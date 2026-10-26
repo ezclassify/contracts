@@ -1,0 +1,62 @@
+{
+    "name": "@ezclassify/contracts-monorepo",
+    "version": "1.0.0-dev.30",
+    "type": "module",
+    "description": "EzClassify public contracts: wire and definition types, JSON schemas, the OpenAPI spec, the conformance corpus, a replay server for it, and a schema-only validator",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/ezclassify/contracts.git"
+    },
+    "homepage": "https://ezclassify.com",
+    "author": "EzClassify, LLC",
+    "license": "Apache-2.0",
+    "private": true,
+    "workspaces": [
+        "libs/*",
+        "packages/*"
+    ],
+    "engines": {
+        "node": ">=22.0.0"
+    },
+    "scripts": {
+        "build": "npm run build -w @ezclassify/types && npm run build -w @ezclassify/schemas && npm run build -w @ezclassify/openapi",
+        "bundle": "node libs/schemas/build.mjs",
+        "check:dependency-age": "node scripts/check-dependency-age.mjs",
+        "check:lockfile-portable": "node scripts/check-lockfile-portable.mjs",
+        "check:notices": "node scripts/generate-notices.mjs --check",
+        "check:openapi": "tsx libs/openapi/scripts/check-openapi.ts",
+        "check:schemas": "node scripts/check-schemas-fresh.mjs",
+        "check:spec": "node scripts/check-public-spec.mjs",
+        "clean": "npm run clean -w @ezclassify/types --if-present && npm run clean -w @ezclassify/schemas --if-present && npm run clean -w @ezclassify/openapi --if-present",
+        "codegen": "tsx libs/openapi/scripts/emit-openapi.ts",
+        "deps:relock": "node -e \"const{rmSync}=require('node:fs');for(const path of ['node_modules','package-lock.json'])rmSync(path,{force:true,recursive:true})\" && npm install --package-lock-only --include=optional --ignore-scripts --before=\"$(node -e 'console.log(new Date(Date.now()-7*864e5).toISOString())')\" && npm run check:lockfile-portable && npm run check:dependency-age",
+        "docs": "npm exec --yes --package=typedoc@0.28.20 --package=typescript@5.9.3 -- typedoc --options typedoc.json",
+        "docs:check": "npm exec --yes --package=typedoc@0.28.20 --package=typescript@5.9.3 -- typedoc --options typedoc.json --emit none",
+        "docs:source": "npm exec --yes --package=typedoc@0.28.20 --package=typescript@5.9.3 -- typedoc --options typedoc.source.json",
+        "format": "prettier --write .",
+        "format:check": "prettier --check .",
+        "notices": "node scripts/generate-notices.mjs",
+        "test": "npm run typecheck && vitest run",
+        "test:verbose": "vitest run --reporter=verbose --no-file-parallelism",
+        "typecheck": "tsc -p libs/types/tsconfig.contract.json && tsc -p libs/openapi/tsconfig.json && tsc -p packages/conformance-server/tsconfig.json",
+        "validate": "node packages/validator/bin/ezclassify-validate.mjs"
+    },
+    "devDependencies": {
+        "@ezclassify/tsconfig": "^1.0.0-0",
+        "@types/js-yaml": "4.0.9",
+        "@types/node": "^22.15.0",
+        "ajv": "8.20.0",
+        "ajv-formats": "3.0.1",
+        "js-yaml": "^4.1.0",
+        "prettier": "^3.5.0",
+        "prettier-plugin-jsdoc": "^1.3.0",
+        "prettier-plugin-pkg": "^0.21.0",
+        "prettier-plugin-sort-json": "^4.1.0",
+        "ts-json-schema-generator": "^2.4.0",
+        "tsx": "^4.20.0",
+        "typescript": "5.9.3",
+        "vite": "^8.0.0",
+        "vite-plugin-dts": "^5.0.0",
+        "vitest": "^4.1.1"
+    }
+}

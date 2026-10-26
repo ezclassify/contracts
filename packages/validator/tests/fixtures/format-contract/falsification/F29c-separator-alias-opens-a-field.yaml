@@ -1,0 +1,57 @@
+# F29c: a boundary one field reads and another field opens with.
+#
+# EXPECTS `plan/separator-alias-collision`.
+#
+# The other half of the same rule. A field's prefix says where that field
+# begins; a separator alias says those same characters end a value of another
+# field. Text carrying them is then either the second field opening or the first
+# field's list continuing, and the format has no way to say which.
+scheme:
+  id: p1-f29c
+  version: 1.0.0
+  name: 'F29c: an alias that opens a field'
+  default_scope: block
+  scopes: [{ id: block, label: Block }]
+  data:
+    categories:
+      - id: control
+        label: Control
+        rollup: union
+      - id: source
+        label: Source
+        rollup: union
+        single: true
+    concepts:
+      inline:
+        - {
+              id: CONTROL_A,
+              name: Control A,
+              views: { default: AAA },
+              categories: [control],
+          }
+        - {
+              id: CONTROL_B,
+              name: Control B,
+              views: { default: BBB },
+              categories: [control],
+          }
+        - {
+              id: SOURCE_ONE,
+              name: Source one,
+              views: { default: Source One },
+              categories: [source],
+          }
+  render:
+    default: block
+    formats:
+      - id: block
+        surface: block
+        mode: block
+        view: default
+        separator: "\n"
+        fields:
+          - category: control
+            separator: ', '
+            separator_aliases: ['Taken From: ']
+          - category: source
+            prefix: 'Taken From: '

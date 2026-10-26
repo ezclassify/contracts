@@ -1,0 +1,69 @@
+# Design section 5.4: the one declaration for genuinely exceptional input.
+#
+# Ordinary input needs none of this: the field tree that writes a marking is the
+# tree that reads it, so a phrase, a typed value, a view and an alias all
+# recognize themselves. This is for input no field tree can describe.
+#
+# Deliberately narrow. One bounded pattern, capture groups bound to named fields
+# of one named format, and no priority: a recognizer produces candidates into
+# the same evidence graph under the same budgets and competes on evidence. It
+# never asserts a concept directly and it never runs as a second pass after a
+# canonical read failed, because a fallback that only fires on failure turns an
+# unrecognized input into a confident one.
+#
+# Both references resolve here, and the compiler checks both: the format exists,
+# and `reference` is a field of it.
+scheme:
+  id: p1-recognizers
+  version: 1.0.0
+  name: 'format fixture: exceptional recognizers'
+  default_scope: banner
+  scopes:
+    - id: banner
+      label: Banner
+  parse:
+    case_sensitive: false
+    strip_whitespace: true
+    recognizers:
+      - id: bracketed-reference
+        pattern: '\[ref ([0-9]{4})\]'
+        format: banner
+        binds:
+          - group: 1
+            field: reference
+        message: A bracketed reference number is read as the reference field.
+  data:
+    categories:
+      - id: level
+        label: Level
+        rollup: max
+        single: true
+        required: true
+      - id: reference
+        label: Reference
+        rollup: union
+    concepts:
+      inline:
+        - id: LEVEL_ONE
+          name: Level one
+          views: { default: ONE }
+          categories: [level]
+        - id: REFERENCE_NUMBER
+          name: Reference number
+          views: { default: '{value}' }
+          categories: [reference]
+          text_input:
+            label: Reference number
+            encoding: { type: text, pattern: '[0-9]{4}' }
+  render:
+    default: banner
+    formats:
+      - id: banner
+        surface: banner
+        mode: inline
+        view: default
+        separator: '//'
+        fields:
+          - category: level
+          - category: reference
+            separator: '/'

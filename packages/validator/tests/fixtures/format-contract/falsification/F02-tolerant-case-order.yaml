@@ -1,0 +1,59 @@
+# F02: mixed case, wrong separators, wrong order.
+#
+# The repair rules did not change with the format contract; what changed is that
+# the same field tree reads the reordered input, rather than a separate tolerant
+# token list saying the order may also be the other way round. Every departure the reader takes is
+# reported as a correction against its own span.
+#
+# The `parse` block carries recognition policy and nothing else. It used to
+# declare `separator: '//'` beside a format that declares the same boundary,
+# which was two places saying one thing; the boundary belongs to the format, and
+# what is left here is how a spelling found at that boundary is compared.
+scheme:
+  id: p1-f02
+  version: 1.0.0
+  name: 'F02: tolerant recognition'
+  default_scope: banner
+  scopes: [{ id: banner, label: Banner }]
+  parse:
+    case_sensitive: false
+    strip_whitespace: true
+    normalize:
+      - id: upcase
+        type: case
+        confidence: safe
+        explanation: This grammar is written in upper case.
+        correction: upper
+      - id: slash-run
+        type: separator
+        confidence: safe
+        explanation: A run of slashes is one separator.
+        pattern: '/{3,}'
+        correction: '//'
+  data:
+    categories:
+      - id: level
+        label: Level
+        rollup: max
+        single: true
+        required: true
+      - id: handling
+        label: Handling
+        rollup: union
+    concepts:
+      inline:
+        - { id: LEVEL_ONE, name: Level one, views: { default: ONE }, categories: [level], aliases: [one] }
+        - { id: HANDLING_A, name: Handling A, views: { default: HA }, categories: [handling] }
+        - { id: HANDLING_B, name: Handling B, views: { default: HB }, categories: [handling] }
+  render:
+    default: banner
+    formats:
+      - id: banner
+        surface: banner
+        mode: inline
+        view: default
+        separator: '//'
+        fields:
+          - category: level
+          - category: handling
+            separator: '/'

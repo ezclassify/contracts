@@ -1,0 +1,50 @@
+# F21: a free-text value that is exactly a reserved literal.
+#
+# EXPECTS plan/reserved-literal-collision.
+#
+# The field is written either as a citation the author types or as the fixed
+# multiple-sources instruction. A citation whose whole value is the text of that
+# instruction is written out and read back as the instruction: same characters,
+# different concept identity, and no punctuation involved.
+#
+# The old contract had no way to notice. Giving the value an encoding that
+# cannot spell the literal is one answer; writing the two facts as two fields is
+# the other.
+scheme:
+  id: p1-f21
+  version: 1.0.0
+  name: 'F21: reserved literal collision'
+  default_scope: authority
+  scopes: [{ id: authority, label: Authority }]
+  data:
+    categories:
+      - id: source
+        label: Source
+        rollup: first
+        single: true
+        required: true
+      - id: source_instruction
+        label: Source instruction
+        rollup: first
+        single: true
+    concepts:
+      inline:
+        - id: SOURCE_CITATION
+          name: A named source
+          views: { default: '{value}' }
+          categories: [source]
+          text_input: { label: Source citation, required: true }
+        - { id: MULTIPLE_SOURCES, name: Multiple sources, views: { default: Multiple Sources }, categories: [source_instruction] }
+  render:
+    default: authority
+    formats:
+      - id: authority
+        surface: authority
+        mode: block
+        view: default
+        fields:
+          - name: Source
+            prefix: 'Derived From: '
+            alternatives:
+              - category: source
+              - category: source_instruction

@@ -1,0 +1,56 @@
+# F14: two fields writing the same XML attribute.
+#
+# EXPECTS plan/duplicate-attribute.
+#
+# An element cannot carry the same attribute twice, so two fields may share a
+# name only when at most one of them is ever active. Here both write concepts of
+# a category that holds several at once, and neither carries a predicate, so
+# nothing rules out a state where both are on: conflicting values would become a
+# repeated attribute.
+#
+# Compare the 5.7 design fixture, where the two writers name concepts of a
+# single-valued category and the exclusivity is proved from the category's own
+# cardinality without the author restating it.
+scheme:
+  id: p1-f14
+  version: 1.0.0
+  name: 'F14: duplicate attribute'
+  default_scope: marking
+  scopes: [{ id: marking, label: Marking }]
+  data:
+    categories:
+      - id: dates
+        label: Dates
+        rollup: union
+        required: true
+    concepts:
+      inline:
+        - id: REVIEW_DATE
+          name: Review date
+          views: { default: '{value}' }
+          categories: [dates]
+          text_input:
+            label: Review date
+            encoding: { type: calendar-date, canonical: 'YYYY-MM-DD', accepts: ['YYYY-MM-DD'] }
+        - id: EXPIRY_DATE
+          name: Expiry date
+          views: { default: '{value}' }
+          categories: [dates]
+          text_input:
+            label: Expiry date
+            encoding: { type: calendar-date, canonical: 'YYYY-MM-DD', accepts: ['YYYY-MM-DD'] }
+  render:
+    default: structured
+    formats:
+      - id: structured
+        surface: marking
+        mode: block
+        view: default
+        syntax: { type: xml-attributes }
+        fields:
+          - attribute: effectiveDate
+            concept: REVIEW_DATE
+            category: dates
+          - attribute: effectiveDate
+            concept: EXPIRY_DATE
+            category: dates

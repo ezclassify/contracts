@@ -1,0 +1,20 @@
+context:
+  id: acme-prod-marking
+  version: 1.0.0
+  description: ACME production Context, primary scheme + program overlays + quickmark guide.
+  scheme:
+    id: acme-classification-primary
+    version: latest
+    layers:
+      - id: acme-program-overlays
+        version: latest
+      - id: acme-region-concepts
+        version: latest
+  guides:
+    - id: acme-quickmark-rules
+      version: latest
+    - id: acme-detailed-marking
+      version: latest
+  access:
+    id: acme-rbac-access
+    version: latest

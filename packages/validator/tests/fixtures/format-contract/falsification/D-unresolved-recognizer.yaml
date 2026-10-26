@@ -1,0 +1,55 @@
+# A recognizer naming a format and a field that do not exist.
+#
+# EXPECTS plan/unresolved-reference, twice.
+#
+# A recognizer is the one place the contract lets an author name a format and a
+# field from outside the format itself. Both are references, and a misspelled
+# one is a declaration that can never fire: there is nothing to feed, or nothing
+# to fill. The old contract had no such check because `parse.tokens` named no
+# format at all.
+scheme:
+  id: p1-d-unresolved-recognizer
+  version: 1.0.0
+  name: 'falsification fixture: unresolved recognizer references'
+  default_scope: banner
+  scopes: [{ id: banner, label: Banner }]
+  parse:
+    recognizers:
+      - id: no-such-format
+        pattern: '\[ref ([0-9]{4})\]'
+        format: portion
+        binds: [{ group: 1, field: reference }]
+      - id: no-such-field
+        pattern: '\[alt ([0-9]{4})\]'
+        format: banner
+        binds: [{ group: 1, field: citation }]
+  data:
+    categories:
+      - id: level
+        label: Level
+        rollup: max
+        single: true
+        required: true
+      - id: reference
+        label: Reference
+        rollup: union
+    concepts:
+      inline:
+        - { id: LEVEL_ONE, name: Level one, views: { default: ONE }, categories: [level] }
+        - id: REFERENCE_NUMBER
+          name: Reference number
+          views: { default: '{value}' }
+          categories: [reference]
+          text_input: { label: Reference number }
+  render:
+    default: banner
+    formats:
+      - id: banner
+        surface: banner
+        mode: inline
+        view: default
+        separator: '//'
+        fields:
+          - category: level
+          - category: reference
+            separator: '/'

@@ -1,0 +1,177 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "additionalProperties": false,
+    "definitions": {
+        "ComponentRef": {
+            "additionalProperties": false,
+            "description": "A reference to a versioned component (scheme, layer, guide, access policy, or crosswalk). The `version` may be a concrete semver string or the literal `'latest'`, in which case the highest published semver is resolved at request time.",
+            "properties": {
+                "id": {
+                    "description": "The id of the component.",
+                    "minLength": 1,
+                    "type": "string"
+                },
+                "version": {
+                    "description": "A concrete semver version, or `latest` for the highest published one.",
+                    "pattern": "^(latest|\\d+\\.\\d+(\\.\\d+)?(-[0-9A-Za-z.-]+)?(\\+[0-9A-Za-z.-]+)?)$",
+                    "type": "string"
+                }
+            },
+            "required": ["id", "version"],
+            "type": "object"
+        },
+        "ContextAccessRef": {
+            "additionalProperties": false,
+            "description": "The access-policy reference in a Context. An access ref carries the policy's `id` + `version` and optionally a list of layer refs that stack on top of the base. Layers belong inside the access entry because a layer is semantically a derivative of _that_ policy; it cannot be paired with a different base, so nesting it under the policy keeps that coupling explicit.\n\nAn access layer only ever adds. See `AccessLayer` for why overriding or removing an inherited mapping is a composition error rather than a merge.",
+            "properties": {
+                "id": {
+                    "description": "The id of the component.",
+                    "minLength": 1,
+                    "type": "string"
+                },
+                "layers": {
+                    "description": "Optional layer references applied left-to-right after the base access policy.",
+                    "items": {
+                        "$ref": "#/definitions/ComponentRef"
+                    },
+                    "type": "array"
+                },
+                "version": {
+                    "description": "A concrete semver version, or `latest` for the highest published one.",
+                    "pattern": "^(latest|\\d+\\.\\d+(\\.\\d+)?(-[0-9A-Za-z.-]+)?(\\+[0-9A-Za-z.-]+)?)$",
+                    "type": "string"
+                }
+            },
+            "required": ["id", "version"],
+            "type": "object"
+        },
+        "ContextBlock": {
+            "additionalProperties": false,
+            "description": "The body inside the top-level `context:` envelope. References a scheme plus optional guides, a single optional access policy and optional crosswalks by `(id, version)`; resolution to concrete content happens server-side. The crosswalk references make reviewed translations between the referenced scheme and another scheme available to the Context; the resolver loads those scheme dependencies from the crosswalk artifacts.\n\nEvery reference may carry layers, nested inside the reference they derive from, in the one shape that holds for all four families.\n\nContext is pure composition: it names which artifact versions to load and operate on. Artifact-internal concerns (sources, auth, pins, mappings) live on the referenced Scheme/Guide/Access versions, not here.",
+            "properties": {
+                "access": {
+                    "$ref": "#/definitions/ContextAccessRef",
+                    "description": "Optional access-policy reference. A Context binds to at most one access policy. Layers stack on the base policy and are nested under it because a layer is a derivative of _that_ policy; it cannot be paired with a different base."
+                },
+                "crosswalks": {
+                    "description": "Optional directional crosswalk artifact references. Layers stack on a base crosswalk and are nested under it because a layer is a derivative of _that_ crosswalk; it cannot be paired with a different base.",
+                    "items": {
+                        "$ref": "#/definitions/ContextCrosswalkRef"
+                    },
+                    "type": "array"
+                },
+                "description": {
+                    "description": "Longer description of what this context composes and who uses it.",
+                    "type": "string"
+                },
+                "guides": {
+                    "description": "Optional guide references; later guides take precedence on rule-id conflicts. Layers stack on a base guide and are nested under it because a layer is a derivative of _that_ guide; it cannot be paired with a different base.",
+                    "items": {
+                        "$ref": "#/definitions/ContextGuideRef"
+                    },
+                    "type": "array"
+                },
+                "id": {
+                    "description": "Unique context identifier: lowercase letters, digits and hyphens, starting with a letter or digit.",
+                    "pattern": "^[a-z0-9][a-z0-9-]*$",
+                    "type": "string"
+                },
+                "scheme": {
+                    "$ref": "#/definitions/ContextSchemeRef",
+                    "description": "Required scheme reference. Layers stack on the base scheme and are nested under it because a layer is a derivative of _that_ scheme; it cannot be paired with a different base."
+                },
+                "version": {
+                    "description": "Semantic version of this context.",
+                    "pattern": "^\\d+\\.\\d+(\\.\\d+)?(-[0-9A-Za-z.-]+)?(\\+[0-9A-Za-z.-]+)?$",
+                    "type": "string"
+                }
+            },
+            "required": ["id", "version", "scheme"],
+            "type": "object"
+        },
+        "ContextCrosswalkRef": {
+            "additionalProperties": false,
+            "description": "A crosswalk reference in a Context. A crosswalk ref carries the crosswalk's `id` + `version` and optionally a list of layer refs that stack on top of the base. Layers belong inside the crosswalk entry because a layer is semantically a derivative of _that_ crosswalk; it cannot be paired with a different base, so nesting it under the crosswalk keeps that coupling explicit.",
+            "properties": {
+                "id": {
+                    "description": "The id of the component.",
+                    "minLength": 1,
+                    "type": "string"
+                },
+                "layers": {
+                    "description": "Optional layer references applied left-to-right after the base crosswalk.",
+                    "items": {
+                        "$ref": "#/definitions/ComponentRef"
+                    },
+                    "type": "array"
+                },
+                "version": {
+                    "description": "A concrete semver version, or `latest` for the highest published one.",
+                    "pattern": "^(latest|\\d+\\.\\d+(\\.\\d+)?(-[0-9A-Za-z.-]+)?(\\+[0-9A-Za-z.-]+)?)$",
+                    "type": "string"
+                }
+            },
+            "required": ["id", "version"],
+            "type": "object"
+        },
+        "ContextGuideRef": {
+            "additionalProperties": false,
+            "description": "A guide reference in a Context. A guide ref carries the guide's `id` + `version` and optionally a list of layer refs that stack on top of the base. Layers belong inside the guide entry because a layer is semantically a derivative of _that_ guide; it cannot be paired with a different base, so nesting it under the guide keeps that coupling explicit.\n\nAdding guidance needs no layer, since a Context holds a list of guides. Layering is for tailoring a guide the composing organization received read-only.",
+            "properties": {
+                "id": {
+                    "description": "The id of the component.",
+                    "minLength": 1,
+                    "type": "string"
+                },
+                "layers": {
+                    "description": "Optional layer references applied left-to-right after the base guide.",
+                    "items": {
+                        "$ref": "#/definitions/ComponentRef"
+                    },
+                    "type": "array"
+                },
+                "version": {
+                    "description": "A concrete semver version, or `latest` for the highest published one.",
+                    "pattern": "^(latest|\\d+\\.\\d+(\\.\\d+)?(-[0-9A-Za-z.-]+)?(\\+[0-9A-Za-z.-]+)?)$",
+                    "type": "string"
+                }
+            },
+            "required": ["id", "version"],
+            "type": "object"
+        },
+        "ContextSchemeRef": {
+            "additionalProperties": false,
+            "description": "The scheme reference in a Context. A scheme ref carries the scheme's `id` + `version` and optionally a list of layer refs that stack on top of the base. Layers belong inside the scheme block because a layer is semantically a derivative of _that_ scheme; it cannot be paired with a different base, so nesting it under the scheme keeps that coupling explicit.",
+            "properties": {
+                "id": {
+                    "description": "The id of the component.",
+                    "minLength": 1,
+                    "type": "string"
+                },
+                "layers": {
+                    "description": "Optional layer references applied left-to-right after the base scheme.",
+                    "items": {
+                        "$ref": "#/definitions/ComponentRef"
+                    },
+                    "type": "array"
+                },
+                "version": {
+                    "description": "A concrete semver version, or `latest` for the highest published one.",
+                    "pattern": "^(latest|\\d+\\.\\d+(\\.\\d+)?(-[0-9A-Za-z.-]+)?(\\+[0-9A-Za-z.-]+)?)$",
+                    "type": "string"
+                }
+            },
+            "required": ["id", "version"],
+            "type": "object"
+        }
+    },
+    "description": "Top-level YAML document for a Context: `{ context: { ... } }`, the same envelope every other family wears. A runtime reads it from disk or from an installed artifact and resolves the references in its body.",
+    "properties": {
+        "context": {
+            "$ref": "#/definitions/ContextBlock",
+            "description": "Root `context:` envelope. All fields live inside it."
+        }
+    },
+    "required": ["context"],
+    "type": "object"
+}

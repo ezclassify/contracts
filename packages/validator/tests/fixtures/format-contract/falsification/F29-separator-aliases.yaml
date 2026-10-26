@@ -1,0 +1,65 @@
+# F29: a separator a field reads and does not write.
+#
+# EXPECTS no diagnostics.
+#
+# `prefix_aliases` says a field opens in more than one spelling. This is the
+# same statement about the other half of a field's syntax: a list a format
+# writes with one boundary arrives written with another, and a reader that
+# accounts for every character has to read the whole run as one value rather
+# than guess where it ends.
+#
+# The tolerant pass already reads spacing and de-doubling variants of the
+# declared separator, and deliberately invents no boundary the declared
+# separator does not already put in the same place. That rule is right and this
+# does not weaken it: the characters here are named by the document, which is
+# the only thing that can say them. Tolerant pass only, never written, every use
+# a `separator` correction naming what the format writes instead.
+scheme:
+  id: p1-f29
+  version: 1.0.0
+  name: 'F29: separator aliases'
+  default_scope: inline
+  scopes: [{ id: inline, label: Inline }]
+  data:
+    categories:
+      - id: control
+        label: Control
+        rollup: union
+      - id: level
+        label: Level
+        rollup: highest
+        single: true
+    concepts:
+      inline:
+        - {
+              id: LEVEL_ONE,
+              name: Level one,
+              views: { default: ONE },
+              categories: [level],
+              rank: 1,
+          }
+        - {
+              id: CONTROL_A,
+              name: Control A,
+              views: { default: AAA },
+              categories: [control],
+          }
+        - {
+              id: CONTROL_B,
+              name: Control B,
+              views: { default: BBB },
+              categories: [control],
+          }
+  render:
+    default: inline
+    formats:
+      - id: inline
+        surface: inline
+        mode: inline
+        view: default
+        separator: '//'
+        fields:
+          - category: level
+          - category: control
+            separator: ', '
+            separator_aliases: ['; ', ' and ']

@@ -1,0 +1,45 @@
+# A per-value affix.
+#
+# `categories[].concept_prefix` put a presentation rule on the category, where
+# it applied to every field that ever wrote it. `each` puts it on the field, and
+# sits beside the field's own `prefix`, which still applies once around the
+# whole. Two properties, two sentences: "this field is introduced by PROG-" and
+# "each program in it is written with SP- in front".
+scheme:
+  id: p1-each
+  version: 1.0.0
+  name: 'format fixture: per-value affix'
+  default_scope: banner
+  scopes:
+    - id: banner
+      label: Banner
+  data:
+    categories:
+      - id: program
+        label: Programs
+        rollup: union
+        required: true
+    concepts:
+      inline:
+        - id: PROGRAM_ONE
+          name: Program one
+          views: { default: ONE }
+          categories: [program]
+        - id: PROGRAM_TWO
+          name: Program two
+          views: { default: TWO }
+          categories: [program]
+  render:
+    default: banner
+    formats:
+      - id: banner
+        surface: banner
+        mode: inline
+        view: default
+        separator: '//'
+        fields:
+          - category: program
+            prefix: 'PROG-'
+            each:
+              prefix: 'SP-'
+            separator: '/'

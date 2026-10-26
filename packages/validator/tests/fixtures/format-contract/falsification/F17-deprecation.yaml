@@ -1,0 +1,47 @@
+# F17: a retired instruction with no known replacement, and one with a sibling
+# replacement.
+#
+# Deprecation did not change with the format contract and is here because
+# altered assertion identity changes what it does. A retired concept with a declared replacement is
+# modernized and the substitution is recorded; one without keeps its evidence
+# and carries a warning. Neither invents a date, and neither erases the
+# instruction to make a required-category check pass.
+scheme:
+  id: p1-f17
+  version: 1.0.0
+  name: 'F17: deprecation'
+  default_scope: banner
+  scopes: [{ id: banner, label: Banner }]
+  data:
+    categories:
+      - id: handling
+        label: Handling
+        rollup: union
+        required: true
+    concepts:
+      inline:
+        - id: RETIRED_NO_REPLACEMENT
+          name: Retired instruction
+          views: { default: RETIRED }
+          categories: [handling]
+          deprecated: true
+          deprecated_message: This instruction was withdrawn and has no replacement.
+        - id: RETIRED_WITH_REPLACEMENT
+          name: Superseded instruction
+          views: { default: SUPERSEDED }
+          categories: [handling]
+          deprecated: true
+          deprecated_message: Use the current instruction instead.
+          deprecated_replacement: CURRENT_INSTRUCTION
+        - { id: CURRENT_INSTRUCTION, name: Current instruction, views: { default: CURRENT }, categories: [handling] }
+  render:
+    default: banner
+    formats:
+      - id: banner
+        surface: banner
+        mode: inline
+        view: default
+        separator: '//'
+        fields:
+          - category: handling
+            separator: '/'

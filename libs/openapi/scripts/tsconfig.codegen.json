@@ -1,0 +1,10 @@
+{
+    "compilerOptions": {
+        "baseUrl": "../../..",
+        "isolatedModules": false,
+        "noEmit": true,
+        "skipLibCheck": true
+    },
+    "extends": "../tsconfig.json",
+    "include": ["../src/wire.ts", "../src/route-decls/types.ts"]
+}

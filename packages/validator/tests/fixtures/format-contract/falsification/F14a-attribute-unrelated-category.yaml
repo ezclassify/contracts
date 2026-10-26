@@ -1,0 +1,59 @@
+# F14a: exclusivity claimed from a category the fields do not write.
+#
+# EXPECTS plan/duplicate-attribute.
+#
+# This is F14 with one line added to each concept: an unrelated membership in a
+# single-valued category that this format never writes. The fields still bind
+# `dates`, which holds several at once, so both can be asserted, both fire, and
+# the element carries `effectiveDate` twice.
+#
+# The proof has to run against the category the field itself writes. A concept
+# belongs to as many categories as its author put it in, and a cardinality on
+# one of the others says nothing about the reading this format produces.
+scheme:
+  id: p1-f14a
+  version: 1.0.0
+  name: 'F14a: exclusivity from an unwritten category'
+  default_scope: marking
+  scopes: [{ id: marking, label: Marking }]
+  data:
+    categories:
+      - id: kind
+        label: Kind
+        rollup: first
+        single: true
+      - id: dates
+        label: Dates
+        rollup: union
+        required: true
+    concepts:
+      inline:
+        - id: REVIEW_DATE
+          name: Review date
+          views: { default: '{value}' }
+          categories: [kind, dates]
+          text_input:
+            label: Review date
+            encoding: { type: calendar-date, canonical: 'YYYY-MM-DD', accepts: ['YYYY-MM-DD'] }
+        - id: EXPIRY_DATE
+          name: Expiry date
+          views: { default: '{value}' }
+          categories: [kind, dates]
+          text_input:
+            label: Expiry date
+            encoding: { type: calendar-date, canonical: 'YYYY-MM-DD', accepts: ['YYYY-MM-DD'] }
+  render:
+    default: structured
+    formats:
+      - id: structured
+        surface: marking
+        mode: block
+        view: default
+        syntax: { type: xml-attributes }
+        fields:
+          - attribute: effectiveDate
+            concept: REVIEW_DATE
+            category: dates
+          - attribute: effectiveDate
+            concept: EXPIRY_DATE
+            category: dates

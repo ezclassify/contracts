@@ -1,0 +1,185 @@
+name: Publish mirror (GitHub Packages)
+
+# Nightly republish of this repository's seven packages to the organization's
+# GitHub Packages development mirror.
+#
+# Every repository that consumes @ezclassify/{tsconfig,types,schemas,openapi,
+# conformance,validator,conformance-server} installs them from this mirror
+# between releases, so this job runs first, at 05:45, ahead of every consumer.
+#
+# The mirror carries prerelease versions only: 1.0.0-mirror.N, never a plain
+# 1.0.0. The real npm publish belongs to the release process.
+
+on:
+  schedule:
+    - cron: '45 5 * * *' # 05:45 UTC nightly, ahead of every repo that consumes this
+  workflow_dispatch:
+
+permissions:
+  packages: write
+  contents: read
+
+concurrency:
+  group: publish-mirror
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    # Publication authority is repository configuration, not repository
+    # identity, so moving the variable and secret moves the publisher without
+    # a code change.
+    if: vars.EZ_DEVELOPMENT_MIRROR_PUBLISHER == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Gate on a commit in the last 24h
+        id: gate
+        # The gate covers the cron only. Someone who dispatches this by hand
+        # means to publish, so a manual run always publishes and there is no
+        # `force` input to get wrong.
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "manual dispatch: publishing"; echo "run=yes" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          age=$(( $(date +%s) - $(git show -s --format=%ct HEAD) ))
+          if [ "$age" -lt 86400 ]; then
+            echo "HEAD is ${age}s old (<24h): publishing"; echo "run=yes" >> "$GITHUB_OUTPUT"
+          else
+            echo "HEAD is ${age}s old (>=24h): nothing landed today, skipping"; echo "run=no" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        if: steps.gate.outputs.run == 'yes'
+        with:
+          node-version: '24'
+          registry-url: 'https://npm.pkg.github.com'
+          scope: '@ezclassify'
+
+      - name: Install
+        # Third-party only. This repository depends on no EzClassify package it
+        # does not also contain, which is the whole point of the boundary and
+        # the reason this job can run when nothing else can.
+        #
+        # The same install CI runs, for the same reason. With no committed
+        # lockfile a bare `npm ci` has nothing to read and exits EUSAGE, so
+        # deps:relock writes one from an empty dependency tree and `npm ci`
+        # then installs it frozen.
+        #
+        # The generate half is guarded rather than unconditional because
+        # deps:relock deletes the lockfile before it re-resolves. With a
+        # committed lockfile, a publishing job that regenerated it every night
+        # would build and publish against third-party versions nobody
+        # reviewed, silently. Guarded, the step honors committed bytes
+        # whenever they exist.
+        #
+        # NODE_AUTH_TOKEN is set because setup-node above has already pointed
+        # the @ezclassify scope at GitHub Packages. Every name in that scope
+        # resolves to a workspace link here, so nothing should reach the
+        # registry, but an unauthenticated read of GitHub Packages fails
+        # outright instead of falling through to npmjs.
+        if: steps.gate.outputs.run == 'yes'
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.EZ_GHPKG_TOKEN }}
+        run: |
+          test -f package-lock.json || npm run deps:relock
+          npm ci
+
+      - name: Resolve the package list and the mirror version
+        id: plan
+        if: steps.gate.outputs.run == 'yes'
+        # One source of truth. The stamp loop, the build, the publish loop and
+        # the post-publish check all read scripts/mirror-packages.json, so they
+        # cannot drift apart the way two hand-copied lists do.
+        run: |
+          echo "version=1.0.0-mirror.${{ github.run_number }}" >> "$GITHUB_OUTPUT"
+          echo "packages=$(node -p 'require("./scripts/mirror-packages.json").packages.join(" ")')" >> "$GITHUB_OUTPUT"
+
+      - name: Stamp mirror version
+        if: steps.gate.outputs.run == 'yes'
+        run: |
+          for pkg in ${{ steps.plan.outputs.packages }}; do
+            npm pkg set "version=${{ steps.plan.outputs.version }}" -w "$pkg"
+          done
+
+      - name: The list is complete and every range admits a mirror version
+        if: steps.gate.outputs.run == 'yes'
+        # Runs AFTER the stamp so it checks what is about to be published, not
+        # what was committed. Catches three things that otherwise ship quietly:
+        # a publishable workspace nobody added to the list, a first-party
+        # dependency written "^1.0.0" (which npm will not match against
+        # 1.0.0-mirror.N, making the tarball uninstallable off this machine),
+        # and a package the stamp did not reach.
+        run: node scripts/check-mirror-list.mjs --expect-version "${{ steps.plan.outputs.version }}"
+
+      - name: Build
+        if: steps.gate.outputs.run == 'yes'
+        # types, schemas and openapi build the compiled outputs their manifests
+        # publish. The remaining packages publish maintained sources or data.
+        run: npm run build
+
+      # `--access restricted`: on GitHub Packages a public package reads as
+      # organization-public, which is not what a development mirror is for.
+      - name: Publish to GitHub Packages
+        if: steps.gate.outputs.run == 'yes'
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.EZ_GHPKG_TOKEN }}
+        run: |
+          for pkg in ${{ steps.plan.outputs.packages }}; do
+            npm publish --tag dev --access restricted -w "$pkg"
+          done
+
+      - name: Install what was just published and run it
+        if: steps.gate.outputs.run == 'yes'
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.EZ_GHPKG_TOKEN }}
+        # The step that makes a silent no-op impossible. Everything above can
+        # succeed while producing something no consumer can install: a tarball
+        # missing its declared files, a dependency range that resolves here and
+        # nowhere else, a bin that was never executed. So this leaves the
+        # workspace entirely, installs the versions this run produced from the
+        # registry it just pushed them to, asserts the OpenAPI assets arrived,
+        # and runs the validator bin over a real document and then a broken one.
+        # If the second call does not fail, the validator is inert and this job
+        # fails even though every publish succeeded.
+        run: |
+          set -euo pipefail
+          VERSION="${{ steps.plan.outputs.version }}"
+          PROOF="$RUNNER_TEMP/mirror-proof"
+          DOC="$GITHUB_WORKSPACE/libs/types/examples/context-with-sources.yaml"
+          test -f "$DOC"
+
+          mkdir -p "$PROOF" && cd "$PROOF"
+          echo '{"name":"mirror-proof","private":true,"version":"0.0.0"}' > package.json
+          for pkg in ${{ steps.plan.outputs.packages }}; do
+            npm install --no-audit --no-fund "${pkg}@${VERSION}"
+          done
+
+          # The ${...} in the program below are JavaScript template
+          # placeholders. Single quotes are what keeps the shell out of them.
+          # shellcheck disable=SC2016
+          node -e '
+            const fs = require("node:fs");
+            const list = require("@ezclassify/openapi/openapi.json");
+            const yaml = fs.readFileSync(require.resolve("@ezclassify/openapi/openapi.yaml"), "utf8");
+            const paths = Object.keys(list.paths).length;
+            if (paths === 0) throw new Error("published openapi.json describes no paths");
+            if (yaml.length === 0) throw new Error("published openapi.yaml is empty");
+            console.log(`openapi assets present: ${paths} paths, ${yaml.length} bytes of YAML`);
+            const plans = fs.readdirSync(require("node:path").join(
+              require.resolve("@ezclassify/conformance/matrix.json"), "..", "plans/v1"));
+            if (plans.length === 0) throw new Error("published conformance corpus has no plans");
+            console.log(`conformance corpus present: ${plans.length} plan files`);
+          '
+
+          cp "$DOC" ./good.yaml
+          ./node_modules/.bin/ezclassify-validate ./good.yaml
+
+          printf 'nonsense:\n  a: 1\n' > ./bad.yaml
+          if ./node_modules/.bin/ezclassify-validate ./bad.yaml; then
+            echo "The published validator accepted a document that is not an EzClassify document." >&2
+            echo "It is reporting success without validating anything. Refusing to call this publish good." >&2
+            exit 1
+          fi
+          echo "Published validator accepts a valid document and rejects an invalid one."

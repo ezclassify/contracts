@@ -1,0 +1,59 @@
+# F28: a spelling a field reads and does not write.
+#
+# EXPECTS no diagnostics.
+#
+# A format writes one spelling of a line and the documents it has to read carry
+# more than one. Nothing already in the contract says that. Two `alternatives`
+# that can both write one state are a conflict by design and never a winner by
+# order, and a `Recognizer` describes a whole region rather than one line inside
+# a block, so the only way left was matching a substring and dropping whatever
+# came before it - which is the fail-open accounting this engine closed.
+#
+# `prefix_aliases` is the tolerant half of the tree written down. The canonical
+# pass reads `prefix` and nothing else; a spelling named here is admitted by the
+# tolerant pass beside the case difference, the declared alias and the separator
+# substitution it already admits, and every use is reported as an `alias`
+# correction. The renderer never reads it, so the format writes exactly what it
+# wrote before this word existed.
+scheme:
+  id: p1-f28
+  version: 1.0.0
+  name: 'F28: prefix aliases'
+  default_scope: block
+  scopes: [{ id: block, label: Block }]
+  data:
+    categories:
+      - id: author
+        label: Author
+        rollup: union
+      - id: source
+        label: Source
+        rollup: union
+    concepts:
+      inline:
+        - {
+              id: AUTHOR_ONE,
+              name: Author one,
+              views: { default: Author One },
+              categories: [author],
+          }
+        - {
+              id: SOURCE_MANY,
+              name: Many sources,
+              views: { default: Many Sources },
+              categories: [source],
+          }
+  render:
+    default: block
+    formats:
+      - id: block
+        surface: block
+        mode: block
+        view: default
+        separator: "\n"
+        fields:
+          - category: author
+            prefix: 'Written By: '
+            prefix_aliases: ['Separately Written By: ']
+          - category: source
+            prefix: 'Taken From: '

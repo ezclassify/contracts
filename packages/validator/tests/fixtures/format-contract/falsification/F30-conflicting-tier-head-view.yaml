@@ -1,0 +1,56 @@
+# One composition head cannot change spelling according to which child tier
+# happens to be visited first. Both children attach to HEAD, but the two tier
+# boundaries select different rendered spellings for that one head position.
+scheme:
+  id: p1-f30
+  version: 1.0.0
+  name: 'F30: conflicting tier head view'
+  default_scope: banner
+  scopes:
+    - id: banner
+      label: Banner
+  data:
+    categories:
+      - id: program
+        label: Programs
+        rollup: union
+        required: true
+    concepts:
+      inline:
+        - id: HEAD
+          name: Shared head
+          views:
+            default: HEAD
+            abbreviated: H
+          categories: [program]
+        - id: ALPHA
+          name: Alpha child
+          views:
+            default: ALPHA
+          categories: [program]
+          parents: [HEAD]
+          tier: alpha
+        - id: BETA
+          name: Beta child
+          views:
+            default: BETA
+          categories: [program]
+          parents: [HEAD]
+          tier: beta
+  render:
+    default: banner
+    formats:
+      - id: banner
+        surface: banner
+        mode: inline
+        view: default
+        fields:
+          - category: program
+            separator: '/'
+            tiers:
+              - tier: alpha
+                attached_by: '-'
+                head_view: default
+              - tier: beta
+                attached_by: '+'
+                head_view: abbreviated

@@ -1,0 +1,70 @@
+# F23: the same shape with two guards that do not cover the state space.
+#
+# EXPECTS no diagnostics; the compiled root canBeEmpty is true.
+#
+# F22's two options are a condition and its negation, so between them they hold
+# in every state. These two are unrelated conditions: there is a state where
+# neither holds and the alternation can select no option. The finite format is
+# accepted without an empty-match warning; the compiled plan records that it
+# can be empty. Runtime rendering and detection remain separate controls.
+#
+# F22 is the negative control: its complementary guards compile with
+# canBeEmpty false. F23 has no such exhaustiveness guarantee.
+scheme:
+  id: p1-f23
+  version: 1.0.0
+  name: 'F23: uncovered alternatives'
+  default_scope: banner
+  scopes:
+    - id: banner
+      label: Banner
+  named_conditions:
+    owner-is-home:
+      has: OWNER_HOME
+    owner-is-partner:
+      has: OWNER_PARTNER
+    owner-present:
+      category: owner
+  data:
+    categories:
+      - id: level
+        label: Level
+        rollup: max
+        single: true
+      - id: owner
+        label: Owner
+        rollup: union
+        required: true
+    concepts:
+      inline:
+        - { id: LEVEL_ONE, name: Level one, views: { default: ONE }, categories: [level] }
+        - { id: OWNER_HOME, name: Home owner, views: { default: HOME }, categories: [owner] }
+        - { id: OWNER_PARTNER, name: Partner owner, views: { default: PARTNER }, categories: [owner] }
+        - { id: OWNER_OTHER, name: Other owner, views: { default: OTHER }, categories: [owner] }
+  render:
+    default: banner
+    formats:
+      - id: banner
+        surface: banner
+        mode: inline
+        view: default
+        prefix:
+          - { text: '//', when: { named_condition: owner-present } }
+        separator: '//'
+        fields:
+          - name: Origin phrase
+            alternatives:
+              - name: Owner first
+                when: { named_condition: owner-is-home }
+                separator: ' '
+                fields:
+                  - category: owner
+                    separator: ' '
+                  - category: level
+              - name: Level first
+                when: { named_condition: owner-is-partner }
+                separator: ' '
+                fields:
+                  - category: level
+                  - category: owner
+                    separator: ' '

@@ -1,0 +1,50 @@
+# F28a: one spelling opening two fields of a format.
+#
+# EXPECTS `plan/prefix-alias-collision`.
+#
+# An alias is read and never written, so it has no state of its own to be told
+# apart by. A line reaching two fields through one is two readings and there is
+# nothing here to choose between them: declaration order settles no more for an
+# alias than it does anywhere else in this engine.
+scheme:
+  id: p1-f28a
+  version: 1.0.0
+  name: 'F28a: a colliding alias'
+  default_scope: block
+  scopes: [{ id: block, label: Block }]
+  data:
+    categories:
+      - id: author
+        label: Author
+        rollup: union
+      - id: source
+        label: Source
+        rollup: union
+    concepts:
+      inline:
+        - {
+              id: AUTHOR_ONE,
+              name: Author one,
+              views: { default: Author One },
+              categories: [author],
+          }
+        - {
+              id: SOURCE_MANY,
+              name: Many sources,
+              views: { default: Many Sources },
+              categories: [source],
+          }
+  render:
+    default: block
+    formats:
+      - id: block
+        surface: block
+        mode: block
+        view: default
+        separator: "\n"
+        fields:
+          - category: author
+            prefix: 'Written By: '
+            prefix_aliases: ['Taken From: ']
+          - category: source
+            prefix: 'Taken From: '

@@ -1,0 +1,95 @@
+# Design section 5.2: labeled block fields and alternative instructions.
+#
+# `alternatives` means different representations of one field, not first
+# matching category wins. The declassification field is written either as a
+# type or as an exemption code, never as both.
+scheme:
+  id: p1-block-alternatives
+  version: 1.0.0
+  name: 'format fixture: block fields and alternatives'
+  default_scope: authority
+  scopes:
+    - id: authority
+      label: Authority
+  data:
+    categories:
+      - id: classifier
+        label: Classifier
+        rollup: first
+        single: true
+      - id: source
+        required: true
+        label: Source
+        rollup: first
+        single: true
+      - id: reason
+        label: Reason
+        rollup: union
+      - id: declass
+        label: Declassification instruction
+        rollup: first
+        single: true
+      - id: exemption
+        label: Exemption
+        rollup: first
+        single: true
+    concepts:
+      inline:
+        - id: CLASSIFIER_NAME
+          name: Classifier name
+          views: { default: '{value}' }
+          categories: [classifier]
+          text_input:
+            label: Classifier
+            required: true
+        - id: SOURCE_CITATION
+          name: A named source
+          views: { default: '{value}' }
+          categories: [source]
+          text_input:
+            label: Source citation
+            required: true
+        - id: REASON_ONE
+          name: Reason one
+          views: { default: R1 }
+          categories: [reason]
+        - id: REASON_TWO
+          name: Reason two
+          views: { default: R2 }
+          categories: [reason]
+        - id: DECLASS_DATE
+          name: Specific date
+          views: { default: '{value}' }
+          categories: [declass]
+          text_input:
+            label: Declassification date
+            required: true
+            encoding:
+              type: calendar-date
+              canonical: 'YYYY-MM-DD'
+              accepts: ['YYYYMMDD', 'YYYY-MM-DD']
+        - id: EXEMPT_CODE_ONE
+          name: Exemption one
+          views: { default: X1 }
+          categories: [exemption]
+  render:
+    default: authority_block
+    formats:
+      - id: authority_block
+        surface: authority
+        mode: block
+        view: default
+        separator: "\n"
+        fields:
+          - category: classifier
+            prefix: 'Classified By: '
+          - category: source
+            prefix: 'Derived From: '
+          - category: reason
+            prefix: 'Reason: '
+            separator: ', '
+          - name: Declassification instruction
+            prefix: 'Declassify On: '
+            alternatives:
+              - category: declass
+              - category: exemption

@@ -1,0 +1,1225 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "additionalProperties": false,
+    "definitions": {
+        "AttributionDoc": {
+            "additionalProperties": false,
+            "description": "Provenance attached to every external source. Mirrors the runtime `Attribution` declared in `./source.ts`; redeclared here so the YAML schema can validate it without depending on the runtime source contract.",
+            "properties": {
+                "citation": {
+                    "description": "Suggested citation for the source.",
+                    "type": "string"
+                },
+                "license": {
+                    "description": "SPDX identifier or short license token, such as `CC-BY-4.0`.",
+                    "type": "string"
+                },
+                "licenseUrl": {
+                    "description": "Canonical URL where the license terms can be inspected.",
+                    "type": "string"
+                },
+                "name": {
+                    "description": "Display name of the upstream source.",
+                    "type": "string"
+                }
+            },
+            "required": ["name", "license"],
+            "type": "object"
+        },
+        "CharacterWindow": {
+            "additionalProperties": false,
+            "description": "Proximity measured in raw characters.",
+            "properties": {
+                "chars": {
+                    "description": "The largest distance allowed between two spans, counted in characters (UTF-16 code units) between their nearest edges. Spans that touch or overlap are 0 apart.",
+                    "minimum": 0,
+                    "type": "integer"
+                }
+            },
+            "required": ["chars"],
+            "type": "object"
+        },
+        "ConceptRef": {
+            "additionalProperties": false,
+            "description": "A reference to a concept in a dependent scheme. Resolved to a full Assertion during guide evaluation.",
+            "properties": {
+                "category": {
+                    "description": "Category ID: required when the concept belongs to multiple categories.",
+                    "type": "string"
+                },
+                "id": {
+                    "description": "Concept ID: must exist in one of the guide's target schemes.",
+                    "type": "string"
+                },
+                "value": {
+                    "description": "Value for text-input concepts (e.g., country codes, project names).",
+                    "type": "string"
+                }
+            },
+            "required": ["id"],
+            "type": "object"
+        },
+        "ExternalSourceAuth": {
+            "additionalProperties": false,
+            "description": "Request-level authentication on an external source. `flow` selects the registered handler (Basic, Bearer, a named header, AWS-SigV4, OAuth2 client credentials) that decorates each request; the credential refs are provider-specific opaque ids that are resolved server-side.\n\nCertificates are not request-level. A client certificate for mutual TLS, and a CA bundle for a private upstream, belong to the connection and are declared in the source's `tls` block.",
+            "properties": {
+                "accessKeyRef": {
+                    "$ref": "#/definitions/SecretRefDoc",
+                    "description": "AWS access key ref, used by `aws-sigv4`."
+                },
+                "clientCredentialRef": {
+                    "$ref": "#/definitions/SecretRefDoc",
+                    "description": "OAuth2 client credential, used by `oauth2-cc`."
+                },
+                "credentialRef": {
+                    "$ref": "#/definitions/SecretRefDoc",
+                    "description": "Single primary credential, used by `basic`, `bearer`, `header`."
+                },
+                "flow": {
+                    "description": "Registered AuthFlowHandler id.",
+                    "enum": [
+                        "none",
+                        "basic",
+                        "bearer",
+                        "header",
+                        "aws-sigv4",
+                        "oauth2-cc"
+                    ],
+                    "type": "string"
+                },
+                "params": {
+                    "$ref": "#/definitions/Record%3Cstring%2Cstring%3E",
+                    "description": "Optional scopes / region / token endpoint params, provider-specific."
+                },
+                "secretKeyRef": {
+                    "$ref": "#/definitions/SecretRefDoc",
+                    "description": "AWS secret access key ref, used by `aws-sigv4`."
+                }
+            },
+            "required": ["flow"],
+            "type": "object"
+        },
+        "ExternalSourceCapabilities": {
+            "additionalProperties": false,
+            "description": "Capability hints declared on an external source. The compiler infers defaults from the mapping shape; an explicit block overrides inference.",
+            "properties": {
+                "ancestorsOf": {
+                    "description": "Whether the upstream can list a concept's ancestors.",
+                    "type": "boolean"
+                },
+                "childrenOf": {
+                    "description": "Whether the upstream can list a concept's children.",
+                    "type": "boolean"
+                },
+                "count": {
+                    "description": "Whether the upstream reports how many records it holds. Used by authoring tools.",
+                    "type": "boolean"
+                },
+                "enumerate": {
+                    "description": "Whether the upstream can be browsed page by page. Used by authoring tools, not by the runtime.",
+                    "type": "boolean"
+                },
+                "prefixMatch": {
+                    "description": "Whether the upstream answers a prefix lookup.",
+                    "type": "boolean"
+                },
+                "resolveAliases": {
+                    "description": "How the upstream resolves an alias to a concept: `exact` for literal matches, `fuzzy` for tolerant ones, or `none` when it cannot.",
+                    "enum": ["exact", "fuzzy", "none"],
+                    "type": "string"
+                },
+                "search": {
+                    "description": "Whether the upstream answers a free-text search.",
+                    "type": "boolean"
+                }
+            },
+            "type": "object"
+        },
+        "ExternalSourcePagination": {
+            "anyOf": [
+                {
+                    "additionalProperties": false,
+                    "properties": {
+                        "style": {
+                            "const": "none",
+                            "description": "The upstream answers in a single response.",
+                            "type": "string"
+                        }
+                    },
+                    "required": ["style"],
+                    "type": "object"
+                },
+                {
+                    "additionalProperties": false,
+                    "properties": {
+                        "pageParam": {
+                            "description": "Name of the query parameter that carries the page number.",
+                            "type": "string"
+                        },
+                        "start": {
+                            "description": "The number of the first page, usually `0` or `1`.",
+                            "type": "integer"
+                        },
+                        "style": {
+                            "const": "page",
+                            "description": "The upstream pages by page number: `start` first, then one more per page, until a page comes back empty.",
+                            "type": "string"
+                        }
+                    },
+                    "required": ["style", "pageParam", "start"],
+                    "type": "object"
+                },
+                {
+                    "additionalProperties": false,
+                    "properties": {
+                        "offsetParam": {
+                            "description": "Name of the query parameter that carries the record offset.",
+                            "type": "string"
+                        },
+                        "style": {
+                            "const": "offset",
+                            "description": "The upstream pages by record offset: `0` first, then the previous offset plus the records that page returned, until a page comes back empty.",
+                            "type": "string"
+                        }
+                    },
+                    "required": ["style", "offsetParam"],
+                    "type": "object"
+                },
+                {
+                    "additionalProperties": false,
+                    "properties": {
+                        "cursorParam": {
+                            "description": "Name of the query parameter that carries the cursor.",
+                            "type": "string"
+                        },
+                        "nextField": {
+                            "description": "Dot-path in the response body to the next page's cursor.",
+                            "type": "string"
+                        },
+                        "style": {
+                            "const": "cursor",
+                            "description": "The upstream pages by an opaque cursor it returns. The read ends at the first page whose response names no next cursor.",
+                            "type": "string"
+                        }
+                    },
+                    "required": ["style", "cursorParam", "nextField"],
+                    "type": "object"
+                },
+                {
+                    "additionalProperties": false,
+                    "properties": {
+                        "style": {
+                            "const": "link-header",
+                            "description": "The upstream links the next page in its `Link` response header. The read ends at the first page whose response links no next page.",
+                            "type": "string"
+                        }
+                    },
+                    "required": ["style"],
+                    "type": "object"
+                }
+            ],
+            "description": "Pagination shape declared on an HTTP transport.\n\nA read follows the declared style until the style's last page, and fails rather than return a partial set when it cannot get there: a failed page, a repeated continuation or page, or a read past the host's page, record or time limit. The page size, for every style, is the `queryParams.pageSize` parameter.\n\nThe `page` and `offset` styles compute the next request themselves, so an empty page is the only page that ends the read; a short page does not, because the upstream's page size is not something the read trusts. The `cursor` and `link-header` styles follow the continuation the upstream returns, and the read ends at the first page that names none."
+        },
+        "ExternalSourceQueryParams": {
+            "additionalProperties": false,
+            "description": "Upstream-specific query-parameter names for an HTTP external source. Each field overrides the transport's built-in default name (`search` → `q`, `prefix` → `prefix`, `scope` → `scope`, `pageSize` → `pageSize`) so a customer mapping an upstream that searches via `?query=` or `?filter=` isn't stuck with the transport's own convention. Page continuation parameters belong to the `pagination` block.",
+            "properties": {
+                "pageSize": {
+                    "description": "Name of the query parameter that carries the page size, for every pagination style. Default `pageSize`.",
+                    "type": "string"
+                },
+                "prefix": {
+                    "description": "Name of the query parameter that carries a prefix to match. Default `prefix`.",
+                    "type": "string"
+                },
+                "scope": {
+                    "description": "Name of the query parameter that carries a scope. Default `scope`.",
+                    "type": "string"
+                },
+                "search": {
+                    "description": "Name of the query parameter that carries a search term. Default `q`.",
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "ExternalSourceSpec<RuleMappingDoc>": {
+            "additionalProperties": false,
+            "description": "The body of an `external:` block on a concept / guide-rule / access source. The mapping field is one of `ConceptMappingDoc`, `RuleMappingDoc`, or `AccessMappingDoc` depending on which artifact this block belongs to.",
+            "properties": {
+                "attribution": {
+                    "$ref": "#/definitions/AttributionDoc",
+                    "description": "Provenance for downstream attribution UIs."
+                },
+                "auth": {
+                    "$ref": "#/definitions/ExternalSourceAuth",
+                    "description": "Request-level authentication, applied to each request."
+                },
+                "capabilities": {
+                    "$ref": "#/definitions/ExternalSourceCapabilities",
+                    "description": "Capability overrides. When omitted, inferred from `mapping`."
+                },
+                "grantId": {
+                    "description": "The publisher's opaque reference (`grantId:<uuid>`) to the sharing grant under which it read the source `srcref` names. Provenance only; the engine accepts it and does not act on it.",
+                    "type": "string"
+                },
+                "headers": {
+                    "$ref": "#/definitions/Record%3Cstring%2Cstring%3E",
+                    "description": "Static request headers (HTTP only)."
+                },
+                "id": {
+                    "description": "Stable identifier for this source within the containing artifact. Required when multiple external sources appear on the same scheme; the loader synthesizes `external-${i}` when the field is absent.",
+                    "type": "string"
+                },
+                "liveFetch": {
+                    "description": "How the publisher obtained the records it published for this source: `true` when it read the upstream as it composed the artifact, `false` (the default) when it used a stored snapshot, named by `snapshotRef`. Provenance only; the engine accepts it and does not act on it.",
+                    "type": "boolean"
+                },
+                "mapping": {
+                    "$ref": "#/definitions/RuleMappingDoc",
+                    "description": "Declarative projection from foreign records into canonical shape."
+                },
+                "mappingHash": {
+                    "description": "The publisher's anchor over this spec block: SHA-256 hex of its canonical sorted-key JSON serialization, excluding this field. Whoever publishes the artifact writes it. The engine recomputes it when it loads the Context and refuses to load on a mismatch, so a block edited after publication is caught. Absent means the block carries no anchor and nothing is checked.",
+                    "type": "string"
+                },
+                "pagination": {
+                    "$ref": "#/definitions/ExternalSourcePagination",
+                    "description": "HTTP-only knobs. Ignored for non-http transports."
+                },
+                "query": {
+                    "$ref": "#/definitions/Record%3Cstring%2Cstring%3E",
+                    "description": "Static query params (HTTP only)."
+                },
+                "queryParams": {
+                    "$ref": "#/definitions/ExternalSourceQueryParams",
+                    "description": "HTTP-only: override the transport's default query-parameter names."
+                },
+                "rateLimit": {
+                    "additionalProperties": false,
+                    "description": "Per-instance rate-limit bucket.",
+                    "properties": {
+                        "burst": {
+                            "description": "Most requests allowed in one window.",
+                            "type": "integer"
+                        },
+                        "windowMs": {
+                            "description": "Length of the window, in milliseconds.",
+                            "type": "number"
+                        }
+                    },
+                    "required": ["burst", "windowMs"],
+                    "type": "object"
+                },
+                "recordsPath": {
+                    "description": "Dot-path into the JSON response body that locates the records array (HTTP only). Omit when the response body is itself the array. Use this for upstreams that wrap their payload, e.g. GeoJSON `FeatureCollection.features`, ArcGIS REST `features`, Elasticsearch `hits.hits`.",
+                    "type": "string"
+                },
+                "snapshotId": {
+                    "description": "Optional pin on the records this source serves: the sha256 records digest the source reports for them, written `sha256:` followed by 64 lowercase hex digits (the pattern `^sha256:[0-9a-f]{64}$`). When it is set, the engine loads the artifact only if the source reports the same digest, so an artifact version is immutable around it. To absorb new data from upstream, mint a new artifact version with the new digest.\n\nA label such as a release name never matches and is refused; it belongs in `attribution.citation`. Omit the pin for a best-effort live source that cannot report a stable digest.",
+                    "pattern": "^sha256:[0-9a-f]{64}$",
+                    "type": "string"
+                },
+                "snapshotRef": {
+                    "description": "The publisher's content-addressed reference to the stored snapshot the records came from, when `liveFetch` is `false`. Provenance only; the engine accepts it and does not act on it.",
+                    "type": "string"
+                },
+                "source": {
+                    "description": "URI for the upstream: http(s), file://, or inline:// (rare).",
+                    "type": "string"
+                },
+                "srcref": {
+                    "description": "The publisher's opaque reference (`srcref:<uuid>`) to a source another organization shared with it, when the records came through such a share. Provenance only; the engine accepts it and does not act on it.",
+                    "type": "string"
+                },
+                "timeoutMs": {
+                    "description": "Per-request timeout in ms.",
+                    "type": "number"
+                },
+                "tls": {
+                    "$ref": "#/definitions/ExternalSourceTls",
+                    "description": "HTTP only: the connection's TLS settings (a private CA, a client certificate for mutual TLS). Independent of `auth`, so a source can present a client certificate and a bearer token together. A source whose only credential is its client certificate has `tls` and no `auth`."
+                },
+                "transport": {
+                    "$ref": "#/definitions/ExternalSourceTransport",
+                    "description": "Inferred from `source` when omitted."
+                }
+            },
+            "required": ["source", "mapping"],
+            "type": "object"
+        },
+        "ExternalSourceTls": {
+            "additionalProperties": false,
+            "description": "TLS settings for an HTTP external source's connections. They apply to requests to `source` and to same-origin redirects. Any `tls` setting pins the source to its origin, so a cross-origin redirect is refused. Server verification is always on and cannot be turned off here.\n\nDeclare at least one field, and give `keyPassphraseRef` only together with `clientCertAndKeyRef`. The block is valid only on an `http` transport whose `source` is an `https:` URL; the runtime refuses it anywhere else when it builds the source.",
+            "if": {
+                "required": ["keyPassphraseRef"]
+            },
+            "minProperties": 1,
+            "properties": {
+                "caBundleRef": {
+                    "$ref": "#/definitions/SecretRefDoc",
+                    "description": "PEM CA bundle that verifies the upstream server certificate. Resolves to a string-secret. When set, it replaces the platform's default roots for this source. The material is public, but it is referenced rather than inlined so the deployment can rotate it without a new artifact version."
+                },
+                "clientCertAndKeyRef": {
+                    "$ref": "#/definitions/SecretRefDoc",
+                    "description": "Client certificate and private key presented in the handshake (mutual TLS). Resolves to a cert-and-key-pair."
+                },
+                "keyPassphraseRef": {
+                    "$ref": "#/definitions/SecretRefDoc",
+                    "description": "Passphrase for an encrypted private key in `clientCertAndKeyRef`. Resolves to a string-secret. Requires `clientCertAndKeyRef`. Leave it unset when the pair already carries its passphrase; supplying both is refused."
+                }
+            },
+            "then": {
+                "required": ["clientCertAndKeyRef"]
+            },
+            "type": "object"
+        },
+        "ExternalSourceTransport": {
+            "description": "Discriminated transport union for an external source. `transport` is inferred from the URI scheme when omitted (`https://` → `http`, `file://` → `file`, no scheme → `inline-data`); explicit values win.",
+            "enum": ["http", "file", "inline-data"],
+            "type": "string"
+        },
+        "GuideBlock": {
+            "additionalProperties": false,
+            "description": "The body inside the top-level `guide:` envelope: what a marking guide declares. The runtime `Guide` is the engine's resolved in-memory shape after loading and is not part of the published contract.",
+            "properties": {
+                "categories": {
+                    "description": "Sections for organizing rules in the UI.",
+                    "items": {
+                        "$ref": "#/definitions/GuideCategory"
+                    },
+                    "type": "array"
+                },
+                "description": {
+                    "description": "Longer description of what this guide covers.",
+                    "type": "string"
+                },
+                "id": {
+                    "description": "Unique guide identifier.",
+                    "type": "string"
+                },
+                "layer": {
+                    "$ref": "#/definitions/GuideLayer",
+                    "description": "The guide family's layer payload. Required when `type: 'layer'`, forbidden otherwise."
+                },
+                "name": {
+                    "description": "Human-readable guide name.",
+                    "type": "string"
+                },
+                "rules": {
+                    "$ref": "#/definitions/GuideRulesBlock",
+                    "description": "Guide rules: inline array and/or external sources."
+                },
+                "targetSchemes": {
+                    "description": "Target scheme dependencies: at least one required.",
+                    "items": {
+                        "$ref": "#/definitions/GuideDependency"
+                    },
+                    "type": "array"
+                },
+                "type": {
+                    "description": "What kind of document this is. Absent means `'guide'`. `type: 'layer'` requires the `layer` block and `type: 'guide'` forbids it, both enforced at load. Every layerable family wears this same envelope; see `LayerBinding`.",
+                    "enum": ["guide", "layer"],
+                    "type": "string"
+                },
+                "version": {
+                    "description": "Semantic version of this guide.",
+                    "type": "string"
+                },
+                "vocabulary": {
+                    "$ref": "#/definitions/Vocabulary",
+                    "description": "Display words this guide advertises for UI consumers. A presentation hint only."
+                }
+            },
+            "required": ["id", "version", "name", "targetSchemes", "rules"],
+            "type": "object"
+        },
+        "GuideCategory": {
+            "additionalProperties": false,
+            "description": "A section grouping guide rules for UI organization.",
+            "properties": {
+                "description": {
+                    "description": "Optional description shown below the heading.",
+                    "type": "string"
+                },
+                "id": {
+                    "description": "Unique identifier within the guide.",
+                    "type": "string"
+                },
+                "label": {
+                    "description": "Display label for the category heading.",
+                    "type": "string"
+                }
+            },
+            "required": ["id", "label"],
+            "type": "object"
+        },
+        "GuideDependency": {
+            "additionalProperties": false,
+            "description": "A target scheme dependency declared by a guide.",
+            "properties": {
+                "id": {
+                    "description": "Scheme ID that must be loaded for this guide to evaluate.",
+                    "type": "string"
+                },
+                "version": {
+                    "description": "Optional semver constraint (e.g. \">=2.0.0\") or \"*\" for any version.",
+                    "type": "string"
+                }
+            },
+            "required": ["id"],
+            "type": "object"
+        },
+        "GuideLayer": {
+            "additionalProperties": false,
+            "description": "The guide family's layer payload. Required when `type: 'layer'`, forbidden otherwise.\n\nLayering a guide is for _tailoring_ one that arrived from above. Adding guidance needs no layer at all, because a Context holds a list of guides and an organization can simply add its own. What an organization cannot do is edit a guide it received read-only, so a layer is how it narrows a rule that does not fit its mission or drops one that does not apply. The layer's own `rules` and `categories` are the additions and overrides, written as an ordinary guide document; what it takes away is listed here.\n\nBinding and merge rules are the cross-family ones: see `LayerBinding`. A guide layer may add, override, and remove; later wins on a colliding id. Guidance is advisory content, so an override changes what an author is told, never what the engine permits.",
+            "properties": {
+                "base": {
+                    "description": "The artifact or layer this one stacks on, as `id@version`.",
+                    "type": "string"
+                },
+                "removes": {
+                    "description": "Rules and categories inherited from below that this layer takes away.",
+                    "items": {
+                        "$ref": "#/definitions/GuideLayerRemoval"
+                    },
+                    "type": "array"
+                },
+                "requires": {
+                    "description": "Layers that must be present AND composed before this one. A layer that builds on what another layer introduced, or restores what another layer removed, only means anything on top of that layer, so the ordering is a load-time constraint rather than a hint.",
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array"
+                },
+                "restores": {
+                    "description": "Rules and categories an earlier layer removed that this one brings back, with the definition they had below. Naming an element in both `removes` and `restores` is a load error.",
+                    "items": {
+                        "$ref": "#/definitions/GuideLayerRemoval"
+                    },
+                    "type": "array"
+                }
+            },
+            "required": ["base"],
+            "type": "object"
+        },
+        "GuideLayerRemoval": {
+            "anyOf": [
+                {
+                    "additionalProperties": false,
+                    "properties": {
+                        "rule": {
+                            "description": "The id of the guide rule to remove.",
+                            "type": "string"
+                        }
+                    },
+                    "required": ["rule"],
+                    "type": "object"
+                },
+                {
+                    "additionalProperties": false,
+                    "properties": {
+                        "category": {
+                            "description": "The id of the guide category to remove.",
+                            "type": "string"
+                        }
+                    },
+                    "required": ["category"],
+                    "type": "object"
+                }
+            ],
+            "description": "One element a guide layer takes away, named by kind and id. Exactly one key.\n\nThe same reference-not-a-path reasoning as the scheme family: a rule or a category is addressed by its id, which survives a storage change and validates as a closed set."
+        },
+        "GuideMatchSpec": {
+            "additionalProperties": false,
+            "description": "A named pattern matcher specification. Use built-in types like 'ipv4', 'email', 'coordinates', or 'regex' with a custom pattern.",
+            "properties": {
+                "caseSensitive": {
+                    "description": "Case-sensitivity for a `type: 'regex'` leaf. When true the pattern compiles without the `i` flag, so an `[A-Z]` class means uppercase only. Absent or false, the pattern matches case-insensitively. Ignored on non-`regex` leaves.",
+                    "type": "boolean"
+                },
+                "label": {
+                    "description": "Display label: overrides the matcher's built-in label.",
+                    "type": "string"
+                },
+                "pattern": {
+                    "description": "Custom regex pattern: only used when type is 'regex'.",
+                    "type": "string"
+                },
+                "runtime": {
+                    "description": "`runtime: true` marks a matcher provided by the host at runtime. Such a leaf is always valid at load; if the named matcher is not registered it matches nothing here, and resolves normally where it is registered.",
+                    "type": "boolean"
+                },
+                "type": {
+                    "description": "Matcher type: a built-in name (ipv4, cidr, ipv6, mac_address, email, hostname, url, coordinates, mgrs, phone, ssn, credit_card, date, uuid) or 'regex' for custom. Domain-specific packs (usgov, healthcare, financial, ...) add further names when registered.",
+                    "minLength": 1,
+                    "type": "string"
+                }
+            },
+            "required": ["type"],
+            "type": "object"
+        },
+        "GuideRule": {
+            "additionalProperties": false,
+            "description": "A rule in a marking guide: a data-element description with an outcome that contributes to the aggregate marking when activated.\n\nRules are presented as checkboxes in the UI. `keywords` enables keyword-search filtering; `match` enables text-scan detection (e.g., finding IPv4 addresses in a document body). `outcome.rendered` or `outcome.concepts` provides the marking contribution. Rules with `when` are computed; they auto-activate based on sibling rule selection state and do not appear as user-visible checkboxes.\n\nThis is the named runtime/read-result shape. Authoring input is carried by the guide definition's `rules.inline` entries.",
+            "properties": {
+                "category": {
+                    "description": "Guide category ID for grouping in the UI.",
+                    "type": "string"
+                },
+                "description": {
+                    "description": "Description of the data element this rule covers.",
+                    "type": "string"
+                },
+                "id": {
+                    "description": "Unique identifier within the guide.",
+                    "type": "string"
+                },
+                "keywords": {
+                    "description": "Searchable terms for literal keyword filtering (absent on computed rules).",
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array"
+                },
+                "match": {
+                    "description": "Named pattern matchers for content evaluation. Each entry is a `MatchNode`: a leaf spec referencing a built-in matcher (e.g. `{ type: 'ipv4' }`) or a custom regex (`{ type: 'regex', pattern: '...' }`), or a combinator node (`any` / `all` / `not` / `near` / `context` / `validate`) composed over child nodes. When content is evaluated, both `keywords` and `match` are checked.",
+                    "items": {
+                        "$ref": "#/definitions/MatchNode"
+                    },
+                    "type": "array"
+                },
+                "name": {
+                    "description": "Human-readable display name.",
+                    "type": "string"
+                },
+                "outcome": {
+                    "$ref": "#/definitions/GuideRuleOutcome",
+                    "description": "What this rule contributes when active. At least one of rendered or concepts must be set."
+                },
+                "overrides": {
+                    "description": "Rule IDs whose outcomes this rule replaces when active. When omitted (default), this rule's outcome is additive: it contributes alongside the rules it depends on.",
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array"
+                },
+                "rationale": {
+                    "description": "Explanation of why this outcome applies.",
+                    "type": "string"
+                },
+                "when": {
+                    "$ref": "#/definitions/RuleWhen",
+                    "description": "When present, this rule auto-activates based on other rules' selection state. Uses the same when framework as scheme rules. `has` references guide rule IDs. Rules with `when` are \"computed\"; they don't appear as checkboxes."
+                }
+            },
+            "required": ["id", "name", "outcome"],
+            "type": "object"
+        },
+        "GuideRuleOutcome": {
+            "additionalProperties": false,
+            "description": "The effect of a guide rule: what it contributes to the marking.",
+            "properties": {
+                "concepts": {
+                    "description": "Direct concept references: converted to assertions, then engine.process()'d.",
+                    "items": {
+                        "$ref": "#/definitions/ConceptRef"
+                    },
+                    "type": "array"
+                },
+                "rendered": {
+                    "description": "Pre-rendered marking string: parsed by engine.process() during evaluation.",
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "GuideRulesBlock": {
+            "additionalProperties": false,
+            "description": "Inline-or-external guide-rule block. The canonical 1.0 wire format for `GuideBlock.rules`.",
+            "properties": {
+                "external": {
+                    "description": "Live external rule sources. An array allows a guide to draw rules from multiple upstream endpoints, composed via `ChainedGuideRuleSource` at load time.",
+                    "items": {
+                        "$ref": "#/definitions/ExternalSourceSpec%3CRuleMappingDoc%3E"
+                    },
+                    "type": "array"
+                },
+                "inline": {
+                    "description": "Inline rules, authored as an array of `GuideRule` entries with `id` carried as a field on each entry, matches the scheme inline shape (`data.concepts.inline: [...]`) so authoring stays uniform across scheme and guide YAML. Uniqueness of `id` within the array is enforced by the loader's validator; the engine builds a `Map<string, GuideRule>` index at load time to keep id lookups O(1).",
+                    "items": {
+                        "$ref": "#/definitions/GuideRule"
+                    },
+                    "type": "array"
+                }
+            },
+            "type": "object"
+        },
+        "MatchAllNode": {
+            "additionalProperties": false,
+            "description": "The `all` combinator: every child must match, and all children must overlap within `within` of the first child's span. The emitted span is the first child's (the anchor). Used to require several signals co-occur.",
+            "properties": {
+                "all": {
+                    "description": "The signals that must all match. The first is the anchor whose span is kept.",
+                    "items": {
+                        "$ref": "#/definitions/MatchNode"
+                    },
+                    "minItems": 1,
+                    "type": "array"
+                },
+                "label": {
+                    "description": "Display label for this node's matches. Defaults to `all`.",
+                    "type": "string"
+                },
+                "within": {
+                    "$ref": "#/definitions/Win",
+                    "description": "How close every other child's match must lie to the anchor's."
+                }
+            },
+            "required": ["all", "within"],
+            "type": "object"
+        },
+        "MatchAnyNode": {
+            "additionalProperties": false,
+            "description": "The `any` combinator: a union of child spans under one label. Used to express a multi-format value as several small, individually screened leaves instead of one giant alternation.",
+            "properties": {
+                "any": {
+                    "description": "The alternatives. A span any of them matches is a match.",
+                    "items": {
+                        "$ref": "#/definitions/MatchNode"
+                    },
+                    "minItems": 1,
+                    "type": "array"
+                },
+                "label": {
+                    "description": "Display label for this node's matches. Defaults to `any`.",
+                    "type": "string"
+                }
+            },
+            "required": ["any"],
+            "type": "object"
+        },
+        "MatchContextExpression": {
+            "additionalProperties": false,
+            "description": "Cue relationship used by the context combinator.",
+            "properties": {
+                "candidate": {
+                    "$ref": "#/definitions/MatchNode",
+                    "description": "The spans to keep when the cue is present."
+                },
+                "cue": {
+                    "$ref": "#/definitions/MatchNode",
+                    "description": "The span that must lie near a candidate for it to count."
+                },
+                "side": {
+                    "$ref": "#/definitions/MatchContextSide",
+                    "description": "Where the cue may lie relative to the candidate: `before`, `after`, or `both` (the default)."
+                },
+                "within": {
+                    "$ref": "#/definitions/Win",
+                    "description": "How close the cue must lie to the candidate."
+                }
+            },
+            "required": ["candidate", "cue", "within"],
+            "type": "object"
+        },
+        "MatchContextNode": {
+            "additionalProperties": false,
+            "description": "The `context` combinator: keep each `candidate` span only when a `cue` span lies within `within` on the given `side` (default `both`). Used to require a positive cue (e.g. a ZIP only counts with a postal/state cue nearby).",
+            "properties": {
+                "context": {
+                    "$ref": "#/definitions/MatchContextExpression",
+                    "description": "The candidate and the cue it needs."
+                },
+                "label": {
+                    "description": "Display label for this node's matches. Defaults to `context`.",
+                    "type": "string"
+                }
+            },
+            "required": ["context"],
+            "type": "object"
+        },
+        "MatchContextSide": {
+            "description": "Relative position accepted by a context-expression cue.",
+            "enum": ["before", "after", "both"],
+            "type": "string"
+        },
+        "MatchNearEmit": {
+            "description": "Span emitted by a near-expression match.",
+            "enum": ["a", "b", "envelope"],
+            "type": "string"
+        },
+        "MatchNearExpression": {
+            "additionalProperties": false,
+            "description": "Pairing expression used by the near combinator.",
+            "properties": {
+                "a": {
+                    "$ref": "#/definitions/MatchNode",
+                    "description": "The first span of the pair. Kept by default."
+                },
+                "b": {
+                    "$ref": "#/definitions/MatchNode",
+                    "description": "The second span of the pair."
+                },
+                "emit": {
+                    "$ref": "#/definitions/MatchNearEmit",
+                    "description": "Which span survives a match: `a` (the default), `b`, or `envelope`, the span covering both."
+                },
+                "within": {
+                    "$ref": "#/definitions/Win",
+                    "description": "How close the `b` span must lie to the `a` span."
+                }
+            },
+            "required": ["a", "b", "within"],
+            "type": "object"
+        },
+        "MatchNearNode": {
+            "additionalProperties": false,
+            "description": "The `near` combinator: pair an `a` span with a `b` span that lies within `within`. `emit` selects which span survives: the `a` span (default), the `b` span, or the envelope spanning both.",
+            "properties": {
+                "label": {
+                    "description": "Display label for this node's matches. Defaults to `near`.",
+                    "type": "string"
+                },
+                "near": {
+                    "$ref": "#/definitions/MatchNearExpression",
+                    "description": "The pairing to match."
+                }
+            },
+            "required": ["near"],
+            "type": "object"
+        },
+        "MatchNode": {
+            "anyOf": [
+                {
+                    "$ref": "#/definitions/GuideMatchSpec"
+                },
+                {
+                    "$ref": "#/definitions/MatchAnyNode"
+                },
+                {
+                    "$ref": "#/definitions/MatchAllNode"
+                },
+                {
+                    "$ref": "#/definitions/MatchNotNode"
+                },
+                {
+                    "$ref": "#/definitions/MatchNearNode"
+                },
+                {
+                    "$ref": "#/definitions/MatchContextNode"
+                },
+                {
+                    "$ref": "#/definitions/MatchValidateNode"
+                }
+            ],
+            "description": "A declarative match expression: a `GuideMatchSpec` leaf, or one of the combinator nodes composed over child nodes. A guide rule's `match` array is a list of these."
+        },
+        "MatchNotNode": {
+            "additionalProperties": false,
+            "description": "The `not` combinator: keep each `of` candidate span only when NO `not` span lies within `within` of it. Drops a candidate that has a competing cue nearby.",
+            "properties": {
+                "label": {
+                    "description": "Display label for this node's matches. Defaults to `not`.",
+                    "type": "string"
+                },
+                "not": {
+                    "$ref": "#/definitions/MatchNode",
+                    "description": "The competing cue. A candidate with one of its spans nearby is dropped."
+                },
+                "of": {
+                    "$ref": "#/definitions/MatchNode",
+                    "description": "The candidate spans to keep or drop."
+                },
+                "within": {
+                    "$ref": "#/definitions/Win",
+                    "description": "How close a `not` span must lie to a candidate to drop it."
+                }
+            },
+            "required": ["not", "of", "within"],
+            "type": "object"
+        },
+        "MatchValidateNode": {
+            "additionalProperties": false,
+            "description": "The `validate` combinator: run the named validator over each `candidate` span's matched text and keep the candidate when the validator passes (`keep: 'pass'`, the default) or when it fails (`keep: 'fail'`). The validator is content-free arithmetic or structure registered in the validator registry; an unknown name is a load-time error.",
+            "properties": {
+                "label": {
+                    "description": "Display label for this node's matches. Defaults to `validate`.",
+                    "type": "string"
+                },
+                "validate": {
+                    "$ref": "#/definitions/MatchValidationExpression",
+                    "description": "The validator to run and which outcome to keep."
+                }
+            },
+            "required": ["validate"],
+            "type": "object"
+        },
+        "MatchValidationExpression": {
+            "additionalProperties": false,
+            "description": "Validator invocation used by the validate combinator.",
+            "properties": {
+                "args": {
+                    "description": "Optional opaque arguments passed through to the validator."
+                },
+                "candidate": {
+                    "$ref": "#/definitions/MatchNode",
+                    "description": "The spans whose matched text the validator checks."
+                },
+                "keep": {
+                    "$ref": "#/definitions/MatchValidationKeep",
+                    "description": "Which outcome keeps a candidate: `pass` (the default) or `fail`."
+                },
+                "with": {
+                    "description": "Registered validator name.",
+                    "minLength": 1,
+                    "type": "string"
+                }
+            },
+            "required": ["candidate", "with"],
+            "type": "object"
+        },
+        "MatchValidationKeep": {
+            "description": "Validator outcome retained by a validation expression.",
+            "enum": ["pass", "fail"],
+            "type": "string"
+        },
+        "ProcessingRole": {
+            "description": "Structural role of a marking within a processing operation.",
+            "enum": ["whole", "part"],
+            "type": "string"
+        },
+        "Record<string,Term>": {
+            "additionalProperties": {
+                "$ref": "#/definitions/Term"
+            },
+            "type": "object"
+        },
+        "Record<string,string>": {
+            "additionalProperties": {
+                "type": "string"
+            },
+            "type": "object"
+        },
+        "RuleCondition": {
+            "additionalProperties": false,
+            "description": "A single condition in a rule's `when` block. Can test category contents, processing context role, or concept presence.",
+            "properties": {
+                "category": {
+                    "description": "Category to evaluate against. Also serves as a shorthand matching any concept in this category within when blocks.",
+                    "type": "string"
+                },
+                "has": {
+                    "description": "Shorthand for has_concept: check if this concept is present",
+                    "type": "string"
+                },
+                "is": {
+                    "description": "Combined operator+value shorthand (e.g. \"count_eq 1\", \"has_content\")",
+                    "type": "string"
+                },
+                "operator": {
+                    "description": "Explicit operator for the condition",
+                    "type": "string"
+                },
+                "role": {
+                    "$ref": "#/definitions/ProcessingRole",
+                    "description": "Processing context role filter"
+                },
+                "target": {
+                    "$ref": "#/definitions/RuleConditionTarget",
+                    "description": "Which assertion set to evaluate: 'self' (default), 'context' (the whole marking), or 'contributors' (every set that fed an aggregate)."
+                },
+                "value": {
+                    "description": "Explicit value for the operator",
+                    "type": ["string", "number"]
+                }
+            },
+            "type": "object"
+        },
+        "RuleConditionTarget": {
+            "description": "Assertion set a rule condition is evaluated against.\n\n- `'self'` (default): the assertions currently under evaluation.\n- `'context'`: the assertions of the whole marking this one is part of. Such a condition has an answer only when the part has a verified whole, one that reads and is valid. Without one (no whole given, a whole that does not read, or a whole that reads but is invalid) the condition is unresolved, and so is any `all`, `any` or `none` around it whose answer depends on it. A rule whose `when` is unresolved never fires, changes no value, reports no error and offers no fix; a check rule (`require`, `require_any`, `restrict`, `forbid`, `exclusive`, `cardinality`) that the marking already meets still passes, and any other unresolved rule gives the part the `_whole_unverified` notice.\n- `'contributors'`: each contributing assertion set that went into an aggregate, evaluated separately. The condition holds only when EVERY contributor satisfies it, and it is never satisfied outside aggregation, where there are no contributors to inspect. Use it to describe what must be true of every part of a document, which the merged set can no longer answer once the parts have been collapsed into one.",
+            "enum": ["self", "context", "contributors"],
+            "type": "string"
+        },
+        "RuleContributorQuantifier": {
+            "description": "Quantifies a condition block over contributing assertion sets.",
+            "enum": ["any", "all", "none"],
+            "type": "string"
+        },
+        "RuleMappingDoc": {
+            "additionalProperties": false,
+            "description": "Mapping spec for an external guide-rule source: declarative projection of upstream records into guide rules. Every value is an expression in the same subset a concept mapping uses, evaluated against one record.",
+            "properties": {
+                "record": {
+                    "description": "Selector for the array of records on a transport response.",
+                    "type": "string"
+                },
+                "rule": {
+                    "additionalProperties": false,
+                    "description": "How each record's fields project onto a guide rule.",
+                    "properties": {
+                        "category": {
+                            "description": "Expression for the guide category the rule is listed under.",
+                            "type": "string"
+                        },
+                        "description": {
+                            "description": "Expression for the rule's description.",
+                            "type": "string"
+                        },
+                        "id": {
+                            "description": "Expression for the rule id. A record that yields none is refused.",
+                            "type": "string"
+                        },
+                        "keywords": {
+                            "anyOf": [
+                                {
+                                    "items": {
+                                        "type": "string"
+                                    },
+                                    "type": "array"
+                                },
+                                {
+                                    "type": "string"
+                                }
+                            ],
+                            "description": "One expression, or a list of them, for the rule's keywords."
+                        },
+                        "name": {
+                            "description": "Expression for the display name. Falls back to the id.",
+                            "type": "string"
+                        },
+                        "outcome": {
+                            "additionalProperties": false,
+                            "description": "What the rule contributes to the marking when it is activated. Give either or both.",
+                            "properties": {
+                                "concepts": {
+                                    "description": "Expression for a list of concepts. Each item is a concept id, or an object with `id` (or `conceptId`) and optional `category` (or `categoryId`) and `value`.",
+                                    "type": "string"
+                                },
+                                "rendered": {
+                                    "description": "Expression for a pre-rendered marking string.",
+                                    "type": "string"
+                                }
+                            },
+                            "type": "object"
+                        }
+                    },
+                    "required": ["id"],
+                    "type": "object"
+                }
+            },
+            "required": ["rule"],
+            "type": "object"
+        },
+        "RuleWhen": {
+            "anyOf": [
+                {
+                    "type": "string"
+                },
+                {
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array"
+                },
+                {
+                    "$ref": "#/definitions/RuleWhenQuantifier"
+                }
+            ],
+            "description": "Conditions that trigger a rule. Supports shorthand forms:\n\n- `string`: concept ID must be present (any category)\n- `string[]`: any of these concept IDs must be present\n- `object`: structured `{ any | all | none }` block, possibly nested"
+        },
+        "RuleWhenNode": {
+            "anyOf": [
+                {
+                    "$ref": "#/definitions/RuleCondition"
+                },
+                {
+                    "$ref": "#/definitions/RuleWhenQuantifier"
+                }
+            ],
+            "description": "A leaf condition or recursively nested boolean quantifier in a rule tree."
+        },
+        "RuleWhenQuantifier": {
+            "additionalProperties": false,
+            "description": "A node in a rule `when`-tree: either a leaf `RuleCondition` or a nested quantifier (`any` / `all` / `none`) over further nodes.\n\nThe tree structure allows arbitrarily deep boolean logic within a rule's trigger condition. Leaf nodes test assertion or context state; inner nodes combine them with OR (`any`), AND (`all`), or NOT-OR (`none`).",
+            "properties": {
+                "all": {
+                    "description": "Satisfied when every one of these nodes is.",
+                    "items": {
+                        "$ref": "#/definitions/RuleWhenNode"
+                    },
+                    "type": "array"
+                },
+                "any": {
+                    "description": "Satisfied when at least one of these nodes is.",
+                    "items": {
+                        "$ref": "#/definitions/RuleWhenNode"
+                    },
+                    "type": "array"
+                },
+                "none": {
+                    "description": "Satisfied when none of these nodes is.",
+                    "items": {
+                        "$ref": "#/definitions/RuleWhenNode"
+                    },
+                    "type": "array"
+                },
+                "quantifier": {
+                    "$ref": "#/definitions/RuleContributorQuantifier",
+                    "description": "Combine contributor results; defaults to all. Requires target: contributors. Missing or empty contributors never satisfy the block."
+                },
+                "target": {
+                    "const": "contributors",
+                    "description": "Evaluate this entire boolean block within each contributor.",
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "SecretRefDoc": {
+            "anyOf": [
+                {
+                    "additionalProperties": false,
+                    "properties": {
+                        "envVar": {
+                            "description": "Name of the environment variable that holds the secret.",
+                            "type": "string"
+                        },
+                        "provider": {
+                            "const": "env",
+                            "description": "Read the secret from an environment variable.",
+                            "type": "string"
+                        }
+                    },
+                    "required": ["provider", "envVar"],
+                    "type": "object"
+                },
+                {
+                    "additionalProperties": false,
+                    "properties": {
+                        "certVar": {
+                            "description": "Environment variable that holds the PEM certificate.",
+                            "type": "string"
+                        },
+                        "keyVar": {
+                            "description": "Environment variable that holds the PEM private key.",
+                            "type": "string"
+                        },
+                        "provider": {
+                            "const": "env",
+                            "description": "Read a certificate and key pair from two environment variables.",
+                            "type": "string"
+                        }
+                    },
+                    "required": ["provider", "certVar", "keyVar"],
+                    "type": "object"
+                },
+                {
+                    "additionalProperties": false,
+                    "properties": {
+                        "path": {
+                            "description": "Path of the file that holds the secret. It must lie under a file root the deployment allows.",
+                            "type": "string"
+                        },
+                        "provider": {
+                            "const": "file",
+                            "description": "Read the secret from a mounted file.",
+                            "type": "string"
+                        }
+                    },
+                    "required": ["provider", "path"],
+                    "type": "object"
+                },
+                {
+                    "additionalProperties": false,
+                    "properties": {
+                        "certPath": {
+                            "description": "Path of the PEM certificate file, under an allowed file root.",
+                            "type": "string"
+                        },
+                        "keyPath": {
+                            "description": "Path of the PEM private key file, under an allowed file root.",
+                            "type": "string"
+                        },
+                        "provider": {
+                            "const": "file",
+                            "description": "Read a certificate and key pair from two mounted files.",
+                            "type": "string"
+                        }
+                    },
+                    "required": ["provider", "certPath", "keyPath"],
+                    "type": "object"
+                },
+                {
+                    "additionalProperties": false,
+                    "properties": {
+                        "provider": {
+                            "const": "secret-store",
+                            "description": "Ask the deployment's secret store for the secret.",
+                            "type": "string"
+                        },
+                        "secretId": {
+                            "description": "The id of the secret in that store.",
+                            "type": "string"
+                        }
+                    },
+                    "required": ["provider", "secretId"],
+                    "type": "object"
+                }
+            ],
+            "description": "A reference to a piece of secret material, never the material itself. `provider` says where the server finds it when the source issues a request: `env` reads an environment variable (or a certificate and key pair of them), `file` reads a mounted file (or a certificate and key pair of files), and `secret-store` asks the secret store the deployment names for the secret with that id.\n\nBrowsers never see raw secrets, only the reference. The material stays on the server that resolves it."
+        },
+        "Term": {
+            "additionalProperties": false,
+            "description": "A singular/plural display-word pair.",
+            "properties": {
+                "plural": {
+                    "description": "The word for more than one, such as `rules`.",
+                    "type": "string"
+                },
+                "singular": {
+                    "description": "The word for one, such as `rule`.",
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "TokenWindow": {
+            "additionalProperties": false,
+            "description": "Proximity measured in whitespace-delimited tokens.",
+            "properties": {
+                "tokens": {
+                    "description": "The largest distance allowed between two spans, counted in whitespace-delimited tokens between their nearest edges.",
+                    "minimum": 0,
+                    "type": "integer"
+                }
+            },
+            "required": ["tokens"],
+            "type": "object"
+        },
+        "Vocabulary": {
+            "$ref": "#/definitions/Record%3Cstring%2CTerm%3E",
+            "description": "Author-facing vocabulary: an open map from a term key (e.g. \"rule\", \"concept\", \"tag\") to the display words. Term keys are not enumerated here; consumers pick the keys that matter to them.\n\nPurely a presentation hint: nothing in the engine's evaluation logic reads it. Each consumer owns its own default map and calls `resolveVocabulary(source, defaults)` to merge."
+        },
+        "Win": {
+            "anyOf": [
+                {
+                    "$ref": "#/definitions/TokenWindow"
+                },
+                {
+                    "$ref": "#/definitions/CharacterWindow"
+                }
+            ],
+            "description": "A bounded proximity window. Exactly one token or character bound is present, so a windowed operation can never widen to the whole line accidentally."
+        }
+    },
+    "description": "Top-level YAML document for a marking guide: `{ guide: { ... } }`. This is the published 1.0 format every customer authors against.\n\nRead it aloud and it says what it is: this document is a guide. A scheme file is `{ scheme: ... }`, an access file is `{ access: ... }`, a crosswalk file is `{ crosswalk: ... }`, a context file is `{ context: ... }`; a guide file is `{ guide: ... }`. The envelope is also what makes a document self-describing on disk: a tool handed a file with no other context reads the envelope key to learn the kind.",
+    "properties": {
+        "guide": {
+            "$ref": "#/definitions/GuideBlock",
+            "description": "Root `guide:` envelope. All fields live inside it."
+        }
+    },
+    "required": ["guide"],
+    "type": "object"
+}

@@ -1,0 +1,67 @@
+# F27a: a phrase whose head this field does not write.
+#
+# EXPECTS `plan/phrase-head-not-bound`.
+#
+# The phrase is written where its head sits in the field's category order, so a
+# head that is not one of this field's concepts leaves the phrase with no
+# position at all. Two ways to get there and one diagnostic: the head belongs
+# to another category, or this field excluded it. Here it is excluded, which is
+# the one that reads as a contradiction - the field is told not to write the
+# concept and then told to write it with a list.
+scheme:
+  id: p1-f27a
+  version: 1.0.0
+  name: 'F27a: a phrase head this field does not write'
+  default_scope: banner
+  scopes: [{ id: banner, label: Banner }]
+  data:
+    categories:
+      - id: handling
+        label: Handling
+        rollup: union
+        sort: position
+      - id: recipients
+        label: Recipients
+        rollup: union
+        sort: position
+    concepts:
+      inline:
+        - {
+              id: H_ONE,
+              name: Handling one,
+              views: { default: HONE },
+              categories: [handling],
+              position: 1,
+          }
+        - {
+              id: H_TWO,
+              name: Handling two,
+              views: { default: HTWO },
+              categories: [handling],
+              position: 2,
+          }
+        - {
+              id: R_ONE,
+              name: Recipient one,
+              views: { default: RONE },
+              categories: [recipients],
+              position: 1,
+          }
+  render:
+    default: banner
+    formats:
+      - id: banner
+        surface: banner
+        mode: inline
+        view: default
+        separator: '//'
+        fields:
+          - category: handling
+            separator: '/'
+            exclude_concepts: [H_TWO]
+            phrases:
+              - head: H_TWO
+                separator: ' '
+                fields:
+                  - category: recipients
+                    separator: ', '

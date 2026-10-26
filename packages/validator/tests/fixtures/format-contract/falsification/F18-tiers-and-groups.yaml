@@ -1,0 +1,60 @@
+# F18: parent and tier composition, composed views, groups and lists.
+#
+# Everything the old contract spread across `categories[].separators`,
+# `composed_view` and header ownership, said once each and in the place it
+# belongs: `tiers` on the field that writes the tiered category, a named group
+# for the phrase, and `exclude_concepts` so the broad field does not write the
+# group's header a second time.
+scheme:
+  id: p1-f18
+  version: 1.0.0
+  name: 'F18: tiers and groups'
+  default_scope: banner
+  scopes: [{ id: banner, label: Banner }]
+  data:
+    categories:
+      - id: program
+        label: Programs
+        rollup: union
+        required: true
+      - id: handling
+        label: Handling
+        rollup: union
+      - id: release
+        label: Release list
+        rollup: union
+    concepts:
+      inline:
+        - { id: PROGRAM_ROOT, name: Program root, views: { default: PROGRAM ROOT, abbreviated: PR }, categories: [program] }
+        - id: PROGRAM_PART
+          name: Program part
+          views: { default: PART, abbreviated: PT }
+          categories: [program]
+          parents: [PROGRAM_ROOT]
+          tier: subprogram
+        - { id: RELEASE_HEADER, name: Authorized release, views: { default: RELEASE }, categories: [handling] }
+        - { id: HANDLING_A, name: Handling A, views: { default: HA }, categories: [handling] }
+        - { id: PARTNER_A, name: Partner A, views: { default: PA }, categories: [release] }
+  render:
+    default: banner
+    formats:
+      - id: banner
+        surface: banner
+        mode: inline
+        view: default
+        separator: '//'
+        fields:
+          - category: program
+            separator: '/'
+            tiers:
+              - { tier: subprogram, attached_by: '-', view: abbreviated }
+          - name: Authorized release
+            when: RELEASE_HEADER
+            separator: ' '
+            fields:
+              - { concept: RELEASE_HEADER, category: handling }
+              - category: release
+                separator: ', '
+          - category: handling
+            exclude_concepts: [RELEASE_HEADER]
+            separator: '/'

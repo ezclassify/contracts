@@ -1,0 +1,176 @@
+# HTTP-level overlay merged into openapi.yaml at emit time.
+#
+# Holds the two `components` sections that have no TypeScript counterpart:
+#
+#   - `parameters`: shared path/query parameters reused across routes. These
+#     describe URL-shape concerns, not body shapes; route declarations
+#     reference them by name via `$ref` and keep per-route entries tiny.
+#
+#     Only add a parameter here once a route actually references it. An
+#     entry nothing points at still lands in the emitted document, where
+#     the contracts unreachable-component check refuses it.
+#
+#   - `securitySchemes`: how a caller authenticates. There is no TypeScript
+#     counterpart because no request or response body carries it; the
+#     credential travels in a header the transport owns.
+#
+#   - `responses`: shared HTTP error envelopes (400/404/409/422/429/500/503).
+#     Each `$ref`s a generated body schema (`ErrorResponse`, `ReadyResponse`
+#     or `RateLimitError`) and adds the HTTP-level dressing (description,
+#     example payload, response headers) that lives outside the body type.
+#     The emitter declares the 429 on every operation, and the 400 on every
+#     operation whose route declares none of its own. There is no 401 or 403
+#     envelope here, because the server answers an unauthenticated request
+#     with the not-found shape.
+#
+# Component schemas (`components.schemas`) are NOT in this file: they are
+# generated from TypeScript types via `scripts/codegen-schemas.mjs` at emit
+# time. The TypeScript types are the canonical source for every body shape:
+# nothing in this file restates one.
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: >
+        Bearer token presented on every data-path request. A deployment that
+        runs without authentication ignores it. One that requires it answers an
+        unauthenticated request with the same not-found shape a missing
+        resource gets, so a caller learns nothing about what exists from being
+        refused. That is why no operation here declares a 401 or a 403: the
+        server does not emit them.
+    contextToken:
+      type: apiKey
+      in: header
+      name: x-ezclassify-context-token
+      description: >
+        Signed, deployment-scoped Context authorization presented on every
+        Context data-path request. This credential is independent of caller
+        identity: the bearer token identifies the principal, while this token
+        proves that the deployment authorizes the requested Context and
+        version. Refusals use the same constant not-found response as every
+        other authorization failure.
+
+  headers:
+    ResolvedVersion:
+      description: >
+        The concrete semver version the request resolved to. A route under
+        /v1/ctx/{ctxId}/{version} accepts "latest" as its version, and an
+        operation route also accepts the version segment left out; this header
+        reports what the server actually served, so callers always know the
+        resolved version even when they didn't ask for one explicitly.
+      schema:
+        type: string
+      example: '1.2.0'
+
+  responses:
+    BadRequest:
+      description: >
+        Invalid or missing request parameters, or a query parameter or body
+        field the operation does not declare
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: 'Missing required field: input'
+
+    Conflict:
+      description: The request references state that is no longer current
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: 'A supplied guide determination is stale'
+
+    InternalError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: 'No scheme files found in /app/schemes'
+
+    NotReady:
+      description: Replica has not activated a generation or finished its startup checks
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ReadyResponse'
+          example:
+            status: 'starting'
+
+    NotFound:
+      description: >
+        Context or resource not found. A request that reached routing and
+        matched no route carries `code: route_not_found`; a request refused
+        before routing carries the constant refusal body, which has no `code`
+        by design. Branch on the code, never on the message. See the API
+        description for why the two bodies differ.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            resourceAbsent:
+              summary: The route exists and the resource does not
+              value:
+                error: 'Context not found: nonexistent-context'
+            routeAbsent:
+              summary: The request reached routing and matched no route
+              value:
+                error: 'Not found: /v1/unknown'
+                code: route_not_found
+            refused:
+              summary: >
+                Refused before routing. Constant and codeless on purpose, so a
+                caller learns nothing about what exists from being refused.
+              value:
+                error: not_found
+
+    UnprocessableEntity:
+      description: >
+        The request is well formed, but the Context cannot serve it: the
+        Context has no component of the kind the operation needs, or a
+        component it names could not be loaded.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: Context has no access policy attached.
+
+    TooManyRequests:
+      description: >
+        Rate limit exceeded. The rate limiter answers ahead of every route, so
+        any operation can return this. Wait the number of seconds in
+        `Retry-After` (the same value as the body's `retryAfter`) before
+        retrying.
+      headers:
+        Retry-After:
+          schema:
+            type: integer
+          description: Seconds until the rate-limit window resets
+        X-RateLimit-Limit:
+          schema:
+            type: integer
+          description: Maximum requests allowed per window
+        X-RateLimit-Remaining:
+          schema:
+            type: integer
+          description: Remaining requests in current window
+        X-RateLimit-Reset:
+          schema:
+            type: integer
+          description: Unix timestamp when the window resets
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/RateLimitError'
+          example:
+            error: Too Many Requests
+            retryAfter: 42

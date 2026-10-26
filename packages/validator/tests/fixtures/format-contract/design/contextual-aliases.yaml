@@ -1,0 +1,59 @@
+# Design section 5.6: contextual aliases.
+#
+# `NC` means this concept only when it is not the first thing in the marking
+# region. Position is measured after a recognized wrapper is stripped and
+# before anything is reordered, so a malformed input is read by where its
+# characters actually were.
+scheme:
+  id: p1-contextual-aliases
+  version: 1.0.0
+  name: 'format fixture: contextual aliases'
+  default_scope: banner
+  scopes:
+    - id: banner
+      label: Banner
+  data:
+    categories:
+      - id: level
+        label: Level
+        rollup: max
+        single: true
+        required: true
+      - id: handling
+        label: Handling
+        rollup: union
+    concepts:
+      inline:
+        - id: LEVEL_ONE
+          name: Level one
+          views:
+            default: ONE
+          categories: [level]
+        - id: NOCONTRACT
+          name: No contractor handling
+          views:
+            default: NOCONTRACT
+          categories: [handling]
+          input_aliases:
+            - text: NC
+              position: non-leading
+        - id: HANDLING_ONE
+          name: Handling one
+          views:
+            default: H1
+          categories: [handling]
+          input_aliases:
+            - text: H
+              after_category: handling
+  render:
+    default: banner
+    formats:
+      - id: banner
+        surface: banner
+        mode: inline
+        view: default
+        separator: '//'
+        fields:
+          - category: level
+          - category: handling
+            separator: '/'

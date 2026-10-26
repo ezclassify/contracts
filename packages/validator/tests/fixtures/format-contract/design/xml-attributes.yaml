@@ -1,0 +1,106 @@
+# Design section 5.7: XML attribute representation.
+#
+# Three fields, two attribute names. The two that share `declassDate` are
+# provably exclusive, which is what makes sharing the name legal: an element
+# cannot write the same attribute twice, so a format that might is a compile
+# error rather than a run-time surprise.
+#
+# Each field names its concept and nothing else. The concept belongs to exactly
+# one category, so the binding is already determined and saying the category as
+# well would put two facts in the document where one decides the other.
+#
+# The proof: the first field is active exactly when DECLASS_DATE is asserted,
+# the third carries a predicate naming DECLASS_EVENT, and the two concepts are
+# distinct members of one category the scheme declares single-valued, neither of
+# them an ancestor of the other. Widening that category, or making one the
+# parent of the other, breaks the proof and the compiler says so.
+scheme:
+  id: p1-xml-attributes
+  version: 1.0.0
+  name: 'format fixture: XML attributes'
+  default_scope: marking
+  scopes:
+    - id: marking
+      label: Marking
+  data:
+    categories:
+      - id: declass
+        label: Declassification instruction
+        rollup: first
+        single: true
+      - id: declass_date
+        label: Companion date
+        rollup: first
+        single: true
+    concepts:
+      inline:
+        - id: DECLASS_DATE
+          name: Specific date
+          views: { default: '{value}', structured: '{value}' }
+          categories: [declass]
+          text_input:
+            label: Date
+            encoding:
+              type: calendar-date
+              canonical: 'YYYY-MM-DD'
+              accepts: ['YYYY-MM-DD']
+        - id: DECLASS_EVENT
+          name: Event
+          views: { default: '{value}', structured: '{value}' }
+          categories: [declass]
+          text_input:
+            label: Event
+        - id: DECLASS_EVENT_DATE
+          name: Companion date
+          views: { default: '{value}', structured: '{value}' }
+          categories: [declass_date]
+          text_input:
+            label: Companion date
+            encoding:
+              type: calendar-date
+              canonical: 'YYYY-MM-DD'
+              accepts: ['YYYY-MM-DD']
+  rules:
+    - id: declass-event-requires-date
+      name: Structured event instructions include a companion date
+      formats: [structured, structured_namespaced]
+      when: DECLASS_EVENT
+      action: require
+      target: DECLASS_EVENT_DATE
+      category: declass_date
+      message: Provide the companion date to export this event instruction.
+  render:
+    default: structured
+    formats:
+      - id: structured
+        surface: marking
+        mode: block
+        view: structured
+        syntax:
+          type: xml-attributes
+        fields:
+          - attribute: declassDate
+            concept: DECLASS_DATE
+          - attribute: declassEvent
+            concept: DECLASS_EVENT
+          - attribute: declassDate
+            concept: DECLASS_EVENT_DATE
+            when: DECLASS_EVENT
+
+      - id: structured_namespaced
+        surface: marking
+        mode: block
+        view: structured
+        syntax:
+          type: xml-attributes
+          namespace:
+            prefix: ex
+            uri: https://example.invalid/marking/v1
+        fields:
+          - attribute: declassDate
+            concept: DECLASS_DATE
+          - attribute: declassEvent
+            concept: DECLASS_EVENT
+          - attribute: declassDate
+            concept: DECLASS_EVENT_DATE
+            when: DECLASS_EVENT

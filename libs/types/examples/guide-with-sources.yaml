@@ -1,0 +1,39 @@
+guide:
+  id: acme-quickmark-rules
+  version: 1.0.0
+  name: ACME Quickmark Rules
+  description: Rule pack for the ACME quick-mark workflow.
+  targetSchemes:
+    - id: acme-classification-primary
+  rules:
+    inline:
+      - id: handles-pii
+        name: Document handles personally identifiable information
+        keywords: [pii, ssn, dob]
+        outcome:
+          rendered: INTERNAL
+      - id: handles-source-code
+        name: Document contains source code
+        keywords: [source-code, git]
+        outcome:
+          rendered: INTERNAL
+    external:
+      - id: acme-quickmark
+        source: https://rules.acme.example.com/v1/quickmark
+        transport: http
+        auth:
+          flow: bearer
+          credentialRef:
+            provider: env
+            envVar: ACME_QUICKMARK_TOKEN
+        mapping:
+          record: 'rules[*]'
+          rule:
+            id: id
+            name: title
+            keywords: keywords
+            outcome:
+              rendered: marking
+        attribution:
+          name: ACME Quickmark Catalog
+          license: proprietary

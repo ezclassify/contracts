@@ -1,0 +1,88 @@
+# Design section 5.5: typed values without changing assertion storage.
+#
+# The date is a calendar value. It validates real months and leap years, stores
+# one canonical spelling, and prints the spelling each view asks for. The event
+# description carries a recognition hint, which helps find unbound free text and
+# constrains nothing about text supplied explicitly as an event.
+scheme:
+  id: p1-typed-values
+  version: 1.0.0
+  name: 'format fixture: typed values'
+  default_scope: authority
+  scopes:
+    - id: authority
+      label: Authority
+  data:
+    categories:
+      - id: declass
+        required: true
+        label: Declassification instruction
+        rollup: first
+        single: true
+    concepts:
+      inline:
+        - id: DECLASS_DATE
+          name: Specific date
+          views:
+            default: '{value}'
+            portion: '{value}'
+            structured: '{value}'
+          categories: [declass]
+          text_input:
+            label: Declassification date
+            required: true
+            encoding:
+              type: calendar-date
+              canonical: 'YYYY-MM-DD'
+              accepts:
+                - 'YYYYMMDD'
+                - 'YYYY-MM-DD'
+              views:
+                default: 'YYYYMMDD'
+                portion: 'YYYYMMDD'
+                structured: 'YYYY-MM-DD'
+        - id: DECLASS_EVENT
+          name: Event
+          views:
+            default: '{value}'
+            portion: '{value}'
+            structured: '{value}'
+          categories: [declass]
+          text_input:
+            label: Declassification event description
+            required: true
+            recognition:
+              begins_with_word: [Upon, Completion, End, Termination, When]
+        - id: SOURCE_MARKED
+          name: Source marked
+          views:
+            default: '{value}'
+            portion: '{value}'
+            structured: '{value}'
+          categories: [declass]
+          text_input:
+            label: Source marked
+            required: true
+            encoding:
+              type: composite
+              separator: ', '
+              fields:
+                - name: instruction
+                  type: concept
+                  required: true
+                  concepts: [DECLASS_DATE, DECLASS_EVENT]
+                  view: default
+                - name: source_date
+                  type: text
+                  required: false
+  render:
+    default: authority
+    formats:
+      - id: authority
+        surface: authority
+        mode: block
+        view: default
+        separator: "\n"
+        fields:
+          - category: declass
+            prefix: 'Declassify On: '

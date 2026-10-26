@@ -1,0 +1,41 @@
+# Surface outputs, restated by a layer over surface-outputs.yaml.
+#
+# The layer changes how part markings are written. It restates the `short`
+# view, which overrides the view below complete: still a part, now written in
+# `short_shared_line` whether or not the marking was shared, since that format
+# writes the sharing whenever there is one, so the case below is gone. The
+# spelling it wrote before, `short_line`, is still read, so older part markings
+# keep reading as `short`. A restated default replaces the one below whole, so
+# the layer states it again.
+#
+# The layer declares none of what `short` leans on: the scope, both formats and
+# the `full` view all come from the base. On its own this document cannot say
+# whether any of them exist, so the checks that need them wait for the composed
+# stack. What the layer alone decides, its shape, the view ids it lists, the
+# forms each of them names, the shape of its default and the roles of the
+# views it lists, is checked here.
+#
+# Composed onto its base, the sensitivity surface still offers `short`, `full`
+# and `xml`, writes a part marking in `short` and anything else in `full` when
+# a request names none, and every format is still a form of one view. The
+# retention surface is not restated and keeps everything it had.
+scheme:
+  id: surface-outputs-shared-parts
+  version: 1.0.0
+  name: 'format fixture: a layer that restates a view'
+  type: layer
+  layer:
+    base: surface-outputs@1.0.0
+  data:
+    categories: []
+  render:
+    surfaces:
+      - surface: sensitivity
+        default:
+          whole: full
+          part: short
+        views:
+          - id: short
+            role: part
+            format: short_shared_line
+            also_read_in: [short_line]

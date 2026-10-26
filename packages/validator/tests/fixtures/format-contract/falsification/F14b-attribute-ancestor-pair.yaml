@@ -1,0 +1,52 @@
+# F14b: exclusivity claimed over a concept and its own ancestor.
+#
+# EXPECTS plan/duplicate-attribute.
+#
+# Both fields bind the single-valued category they write, and the two concepts
+# are distinct, so the cardinality looks like a proof. It is not one: NARROW
+# declares BROAD as a parent, so implication closure asserts BROAD alongside it
+# with no malformed input involved. Both fields are then active and the element
+# carries `instruction` twice.
+#
+# `single: true` says a marking is INVALID with two values in that category, not
+# that two can never be present. The proof runs after closure for exactly this
+# reason, and an ancestor pair is refused.
+scheme:
+  id: p1-f14b
+  version: 1.0.0
+  name: 'F14b: exclusivity across a parent chain'
+  default_scope: marking
+  scopes: [{ id: marking, label: Marking }]
+  data:
+    categories:
+      - id: kind
+        label: Kind
+        rollup: first
+        single: true
+        required: true
+    concepts:
+      inline:
+        - id: BROAD
+          name: Broad instruction
+          views: { default: BROAD }
+          categories: [kind]
+        - id: NARROW
+          name: Narrow instruction
+          views: { default: NARROW }
+          categories: [kind]
+          parents: [BROAD]
+  render:
+    default: structured
+    formats:
+      - id: structured
+        surface: marking
+        mode: block
+        view: default
+        syntax: { type: xml-attributes }
+        fields:
+          - attribute: instruction
+            concept: BROAD
+            category: kind
+          - attribute: instruction
+            concept: NARROW
+            category: kind

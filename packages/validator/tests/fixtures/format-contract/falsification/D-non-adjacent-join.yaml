@@ -1,0 +1,49 @@
+# EXPECTS plan/non-adjacent-join.
+#
+# The join declares a separator between owner and level, and the handling field
+# sits between them. Nothing goes between two fields that are not adjacent, so
+# the document describes an order it does not have.
+#
+# The fix is to say the real order: move the fields together, or group the pair
+# that is really a phrase.
+scheme:
+  id: p1-non-adjacent-join
+  version: 1.0.0
+  name: 'diagnostic: non-adjacent join'
+  default_scope: banner
+  scopes: [{ id: banner, label: Banner }]
+  data:
+    categories:
+      - id: owner
+        label: Owner
+        rollup: union
+        required: true
+      - id: handling
+        label: Handling
+        rollup: union
+      - id: level
+        label: Level
+        rollup: max
+        single: true
+    concepts:
+      inline:
+        - { id: OWNER_HOME, name: Home owner, views: { default: HOME }, categories: [owner] }
+        - { id: HANDLING_A, name: Handling A, views: { default: HA }, categories: [handling] }
+        - { id: LEVEL_ONE, name: Level one, views: { default: ONE }, categories: [level] }
+  render:
+    default: banner
+    formats:
+      - id: banner
+        surface: banner
+        mode: inline
+        view: default
+        separator: '//'
+        joins:
+          - between: [owner, level]
+            separator: ' '
+        fields:
+          - category: owner
+            separator: ' '
+          - category: handling
+            separator: '/'
+          - category: level

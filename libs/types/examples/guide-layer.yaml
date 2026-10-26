@@ -1,0 +1,27 @@
+# A guide layer.
+#
+# Read it aloud: this document is a layer of the ACME quickmark guide; it
+# replaces one rule with a stricter reading for the eastern division and drops
+# another that does not apply there.
+#
+# Adding guidance would need no layer at all, since a Context holds a list of
+# guides. Layering is for tailoring a guide that arrived read-only.
+guide:
+  id: acme-eastern-division-quickmark
+  version: 1.0.0
+  name: ACME Eastern Division Quickmark Tailoring
+  description: Eastern division reading of the shared quickmark rules.
+  type: layer
+  layer:
+    base: acme-quickmark-rules@1.0.0
+    removes:
+      - rule: handles-source-code
+  targetSchemes:
+    - id: acme-classification-primary
+  rules:
+    inline:
+      - id: handles-pii
+        name: Document handles personally identifiable information
+        keywords: [pii, ssn, dob, personnel-file]
+        outcome:
+          rendered: EASTERN-RESTRICTED

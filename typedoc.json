@@ -1,0 +1,61 @@
+{
+    "$schema": "https://typedoc.org/schema.json",
+    "disableSources": true,
+    "entryPoints": [
+        "libs/types/src/index.ts",
+        "libs/schemas/src/index.ts",
+        "libs/schemas/src/scheme-schema.ts",
+        "libs/schemas/src/guide-schema.ts",
+        "libs/schemas/src/access-schema.ts",
+        "libs/schemas/src/context-schema.ts",
+        "libs/schemas/src/crosswalk-schema.ts",
+        "libs/schemas/src/test-suite-schema.ts",
+        "libs/openapi/src/wire.ts",
+        "packages/validator/src/index.d.ts",
+        "packages/validator/src/scheme.d.ts",
+        "packages/validator/src/guide.d.ts",
+        "packages/validator/src/access.d.ts",
+        "packages/validator/src/context.d.ts",
+        "packages/validator/src/crosswalk.d.ts",
+        "packages/conformance-server/src/index.d.ts"
+    ],
+    "excludeExternals": true,
+    "excludeInternal": true,
+    "excludePrivate": true,
+    "excludeProtected": true,
+    "externalPattern": ["**/*.json"],
+    "intentionallyNotDocumented": [
+        "libs/types/src.TestAssertion.__type.value",
+        "packages/conformance-server/src.ConformanceServerOptions.log.__type.line"
+    ],
+    "name": "EzClassify contract API reference",
+    "out": "docs/api",
+    "packagesRequiringDocumentation": [
+        "@ezclassify/conformance-server",
+        "@ezclassify/openapi",
+        "@ezclassify/schemas",
+        "@ezclassify/types",
+        "@ezclassify/validator"
+    ],
+    "readme": "docs/API.md",
+    "requiredToBeDocumented": [
+        "Accessor",
+        "Class",
+        "Enum",
+        "EnumMember",
+        "Function",
+        "Interface",
+        "Method",
+        "Parameter",
+        "Property",
+        "TypeAlias",
+        "Variable"
+    ],
+    "treatWarningsAsErrors": true,
+    "tsconfig": "docs/tsconfig.json",
+    "validation": {
+        "invalidLink": false,
+        "notDocumented": true,
+        "notExported": false
+    }
+}

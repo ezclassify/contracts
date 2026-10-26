@@ -1,0 +1,65 @@
+# Generated build output: formatted by their generators, not by Prettier.
+**/dist/**
+**/__snapshots__/**
+packages/validator/src/generated/
+
+# Test fixtures are intentional, literal-match data (golden vectors, hash
+# vectors, manifests that tests string-match against). Reformatting them (quote
+# style, JSON key sort) silently breaks tests, so Prettier must leave them alone
+# (same rationale as __snapshots__).
+**/tests/fixtures/**
+**/fixtures/**
+
+# The conformance corpus is a distributed data artifact. It is vendored verbatim
+# into every SDK repository and compared there, so a formatter pass over it is a
+# contract change wearing a whitespace diff.
+libs/conformance/cache/**/*.json
+libs/conformance/plans/
+libs/conformance/recordings/
+libs/conformance/replayer-contract/
+libs/conformance/semantic/
+libs/conformance/wire/
+libs/conformance/matrix.json
+
+# Integration scenario recordings are generated and mirrored byte for byte.
+packages/conformance-server/scenarios/**/*.json
+
+# Frozen contract sources. Reformatting these is not cosmetic, and that was
+# measured rather than assumed: ts-json-schema-generator names anonymous
+# structures after their CHARACTER OFFSETS in the TypeScript source, so a
+# reflowed union in libs/types/src rewrites `$ref` identifiers in the published
+# generated/json-schemas-input set. Running Prettier over these trees moved the
+# generated names, broke both the input-schema freeze golden and the public
+# signature golden, and would have churned every vendored SDK spec mirror, for
+# whitespace. These files stay in the shape their goldens were frozen against;
+# a deliberate contract change regenerates the goldens in the same commit.
+libs/types/src/
+libs/schemas/src/
+libs/schemas/tests/
+libs/openapi/src/
+
+# Frozen versioned input contracts. These are hand-authored public schemas the
+# loader validates author-supplied documents against, and the v1-vs-generated
+# equivalence gate compares them to the generated set. They are written in the
+# generator's expanded style so the two stay diffable; Prettier collapses the
+# arrays and churns hundreds of lines in a frozen contract for no semantic gain.
+libs/schemas/src/versions/
+
+# The OpenAPI spec is the artifact of record: runtimes are compared to it, and
+# it is vendored verbatim into the SDK repositories. A reflow here is a contract
+# diff in every consumer, for whitespace. openapi.json is a mechanical
+# restatement of openapi.yaml and is regenerated, never hand-formatted.
+libs/openapi/openapi.json
+libs/openapi/openapi.yaml
+
+# Reviewable dump of the generated component schemas, written by
+# codegen-schemas.mjs. Formatting it makes the generator and the formatter
+# disagree about the same file on every codegen run.
+libs/openapi/scripts/components.generated.yaml
+
+# Verbatim license text, enforced by content elsewhere.
+LICENSE
+
+# Generated TypeDoc output
+docs/api/
+docs/source/

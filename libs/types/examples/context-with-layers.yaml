@@ -1,0 +1,36 @@
+# A Context that layers all four families.
+#
+# The eastern division composes what the parent organization shared down and
+# completes each piece with a layer of its own. Every layer sits inside the
+# reference it derives from, because a layer means nothing apart from the one
+# artifact it stacks on.
+context:
+  id: acme-eastern-division-marking
+  version: 1.0.0
+  description: Eastern division Context, parent artifacts completed by division layers.
+  scheme:
+    id: acme-classification-primary
+    version: 1.0.0
+    layers:
+      - id: acme-eastern-division-concepts
+        version: 1.0.0
+  guides:
+    - id: acme-quickmark-rules
+      version: 1.0.0
+      layers:
+        - id: acme-eastern-division-quickmark
+          version: 1.0.0
+    - id: acme-detailed-marking
+      version: latest
+  crosswalks:
+    - id: acme-to-partner
+      version: 2.1.0
+      layers:
+        - id: acme-eastern-division-crosswalk-coverage
+          version: 1.0.0
+  access:
+    id: acme-rbac-access
+    version: 1.0.0
+    layers:
+      - id: acme-eastern-division-access
+        version: 1.0.0

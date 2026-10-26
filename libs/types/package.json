@@ -1,0 +1,58 @@
+{
+    "name": "@ezclassify/types",
+    "version": "1.0.0-dev.30",
+    "type": "module",
+    "description": "Canonical hand-written wire-format interfaces for EzClassify",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/ezclassify/contracts.git",
+        "directory": "libs/types"
+    },
+    "homepage": "https://ezclassify.com",
+    "author": "EzClassify, LLC",
+    "license": "Apache-2.0",
+    "engines": {
+        "node": ">=22.0.0"
+    },
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.js",
+            "default": "./dist/index.js"
+        },
+        "./internal": {
+            "types": "./dist/internal/index.d.ts",
+            "import": "./dist/index.js",
+            "default": "./dist/index.js"
+        }
+    },
+    "files": [
+        "dist",
+        "!dist/**/*.map"
+    ],
+    "keywords": [
+        "ezclassify",
+        "classification",
+        "marking",
+        "engine",
+        "types",
+        "typescript"
+    ],
+    "scripts": {
+        "build": "npm run clean && tsc -p tsconfig.build.json && tsc -p tsconfig.internal.json",
+        "clean": "rm -rf dist",
+        "prepublishOnly": "npm run verify:publish-ready",
+        "test": "tsc -p tsconfig.contract.json --noEmit && npx vitest run --root ../.. libs/types/tests/",
+        "verify:publish-ready": "npm run build && npm test"
+    },
+    "devDependencies": {
+        "@types/js-yaml": "4.0.9",
+        "ajv": "8.20.0",
+        "ajv-formats": "3.0.1",
+        "js-yaml": "^4.1.0",
+        "vitest": "^4.1.1"
+    },
+    "sideEffects": false
+}

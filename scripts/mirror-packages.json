@@ -1,0 +1,12 @@
+{
+    "comment": "The packages this repository mirrors to GitHub Packages, in install order. Adding a name here is a publication decision, so the list is written down rather than derived from the workspace glob. scripts/check-mirror-list.mjs fails if it drifts from the set of publishable workspaces in either direction, and .github/workflows/publish-mirror.yml reads this file instead of repeating the names.",
+    "packages": [
+        "@ezclassify/tsconfig",
+        "@ezclassify/types",
+        "@ezclassify/schemas",
+        "@ezclassify/openapi",
+        "@ezclassify/conformance",
+        "@ezclassify/validator",
+        "@ezclassify/conformance-server"
+    ]
+}

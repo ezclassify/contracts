@@ -1,0 +1,68 @@
+# Independent conditional prefixes, concatenated.
+#
+# The old `conditional_prefixes` was a list whose matching entries concatenated,
+# and P0 asked for the rule to be written down. It is written down here: a
+# prefix may be an ordered list of parts, and every part whose condition holds
+# contributes its text in the order the author wrote it.
+#
+# Read aloud: the banner is prefixed by `//` when an owner is present, and by
+# `JOINT ` when the owner is the home one, and by both when both hold.
+#
+# Nesting cannot express this. A nested group is all-or-nothing: the outer
+# prefix vanishes with the group when the inner condition fails. Enumerating the
+# combinations as alternatives costs one option per subset of the conditions.
+scheme:
+  id: p1-conditional-affix
+  version: 1.0.0
+  name: 'format fixture: concatenated conditional prefixes'
+  default_scope: banner
+  scopes:
+    - id: banner
+      label: Banner
+  named_conditions:
+    owner-present:
+      category_id: owner
+      operator: has_content
+    owner-is-home:
+      has: OWNER_HOME
+  data:
+    categories:
+      - id: level
+        label: Level
+        rollup: max
+        single: true
+        required: true
+      - id: owner
+        label: Owner
+        rollup: union
+    concepts:
+      inline:
+        - id: LEVEL_ONE
+          name: Level one
+          views: { default: ONE }
+          categories: [level]
+        - id: OWNER_HOME
+          name: Home owner
+          views: { default: HOME }
+          categories: [owner]
+        - id: OWNER_OTHER
+          name: Other owner
+          views: { default: OTHER }
+          categories: [owner]
+  render:
+    default: banner
+    formats:
+      - id: banner
+        surface: banner
+        mode: inline
+        view: default
+        separator: '//'
+        prefix:
+          - text: '//'
+            when: { named_condition: owner-present }
+          - text: 'JOINT '
+            when: { named_condition: owner-is-home }
+        fields:
+          - category: level
+          - category: owner
+            separator: ' '

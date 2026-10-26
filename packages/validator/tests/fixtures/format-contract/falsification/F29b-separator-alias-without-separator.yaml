@@ -1,0 +1,51 @@
+# F29b: a separator alias with no separator beside it.
+#
+# EXPECTS `plan/unresolved-reference`.
+#
+# `separator_aliases` names other spellings of this field's `separator`, and a
+# field that declares none has nothing for them to be spellings of. Reading them
+# anyway would be the engine inventing a boundary the format never writes, which
+# is the same defect as an alias of an absent prefix.
+scheme:
+  id: p1-f29b
+  version: 1.0.0
+  name: 'F29b: an alias of no boundary'
+  default_scope: inline
+  scopes: [{ id: inline, label: Inline }]
+  data:
+    categories:
+      - id: control
+        label: Control
+        rollup: union
+        single: true
+      - id: level
+        label: Level
+        rollup: highest
+        single: true
+    concepts:
+      inline:
+        - {
+              id: LEVEL_ONE,
+              name: Level one,
+              views: { default: ONE },
+              categories: [level],
+              rank: 1,
+          }
+        - {
+              id: CONTROL_A,
+              name: Control A,
+              views: { default: AAA },
+              categories: [control],
+          }
+  render:
+    default: inline
+    formats:
+      - id: inline
+        surface: inline
+        mode: inline
+        view: default
+        separator: '//'
+        fields:
+          - category: level
+          - category: control
+            separator_aliases: ['; ']

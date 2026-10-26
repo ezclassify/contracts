@@ -1,0 +1,41 @@
+# F07: a conditional field whose predicate needs something nothing supplies.
+#
+# EXPECTS plan/unresolved-condition.
+#
+# The field is written only when `owner-is-home` holds, and the scheme declares
+# no such condition. A predicate nothing defines is never true, so the field can
+# never be written and the category it binds has no representation in this
+# format at all. The old contract would have carried this silently.
+scheme:
+  id: p1-f07
+  version: 1.0.0
+  name: 'F07: unresolved condition'
+  default_scope: banner
+  scopes: [{ id: banner, label: Banner }]
+  data:
+    categories:
+      - id: level
+        label: Level
+        rollup: max
+        single: true
+        required: true
+      - id: owner
+        label: Owner
+        rollup: union
+    concepts:
+      inline:
+        - { id: LEVEL_ONE, name: Level one, views: { default: ONE }, categories: [level] }
+        - { id: OWNER_HOME, name: Home owner, views: { default: HOME }, categories: [owner] }
+  render:
+    default: banner
+    formats:
+      - id: banner
+        surface: banner
+        mode: inline
+        view: default
+        separator: '//'
+        fields:
+          - category: level
+          - category: owner
+            when: { named_condition: owner-is-home }
+            separator: ' '

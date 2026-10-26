@@ -1,0 +1,64 @@
+# F24: an attribute whose value the format fixes, written under a predicate.
+#
+# EXPECTS no diagnostics.
+#
+# Every other field carries a fact out of the state and writes it. This one
+# writes a literal the format names, and it is read back as a check that the
+# same predicate holds. That is the whole of it. It exists because a structured
+# representation can require a flag attribute that says something about the
+# representation rather than about the marking: the marking already holds the
+# fact that two owners share it, and the attribute is how that representation
+# spells it.
+#
+# Binding a concept would be the wrong answer and the shape refuses to offer
+# it: the flag would then assert something, and the same state written two ways
+# would hold different facts depending on which way it was written.
+#
+# `F24a` is the same document with the `when` taken off, which the walker
+# refuses: a fixed attribute written for every state says nothing about any of
+# them, and the read side learns nothing from finding it.
+scheme:
+  id: p1-f24
+  version: 1.0.0
+  name: 'F24: fixed-value attribute'
+  default_scope: marking
+  scopes:
+    - id: marking
+      label: Marking
+  named_conditions:
+    shared-origin:
+      is: count_gt 1
+      category_id: owner
+  data:
+    categories:
+      - id: level
+        label: Level
+        rollup: max
+        single: true
+        required: true
+      - id: owner
+        label: Owner
+        rollup: union
+    concepts:
+      inline:
+        - { id: LEVEL_ONE, name: Level one, views: { default: ONE, structured: ONE }, categories: [level] }
+        - { id: OWNER_HOME, name: Home owner, views: { default: HOME, structured: HOME }, categories: [owner] }
+        - { id: OWNER_PARTNER, name: Partner owner, views: { default: PARTNER, structured: PARTNER }, categories: [owner] }
+  render:
+    default: structured
+    formats:
+      - id: structured
+        surface: marking
+        mode: block
+        view: structured
+        syntax:
+          type: xml-attributes
+        fields:
+          - attribute: levelCode
+            category: level
+          - attribute: originCode
+            category: owner
+            separator: ' '
+          - attribute: shared
+            value: 'true'
+            when: { named_condition: shared-origin }

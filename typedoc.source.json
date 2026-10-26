@@ -1,0 +1,29 @@
+{
+    "$schema": "https://typedoc.org/schema.json",
+    "disableSources": true,
+    "entryPointStrategy": "expand",
+    "entryPoints": ["libs/", "packages/", "scripts/"],
+    "exclude": [
+        "**/*.spec.*",
+        "**/*.test.*",
+        "**/generated/**",
+        "**/versions/**",
+        "**/tests/**",
+        "**/dist/**",
+        "**/node_modules/**",
+        "**/fixtures/**"
+    ],
+    "excludeInternal": false,
+    "excludePrivate": false,
+    "excludeProtected": false,
+    "name": "contracts source reference",
+    "out": "docs/source",
+    "readme": "none",
+    "skipErrorChecking": true,
+    "treatWarningsAsErrors": true,
+    "tsconfig": "docs/tsconfig.source.json",
+    "validation": {
+        "invalidLink": false,
+        "notExported": false
+    }
+}

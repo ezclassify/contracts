@@ -1,0 +1,46 @@
+# EXPECTS plan/reserved-literal-collision, once.
+#
+# A concept spelled exactly as its field's separator. The same characters are
+# the boundary between two values of that field and one of the values, so the
+# concept cannot be written here and text that is only the separator does not
+# read back as it. Everything else in the field works, which is what made this
+# worth saying at compile time: the failure is one concept wide and silent on
+# the way in.
+#
+# The second field is the control. It holds a concept spelled with the
+# separator's characters inside a longer string, which is representable and is
+# not reported.
+scheme:
+  id: p1-separator-spelling
+  version: 1.0.0
+  name: 'diagnostic: a concept spelled as its own separator'
+  default_scope: banner
+  scopes: [{ id: banner, label: Banner }]
+  data:
+    categories:
+      - id: handling
+        label: Handling
+        rollup: union
+        required: true
+      - id: owner
+        label: Owner
+        rollup: union
+    concepts:
+      inline:
+        - { id: HANDLING_AND, name: Handling and, views: { default: AND }, categories: [handling] }
+        - { id: HANDLING_B, name: Handling B, views: { default: HB }, categories: [handling] }
+        - { id: OWNER_HOME, name: Home owner, views: { default: HOME AND AWAY }, categories: [owner] }
+        - { id: OWNER_AWAY, name: Away owner, views: { default: AWAY }, categories: [owner] }
+  render:
+    default: banner
+    formats:
+      - id: banner
+        surface: banner
+        mode: inline
+        view: default
+        separator: '//'
+        fields:
+          - category: handling
+            separator: 'AND'
+          - category: owner
+            separator: 'AND'

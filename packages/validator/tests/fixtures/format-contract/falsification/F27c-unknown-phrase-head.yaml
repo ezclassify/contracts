@@ -1,0 +1,57 @@
+# F27c: a phrase headed by a concept the scheme does not declare.
+#
+# EXPECTS `plan/unresolved-reference`.
+#
+# Told apart from F27a on purpose. A head that names nothing at all is a typo
+# or a concept that was removed; a head that names a real concept this field
+# does not write is a category or an exclusion the author got wrong. Same
+# symptom, different fix, so they are different diagnostics.
+scheme:
+  id: p1-f27c
+  version: 1.0.0
+  name: 'F27c: a phrase head that is nothing'
+  default_scope: banner
+  scopes: [{ id: banner, label: Banner }]
+  data:
+    categories:
+      - id: handling
+        label: Handling
+        rollup: union
+        sort: position
+      - id: recipients
+        label: Recipients
+        rollup: union
+        sort: position
+    concepts:
+      inline:
+        - {
+              id: H_ONE,
+              name: Handling one,
+              views: { default: HONE },
+              categories: [handling],
+              position: 1,
+          }
+        - {
+              id: R_ONE,
+              name: Recipient one,
+              views: { default: RONE },
+              categories: [recipients],
+              position: 1,
+          }
+  render:
+    default: banner
+    formats:
+      - id: banner
+        surface: banner
+        mode: inline
+        view: default
+        separator: '//'
+        fields:
+          - category: handling
+            separator: '/'
+            phrases:
+              - head: H_NOWHERE
+                separator: ' '
+                fields:
+                  - category: recipients
+                    separator: ', '

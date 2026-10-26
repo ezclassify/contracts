@@ -1,0 +1,50 @@
+{
+    "name": "@ezclassify/openapi",
+    "version": "1.0.0-dev.30",
+    "type": "module",
+    "description": "The EzClassify REST API OpenAPI document, plus the wire-body types it is generated from",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/ezclassify/contracts.git",
+        "directory": "libs/openapi"
+    },
+    "homepage": "https://ezclassify.com",
+    "author": "EzClassify, LLC",
+    "license": "Apache-2.0",
+    "engines": {
+        "node": ">=22.0.0"
+    },
+    "exports": {
+        "./wire": {
+            "types": "./dist/wire.d.ts",
+            "import": "./dist/wire.js",
+            "default": "./dist/wire.js"
+        },
+        "./openapi.yaml": "./openapi.yaml",
+        "./openapi.json": "./openapi.json"
+    },
+    "files": [
+        "dist",
+        "openapi.json",
+        "openapi.yaml",
+        "!dist/**/*.map"
+    ],
+    "scripts": {
+        "build": "npm run clean && tsc -p tsconfig.build.json",
+        "clean": "rm -rf dist",
+        "codegen": "tsx scripts/emit-openapi.ts",
+        "prepack": "npm run build",
+        "typecheck": "tsc -p tsconfig.json"
+    },
+    "dependencies": {
+        "@ezclassify/types": "^1.0.0-0"
+    },
+    "devDependencies": {
+        "@types/js-yaml": "4.0.9",
+        "@types/node": "^22.15.0",
+        "js-yaml": "^4.1.0",
+        "ts-json-schema-generator": "^2.4.0",
+        "tsx": "^4.20.0"
+    },
+    "sideEffects": false
+}

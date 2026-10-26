@@ -1,0 +1,63 @@
+# What `line_templates['notice:<concept>']` becomes: a field that writes the
+# notice concept, in the place the notice goes.
+#
+# The old key keyed a template string by the concept it was for, which made the
+# notice's position a property of a map rather than of the format. A notice is a
+# field like any other: it names the concept it writes, it carries the lead-in
+# that introduces it, and it sits where it is written.
+#
+# Read aloud: the handling block writes the level, then the notice, introduced
+# by its own lead-in.
+scheme:
+  id: p1-notice-slot
+  version: 1.0.0
+  name: 'format fixture: notice slot'
+  default_scope: handling_block
+  scopes:
+    - id: handling_block
+      label: Handling block
+  data:
+    categories:
+      - id: level
+        label: Level
+        rollup: max
+        single: true
+        required: true
+      - id: handling
+        label: Handling
+        rollup: union
+    concepts:
+      inline:
+        - id: LEVEL_ONE
+          name: Level one
+          views: { default: ONE }
+          categories: [level]
+        - id: RESTRICTED_HANDLING
+          name: Restricted handling
+          views: { default: RESTRICTED HANDLING }
+          categories: [handling]
+          notices:
+            - type: handling
+              required: true
+              text: This material is handled under the restricted handling procedure.
+        - id: HANDLING_ONE
+          name: Handling one
+          views: { default: H1 }
+          categories: [handling]
+  render:
+    default: handling_block
+    formats:
+      - id: handling_block
+        surface: handling_block
+        mode: block
+        view: default
+        separator: "\n"
+        fields:
+          - category: level
+            prefix: 'Level: '
+          - concept: RESTRICTED_HANDLING
+            prefix: 'Handling notice: '
+          - category: handling
+            exclude_concepts: [RESTRICTED_HANDLING]
+            prefix: 'Other handling: '
+            separator: ', '

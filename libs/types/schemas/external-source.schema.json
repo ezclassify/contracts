@@ -1,0 +1,256 @@
+{
+    "$defs": {
+        "attribution": {
+            "additionalProperties": false,
+            "properties": {
+                "citation": { "type": "string" },
+                "license": { "minLength": 1, "type": "string" },
+                "licenseUrl": { "format": "uri", "type": "string" },
+                "name": { "minLength": 1, "type": "string" }
+            },
+            "required": ["name", "license"],
+            "type": "object"
+        },
+        "auth": {
+            "additionalProperties": false,
+            "description": "Request-level authentication. Certificates belong to the connection and are declared in `tls`.",
+            "properties": {
+                "accessKeyRef": { "$ref": "#/$defs/credentialRef" },
+                "clientCredentialRef": { "$ref": "#/$defs/credentialRef" },
+                "credentialRef": { "$ref": "#/$defs/credentialRef" },
+                "flow": {
+                    "enum": [
+                        "none",
+                        "basic",
+                        "bearer",
+                        "header",
+                        "aws-sigv4",
+                        "oauth2-cc"
+                    ],
+                    "type": "string"
+                },
+                "params": {
+                    "additionalProperties": { "type": "string" },
+                    "type": "object"
+                },
+                "secretKeyRef": { "$ref": "#/$defs/credentialRef" }
+            },
+            "required": ["flow"],
+            "type": "object"
+        },
+        "capabilities": {
+            "additionalProperties": false,
+            "properties": {
+                "ancestorsOf": { "type": "boolean" },
+                "childrenOf": { "type": "boolean" },
+                "count": { "type": "boolean" },
+                "enumerate": { "type": "boolean" },
+                "prefixMatch": { "type": "boolean" },
+                "resolveAliases": {
+                    "enum": ["exact", "fuzzy", "none"],
+                    "type": "string"
+                },
+                "search": { "type": "boolean" }
+            },
+            "type": "object"
+        },
+        "credentialRef": {
+            "description": "Closed-set credential reference. The 1.0 wire format supports env, file, secret-store.",
+            "oneOf": [
+                {
+                    "additionalProperties": false,
+                    "properties": {
+                        "envVar": { "minLength": 1, "type": "string" },
+                        "provider": { "const": "env" }
+                    },
+                    "required": ["provider", "envVar"],
+                    "type": "object"
+                },
+                {
+                    "additionalProperties": false,
+                    "properties": {
+                        "certVar": { "minLength": 1, "type": "string" },
+                        "keyVar": { "minLength": 1, "type": "string" },
+                        "provider": { "const": "env" }
+                    },
+                    "required": ["provider", "certVar", "keyVar"],
+                    "type": "object"
+                },
+                {
+                    "additionalProperties": false,
+                    "properties": {
+                        "path": { "minLength": 1, "type": "string" },
+                        "provider": { "const": "file" }
+                    },
+                    "required": ["provider", "path"],
+                    "type": "object"
+                },
+                {
+                    "additionalProperties": false,
+                    "properties": {
+                        "certPath": { "minLength": 1, "type": "string" },
+                        "keyPath": { "minLength": 1, "type": "string" },
+                        "provider": { "const": "file" }
+                    },
+                    "required": ["provider", "certPath", "keyPath"],
+                    "type": "object"
+                },
+                {
+                    "additionalProperties": false,
+                    "properties": {
+                        "provider": { "const": "secret-store" },
+                        "secretId": { "minLength": 1, "type": "string" }
+                    },
+                    "required": ["provider", "secretId"],
+                    "type": "object"
+                }
+            ]
+        },
+        "pagination": {
+            "oneOf": [
+                {
+                    "additionalProperties": false,
+                    "properties": {
+                        "style": { "const": "none" }
+                    },
+                    "required": ["style"],
+                    "type": "object"
+                },
+                {
+                    "additionalProperties": false,
+                    "properties": {
+                        "pageParam": { "minLength": 1, "type": "string" },
+                        "start": { "type": "integer" },
+                        "style": { "const": "page" }
+                    },
+                    "required": ["style", "pageParam", "start"],
+                    "type": "object"
+                },
+                {
+                    "additionalProperties": false,
+                    "properties": {
+                        "offsetParam": { "minLength": 1, "type": "string" },
+                        "style": { "const": "offset" }
+                    },
+                    "required": ["style", "offsetParam"],
+                    "type": "object"
+                },
+                {
+                    "additionalProperties": false,
+                    "properties": {
+                        "cursorParam": { "minLength": 1, "type": "string" },
+                        "nextField": { "minLength": 1, "type": "string" },
+                        "style": { "const": "cursor" }
+                    },
+                    "required": ["style", "cursorParam", "nextField"],
+                    "type": "object"
+                },
+                {
+                    "additionalProperties": false,
+                    "properties": {
+                        "style": { "const": "link-header" }
+                    },
+                    "required": ["style"],
+                    "type": "object"
+                }
+            ]
+        },
+        "queryParams": {
+            "additionalProperties": false,
+            "properties": {
+                "pageSize": { "type": "string" },
+                "prefix": { "type": "string" },
+                "scope": { "type": "string" },
+                "search": { "type": "string" }
+            },
+            "type": "object"
+        },
+        "tls": {
+            "additionalProperties": false,
+            "dependentRequired": {
+                "keyPassphraseRef": ["clientCertAndKeyRef"]
+            },
+            "description": "Connection TLS settings. Valid only on an http transport with an https: source, which the runtime checks when it builds the source. Server verification is always on.",
+            "minProperties": 1,
+            "properties": {
+                "caBundleRef": {
+                    "$ref": "#/$defs/credentialRef",
+                    "description": "PEM CA bundle that verifies the upstream server certificate. Resolves to a string-secret and replaces the default roots for this source."
+                },
+                "clientCertAndKeyRef": {
+                    "$ref": "#/$defs/credentialRef",
+                    "description": "Client certificate and private key presented in the handshake (mutual TLS). Resolves to a cert-and-key-pair."
+                },
+                "keyPassphraseRef": {
+                    "$ref": "#/$defs/credentialRef",
+                    "description": "Passphrase for an encrypted private key in `clientCertAndKeyRef`. Resolves to a string-secret."
+                }
+            },
+            "type": "object"
+        }
+    },
+    "$id": "https://ezclassify.com/schemas/v1/external-source.schema.json",
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "additionalProperties": false,
+    "description": "Body of an `external:` block on a concept / guide-rule / access source. Pairs a transport URI with a declarative mapping that projects upstream records into canonical concept / rule / access shapes.",
+    "properties": {
+        "attribution": { "$ref": "#/$defs/attribution" },
+        "auth": { "$ref": "#/$defs/auth" },
+        "capabilities": { "$ref": "#/$defs/capabilities" },
+        "grantId": { "type": "string" },
+        "headers": {
+            "additionalProperties": { "type": "string" },
+            "type": "object"
+        },
+        "id": {
+            "description": "Stable identifier for this source within the containing artifact. Required when multiple external sources appear on the same scheme; loader synthesizes `external-${i}` when absent.",
+            "minLength": 1,
+            "type": "string"
+        },
+        "liveFetch": { "type": "boolean" },
+        "mapping": {
+            "description": "Declarative projection: concept | rule | access (shape varies by artifact).",
+            "minProperties": 1,
+            "type": "object"
+        },
+        "mappingHash": { "type": "string" },
+        "pagination": { "$ref": "#/$defs/pagination" },
+        "query": {
+            "additionalProperties": { "type": "string" },
+            "type": "object"
+        },
+        "queryParams": { "$ref": "#/$defs/queryParams" },
+        "rateLimit": {
+            "additionalProperties": false,
+            "properties": {
+                "burst": { "minimum": 1, "type": "integer" },
+                "windowMs": { "minimum": 1, "type": "integer" }
+            },
+            "required": ["burst", "windowMs"],
+            "type": "object"
+        },
+        "recordsPath": { "type": "string" },
+        "snapshotId": {
+            "description": "The digest the source reports for its records, written sha256: followed by 64 lowercase hex digits. A label is refused; it belongs in attribution.citation.",
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "type": "string"
+        },
+        "snapshotRef": { "type": "string" },
+        "source": {
+            "description": "URI for the upstream: http(s)://, file://, or inline://.",
+            "minLength": 1,
+            "type": "string"
+        },
+        "srcref": { "type": "string" },
+        "timeoutMs": { "minimum": 1, "type": "integer" },
+        "tls": { "$ref": "#/$defs/tls" },
+        "transport": {
+            "description": "Inferred from the URI scheme when omitted.",
+            "enum": ["http", "file", "inline-data"],
+            "type": "string"
+        }
+    },
+    "required": ["source", "mapping"],
+    "title": "EzClassify external source spec",
+    "type": "object"
+}

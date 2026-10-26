@@ -1,0 +1,48 @@
+# compiled output
+dist
+tmp
+build
+
+# `libs/schemas/generated/` is deliberately tracked source-adjacent contract
+# output. It is not ignored or treated as disposable compiled output.
+
+# TypeScript build artifacts emitted next to .ts sources by a stray in-place
+# tsc run. Per-package build configs emit to their own dist/, ignored above.
+**/src/**/*.js
+**/src/**/*.d.ts
+**/src/**/*.map
+!**/src/**/*.mjs
+
+# Exception: the packages under packages/ are hand-authored ESM with no build
+# step, so their sources and the declaration file each one publishes as its
+# `types` entry are checked in. They compile with noEmit, so the rule above is
+# guarding against output that cannot appear there in the first place.
+!packages/*/src/*.d.ts
+
+# dependencies
+node_modules
+package-lock.json
+
+# IDEs and editors
+/.idea
+.vscode/*
+!.vscode/settings.json
+
+# misc
+/coverage
+coverage/
+npm-debug.log
+*.tsbuildinfo
+*.tgz
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Environment files
+.env*
+
+
+# Local generated API references
+docs/api/
+docs/source/

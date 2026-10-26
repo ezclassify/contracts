@@ -1,0 +1,48 @@
+# F16: a finite optional format that can render an empty string.
+#
+# EXPECTS no diagnostics; the compiled root canBeEmpty is true.
+#
+# Every field is optional and no literal frames the whole, so an empty render
+# is possible. The format tree is finite, and the validator accepts it. Runtime
+# discovery and scanning must handle zero-width progress when they encounter
+# an empty result; this fixture does not test that behavior.
+#
+# F22 contrasts this nullable format with complementary alternatives whose
+# compiled root canBeEmpty is false.
+scheme:
+  id: p1-f16
+  version: 1.0.0
+  name: 'F16: empty match'
+  default_scope: banner
+  scopes: [{ id: banner, label: Banner }]
+  data:
+    categories:
+      - id: level
+        label: Level
+        rollup: max
+        single: true
+      - id: handling
+        label: Handling
+        rollup: union
+      - id: release
+        label: Release list
+        rollup: union
+    concepts:
+      inline:
+        - { id: LEVEL_ONE, name: Level one, views: { default: ONE }, categories: [level] }
+        - { id: HANDLING_A, name: Handling A, views: { default: HA }, categories: [handling] }
+        - { id: PARTNER_A, name: Partner A, views: { default: PA }, categories: [release] }
+  render:
+    default: banner
+    formats:
+      - id: banner
+        surface: banner
+        mode: inline
+        view: default
+        separator: '//'
+        fields:
+          - category: level
+          - category: handling
+            separator: '/'
+          - category: release
+            separator: ', '

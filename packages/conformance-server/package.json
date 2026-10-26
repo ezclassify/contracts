@@ -1,0 +1,54 @@
+{
+    "name": "@ezclassify/conformance-server",
+    "version": "1.0.0-dev.30",
+    "type": "module",
+    "description": "Replay server for EzClassify SDK conformance and application integration scenarios: real HTTP, recorded answers, no engine",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/ezclassify/contracts.git",
+        "directory": "packages/conformance-server"
+    },
+    "homepage": "https://ezclassify.com",
+    "author": "EzClassify, LLC",
+    "license": "Apache-2.0",
+    "engines": {
+        "node": ">=22.0.0"
+    },
+    "bin": {
+        "ezclassify-conformance-server": "./bin/ezclassify-conformance-server.mjs"
+    },
+    "main": "./src/index.mjs",
+    "types": "./src/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./src/index.d.ts",
+            "default": "./src/index.mjs"
+        }
+    },
+    "files": [
+        "THIRD-PARTY-NOTICES.md",
+        "bin/",
+        "scenarios/",
+        "src/"
+    ],
+    "keywords": [
+        "ezclassify",
+        "conformance",
+        "replay",
+        "mock-server",
+        "openapi",
+        "sdk-testing"
+    ],
+    "scripts": {
+        "test": "npx vitest run --root ../.. packages/conformance-server/tests/"
+    },
+    "dependencies": {
+        "@ezclassify/conformance": "^1.0.0-0",
+        "@ezclassify/openapi": "^1.0.0-0",
+        "ajv": "8.20.0",
+        "ajv-formats": "3.0.1"
+    },
+    "devDependencies": {
+        "vitest": "^4.1.1"
+    }
+}

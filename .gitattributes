@@ -1,0 +1,12 @@
+# Auto detect text files and perform LF normalization
+* text=auto
+
+# Explicitly declare text files
+*.ts text
+*.mjs text
+*.json text
+*.yaml text
+*.yml text
+*.toml text
+*.md text
+*.txt text

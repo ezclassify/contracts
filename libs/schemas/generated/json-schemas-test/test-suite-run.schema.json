@@ -1,0 +1,1221 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "definitions": {
+        "ArtifactKind": {
+            "description": "Closed artifact families participating in a composed operation.",
+            "enum": [
+                "scheme",
+                "layer",
+                "guide",
+                "access",
+                "crosswalk",
+                "context"
+            ],
+            "type": "string"
+        },
+        "ArtifactReference": {
+            "description": "Identifies an immutable artifact participating in a composed operation.",
+            "properties": {
+                "digest": {
+                    "description": "Content digest when the resolver can supply one.",
+                    "type": "string"
+                },
+                "id": {
+                    "description": "Artifact identifier.",
+                    "type": "string"
+                },
+                "kind": {
+                    "$ref": "#/definitions/ArtifactKind",
+                    "description": "Artifact family."
+                },
+                "version": {
+                    "description": "Resolved immutable artifact version.",
+                    "type": "string"
+                }
+            },
+            "required": ["kind", "id", "version"],
+            "type": "object"
+        },
+        "Assertion": {
+            "description": "A concept asserted in a category during processing, with confidence level and provenance metadata.\n\nAssertions are the core data unit flowing through the engine pipeline. `confidence` records how the assertion was produced: `'certain'` when read or handed in as stated, `'inferred'` when an inference rule added it, and `'repaired'` when the engine added or rewrote it while repairing the marking. The engine does not assign `'uncertain'` itself. `source` says where the assertion came from. `expiresAt` records caller-supplied expiry metadata. The engine does not evaluate that date or automatically change confidence or the marking; the host applies its expiry policy.",
+            "properties": {
+                "categoryId": {
+                    "description": "The id of the category the concept is asserted in.",
+                    "type": "string"
+                },
+                "conceptId": {
+                    "description": "The id of the concept.",
+                    "type": "string"
+                },
+                "confidence": {
+                    "$ref": "#/definitions/AssertionConfidence",
+                    "description": "How the assertion was produced: `certain` when read or handed in as stated, `inferred` when an inference rule added it, or `repaired` when the engine added or rewrote it while repairing the marking. The engine does not assign `uncertain` itself."
+                },
+                "expiresAt": {
+                    "description": "Caller-supplied ISO 8601 expiry date; the engine does not evaluate it.",
+                    "type": "string"
+                },
+                "metadata": {
+                    "$ref": "#/definitions/Record%3Cstring%2Cunknown%3E",
+                    "description": "Caller-defined data attached to the assertion. The engine assigns it no meaning."
+                },
+                "provenance": {
+                    "$ref": "#/definitions/SourceReference",
+                    "description": "Source provenance for the concept that backed this assertion.\n\nPopulated only when the concept came from an external source whose records were loaded with the scheme (typically one a scheme's `concepts.external` block declares). Inline-backed assertions leave this field undefined to keep payloads compact for the common single-source case. A concept a scheme document declares in its `inline` list has none, even when one of that document's `external` sources also serves a record with its id. A concept read through a queryable-only source (`SourceCapabilities.queryableOnly`) has none either: that source is asked per lookup and never loaded whole, and a lookup does not say which source answered. Such a source still appears in a composed operation's `resolution.sources`. Across a layered stack the later layer decides: a concept a later layer's source supplies carries that source's provenance even when an earlier document declares it inline, and a concept a later layer declares inline carries none.\n\nIdentity fields mirror the source's `sourceIdentity()` observation at engine-load time (or the immutable value the Context pinned)."
+                },
+                "replacedConceptId": {
+                    "description": "The deprecated concept this assertion was modernized from.\n\nSet when processing rewrote a deprecated concept into the replacement its scheme declares. `conceptId` is the current concept every downstream stage evaluates; this field records what the data was actually marked with, so an explanation can show the substitution (\"concept A was replaced by concept B; B is what your access was compared against\") instead of silently presenting a concept the document never carried.\n\nIt travels on the assertion rather than alongside it because assertion arrays are the engine's state transport: an access check made from transported assertions can still explain the substitution.",
+                    "type": "string"
+                },
+                "source": {
+                    "description": "Where this assertion came from. An open string: the engine labels the facts it adds, and a caller or a host may label the facts it hands in however it likes.\n\nFour labels mean the engine derived the fact, so it derives the fact again each time it settles a marking: `infer`, and `repair` with a `sourceRule`, a fact a scheme rule adds; `default`, a category's default concept; and `context`, a value a part took from its whole. When validate, process or explain settles a marking, a fact handed in under one of them is set aside and comes back only if the engine derives it again, so no label can make a removal silent.\n\nEvery other label is the author's statement and is kept as given: `parse` (read from text), `user` (handed in by a caller), `aggregate` (a value a rollup states as its own, even one a contributor derived or took from its whole), every other label the engine writes on a result, and any label a caller or host chooses, such as `stated`.",
+                    "type": "string"
+                },
+                "sourceRule": {
+                    "description": "The id of the scheme rule that produced this assertion, when one did. Otherwise an engine-owned id beginning with `_`, set when the scheme's structure, not a rule, added the assertion. The engine writes two: `_tier_child_requires_parent` (a tier parent required by a stated child) and `_header_of_stated_member` (a header filled in for a stated member). A scheme rule id never begins with `_`.",
+                    "type": "string"
+                },
+                "value": {
+                    "description": "The value of a concept that takes one (`text_input`).\n\nA value handed in is read the way a value in text is: it settles in the spelling the concept's encoding stores. One the encoding cannot read is reported as the error `_invalid_assertion_value`, and a concept that takes a value, handed in with none, as `_missing_assertion_value`. See `ValidationError`.",
+                    "type": "string"
+                }
+            },
+            "required": ["categoryId", "conceptId", "confidence", "source"],
+            "type": "object"
+        },
+        "AssertionConfidence": {
+            "description": "Confidence assigned to an assertion by the processing pipeline.",
+            "enum": ["certain", "inferred", "repaired", "uncertain"],
+            "type": "string"
+        },
+        "Attribution": {
+            "description": "Provenance attached to every source so downstream consumers can render proper attribution and license notices.\n\nMandatory because most source data we'll integrate (NIST, ICS, IANA, external taxonomies) requires citation. Sources that don't have a formal license should set `license: 'unspecified'` rather than omit it.",
+            "properties": {
+                "citation": {
+                    "description": "Suggested citation string for academic / regulatory use.",
+                    "type": "string"
+                },
+                "license": {
+                    "description": "SPDX identifier or short license token (e.g. \"CC-BY-4.0\", \"public-domain\").",
+                    "type": "string"
+                },
+                "licenseUrl": {
+                    "description": "Canonical URL where the license terms can be inspected.",
+                    "type": "string"
+                },
+                "name": {
+                    "description": "Display name of the upstream source (e.g. \"NIST CSWP-29\").",
+                    "type": "string"
+                }
+            },
+            "required": ["name", "license"],
+            "type": "object"
+        },
+        "BestEffortRuleSourceReference": {
+            "description": "Best-effort external source join carried by a qualified rule reference.",
+            "properties": {
+                "providerId": {
+                    "description": "Stable identifier for the source provider.",
+                    "type": "string"
+                },
+                "reproducibility": {
+                    "const": "best-effort",
+                    "description": "Whether the source observation can be reproduced byte-for-byte.",
+                    "type": "string"
+                },
+                "snapshotId": {
+                    "description": "Snapshot identity is forbidden when reproducibility is not proven.",
+                    "not": {}
+                }
+            },
+            "required": ["providerId", "reproducibility"],
+            "type": "object"
+        },
+        "BestEffortSourceReference": {
+            "description": "Best-effort source identity and mandatory attribution for an operation.",
+            "properties": {
+                "attribution": {
+                    "$ref": "#/definitions/Attribution",
+                    "description": "Attribution and license information for the observed source."
+                },
+                "locator": {
+                    "description": "Location from which the mutable content was observed.",
+                    "type": "string"
+                },
+                "providerId": {
+                    "description": "Stable identifier for the source provider.",
+                    "type": "string"
+                },
+                "reproducibility": {
+                    "const": "best-effort",
+                    "description": "Whether the source observation can be reproduced byte-for-byte.",
+                    "type": "string"
+                },
+                "snapshotId": {
+                    "description": "Snapshot identity is forbidden when reproducibility is not proven.",
+                    "not": {}
+                }
+            },
+            "required": ["attribution", "providerId", "reproducibility"],
+            "type": "object"
+        },
+        "ComponentRef": {
+            "description": "A reference to a versioned component (scheme, layer, guide, access policy, or crosswalk). The `version` may be a concrete semver string or the literal `'latest'`, in which case the highest published semver is resolved at request time.",
+            "properties": {
+                "id": {
+                    "description": "The id of the component.",
+                    "minLength": 1,
+                    "type": "string"
+                },
+                "version": {
+                    "description": "A concrete semver version, or `latest` for the highest published one.",
+                    "pattern": "^(latest|\\d+\\.\\d+(\\.\\d+)?(-[0-9A-Za-z.-]+)?(\\+[0-9A-Za-z.-]+)?)$",
+                    "type": "string"
+                }
+            },
+            "required": ["id", "version"],
+            "type": "object"
+        },
+        "ContentEvidenceSpan": {
+            "description": "Evidence range in the exact accepted UTF-8 document bytes.",
+            "properties": {
+                "end": {
+                    "description": "Zero-based exclusive byte offset.",
+                    "type": "integer"
+                },
+                "matched": {
+                    "description": "Matched source text, present only in the full response profile.",
+                    "type": "string"
+                },
+                "offsetEncoding": {
+                    "const": "utf-8-bytes",
+                    "description": "Frozen offset encoding for document evidence.",
+                    "type": "string"
+                },
+                "rule": {
+                    "$ref": "#/definitions/RuleReference",
+                    "description": "Qualified rule that produced the evidence."
+                },
+                "start": {
+                    "description": "Zero-based inclusive byte offset.",
+                    "type": "integer"
+                }
+            },
+            "required": ["start", "end", "offsetEncoding", "rule"],
+            "type": "object"
+        },
+        "ContextAccessRef": {
+            "description": "The access-policy reference in a Context. An access ref carries the policy's `id` + `version` and optionally a list of layer refs that stack on top of the base. Layers belong inside the access entry because a layer is semantically a derivative of _that_ policy; it cannot be paired with a different base, so nesting it under the policy keeps that coupling explicit.\n\nAn access layer only ever adds. See `AccessLayer` for why overriding or removing an inherited mapping is a composition error rather than a merge.",
+            "properties": {
+                "id": {
+                    "description": "The id of the component.",
+                    "minLength": 1,
+                    "type": "string"
+                },
+                "layers": {
+                    "description": "Optional layer references applied left-to-right after the base access policy.",
+                    "items": {
+                        "$ref": "#/definitions/ComponentRef"
+                    },
+                    "type": "array"
+                },
+                "version": {
+                    "description": "A concrete semver version, or `latest` for the highest published one.",
+                    "pattern": "^(latest|\\d+\\.\\d+(\\.\\d+)?(-[0-9A-Za-z.-]+)?(\\+[0-9A-Za-z.-]+)?)$",
+                    "type": "string"
+                }
+            },
+            "required": ["id", "version"],
+            "type": "object"
+        },
+        "ContextCrosswalkRef": {
+            "description": "A crosswalk reference in a Context. A crosswalk ref carries the crosswalk's `id` + `version` and optionally a list of layer refs that stack on top of the base. Layers belong inside the crosswalk entry because a layer is semantically a derivative of _that_ crosswalk; it cannot be paired with a different base, so nesting it under the crosswalk keeps that coupling explicit.",
+            "properties": {
+                "id": {
+                    "description": "The id of the component.",
+                    "minLength": 1,
+                    "type": "string"
+                },
+                "layers": {
+                    "description": "Optional layer references applied left-to-right after the base crosswalk.",
+                    "items": {
+                        "$ref": "#/definitions/ComponentRef"
+                    },
+                    "type": "array"
+                },
+                "version": {
+                    "description": "A concrete semver version, or `latest` for the highest published one.",
+                    "pattern": "^(latest|\\d+\\.\\d+(\\.\\d+)?(-[0-9A-Za-z.-]+)?(\\+[0-9A-Za-z.-]+)?)$",
+                    "type": "string"
+                }
+            },
+            "required": ["id", "version"],
+            "type": "object"
+        },
+        "ContextGuideRef": {
+            "description": "A guide reference in a Context. A guide ref carries the guide's `id` + `version` and optionally a list of layer refs that stack on top of the base. Layers belong inside the guide entry because a layer is semantically a derivative of _that_ guide; it cannot be paired with a different base, so nesting it under the guide keeps that coupling explicit.\n\nAdding guidance needs no layer, since a Context holds a list of guides. Layering is for tailoring a guide the composing organization received read-only.",
+            "properties": {
+                "id": {
+                    "description": "The id of the component.",
+                    "minLength": 1,
+                    "type": "string"
+                },
+                "layers": {
+                    "description": "Optional layer references applied left-to-right after the base guide.",
+                    "items": {
+                        "$ref": "#/definitions/ComponentRef"
+                    },
+                    "type": "array"
+                },
+                "version": {
+                    "description": "A concrete semver version, or `latest` for the highest published one.",
+                    "pattern": "^(latest|\\d+\\.\\d+(\\.\\d+)?(-[0-9A-Za-z.-]+)?(\\+[0-9A-Za-z.-]+)?)$",
+                    "type": "string"
+                }
+            },
+            "required": ["id", "version"],
+            "type": "object"
+        },
+        "ContextResolution": {
+            "description": "Resolution identity shared by every branch of one Context operation.",
+            "properties": {
+                "artifacts": {
+                    "description": "Ordered artifacts participating in the composition.",
+                    "items": {
+                        "$ref": "#/definitions/ArtifactReference"
+                    },
+                    "type": "array"
+                },
+                "contextId": {
+                    "description": "Resolved Context identifier.",
+                    "type": "string"
+                },
+                "requestedVersion": {
+                    "description": "The version the request named, an alias such as `latest` included, and `latest` when the request named none. `resolvedVersion` is the concrete version that answered. Absent only from a resolution produced in process without a request.",
+                    "type": "string"
+                },
+                "resolvedVersion": {
+                    "description": "Concrete Context version used by the operation.",
+                    "type": "string"
+                },
+                "sources": {
+                    "description": "De-duplicated source observations used by the operation.",
+                    "items": {
+                        "$ref": "#/definitions/SourceReference"
+                    },
+                    "type": "array"
+                }
+            },
+            "required": [
+                "contextId",
+                "resolvedVersion",
+                "artifacts",
+                "sources"
+            ],
+            "type": "object"
+        },
+        "ContextSchemeRef": {
+            "description": "The scheme reference in a Context. A scheme ref carries the scheme's `id` + `version` and optionally a list of layer refs that stack on top of the base. Layers belong inside the scheme block because a layer is semantically a derivative of _that_ scheme; it cannot be paired with a different base, so nesting it under the scheme keeps that coupling explicit.",
+            "properties": {
+                "id": {
+                    "description": "The id of the component.",
+                    "minLength": 1,
+                    "type": "string"
+                },
+                "layers": {
+                    "description": "Optional layer references applied left-to-right after the base scheme.",
+                    "items": {
+                        "$ref": "#/definitions/ComponentRef"
+                    },
+                    "type": "array"
+                },
+                "version": {
+                    "description": "A concrete semver version, or `latest` for the highest published one.",
+                    "pattern": "^(latest|\\d+\\.\\d+(\\.\\d+)?(-[0-9A-Za-z.-]+)?(\\+[0-9A-Za-z.-]+)?)$",
+                    "type": "string"
+                }
+            },
+            "required": ["id", "version"],
+            "type": "object"
+        },
+        "CrosswalkTranslationInput": {
+            "description": "Input to a composed Context crosswalk operation.",
+            "properties": {
+                "crosswalkId": {
+                    "description": "Crosswalk artifact id loaded into the Context.",
+                    "type": "string"
+                },
+                "marking": {
+                    "anyOf": [
+                        {
+                            "type": "string"
+                        },
+                        {
+                            "items": {
+                                "$ref": "#/definitions/Assertion"
+                            },
+                            "type": "array"
+                        }
+                    ],
+                    "description": "Source marking text or previously parsed source assertions."
+                }
+            },
+            "required": ["crosswalkId", "marking"],
+            "type": "object"
+        },
+        "DecisionProposalOrigin": {
+            "description": "Describes how a decision proposal entered the analyst workflow.",
+            "enum": ["analyst-authored", "agent-drafted", "host-imported"],
+            "type": "string"
+        },
+        "DocumentResponseProfile": {
+            "description": "Controls how much evidence detail a document operation returns.",
+            "enum": ["summary", "standard", "full"],
+            "type": "string"
+        },
+        "EffectiveTestCase": {
+            "description": "Case origin and the exact child that supplied its effective expectation.",
+            "properties": {
+                "override": {
+                    "description": "The override that replaced the case's assertions, when one did.",
+                    "properties": {
+                        "owner": {
+                            "$ref": "#/definitions/ComponentRef",
+                            "description": "The suite that declares the override."
+                        },
+                        "reason": {
+                            "description": "Why the inherited expectation is replaced.",
+                            "type": "string"
+                        }
+                    },
+                    "required": ["owner", "reason"],
+                    "type": "object"
+                },
+                "owner": {
+                    "$ref": "#/definitions/ComponentRef",
+                    "description": "The suite that declares the case."
+                },
+                "test": {
+                    "$ref": "#/definitions/TestCase",
+                    "description": "The case as it runs, with any override's assertions in place."
+                }
+            },
+            "required": ["test", "owner"],
+            "type": "object"
+        },
+        "EffectiveTestSuite": {
+            "description": "Resolved parent chain; no parent coverage or execution results are inherited.",
+            "properties": {
+                "ancestors": {
+                    "description": "The parent chain, root first, each with its content digest.",
+                    "items": {
+                        "properties": {
+                            "digest": {
+                                "description": "Content digest of that parent suite document.",
+                                "type": "string"
+                            },
+                            "ref": {
+                                "$ref": "#/definitions/ComponentRef",
+                                "description": "The parent suite, at an exact version."
+                            }
+                        },
+                        "required": ["ref", "digest"],
+                        "type": "object"
+                    },
+                    "type": "array"
+                },
+                "cases": {
+                    "description": "Every effective case, parents' first, in declaration order.",
+                    "items": {
+                        "$ref": "#/definitions/EffectiveTestCase"
+                    },
+                    "type": "array"
+                },
+                "composition": {
+                    "$ref": "#/definitions/TestComposition",
+                    "description": "The composition the cases run against: the nearest suite in the chain that declares one."
+                },
+                "digest": {
+                    "description": "Content digest of this resolved suite, checked again before it runs.",
+                    "type": "string"
+                },
+                "suite": {
+                    "$ref": "#/definitions/ComponentRef",
+                    "description": "The suite that was resolved."
+                },
+                "suiteDigest": {
+                    "description": "Exact selected suite document content, including its authored metadata.",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "suite",
+                "suiteDigest",
+                "composition",
+                "ancestors",
+                "cases",
+                "digest"
+            ],
+            "type": "object"
+        },
+        "GuideDeterminationInput": {
+            "description": "Set-semantic analyst input supplied to guide evaluation.",
+            "properties": {
+                "findings": {
+                    "description": "Decisions for lexical nominations.",
+                    "items": {
+                        "$ref": "#/definitions/GuideFindingDetermination"
+                    },
+                    "type": "array"
+                },
+                "manualSelections": {
+                    "description": "Qualified rules manually selected by the analyst.",
+                    "items": {
+                        "$ref": "#/definitions/ManualGuideSelectionInput"
+                    },
+                    "type": "array"
+                }
+            },
+            "required": ["findings", "manualSelections"],
+            "type": "object"
+        },
+        "GuideFindingDecision": {
+            "description": "Analyst determination for a nominated guide finding.",
+            "enum": ["accepted", "rejected"],
+            "type": "string"
+        },
+        "GuideFindingDetermination": {
+            "description": "Records an explicit analyst decision about one lexical nomination.",
+            "properties": {
+                "decision": {
+                    "$ref": "#/definitions/GuideFindingDecision",
+                    "description": "Analyst decision for the nominated occurrence."
+                },
+                "documentDigest": {
+                    "description": "Digest of the exact document revision reviewed.",
+                    "type": "string"
+                },
+                "findingId": {
+                    "description": "Stable identifier of the exact nominated occurrence.",
+                    "type": "string"
+                },
+                "proposalOrigin": {
+                    "$ref": "#/definitions/DecisionProposalOrigin",
+                    "description": "Optional provenance for how the decision proposal was drafted."
+                },
+                "reason": {
+                    "description": "Analyst-supplied reason for the decision.",
+                    "type": "string"
+                }
+            },
+            "required": ["findingId", "documentDigest", "decision", "reason"],
+            "type": "object"
+        },
+        "ManualGuideSelectionInput": {
+            "description": "Input for an analyst-selected rule that lexical scanning missed.",
+            "properties": {
+                "documentDigest": {
+                    "description": "Digest of the exact document revision reviewed.",
+                    "type": "string"
+                },
+                "evidence": {
+                    "description": "Evidence in the submitted document supporting the selection.",
+                    "items": {
+                        "$ref": "#/definitions/ContentEvidenceSpan"
+                    },
+                    "type": "array"
+                },
+                "proposalOrigin": {
+                    "$ref": "#/definitions/DecisionProposalOrigin",
+                    "description": "Optional provenance for how the selection proposal was drafted."
+                },
+                "reason": {
+                    "description": "Analyst-supplied reason for the selection.",
+                    "type": "string"
+                },
+                "rule": {
+                    "$ref": "#/definitions/RuleReference",
+                    "description": "Qualified loaded rule selected by the analyst."
+                }
+            },
+            "required": ["documentDigest", "rule", "evidence", "reason"],
+            "type": "object"
+        },
+        "ProcessingContext": {
+            "description": "Caller-supplied context describing the role of a marking being processed. No context (or role='whole') means an overall/document-level marking. role='part' means a portion/paragraph that belongs to another marking.",
+            "properties": {
+                "partOf": {
+                    "description": "The whole marking this is part of (when role='part').\n\nThe whole does two jobs. In a role-aware scheme it is the reading context for the scheme's whole-aware rules: a rule condition with `target: 'context'` is answered from it. And in every scheme, role-aware or not, `process`, `validate` and `explain` compare a part that is valid on its own with its whole. That is the comparison a whole is judged by against its parts and the one `checkCoverage` gives, asked of this one part: category by category, in the direction each category's rollup declares. A category a rollup pipeline resolves is judged instead by what rolling the whole up with this part would add or drop. A category whose rollup has no direction one part can be judged by, such as `first`, is left to the whole.\n\nWhat the part carries beyond its whole is one `_exceeds_whole` error on the part. Its `affectedConcepts` names every finding: first what the whole does not cover, then what the whole carries that the part does not allow. Its `categoryId` is set when every finding is in one category. It offers no fix, because whether the part or the whole should change is the author's call. A part that breaks its own rules reports those errors and is not compared. Its own rules are the scheme's: an in-process engine's `afterValidate` plugin runs after the comparison and does not change whether it happens. A call's `parts` and a document scan or audit read each part in the whole without this comparison; they judge coverage on the whole instead.\n\nA part is compared with its whole as the engine settles the whole: read, modernized, completed by what the scheme's rules imply and judged, the same settling `valid` reports for the whole on its own. A whole spelled with a retired concept is compared as its replacement, and a fact the whole's rules add is one the part is compared with.\n\nThe same holds wherever a part meets its whole: here; for each of a call's `parts`, however the call's whole came, as text or as facts; and for each input `SchemeEngineAdapter.aggregate` reads against a whole. A part that takes a value from its whole, such as a list it stands for, takes it from that settled whole.\n\nWhat the part gets depends on the state of its whole:\n\n- A whole that reads and is valid is verified. The part's rules read it, and `process`, `validate` and `explain` compare the part with it.\n- A whole that reads but is invalid, or does not read, is not verified. The part is still read and judged by its own rules but is not compared with the whole, so it never carries `_exceeds_whole`. It always carries the `_whole_unverified` notice.\n- With no whole given, the part is judged by its own rules alone. It carries the `_whole_unverified` notice only when one of its rules was left unresolved.\n\nWithout a verified whole, what needs the whole is left open instead of guessed: a rule condition with `target: 'context'` is unresolved, so its rule never fires, as `RuleConditionTarget` describes.",
+                    "properties": {
+                        "assertions": {
+                            "description": "Pre-resolved assertions of the whole marking (populated by the engine)",
+                            "items": {
+                                "$ref": "#/definitions/Assertion"
+                            },
+                            "type": "array"
+                        },
+                        "rendered": {
+                            "description": "Rendered string of the whole marking",
+                            "type": "string"
+                        }
+                    },
+                    "required": ["rendered"],
+                    "type": "object"
+                },
+                "role": {
+                    "$ref": "#/definitions/ProcessingRole",
+                    "description": "Role of this marking: 'whole' for overall markings, 'part' for portions"
+                }
+            },
+            "type": "object"
+        },
+        "ProcessingRole": {
+            "description": "Structural role of a marking within a processing operation.",
+            "enum": ["whole", "part"],
+            "type": "string"
+        },
+        "Record<string,unknown>": {
+            "additionalProperties": {},
+            "type": "object"
+        },
+        "ReproducibleRuleSourceReference": {
+            "description": "Compact source join carried by a qualified rule reference.",
+            "properties": {
+                "providerId": {
+                    "description": "Stable identifier for the source provider.",
+                    "type": "string"
+                },
+                "reproducibility": {
+                    "const": "reproducible",
+                    "description": "Whether the source observation can be reproduced byte-for-byte.",
+                    "type": "string"
+                },
+                "snapshotId": {
+                    "description": "Immutable snapshot containing the rule.",
+                    "type": "string"
+                }
+            },
+            "required": ["providerId", "reproducibility", "snapshotId"],
+            "type": "object"
+        },
+        "ReproducibleSourceReference": {
+            "description": "Reproducible source identity and mandatory attribution for an operation.",
+            "properties": {
+                "attribution": {
+                    "$ref": "#/definitions/Attribution",
+                    "description": "Attribution and license information for the observed source."
+                },
+                "locator": {
+                    "description": "Location from which the content was observed.",
+                    "type": "string"
+                },
+                "providerId": {
+                    "description": "Stable identifier for the source provider.",
+                    "type": "string"
+                },
+                "reproducibility": {
+                    "const": "reproducible",
+                    "description": "Whether the source observation can be reproduced byte-for-byte.",
+                    "type": "string"
+                },
+                "snapshotId": {
+                    "description": "Immutable content identity.",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "attribution",
+                "providerId",
+                "reproducibility",
+                "snapshotId"
+            ],
+            "type": "object"
+        },
+        "RuleReference": {
+            "description": "Identifies the exact resolved semantics of one policy rule.",
+            "properties": {
+                "artifact": {
+                    "$ref": "#/definitions/ArtifactReference",
+                    "description": "Artifact that owns the rule."
+                },
+                "ruleDigest": {
+                    "description": "RFC 8785/SHA-256 digest of the canonical resolved rule content.",
+                    "type": "string"
+                },
+                "ruleId": {
+                    "description": "Rule identifier within the owning artifact.",
+                    "type": "string"
+                },
+                "source": {
+                    "$ref": "#/definitions/RuleSourceReference",
+                    "description": "External source identity when the rule was not supplied inline."
+                }
+            },
+            "required": ["artifact", "ruleId", "ruleDigest"],
+            "type": "object"
+        },
+        "RuleSourceReference": {
+            "anyOf": [
+                {
+                    "$ref": "#/definitions/ReproducibleRuleSourceReference"
+                },
+                {
+                    "$ref": "#/definitions/BestEffortRuleSourceReference"
+                }
+            ],
+            "description": "Compact source join carried by a qualified rule reference."
+        },
+        "SourceReference": {
+            "anyOf": [
+                {
+                    "$ref": "#/definitions/ReproducibleSourceReference"
+                },
+                {
+                    "$ref": "#/definitions/BestEffortSourceReference"
+                }
+            ],
+            "description": "Records source identity and mandatory attribution for an operation."
+        },
+        "TestAssertion": {
+            "anyOf": [
+                {
+                    "properties": {
+                        "matcher": {
+                            "description": "How the value at `path` is compared with `value`.",
+                            "enum": [
+                                "equals",
+                                "notEquals",
+                                "contains",
+                                "excludes"
+                            ],
+                            "type": "string"
+                        },
+                        "path": {
+                            "description": "The JSON path to the value, one segment per key or array index.",
+                            "items": {
+                                "type": "string"
+                            },
+                            "type": "array"
+                        },
+                        "value": {
+                            "$ref": "#/definitions/TestValue",
+                            "description": "The expected value."
+                        }
+                    },
+                    "required": ["path", "matcher", "value"],
+                    "type": "object"
+                },
+                {
+                    "properties": {
+                        "matcher": {
+                            "description": "Whether the value at `path` must be present or absent.",
+                            "enum": ["exists", "absent"],
+                            "type": "string"
+                        },
+                        "path": {
+                            "description": "The JSON path to the value, one segment per key or array index.",
+                            "items": {
+                                "type": "string"
+                            },
+                            "type": "array"
+                        }
+                    },
+                    "required": ["path", "matcher"],
+                    "type": "object"
+                }
+            ],
+            "description": "One expected result at an exact JSON path. Array indices are decimal path segments. Equality compares the complete value; contains and excludes check string substrings, object fields, or an array item matching the expected value's fields. Exists and absent test presence, including values that are false or null, and omit value."
+        },
+        "TestCase": {
+            "description": "One portable input and its separately authored oracle.",
+            "properties": {
+                "assertions": {
+                    "description": "Every assertion must match for the case to pass.",
+                    "items": {
+                        "$ref": "#/definitions/TestAssertion"
+                    },
+                    "minItems": 1,
+                    "type": "array"
+                },
+                "description": {
+                    "description": "What the case checks and why.",
+                    "type": "string"
+                },
+                "id": {
+                    "description": "Case id, unique across the suite and its parents.",
+                    "type": "string"
+                },
+                "input": {
+                    "$ref": "#/definitions/TestInput",
+                    "description": "The operation's input."
+                },
+                "name": {
+                    "description": "Short human-readable case name.",
+                    "type": "string"
+                },
+                "operation": {
+                    "$ref": "#/definitions/TestOperation",
+                    "description": "The Context operation the case runs."
+                },
+                "options": {
+                    "$ref": "#/definitions/TestOptions",
+                    "description": "Operation-native options, with unknown keys refused by the runner."
+                }
+            },
+            "required": ["id", "operation", "input", "assertions"],
+            "type": "object"
+        },
+        "TestCaseRun": {
+            "description": "Immutable execution of one effective case against one pinned composition.",
+            "properties": {
+                "actual": {
+                    "$ref": "#/definitions/TestValue",
+                    "description": "The operation's result. Absent when the case did not produce one."
+                },
+                "caseId": {
+                    "description": "The id of the case.",
+                    "type": "string"
+                },
+                "coverage": {
+                    "$ref": "#/definitions/TestCoverageReference",
+                    "description": "What the case was observed to cover."
+                },
+                "durationMs": {
+                    "description": "How long the case took, in milliseconds.",
+                    "type": "number"
+                },
+                "error": {
+                    "description": "Why the case did not run to a result. Set for `error` and `not-evaluated`.",
+                    "type": "string"
+                },
+                "mismatches": {
+                    "description": "Each assertion that did not match. Empty when the case passed.",
+                    "items": {
+                        "$ref": "#/definitions/TestMismatch"
+                    },
+                    "type": "array"
+                },
+                "operation": {
+                    "$ref": "#/definitions/TestOperation",
+                    "description": "The operation the case ran."
+                },
+                "status": {
+                    "description": "`passed`, `failed` when an assertion did not match, `error` when the operation could not run, or `not-evaluated` when the run stopped first.",
+                    "enum": ["passed", "failed", "error", "not-evaluated"],
+                    "type": "string"
+                }
+            },
+            "required": [
+                "caseId",
+                "operation",
+                "status",
+                "coverage",
+                "mismatches",
+                "durationMs"
+            ],
+            "type": "object"
+        },
+        "TestComposition": {
+            "description": "Exact artifact composition; suite validation refuses mutable versions.",
+            "properties": {
+                "access": {
+                    "$ref": "#/definitions/ContextAccessRef",
+                    "description": "The access policy the cases run with, at an exact version."
+                },
+                "crosswalks": {
+                    "description": "The crosswalks the cases run with, each at an exact version.",
+                    "items": {
+                        "$ref": "#/definitions/ContextCrosswalkRef"
+                    },
+                    "type": "array"
+                },
+                "guides": {
+                    "description": "The guides the cases run with, each at an exact version.",
+                    "items": {
+                        "$ref": "#/definitions/ContextGuideRef"
+                    },
+                    "type": "array"
+                },
+                "scheme": {
+                    "$ref": "#/definitions/ContextSchemeRef",
+                    "description": "The scheme the cases run against, at an exact version, with any layers."
+                }
+            },
+            "required": ["scheme"],
+            "type": "object"
+        },
+        "TestCoverageObservation": {
+            "description": "Actual engine evidence. Skipped rules are retained but never count as exercised.",
+            "properties": {
+                "artifact": {
+                    "$ref": "#/definitions/ArtifactReference",
+                    "description": "The artifact the member belongs to."
+                },
+                "kind": {
+                    "description": "Whether the member is a concept or a rule.",
+                    "enum": ["concept", "rule"],
+                    "type": "string"
+                },
+                "memberId": {
+                    "description": "The concept or rule id within that artifact.",
+                    "type": "string"
+                },
+                "rule": {
+                    "$ref": "#/definitions/RuleReference",
+                    "description": "The qualified rule reference, for a rule member."
+                },
+                "state": {
+                    "description": "What the run observed: `used` for a concept, `evaluated` or `matched` for a rule, or `skipped` for a rule that did not apply.",
+                    "enum": ["used", "evaluated", "matched", "skipped"],
+                    "type": "string"
+                }
+            },
+            "required": ["artifact", "kind", "memberId", "state"],
+            "type": "object"
+        },
+        "TestCoverageReference": {
+            "description": "Compact case evidence referring to the run's exact native observation dictionary.",
+            "properties": {
+                "families": {
+                    "description": "Coverage completeness per artifact family.",
+                    "properties": {
+                        "access": {
+                            "description": "`complete` when the observations list every access member the operation touched, `incomplete` when they may be partial, and `unavailable` when the operation reports no access coverage.",
+                            "enum": ["complete", "incomplete", "unavailable"],
+                            "type": "string"
+                        },
+                        "guide": {
+                            "description": "`complete` when the observations list every guide member the operation touched, `incomplete` when they may be partial, and `unavailable` when the operation reports no guide coverage.",
+                            "enum": ["complete", "incomplete", "unavailable"],
+                            "type": "string"
+                        },
+                        "scheme": {
+                            "description": "`complete` when the observations list every scheme member the operation touched, `incomplete` when they may be partial, and `unavailable` when the operation reports no scheme coverage.",
+                            "enum": ["complete", "incomplete", "unavailable"],
+                            "type": "string"
+                        }
+                    },
+                    "required": ["scheme", "guide", "access"],
+                    "type": "object"
+                },
+                "observationIndices": {
+                    "description": "Zero-based indices into TestSuiteRun.coverageObservations.",
+                    "items": {
+                        "type": "number"
+                    },
+                    "type": "array"
+                }
+            },
+            "required": ["families", "observationIndices"],
+            "type": "object"
+        },
+        "TestInput": {
+            "description": "Typed, inert operation inputs; boundary validation enforces each operation's key set.",
+            "properties": {
+                "assertions": {
+                    "description": "The facts an operation reads instead of marking text, or that `render` and `suggestForCategories` start from.",
+                    "items": {
+                        "$ref": "#/definitions/Assertion"
+                    },
+                    "type": "array"
+                },
+                "categoryIds": {
+                    "description": "The categories a `suggestForCategories` case asks options for.",
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array"
+                },
+                "context": {
+                    "additionalProperties": {
+                        "$ref": "#/definitions/TestValue"
+                    },
+                    "description": "Request context values a `checkAccess` case passes to the access policy.",
+                    "type": "object"
+                },
+                "guideDeterminations": {
+                    "$ref": "#/definitions/GuideDeterminationInput",
+                    "description": "Analyst decisions on guide nominations, for a document case."
+                },
+                "guideId": {
+                    "description": "The guide a `guideScan` or `guideEvaluate` case uses. A scan with none covers every loaded guide.",
+                    "type": "string"
+                },
+                "marking": {
+                    "description": "The marking text a single-marking operation reads.",
+                    "type": "string"
+                },
+                "markings": {
+                    "description": "The markings an `aggregate` case rolls up.",
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array"
+                },
+                "responseProfile": {
+                    "$ref": "#/definitions/DocumentResponseProfile",
+                    "description": "How much a document case's result carries."
+                },
+                "ruleIds": {
+                    "description": "The guide rules a `guideEvaluate` case selects.",
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array"
+                },
+                "text": {
+                    "description": "The text a scan or document operation reads.",
+                    "type": "string"
+                },
+                "translation": {
+                    "$ref": "#/definitions/CrosswalkTranslationInput",
+                    "description": "The translation request for a `translate` case."
+                },
+                "userAttributes": {
+                    "additionalProperties": {
+                        "$ref": "#/definitions/TestValue"
+                    },
+                    "description": "The user's attributes for a `checkAccess` case.",
+                    "type": "object"
+                }
+            },
+            "type": "object"
+        },
+        "TestMismatch": {
+            "description": "One failed oracle, preserving both expected and observed values.",
+            "properties": {
+                "actual": {
+                    "$ref": "#/definitions/TestValue",
+                    "description": "The value found at the assertion's path."
+                },
+                "expected": {
+                    "$ref": "#/definitions/TestValue",
+                    "description": "The value the assertion expected."
+                },
+                "path": {
+                    "description": "Which assertion failed, as `assertions.` followed by its index, or `limits.status` for a `schemeScan` case whose scan stopped before the end of the text when none of its assertions is on `limits.status`.",
+                    "type": "string"
+                }
+            },
+            "required": ["path", "expected", "actual"],
+            "type": "object"
+        },
+        "TestOperation": {
+            "description": "Canonical Context operations available to a portable test case.\n\n`valid` and `inputWasValid` mean the same under `validate` and `process`, so a case that asserts them reads the same under either: no option changes how a marking is settled (see `TestOptions`). `rendered` reads the same under both too: a case that names no `outputFormat` gets the default for the marking's role, by the one rule `RenderConfigDoc.surfaces` states. A process case adds the authoring fields to assert on, and an `explain` case asserts on the trace, which only explain returns.",
+            "enum": [
+                "process",
+                "validate",
+                "explain",
+                "aggregate",
+                "render",
+                "suggest",
+                "suggestForCategories",
+                "schemeScan",
+                "guideScan",
+                "guideEvaluate",
+                "checkAccess",
+                "auditDocument",
+                "assessDocumentAccess",
+                "translate"
+            ],
+            "type": "string"
+        },
+        "TestOptions": {
+            "description": "Inert native operation options; executable callbacks and adapters cannot enter a suite.\n\nNone of them changes how a marking is settled, so there is no option to settle less than the engine does. Whether text was right as written is what `inputWasValid` and `appliedFixes` answer, and reading is tolerant on purpose.",
+            "properties": {
+                "confidence": {
+                    "description": "Whether a `guideScan` case adds advisory confidence to each span.",
+                    "type": "boolean"
+                },
+                "context": {
+                    "$ref": "#/definitions/ProcessingContext",
+                    "description": "The role the input is read in and the whole it belongs to."
+                },
+                "filter": {
+                    "description": "The text a `suggest` case filters concepts by.",
+                    "type": "string"
+                },
+                "includeGated": {
+                    "description": "Whether a `suggest` case also lists concepts the filter matches but the scheme's rules currently gate.",
+                    "type": "boolean"
+                },
+                "inputFormat": {
+                    "description": "The format the input is written in. Omitted, recognition works it out.",
+                    "type": "string"
+                },
+                "outputFormat": {
+                    "description": "The format the result is written in.",
+                    "type": "string"
+                },
+                "outputs": {
+                    "description": "The outputs a process case writes into `renders`, by output address.",
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array"
+                },
+                "parts": {
+                    "description": "Part markings the whole must cover, for a validate, process or explain case. The whole is judged as covering them.",
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array"
+                },
+                "preservation": {
+                    "description": "What a `render` case asks for: `projection`, the ordinary human projection, or `full`, which fails rather than leave any part of the state unwritten.",
+                    "enum": ["projection", "full"],
+                    "type": "string"
+                },
+                "suggestFor": {
+                    "description": "The categories a process case asks picker options for.",
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array"
+                },
+                "surface": {
+                    "description": "The validation surface the input is, by scheme scope id. Omitted, the input is a whole marking.",
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "TestValue": {
+            "anyOf": [
+                {
+                    "type": "null"
+                },
+                {
+                    "type": "boolean"
+                },
+                {
+                    "type": "number"
+                },
+                {
+                    "type": "string"
+                },
+                {
+                    "items": {
+                        "$ref": "#/definitions/TestValue"
+                    },
+                    "type": "array"
+                },
+                {
+                    "additionalProperties": {
+                        "$ref": "#/definitions/TestValue"
+                    },
+                    "type": "object"
+                }
+            ],
+            "description": "Inert JSON data accepted by portable test inputs and expectations."
+        }
+    },
+    "description": "Portable report; filtered runs retain their denominator and cannot claim completeness.",
+    "properties": {
+        "cases": {
+            "description": "One entry per selected case, in suite order.",
+            "items": {
+                "$ref": "#/definitions/TestCaseRun"
+            },
+            "type": "array"
+        },
+        "complete": {
+            "description": "True when every case in the suite ran. A filtered run is never complete.",
+            "type": "boolean"
+        },
+        "coverageObservations": {
+            "description": "Exact native evidence shared across cases without repeating artifact identities.",
+            "items": {
+                "$ref": "#/definitions/TestCoverageObservation"
+            },
+            "type": "array"
+        },
+        "engineVersion": {
+            "description": "The version of the engine that ran the cases.",
+            "type": "string"
+        },
+        "executionDigest": {
+            "description": "Suite, effective cases, exact resolution, target, and engine content identity.",
+            "type": "string"
+        },
+        "finishedAt": {
+            "description": "When the run finished, as an ISO 8601 timestamp.",
+            "type": "string"
+        },
+        "reportVersion": {
+            "const": 3,
+            "description": "The report format version.",
+            "type": "number"
+        },
+        "reproducibility": {
+            "description": "Missing artifact digests or mutable sources prevent byte-for-byte replay claims.",
+            "enum": ["reproducible", "best-effort"],
+            "type": "string"
+        },
+        "resolution": {
+            "$ref": "#/definitions/ContextResolution",
+            "description": "The exact artifacts and sources the run resolved."
+        },
+        "selected": {
+            "description": "How many cases the run selected.",
+            "type": "integer"
+        },
+        "startedAt": {
+            "description": "When the run started, as an ISO 8601 timestamp.",
+            "type": "string"
+        },
+        "suite": {
+            "$ref": "#/definitions/EffectiveTestSuite",
+            "description": "The resolved suite the run executed."
+        },
+        "target": {
+            "description": "Execution configuration identity, never a credential or exported network URL.",
+            "type": "string"
+        },
+        "total": {
+            "description": "How many cases the suite holds.",
+            "type": "integer"
+        },
+        "totals": {
+            "description": "Case counts by status.",
+            "properties": {
+                "errored": {
+                    "description": "Cases whose operation could not run.",
+                    "type": "integer"
+                },
+                "failed": {
+                    "description": "Cases with at least one mismatch.",
+                    "type": "integer"
+                },
+                "notEvaluated": {
+                    "description": "Cases the run stopped before evaluating.",
+                    "type": "integer"
+                },
+                "passed": {
+                    "description": "Cases that passed.",
+                    "type": "integer"
+                }
+            },
+            "required": ["passed", "failed", "errored", "notEvaluated"],
+            "type": "object"
+        }
+    },
+    "required": [
+        "reportVersion",
+        "coverageObservations",
+        "suite",
+        "engineVersion",
+        "target",
+        "resolution",
+        "executionDigest",
+        "reproducibility",
+        "startedAt",
+        "finishedAt",
+        "selected",
+        "total",
+        "complete",
+        "totals",
+        "cases"
+    ],
+    "type": "object"
+}

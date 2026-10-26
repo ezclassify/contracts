@@ -1,0 +1,47 @@
+# F15: identical repeated concepts against the same concept with two values.
+#
+# The category holds several concepts and says what goes between them, so a
+# repeat of one concept is a duplicate to merge. Two different values of a
+# single-valued concept are not a duplicate: they are conflicting explicit
+# facts, and both stay in the state. Overfill is a reason to report the marking
+# invalid, never a reason to delete one of the two.
+scheme:
+  id: p1-f15
+  version: 1.0.0
+  name: 'F15: repeats and conflicts'
+  default_scope: banner
+  scopes: [{ id: banner, label: Banner }]
+  data:
+    categories:
+      - id: handling
+        label: Handling
+        rollup: union
+        required: true
+      - id: reference
+        label: Reference
+        rollup: first
+        single: true
+    concepts:
+      inline:
+        - { id: HANDLING_A, name: Handling A, views: { default: HA }, categories: [handling] }
+        - { id: HANDLING_B, name: Handling B, views: { default: HB }, categories: [handling] }
+        - id: REFERENCE_ID
+          name: Reference identifier
+          views: { default: '{value}' }
+          categories: [reference]
+          text_input:
+            label: Reference
+            encoding: { type: text, max_length: 64 }
+  render:
+    default: banner
+    formats:
+      - id: banner
+        surface: banner
+        mode: inline
+        view: default
+        separator: '//'
+        fields:
+          - category: handling
+            separator: '/'
+          - category: reference
+            prefix: 'REF '

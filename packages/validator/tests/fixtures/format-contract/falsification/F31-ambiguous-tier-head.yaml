@@ -1,0 +1,52 @@
+# CHILD has two taxonomy parents, and both are values this field writes. The
+# tier relation therefore does not select one composition head. A field that
+# writes only one of these parents is valid and is covered by the positive test.
+scheme:
+  id: p1-f31
+  version: 1.0.0
+  name: 'F31: ambiguous tier head'
+  default_scope: banner
+  scopes:
+    - id: banner
+      label: Banner
+  data:
+    categories:
+      - id: program
+        label: Programs
+        rollup: union
+        required: true
+      - id: taxonomy
+        label: Taxonomy
+        rollup: union
+    concepts:
+      inline:
+        - id: HEAD_ONE
+          name: Head one
+          views:
+            default: H1
+          categories: [program]
+        - id: HEAD_TWO
+          name: Head two
+          views:
+            default: H2
+          categories: [program, taxonomy]
+        - id: CHILD
+          name: Child
+          views:
+            default: C
+          categories: [program]
+          parents: [HEAD_ONE, HEAD_TWO]
+          tier: child
+  render:
+    default: banner
+    formats:
+      - id: banner
+        surface: banner
+        mode: inline
+        view: default
+        fields:
+          - category: program
+            separator: '/'
+            tiers:
+              - tier: child
+                attached_by: '-'

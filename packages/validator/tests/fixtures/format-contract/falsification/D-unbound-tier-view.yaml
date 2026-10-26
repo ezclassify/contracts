@@ -1,0 +1,45 @@
+# EXPECTS plan/unbound-tier-view, twice.
+#
+# The first entry composes the subprogram tier in a view none of that tier's
+# concepts declare, so the composed token has nothing to print. The second
+# names a tier no concept this field writes carries at all, so the rule applies
+# to nothing.
+#
+# Under the old `composed_view` both of these fell back silently to the format's
+# view, which is how a composition rule could be wrong for years without
+# anything noticing.
+scheme:
+  id: p1-unbound-tier-view
+  version: 1.0.0
+  name: 'diagnostic: unbound tier view'
+  default_scope: banner
+  scopes: [{ id: banner, label: Banner }]
+  data:
+    categories:
+      - id: program
+        label: Programs
+        rollup: union
+        required: true
+    concepts:
+      inline:
+        - { id: PROGRAM_ROOT, name: Program root, views: { default: ROOT }, categories: [program] }
+        - id: PROGRAM_PART
+          name: Program part
+          views: { default: PART }
+          categories: [program]
+          parents: [PROGRAM_ROOT]
+          tier: subprogram
+  render:
+    default: banner
+    formats:
+      - id: banner
+        surface: banner
+        mode: inline
+        view: default
+        separator: '//'
+        fields:
+          - category: program
+            separator: '/'
+            tiers:
+              - { tier: subprogram, attached_by: '-', view: abbreviated }
+              - { tier: element, attached_by: ' ' }

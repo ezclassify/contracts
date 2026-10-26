@@ -1,0 +1,29 @@
+{
+    "name": "@ezclassify/tsconfig",
+    "version": "1.0.0-dev.30",
+    "description": "Shared TypeScript base configurations for EzClassify projects",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/ezclassify/contracts.git",
+        "directory": "packages/tsconfig"
+    },
+    "homepage": "https://ezclassify.com",
+    "author": "EzClassify, LLC",
+    "license": "Apache-2.0",
+    "engines": {
+        "node": ">=22.0.0"
+    },
+    "files": [
+        "app.json",
+        "library.json",
+        "test.json",
+        "README.md"
+    ],
+    "scripts": {
+        "prepublishOnly": "npm run verify:publish",
+        "verify:publish": "node -e \"const fs=require('node:fs'); for (const file of ['library.json','app.json','test.json']) JSON.parse(fs.readFileSync(file,'utf8'));\""
+    },
+    "peerDependencies": {
+        "typescript": "5.9.3"
+    }
+}

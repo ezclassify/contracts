@@ -1,0 +1,77 @@
+# Tier composition and composed views.
+#
+# `composed_view` was a format-level setting for something that is a property of
+# how one field writes one category. Two fields may write the same tier family
+# differently, and now they can say so.
+#
+# The key is `attached_by`, not `separator`. Everywhere else in this contract a
+# separator joins siblings, and this is a child-to-parent boundary: read aloud,
+# the subprogram tier is attached by a hyphen.
+#
+# A concept that declares the tier view uses it; one that does not keeps the
+# field's view. The compiler checks that the view exists on the tier's concepts,
+# which is what the old silent fallback never did.
+scheme:
+  id: p1-tiers
+  version: 1.0.0
+  name: 'format fixture: tier composition'
+  default_scope: banner
+  scopes:
+    - id: banner
+      label: Banner
+  data:
+    categories:
+      - id: program
+        label: Programs
+        rollup: union
+        required: true
+    concepts:
+      inline:
+        - id: PROGRAM_ROOT
+          name: Program root
+          views: { default: PROGRAM ROOT, abbreviated: PR }
+          categories: [program]
+        - id: PROGRAM_PART
+          name: Program part
+          views: { default: PART, abbreviated: PT }
+          categories: [program]
+          parents: [PROGRAM_ROOT]
+          tier: subprogram
+        - id: PROGRAM_LEAF
+          name: Program leaf
+          views: { default: LEAF, abbreviated: LF }
+          categories: [program]
+          parents: [PROGRAM_PART]
+          tier: element
+  render:
+    default: banner
+    formats:
+      - id: banner
+        surface: banner
+        mode: inline
+        view: default
+        separator: '//'
+        fields:
+          - category: program
+            separator: '/'
+            tiers:
+              - tier: subprogram
+                attached_by: '-'
+                view: abbreviated
+              - tier: element
+                attached_by: ' '
+                view: abbreviated
+
+      - id: long_banner
+        surface: banner
+        mode: inline
+        view: default
+        separator: '//'
+        fields:
+          - category: program
+            separator: '/'
+            tiers:
+              - tier: subprogram
+                attached_by: '-'
+              - tier: element
+                attached_by: ' '

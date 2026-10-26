@@ -1,0 +1,56 @@
+# F05: a free-text value that can contain the syntax framing it.
+#
+# EXPECTS plan/unframable-value, as a WARNING.
+#
+# A block format puts each field on its own line. A citation containing a
+# newline, followed by text that looks like the next field, would be written out
+# and read back as two fields. The format declares plain text with no escape, so
+# for such a value there is no spelling that survives the round trip.
+#
+# The document is valid. Most citations are fine, and the ones that are not are
+# an unrepresentable-value result at run time, reported against the value that
+# caused it. Refusing the document here would leave an author one way out:
+# declaring an escape mechanism the represented format does not have, which puts
+# a false statement in the scheme and makes a renderer emit text no consumer
+# accepts.
+scheme:
+  id: p1-f05
+  version: 1.0.0
+  name: 'F05: unframable value'
+  default_scope: authority
+  scopes: [{ id: authority, label: Authority }]
+  data:
+    categories:
+      - id: source
+        label: Source
+        rollup: first
+        single: true
+        required: true
+      - id: reason
+        label: Reason
+        rollup: union
+    concepts:
+      inline:
+        - id: SOURCE_CITATION
+          name: A named source
+          views: { default: '{value}' }
+          categories: [source]
+          text_input: { label: Source citation, required: true }
+        - { id: REASON_ONE, name: Reason one, views: { default: R1 }, categories: [reason] }
+  render:
+    default: authority
+    formats:
+      - id: authority
+        surface: authority
+        mode: block
+        view: default
+        separator: "\n"
+        syntax:
+          type: text
+          escape: none
+        fields:
+          - category: source
+            prefix: 'Derived From: '
+          - category: reason
+            prefix: 'Reason: '
+            separator: ', '

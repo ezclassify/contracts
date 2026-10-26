@@ -1,0 +1,57 @@
+# F28c: an alias beside a prefix that is written conditionally.
+#
+# EXPECTS no diagnostics.
+#
+# A prefix written as a list of conditional parts has no single spelling: which
+# parts it writes depends on the state. So it claims no opening, and an alias
+# that happens to read like the concatenation of all its parts collides with
+# nothing. Claiming a spelling a field might never write would report a line
+# that is not there as a line two fields open.
+scheme:
+  id: p1-f28c
+  version: 1.0.0
+  name: 'F28c: an alias beside a conditional prefix'
+  default_scope: block
+  scopes: [{ id: block, label: Block }]
+  data:
+    categories:
+      - id: author
+        label: Author
+        rollup: union
+      - id: source
+        label: Source
+        rollup: union
+    concepts:
+      inline:
+        - {
+              id: AUTHOR_ONE,
+              name: Author one,
+              views: { default: Author One },
+              categories: [author],
+          }
+        - {
+              id: SOURCE_MANY,
+              name: Many sources,
+              views: { default: Many Sources },
+              categories: [source],
+          }
+  named_conditions:
+    has-source:
+      category_id: source
+      operator: has_any
+  render:
+    default: block
+    formats:
+      - id: block
+        surface: block
+        mode: block
+        view: default
+        separator: "\n"
+        fields:
+          - category: author
+            prefix: 'Written By: '
+            prefix_aliases: ['Drawn From: ']
+          - category: source
+            prefix:
+              - { text: 'Drawn ' }
+              - { text: 'From: ', when: { named_condition: has-source } }

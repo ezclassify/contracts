@@ -1,0 +1,49 @@
+# F28b: an alias of a prefix the field does not have.
+#
+# EXPECTS `plan/unresolved-reference`.
+#
+# The word says other spellings of this field's `prefix`. A field with no
+# prefix has nothing for them to be spellings of, and reading them would be the
+# engine inventing an opening the format never writes - which is the same defect
+# as an `attribute` under a syntax that has no attributes.
+scheme:
+  id: p1-f28b
+  version: 1.0.0
+  name: 'F28b: an alias of nothing'
+  default_scope: block
+  scopes: [{ id: block, label: Block }]
+  data:
+    categories:
+      - id: author
+        label: Author
+        rollup: union
+      - id: source
+        label: Source
+        rollup: union
+    concepts:
+      inline:
+        - {
+              id: AUTHOR_ONE,
+              name: Author one,
+              views: { default: Author One },
+              categories: [author],
+          }
+        - {
+              id: SOURCE_MANY,
+              name: Many sources,
+              views: { default: Many Sources },
+              categories: [source],
+          }
+  render:
+    default: block
+    formats:
+      - id: block
+        surface: block
+        mode: block
+        view: default
+        separator: "\n"
+        fields:
+          - category: author
+            prefix_aliases: ['Separately Written By: ']
+          - category: source
+            prefix: 'Taken From: '

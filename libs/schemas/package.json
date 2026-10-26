@@ -1,0 +1,83 @@
+{
+    "name": "@ezclassify/schemas",
+    "version": "1.0.0-dev.30",
+    "type": "module",
+    "description": "Language-neutral spec bundle for EzClassify: JSON Schemas for authored documents and engine results",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/ezclassify/contracts.git",
+        "directory": "libs/schemas"
+    },
+    "homepage": "https://ezclassify.com",
+    "author": "EzClassify, LLC",
+    "license": "Apache-2.0",
+    "engines": {
+        "node": ">=22.0.0"
+    },
+    "main": "./dist/lib/index.cjs",
+    "types": "./dist/lib/index.d.ts",
+    "module": "./dist/lib/index.mjs",
+    "exports": {
+        ".": {
+            "types": "./dist/lib/index.d.ts",
+            "import": "./dist/lib/index.mjs",
+            "require": "./dist/lib/index.cjs"
+        },
+        "./scheme-schema": {
+            "types": "./dist/lib/scheme-schema.d.ts",
+            "import": "./dist/lib/scheme-schema.mjs",
+            "require": "./dist/lib/scheme-schema.cjs"
+        },
+        "./guide-schema": {
+            "types": "./dist/lib/guide-schema.d.ts",
+            "import": "./dist/lib/guide-schema.mjs",
+            "require": "./dist/lib/guide-schema.cjs"
+        },
+        "./access-schema": {
+            "types": "./dist/lib/access-schema.d.ts",
+            "import": "./dist/lib/access-schema.mjs",
+            "require": "./dist/lib/access-schema.cjs"
+        },
+        "./context-schema": {
+            "types": "./dist/lib/context-schema.d.ts",
+            "import": "./dist/lib/context-schema.mjs",
+            "require": "./dist/lib/context-schema.cjs"
+        },
+        "./crosswalk-schema": {
+            "types": "./dist/lib/crosswalk-schema.d.ts",
+            "import": "./dist/lib/crosswalk-schema.mjs",
+            "require": "./dist/lib/crosswalk-schema.cjs"
+        },
+        "./test-suite-schema": {
+            "types": "./dist/lib/test-suite-schema.d.ts",
+            "import": "./dist/lib/test-suite-schema.mjs",
+            "require": "./dist/lib/test-suite-schema.cjs"
+        },
+        "./json-schemas/*": "./generated/json-schemas/*",
+        "./json-schemas-input/*": "./generated/json-schemas-input/*",
+        "./json-schemas-test/*": "./generated/json-schemas-test/*"
+    },
+    "files": [
+        "dist/lib/",
+        "generated/json-schemas-input/",
+        "generated/json-schemas-test/",
+        "generated/json-schemas/",
+        "!dist/**/*.map"
+    ],
+    "scripts": {
+        "build": "node build.mjs && vite build",
+        "build:lib": "vite build",
+        "build:schemas": "node build.mjs",
+        "prepublishOnly": "npm run verify:publish-ready",
+        "test": "npx vitest run",
+        "verify:publish-ready": "npm run build && node ../../scripts/check-schemas-fresh.mjs"
+    },
+    "devDependencies": {
+        "ajv": "8.20.0",
+        "ts-json-schema-generator": "^2.4.0",
+        "vite": "^8.0.0",
+        "vite-plugin-dts": "^5.0.0",
+        "vitest": "^4.1.1"
+    },
+    "sideEffects": false
+}

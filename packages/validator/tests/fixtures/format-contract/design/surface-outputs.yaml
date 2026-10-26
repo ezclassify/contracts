@@ -1,0 +1,147 @@
+# Surface outputs: two surfaces, their defaults, and their named views.
+#
+# Read `render.surfaces` the way it is written. The sensitivity surface has
+# three views. `full` is a whole: a whole marking is written in it, and text
+# read as it is a whole. `short` is a part, the compact view part markings are
+# written in. The third view, `xml`, has no role and is written only when a
+# caller asks for it by name. Short is written in `short_line`, except that a
+# marking shared with partners is written in `short_shared_line`, so the short
+# form never drops who it was shared with. Full is written in `full_line` and
+# is also read in `full_line_2019`, the abbreviated line documents carried
+# until 2019: that text is still read as `full`, and nothing is written that
+# way anymore.
+#
+# Each format is a form of one view, so text read in any of them is read as
+# that view and has its role: `CONF/PARTNERS` is read as `sensitivity/full`, a
+# whole marking.
+#
+# The retention surface has one view, `block`, and one right default for every
+# marking, so its default is that view id and nothing more.
+#
+# A caller asks for `full`, or for `sensitivity/full`. The result carries
+# `sensitivity/short`, `sensitivity/full`, `sensitivity/xml` and
+# `retention/block`, in that order, and nothing for a default on its own: each
+# default is one of its surface's views.
+#
+# The output view `short` and the concept spelling view `abbreviated` are
+# different names on purpose. A view id names an output; a format's `view`
+# names how its concepts are spelled.
+scheme:
+  id: surface-outputs
+  version: 1.0.0
+  name: 'format fixture: surface outputs'
+  default_scope: sensitivity
+  scopes:
+    - id: sensitivity
+      label: Sensitivity
+    - id: retention
+      label: Retention
+  named_conditions:
+    shared-with-partners: PARTNERS
+  data:
+    categories:
+      - id: level
+        label: Level
+        rollup: max
+        single: true
+        required: true
+      - id: sharing
+        label: Sharing
+        rollup: first
+        single: true
+      - id: keep
+        label: Keep for
+        rollup: max
+        single: true
+        scopes: [retention]
+    concepts:
+      inline:
+        - id: INTERNAL
+          name: Internal
+          views: { default: INTERNAL, abbreviated: INT }
+          categories: [level]
+        - id: CONFIDENTIAL
+          name: Confidential
+          views: { default: CONFIDENTIAL, abbreviated: CONF }
+          categories: [level]
+        - id: PARTNERS
+          name: Shared with partners
+          views: { default: PARTNERS }
+          categories: [sharing]
+        - id: KEEP_7Y
+          name: Seven years
+          views: { default: KEEP 7 YEARS }
+          categories: [keep]
+  render:
+    surface_separator: "\n"
+    surfaces:
+      - surface: sensitivity
+        default:
+          whole: full
+          part: short
+        views:
+          - id: short
+            role: part
+            format: short_line
+            cases:
+              - when: { named_condition: shared-with-partners }
+                format: short_shared_line
+          - id: full
+            role: whole
+            format: full_line
+            also_read_in: [full_line_2019]
+          - { id: xml, format: xml_attributes }
+      - surface: retention
+        default: block
+        views:
+          - { id: block, format: retention_block }
+    formats:
+      - id: short_line
+        surface: sensitivity
+        mode: inline
+        view: abbreviated
+        fields:
+          - category: level
+
+      - id: short_shared_line
+        surface: sensitivity
+        mode: inline
+        view: abbreviated
+        separator: ' // '
+        fields:
+          - category: level
+          - category: sharing
+
+      - id: full_line
+        surface: sensitivity
+        mode: inline
+        separator: ' // '
+        fields:
+          - category: level
+          - category: sharing
+
+      - id: full_line_2019
+        surface: sensitivity
+        mode: inline
+        view: abbreviated
+        separator: '/'
+        fields:
+          - category: level
+          - category: sharing
+
+      - id: xml_attributes
+        surface: sensitivity
+        mode: block
+        syntax:
+          type: xml-attributes
+        fields:
+          - attribute: level
+            category: level
+          - attribute: sharing
+            category: sharing
+
+      - id: retention_block
+        surface: retention
+        mode: block
+        fields:
+          - category: keep

@@ -1,0 +1,53 @@
+{
+    "$schema": "https://developer.microsoft.com/json-schemas/tsdoc/v0/tsdoc.schema.json",
+    "tagDefinitions": [
+        {
+            "syntaxKind": "block",
+            "tagName": "@asType"
+        },
+        {
+            "syntaxKind": "block",
+            "tagName": "@if"
+        },
+        {
+            "syntaxKind": "block",
+            "tagName": "@minItems"
+        },
+        {
+            "syntaxKind": "block",
+            "tagName": "@minLength"
+        },
+        {
+            "syntaxKind": "block",
+            "tagName": "@minProperties"
+        },
+        {
+            "syntaxKind": "block",
+            "tagName": "@minimum"
+        },
+        {
+            "syntaxKind": "block",
+            "tagName": "@pattern"
+        },
+        {
+            "syntaxKind": "block",
+            "tagName": "@then"
+        },
+        {
+            "syntaxKind": "block",
+            "tagName": "@type"
+        },
+        {
+            "syntaxKind": "block",
+            "tagName": "@typedef"
+        },
+        {
+            "syntaxKind": "block",
+            "tagName": "@property"
+        },
+        {
+            "syntaxKind": "block",
+            "tagName": "@module"
+        }
+    ]
+}

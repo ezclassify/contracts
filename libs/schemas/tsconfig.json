@@ -1,0 +1,9 @@
+{
+    "compilerOptions": {
+        "declaration": true,
+        "outDir": "../../dist/schemas",
+        "resolveJsonModule": true
+    },
+    "extends": "../../tsconfig.base.json",
+    "include": ["src/**/*.ts"]
+}

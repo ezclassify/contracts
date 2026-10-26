@@ -1,0 +1,31 @@
+# A crosswalk layer.
+#
+# Read it aloud: this document is a layer of the ACME-to-partner crosswalk; it
+# adds mappings for the eastern division's own concepts, which the base
+# crosswalk had never seen and therefore left unmapped.
+crosswalk:
+  id: acme-eastern-division-crosswalk-coverage
+  version: 1.0.0
+  name: ACME Eastern Division Crosswalk Coverage
+  type: layer
+  layer:
+    base: acme-to-partner@2.1.0
+  sourceScheme:
+    id: acme-classification-primary
+    version: 1.0.0
+  targetScheme:
+    id: partner-classification
+    version: 3.0.0
+  mappings:
+    - id: eastern-restricted-to-partner-limited
+      source:
+        categoryId: classification
+        conceptId: eastern-restricted
+      targets:
+        - categoryId: classification
+          conceptId: limited
+      disposition: carry
+      reason:
+        Eastern Restricted and the partner's Limited carry the same handling
+        obligations under the 2026 exchange agreement.
+      authority: ACME Eastern Division exchange agreement, section 4

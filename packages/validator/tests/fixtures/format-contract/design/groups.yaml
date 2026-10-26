@@ -1,0 +1,117 @@
+# Design section 5.3: groups make structural relationships visible.
+#
+# Three fragments in one document, because they are three formats of one
+# scheme: the origin-and-level group, the conditional joint group, and the
+# release header group that pairs a header concept with its list.
+#
+# The release group is why `exclude_concepts` exists. The broad handling field
+# writes everything in its category except the concept the group already took,
+# so the two bindings are disjoint and the compiler has nothing to complain
+# about. Without it, the header concept would be written twice.
+scheme:
+  id: p1-groups
+  version: 1.0.0
+  name: 'format fixture: groups'
+  default_scope: banner
+  scopes:
+    - id: banner
+      label: Banner
+  named_conditions:
+    owner-is-home:
+      has: OWNER_HOME
+  data:
+    categories:
+      - id: level
+        label: Level
+        rollup: max
+        single: true
+      - id: owner
+        label: Owner
+        rollup: union
+      - id: handling
+        label: Handling
+        rollup: union
+      - id: partner
+        label: Release list
+        rollup: union
+    concepts:
+      inline:
+        - id: LEVEL_ONE
+          name: Level one
+          views: { default: ONE, portion: '1', banner_abbreviation: ONE }
+          categories: [level]
+        - id: OWNER_HOME
+          name: Home owner
+          views: { default: HOME, portion: HOME, banner_abbreviation: HOME }
+          categories: [owner]
+        - id: OWNER_OTHER
+          name: Other owner
+          views: { default: OTHER, portion: OTHER, banner_abbreviation: OTHER }
+          categories: [owner]
+        - id: RELEASE_HEADER
+          name: Authorized release
+          views: { default: RELEASE }
+          categories: [handling]
+        - id: HANDLING_ONE
+          name: Handling one
+          views: { default: H1 }
+          categories: [handling]
+        - id: PARTNER_A
+          name: Partner A
+          views: { default: PA }
+          categories: [partner]
+        - id: PARTNER_B
+          name: Partner B
+          views: { default: PB }
+          categories: [partner]
+  render:
+    default: fgi_origin_portion
+    formats:
+      - id: fgi_origin_portion
+        surface: banner
+        mode: inline
+        view: portion
+        prefix: '//'
+        separator: '//'
+        fields:
+          - name: Origin and level
+            separator: ' '
+            fields:
+              - category: owner
+                separator: ' '
+              - category: level
+
+      - id: joint_banner
+        surface: banner
+        mode: inline
+        view: banner_abbreviation
+        prefix: '//'
+        separator: '//'
+        fields:
+          - name: Joint level
+            when: { named_condition: owner-is-home }
+            prefix: 'JOINT '
+            separator: ' '
+            fields:
+              - category: level
+              - category: owner
+                separator: ' '
+
+      - id: release_banner
+        surface: banner
+        mode: inline
+        view: default
+        prefix: '//'
+        separator: '//'
+        fields:
+          - name: Authorized release
+            when: RELEASE_HEADER
+            separator: ' '
+            fields:
+              - concept: RELEASE_HEADER
+                category: handling
+              - category: partner
+                separator: ', '
+          - category: handling
+            exclude_concepts: [RELEASE_HEADER]
+            separator: '/'

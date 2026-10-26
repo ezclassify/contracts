@@ -1,0 +1,44 @@
+# F04: an unknown tail after a recognized block line.
+#
+# Nothing here is an error at compile time; the case is about what a reader does
+# with text it cannot account for. The render-of-invalid policy keeps the tail
+# visible with its span rather than dropping it to make the result look clean,
+# and a preserved unknown segment stays opaque: it cannot become a new field
+# through punctuation the author never wrote.
+#
+# The format declares no escape, because the format it stands for does not have
+# one. That is a `plan/unframable-value` warning and not a refusal: the values
+# that actually cannot be written here are reported at run time, against the
+# value that caused it.
+scheme:
+  id: p1-f04
+  version: 1.0.0
+  name: 'F04: unknown tail'
+  default_scope: authority
+  scopes: [{ id: authority, label: Authority }]
+  data:
+    categories:
+      - id: source
+        label: Source
+        rollup: first
+        single: true
+        required: true
+    concepts:
+      inline:
+        - id: SOURCE_CITATION
+          name: A named source
+          views: { default: '{value}' }
+          categories: [source]
+          text_input: { label: Source citation, required: true }
+  render:
+    default: authority
+    of_invalid: preserve_unmatched
+    formats:
+      - id: authority
+        surface: authority
+        mode: block
+        view: default
+        separator: "\n"
+        fields:
+          - category: source
+            prefix: 'Derived From: '

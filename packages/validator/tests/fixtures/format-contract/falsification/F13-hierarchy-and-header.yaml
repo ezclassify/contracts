@@ -1,0 +1,55 @@
+# F13: a header with a descendant, an unrelated instruction, and a deep parent
+# chain.
+#
+# EXPECTS plan/hierarchy-cycle and plan/overlapping-bindings.
+#
+# Two failures, deliberately together, because the case is about what a closure
+# over the parent graph does. The chain closes on itself, so a transitive
+# closure never ends; and the header group and the broad field both write the
+# header concept, so the implied header is written twice and a reader has two
+# places to put it.
+#
+# The broad field's answer is `exclude_concepts`; the chain's answer is to not
+# be a chain. Neither is a depth limit.
+scheme:
+  id: p1-f13
+  version: 1.0.0
+  name: 'F13: hierarchy and header'
+  default_scope: banner
+  scopes: [{ id: banner, label: Banner }]
+  data:
+    categories:
+      - id: handling
+        label: Handling
+        rollup: union
+        required: true
+      - id: release
+        label: Release list
+        rollup: union
+    concepts:
+      inline:
+        - { id: RELEASE_HEADER, name: Authorized release, views: { default: RELEASE }, categories: [handling] }
+        - { id: HANDLING_OTHER, name: Unrelated instruction, views: { default: OTHER }, categories: [handling] }
+        - { id: DEEP_ROOT, name: Deep root, views: { default: ROOT }, categories: [handling], parents: [DEEP_LEAF] }
+        - { id: DEEP_MIDDLE, name: Deep middle, views: { default: MIDDLE }, categories: [handling], parents: [DEEP_ROOT] }
+        - { id: DEEP_LEAF, name: Deep leaf, views: { default: LEAF }, categories: [handling], parents: [DEEP_MIDDLE] }
+        - { id: PARTNER_A, name: Partner A, views: { default: PA }, categories: [release] }
+  render:
+    default: banner
+    formats:
+      - id: banner
+        surface: banner
+        mode: inline
+        view: default
+        separator: '//'
+        fields:
+          - name: Authorized release
+            when: RELEASE_HEADER
+            separator: ' '
+            fields:
+              - concept: RELEASE_HEADER
+                category: handling
+              - category: release
+                separator: ', '
+          - category: handling
+            separator: '/'

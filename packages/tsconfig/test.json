@@ -1,0 +1,8 @@
+{
+    "$schema": "https://json.schemastore.org/tsconfig",
+    "compilerOptions": {
+        "noEmit": true,
+        "types": ["vitest/globals"]
+    },
+    "extends": "./library.json"
+}

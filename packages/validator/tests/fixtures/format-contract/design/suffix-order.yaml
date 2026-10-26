@@ -1,0 +1,68 @@
+# The trailing-concept group: a header written after its list.
+#
+# The old contract said `header_position: suffix` on the concept. A position is
+# a property of where the field sits, so it is the order of the fields inside
+# the group, and nothing else has to be declared. Compare the release group in
+# 5.3, where the same pair is written header-first with no extra key either.
+#
+# Read aloud: the release group is the partner list followed by the instruction
+# that governs it.
+scheme:
+  id: p1-suffix-order
+  version: 1.0.0
+  name: 'format fixture: trailing concept in a group'
+  default_scope: banner
+  scopes:
+    - id: banner
+      label: Banner
+  data:
+    categories:
+      - id: level
+        label: Level
+        rollup: max
+        single: true
+        required: true
+      - id: handling
+        label: Handling
+        rollup: union
+      - id: partner
+        label: Partner list
+        rollup: union
+    concepts:
+      inline:
+        - id: LEVEL_ONE
+          name: Level one
+          views: { default: ONE }
+          categories: [level]
+        - id: VIEWERS_ONLY
+          name: Named viewers only
+          views: { default: VIEWERS ONLY }
+          categories: [handling]
+        - id: PARTNER_A
+          name: Partner A
+          views: { default: PA }
+          categories: [partner]
+        - id: PARTNER_B
+          name: Partner B
+          views: { default: PB }
+          categories: [partner]
+  render:
+    default: banner
+    formats:
+      - id: banner
+        surface: banner
+        mode: inline
+        view: default
+        separator: '//'
+        fields:
+          - category: level
+          - name: Viewer list
+            when: VIEWERS_ONLY
+            separator: ' '
+            fields:
+              - category: partner
+                separator: ', '
+              - concept: VIEWERS_ONLY
+          - category: handling
+            exclude_concepts: [VIEWERS_ONLY]
+            separator: '/'

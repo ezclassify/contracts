@@ -1,0 +1,77 @@
+# What `swap_when` becomes: alternatives with a `when` on each option.
+#
+# The old key named two categories and a condition under which their order
+# flipped. Two orders are two representations of one field, which is what
+# alternatives are for, and writing them out says which order applies when
+# rather than leaving a reader to apply a swap to a list.
+#
+# Read aloud: the origin phrase is written owner-first when the owner is the
+# home one, and level-first otherwise.
+#
+# Exactly one option is active for any state, which is what the contract
+# requires of alternatives: the two conditions are a predicate and its negation,
+# so there is no state where both are on and none where neither is.
+scheme:
+  id: p1-swap-alternatives
+  version: 1.0.0
+  name: 'format fixture: conditioned alternatives'
+  default_scope: banner
+  scopes:
+    - id: banner
+      label: Banner
+  named_conditions:
+    owner-is-home:
+      has: OWNER_HOME
+    owner-is-not-home:
+      none:
+        - has: OWNER_HOME
+  data:
+    categories:
+      - id: level
+        label: Level
+        rollup: max
+        single: true
+        required: true
+      - id: owner
+        label: Owner
+        rollup: union
+    concepts:
+      inline:
+        - id: LEVEL_ONE
+          name: Level one
+          views: { default: ONE }
+          categories: [level]
+        - id: OWNER_HOME
+          name: Home owner
+          views: { default: HOME }
+          categories: [owner]
+        - id: OWNER_OTHER
+          name: Other owner
+          views: { default: OTHER }
+          categories: [owner]
+  render:
+    default: banner
+    formats:
+      - id: banner
+        surface: banner
+        mode: inline
+        view: default
+        prefix: '//'
+        separator: '//'
+        fields:
+          - name: Origin phrase
+            alternatives:
+              - name: Owner first
+                when: { named_condition: owner-is-home }
+                separator: ' '
+                fields:
+                  - category: owner
+                    separator: ' '
+                  - category: level
+              - name: Level first
+                when: { named_condition: owner-is-not-home }
+                separator: ' '
+                fields:
+                  - category: level
+                  - category: owner
+                    separator: ' '

@@ -1,0 +1,24 @@
+{
+    "compilerOptions": {
+        "allowJs": true,
+        "checkJs": false,
+        "noEmit": true
+    },
+    "exclude": [
+        "../node_modules",
+        "../**/dist",
+        "../**/generated",
+        "../**/*.test.*",
+        "../**/*.spec.*",
+        "../**/tests",
+        "../**/fixtures"
+    ],
+    "extends": "./tsconfig.json",
+    "include": [
+        "../libs/**/*.ts",
+        "../libs/**/*.mjs",
+        "../packages/**/*.ts",
+        "../packages/**/*.mjs",
+        "../scripts/**/*.mjs"
+    ]
+}

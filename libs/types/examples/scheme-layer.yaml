@@ -1,0 +1,23 @@
+# A scheme layer.
+#
+# Read it aloud: this document is a layer of the ACME primary classification
+# scheme; it adds the concepts the eastern division works with, and takes away
+# one the division is not permitted to apply.
+scheme:
+  id: acme-eastern-division-concepts
+  version: 1.0.0
+  name: ACME Eastern Division Concepts
+  type: layer
+  layer:
+    base: acme-classification-primary@1.0.0
+    removes:
+      - concept: internal
+  data:
+    concepts:
+      inline:
+        - id: eastern-restricted
+          name: Eastern Restricted
+          views: { default: EASTERN-RESTRICTED }
+          categories: [classification]
+          parents: [public]
+          rank: 2

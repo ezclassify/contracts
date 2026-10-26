@@ -1,0 +1,31 @@
+# An access layer.
+#
+# Read it aloud: this document is a layer of the ACME RBAC access policy; it
+# adds the mapping for a concept the parent policy could not have known about.
+#
+# The eastern division's own concept arrives through its scheme layer, so
+# mapping it to a subject attribute is the division's call. Everything the
+# parent mapped stays the parent's: an access layer has no way to remove or
+# override an inherited rule, and a colliding rule id is refused at load rather
+# than merged.
+access:
+  id: acme-eastern-division-access
+  version: 1.0.0
+  name: ACME Eastern Division Access Additions
+  type: layer
+  layer:
+    base: acme-rbac-access@1.0.0
+  targetScheme:
+    id: acme-classification-primary
+  rules:
+    inline:
+      - id: eastern-restricted-endorsement
+        name: Eastern Restricted requires the division endorsement attribute
+        attribute: easternEndorsement
+        categoryId: classification
+        strategy: includes
+        values:
+          endorsed: eastern-restricted
+        denyReason:
+          Reading {conceptName} requires the eastern division endorsement on
+          your account.

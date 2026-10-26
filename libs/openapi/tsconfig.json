@@ -1,0 +1,9 @@
+{
+    "compilerOptions": {
+        "noEmit": true,
+        "types": ["node"]
+    },
+    "exclude": ["node_modules"],
+    "extends": "../../tsconfig.base.json",
+    "include": ["src/**/*.ts", "scripts/**/*.ts", "tests/**/*.ts"]
+}

@@ -1,0 +1,58 @@
+# F29a: a boundary one field reads and another field writes.
+#
+# EXPECTS `plan/separator-alias-collision`.
+#
+# An alias is read and never written, so the characters it names carry no state
+# of their own and nothing about them says which field they belong to. Here the
+# control field reads `//` as its own value boundary and the format writes `//`
+# between its top-level fields: one run of text is two boundaries at once, and
+# nothing in this engine settles that by declaration order.
+scheme:
+  id: p1-f29a
+  version: 1.0.0
+  name: 'F29a: a colliding separator alias'
+  default_scope: inline
+  scopes: [{ id: inline, label: Inline }]
+  data:
+    categories:
+      - id: control
+        label: Control
+        rollup: union
+      - id: level
+        label: Level
+        rollup: highest
+        single: true
+    concepts:
+      inline:
+        - {
+              id: LEVEL_ONE,
+              name: Level one,
+              views: { default: ONE },
+              categories: [level],
+              rank: 1,
+          }
+        - {
+              id: CONTROL_A,
+              name: Control A,
+              views: { default: AAA },
+              categories: [control],
+          }
+        - {
+              id: CONTROL_B,
+              name: Control B,
+              views: { default: BBB },
+              categories: [control],
+          }
+  render:
+    default: inline
+    formats:
+      - id: inline
+        surface: inline
+        mode: inline
+        view: default
+        separator: '//'
+        fields:
+          - category: level
+          - category: control
+            separator: ', '
+            separator_aliases: ['//']

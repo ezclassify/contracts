@@ -1,0 +1,111 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    strategy:
+      matrix:
+        node-version: [22, 24]
+
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      # This repository depends on no EzClassify package, so the install is
+      # third-party only and needs no registry beyond npmjs. That is the point
+      # of the boundary. With no committed lockfile, CI creates one from an
+      # empty dependency tree and immediately proves it with a frozen install.
+      #
+      # deps:relock runs only when there is no lockfile, because it deletes
+      # the file before it re-resolves. Regenerating a committed lockfile here
+      # would re-resolve every floating third-party range on every run, which
+      # both throws away the reviewed versions and leaves the tree dirty for
+      # the clean-tree step below. It resolves only versions at least seven
+      # days old and checks the result before anything installs.
+      - name: Install dependencies
+        run: |
+          test -f package-lock.json || npm run deps:relock
+          npm ci
+
+      - name: Dependency quarantine window
+        # Holds a committed lockfile, or one a dependency update proposes, to
+        # the same seven-day window deps:relock resolves under. Pinned to one
+        # matrix leg: it asks the registry for publish dates, so it does not
+        # depend on the Node version.
+        if: matrix.node-version == 22
+        run: npm run check:dependency-age
+
+      - name: Build
+        run: npm run build
+
+      - name: Test
+        run: npm test
+
+      - name: Mirror publish list is complete and installable
+        # The mirror carries 1.0.0-mirror.N only, and npm will not match a
+        # prerelease against a "^1.0.0" range. A first-party dependency written
+        # that way installs fine here, where the sibling is a workspace link,
+        # and is unresolvable for every consumer. Checked on every commit
+        # rather than only in the nightly publish, because the commit that
+        # introduces it is where it is cheap to see.
+        run: node scripts/check-mirror-list.mjs
+
+      - name: Public spec carries nothing private
+        # This repository owns openapi.yaml, so the spec is checked here
+        # rather than downstream: frozen operation surface, no reserved
+        # namespaces, no entitlement vocabulary in contract names, no component
+        # left unreachable, and the JSON restatement in step with the YAML.
+        run: npm run check:spec
+
+      - name: Every published export is documented
+        # TypeDoc reads each published package's entry points and fails on any
+        # exported declaration, member or parameter without a doc comment, so
+        # the API reference and every editor tooltip say what a field means.
+        run: npm run docs:check
+
+      - name: Spec matches the route declarations it is generated from
+        # libs/openapi/openapi.yaml is generated here from the route
+        # declarations beside it plus the published types. This rebuilds it in
+        # memory and fails on any difference, so a hand edit to the committed
+        # spec, or a wire-type change that was never regenerated, cannot reach
+        # a consumer.
+        run: npm run check:openapi
+
+      - name: Regenerate the schema bundle
+        # libs/schemas/generated is committed so downstream language generators can
+        # consume it. Rebuilding it here and failing on a diff is what keeps the
+        # committed copy honest against the types it is derived from.
+        run: npm run bundle
+
+      - name: Working tree is clean after build
+        run: git diff --exit-code && test -z "$(git status --porcelain)"
+
+      - name: Formatting
+        run: npm run format:check
+
+      - name: Validator bin runs end-to-end
+        # The validator ships a bin a community author is told to run on day
+        # one, so the published entry point is exercised here and not just the
+        # functions behind it.
+        run: node packages/validator/bin/ezclassify-validate.mjs libs/types/examples/context-with-sources.yaml
+
+      - name: Audit dependencies
+        run: npm audit --audit-level=critical

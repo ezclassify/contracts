@@ -1,0 +1,63 @@
+# F25: the two halves of a composed token, written in different views.
+#
+# EXPECTS no diagnostics.
+#
+# A composed token is a name in its own right. A format that spells its concepts
+# out in full still wants the short head inside one, because the spelled-out
+# head reads as a sentence: `PROGRAM ROOT-PART` is the head and the child put
+# next to each other, and `PR-PART` is the name the thing is known by.
+#
+# `view` sets the child's view and `head_view` sets the head's; either falls
+# back to the field's. The two formats here are the pair worth having: the
+# spelled-out banner mixes them, and the abbreviated banner names the same
+# `head_view` and is unchanged by it, because the field's view is already that
+# one. A head written on its own is not part of a composed token and keeps the
+# field's view in both.
+#
+# `F25a` names a view the heads do not declare, which the walker refuses for the
+# same reason it refuses an unbound child view: that half of the composed token
+# has nothing to print.
+scheme:
+  id: p1-f25
+  version: 1.0.0
+  name: 'F25: composed head view'
+  default_scope: banner
+  scopes: [{ id: banner, label: Banner }]
+  data:
+    categories:
+      - id: program
+        label: Programs
+        rollup: union
+        required: true
+    concepts:
+      inline:
+        - { id: PROGRAM_ROOT, name: Program root, views: { default: PROGRAM ROOT, abbreviated: PR }, categories: [program] }
+        - id: PROGRAM_PART
+          name: Program part
+          views: { default: PART, abbreviated: PT }
+          categories: [program]
+          parents: [PROGRAM_ROOT]
+          tier: subprogram
+  render:
+    default: banner
+    formats:
+      - id: banner
+        surface: banner
+        mode: inline
+        view: default
+        separator: '//'
+        fields:
+          - category: program
+            separator: '/'
+            tiers:
+              - { tier: subprogram, attached_by: '-', head_view: abbreviated }
+      - id: banner-abbreviated
+        surface: banner
+        mode: inline
+        view: abbreviated
+        separator: '//'
+        fields:
+          - category: program
+            separator: '/'
+            tiers:
+              - { tier: subprogram, attached_by: '-', head_view: abbreviated }

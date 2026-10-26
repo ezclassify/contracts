@@ -1,0 +1,124 @@
+# F27: a control written together with the list it introduces.
+#
+# EXPECTS no diagnostics.
+#
+# The handling category holds three controls. Two of them are written on their
+# own; one introduces a list of recipients and is written with it. The category
+# order puts the plain controls on both sides of it - `H_ONE` before, `H_THREE`
+# after - which is the case no field arrangement answers. Written as two
+# fields, the list has a position in the format's own sequence and the plain
+# controls have another, so either `H_ONE` or `H_THREE` ends up on the wrong
+# side of the list.
+#
+# `phrases` is the sentence that says it. The head is a concept of this field's
+# category, so the category's own order already places it, and the phrase is
+# written at the head's position among the field's other values. No field knows
+# where a control sits, and nothing else moves.
+scheme:
+  id: p1-f27
+  version: 1.0.0
+  name: 'F27: a phrase and its head'
+  default_scope: banner
+  scopes: [{ id: banner, label: Banner }]
+  data:
+    categories:
+      - id: level
+        label: Level
+        rollup: max
+        single: true
+      - id: handling
+        label: Handling
+        rollup: union
+        sort: position
+      - id: recipients
+        label: Recipients
+        rollup: union
+        sort: position
+      - id: reviewers
+        label: Reviewers
+        rollup: union
+        sort: position
+    concepts:
+      inline:
+        - {
+              id: LEVEL_ONE,
+              name: Level one,
+              views: { default: ONE },
+              categories: [level],
+          }
+        - {
+              id: H_ONE,
+              name: Handling one,
+              views: { default: HONE },
+              categories: [handling],
+              position: 1,
+          }
+        - {
+              id: H_TWO,
+              name: Handling two,
+              views: { default: HTWO },
+              categories: [handling],
+              position: 2,
+          }
+        - {
+              id: H_THREE,
+              name: Handling three,
+              views: { default: HTHREE },
+              categories: [handling],
+              position: 3,
+          }
+        - {
+              id: H_FOUR,
+              name: Handling four,
+              views: { default: HFOUR },
+              categories: [handling],
+              position: 4,
+          }
+        - {
+              id: R_ONE,
+              name: Recipient one,
+              views: { default: RONE },
+              categories: [recipients],
+              position: 1,
+          }
+        - {
+              id: R_TWO,
+              name: Recipient two,
+              views: { default: RTWO },
+              categories: [recipients],
+              position: 2,
+          }
+        - {
+              id: V_ONE,
+              name: Reviewer one,
+              views: { default: VONE },
+              categories: [reviewers],
+              position: 1,
+          }
+  render:
+    default: banner
+    formats:
+      - id: banner
+        surface: banner
+        mode: inline
+        view: default
+        separator: '//'
+        fields:
+          - category: level
+          - category: handling
+            separator: '/'
+            phrases:
+              # Written where `H_TWO` sits, which is between `H_ONE` and
+              # `H_THREE`. Neither of those two knows the phrase exists.
+              - head: H_TWO
+                separator: ' '
+                fields:
+                  - category: recipients
+                    separator: ', '
+              # The one written after its list rather than before it.
+              - head: H_FOUR
+                head_position: last
+                separator: ' '
+                fields:
+                  - category: reviewers
+                    separator: ', '

@@ -1,0 +1,46 @@
+access:
+  id: acme-rbac-access
+  version: 1.0.0
+  name: ACME RBAC Access Policy
+  targetScheme:
+    id: acme-classification-primary
+  rules:
+    inline:
+      - id: classification-floor
+        name: User clearance must dominate document classification
+        attribute: clearance
+        categoryId: classification
+        strategy: gte
+    external:
+      - id: acme-access-policy
+        source: file:///etc/acme/access-rules.json
+        transport: file
+        mapping:
+          record: 'rules[*]'
+          access:
+            id: id
+            name: name
+            attribute: userAttribute
+            categoryId: category
+            strategy: comparison
+        attribution:
+          name: ACME Access Policy Catalog
+          license: proprietary
+      - id: acme-need-to-know
+        transport: inline-data
+        source: >-
+          [{"id": "need-to-know",
+            "name": "User need-to-know must dominate document classification",
+            "userAttribute": "needToKnow", "category": "classification",
+            "comparison": "gte"}]
+        mapping:
+          access:
+            id: id
+            name: name
+            attribute: userAttribute
+            categoryId: category
+            strategy: comparison
+        snapshotId: sha256:5073460cb82a8f383bc24e7c8b274cfb6c14f83d55ea142df1037da30bba5a08
+        attribution:
+          name: ACME Access Policy Catalog
+          license: proprietary

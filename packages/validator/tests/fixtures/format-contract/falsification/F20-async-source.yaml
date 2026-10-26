@@ -1,0 +1,53 @@
+# F20: an async concept source, and cancellation.
+#
+# The scheme half is a category whose concepts come from an upstream endpoint
+# rather than from this document, which is what makes the parse path async and
+# makes cancellation something a caller can ask for.
+#
+# The engine half is new work. P0 established that the current engine accepts an
+# abort signal in two signatures and reads it nowhere, so F20 is not behavior to
+# preserve. The contract's part is that the option is real on every operation
+# that reads text, and that exhausting a budget or being cancelled returns a
+# resource-limit status rather than a confident answer.
+scheme:
+  id: p1-f20
+  version: 1.0.0
+  name: 'F20: async source'
+  default_scope: banner
+  scopes: [{ id: banner, label: Banner }]
+  data:
+    categories:
+      - id: level
+        label: Level
+        rollup: max
+        single: true
+        required: true
+      - id: partner
+        label: Partners
+        rollup: union
+    concepts:
+      inline:
+        - { id: LEVEL_ONE, name: Level one, views: { default: ONE }, categories: [level] }
+      external:
+        - id: partner-directory
+          source: https://directory.example.invalid/v1/partners
+          transport: http
+          snapshotId: partner-directory@2026-09-15
+          mapping:
+            concept:
+              id: code
+              name: label
+              views: { default: code }
+              categories: [{ id: partner }]
+  render:
+    default: banner
+    formats:
+      - id: banner
+        surface: banner
+        mode: inline
+        view: default
+        separator: '//'
+        fields:
+          - category: level
+          - category: partner
+            separator: ', '

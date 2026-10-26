@@ -1,0 +1,42 @@
+{
+    "name": "@ezclassify/conformance",
+    "version": "1.0.0-dev.30",
+    "type": "module",
+    "description": "Conformance corpus for EzClassify engine implementations: plans, reference fixtures, recordings, and the per-SDK support matrix",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/ezclassify/contracts.git",
+        "directory": "libs/conformance"
+    },
+    "homepage": "https://ezclassify.com",
+    "author": "EzClassify, LLC",
+    "license": "Apache-2.0",
+    "engines": {
+        "node": ">=22.0.0"
+    },
+    "files": [
+        "cache/",
+        "fixtures/",
+        "matrix.json",
+        "plans/",
+        "recordings/",
+        "replayer-contract/",
+        "semantic/",
+        "wire/"
+    ],
+    "keywords": [
+        "ezclassify",
+        "conformance",
+        "classification",
+        "marking",
+        "test-vectors"
+    ],
+    "scripts": {
+        "test": "npx vitest run --root ../.. libs/conformance/tests/"
+    },
+    "devDependencies": {
+        "ajv": "^8.0.0",
+        "ajv-formats": "^3.0.1",
+        "vitest": "^4.1.1"
+    }
+}

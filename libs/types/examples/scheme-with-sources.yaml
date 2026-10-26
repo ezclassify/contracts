@@ -1,0 +1,72 @@
+scheme:
+  id: acme-classification-primary
+  version: 1.0.0
+  name: ACME Classification Primary
+  data:
+    categories:
+      - id: classification
+        label: Classification
+        rollup: max
+        required: true
+        single: true
+    concepts:
+      inline:
+        - id: public
+          name: Public
+          views: { default: PUBLIC }
+          categories: [classification]
+          parents: []
+          rank: 0
+        - id: internal
+          name: Internal
+          views: { default: INTERNAL }
+          categories: [classification]
+          parents: [public]
+          rank: 1
+      external:
+        - id: acme-markings
+          source: https://markings.acme.example.com/v1/concepts
+          transport: http
+          pagination:
+            style: page
+            pageParam: page
+            start: 1
+          queryParams:
+            pageSize: page_size
+          tls:
+            caBundleRef:
+              provider: file
+              path: /var/run/secrets/acme/ca-bundle.pem
+            clientCertAndKeyRef:
+              provider: secret-store
+              secretId: sec_01HXY7
+          mapping:
+            record: 'concepts[*]'
+            concept:
+              id: code
+              name: name
+              aliases: [shortCode, 'altNames[*]']
+              parents: parents
+              views:
+                short: shortName
+          capabilities:
+            resolveAliases: exact
+            search: true
+            prefixMatch: false
+            ancestorsOf: true
+          attribution:
+            name: ACME Markings Catalog
+            license: proprietary
+  parse:
+    case_sensitive: false
+  render:
+    default: default
+    formats:
+      - id: default
+        surface: banner
+        mode: inline
+        view: default
+        separator: '//'
+        fields:
+          - category: classification
+            separator: '//'

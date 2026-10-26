@@ -1,0 +1,61 @@
+# Boundary-specific separators.
+#
+# The old contract said `between_categories: {"owner::level":
+# " "}`. That is data about one boundary, and `joins` says it as data about one
+# boundary. It changes neither child's own separator.
+#
+# The compiler refuses a join whose two names are not adjacent, so an author
+# cannot declare an order the field list does not have. Where the pair is really
+# a phrase, a named group reads better and this fixture shows both.
+scheme:
+  id: p1-joins
+  version: 1.0.0
+  name: 'format fixture: boundary joins'
+  default_scope: banner
+  scopes:
+    - id: banner
+      label: Banner
+  data:
+    categories:
+      - id: owner
+        label: Owner
+        rollup: union
+        required: true
+      - id: level
+        label: Level
+        rollup: max
+        single: true
+      - id: handling
+        label: Handling
+        rollup: union
+    concepts:
+      inline:
+        - id: OWNER_HOME
+          name: Home owner
+          views: { default: HOME }
+          categories: [owner]
+        - id: LEVEL_ONE
+          name: Level one
+          views: { default: ONE }
+          categories: [level]
+        - id: HANDLING_ONE
+          name: Handling one
+          views: { default: H1 }
+          categories: [handling]
+  render:
+    default: banner
+    formats:
+      - id: banner
+        surface: banner
+        mode: inline
+        view: default
+        separator: '//'
+        joins:
+          - between: [owner, level]
+            separator: ' '
+        fields:
+          - category: owner
+            separator: ' '
+          - category: level
+          - category: handling
+            separator: '/'

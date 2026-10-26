@@ -1,0 +1,15 @@
+{
+    "compilerOptions": {
+        "declarationMap": true,
+        "noEmit": false,
+        "rootDir": "."
+    },
+    "exclude": [
+        "node_modules",
+        "tmp",
+        "**/*.spec.ts",
+        "**/*.test.ts",
+        "**/vitest.config.ts"
+    ],
+    "extends": "@ezclassify/tsconfig/app.json"
+}

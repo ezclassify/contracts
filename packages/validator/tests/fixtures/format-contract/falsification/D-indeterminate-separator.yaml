@@ -1,0 +1,49 @@
+# EXPECTS plan/indeterminate-separator, twice.
+#
+# Two boundaries with no owner. The handling category holds several concepts at
+# once and the field says nothing about what goes between two of them; the
+# group has two children and neither a separator nor a join covering the one
+# boundary between them.
+#
+# An outer separator cannot stand in for either: the format's separator joins
+# the format's fields, and that is a different boundary.
+scheme:
+  id: p1-indeterminate-separator
+  version: 1.0.0
+  name: 'diagnostic: indeterminate separator'
+  default_scope: banner
+  scopes: [{ id: banner, label: Banner }]
+  data:
+    categories:
+      - id: level
+        label: Level
+        rollup: max
+        single: true
+        required: true
+      - id: handling
+        label: Handling
+        rollup: union
+      - id: owner
+        label: Owner
+        rollup: union
+    concepts:
+      inline:
+        - { id: LEVEL_ONE, name: Level one, views: { default: ONE }, categories: [level] }
+        - { id: HANDLING_A, name: Handling A, views: { default: HA }, categories: [handling] }
+        - { id: HANDLING_B, name: Handling B, views: { default: HB }, categories: [handling] }
+        - { id: OWNER_HOME, name: Home owner, views: { default: HOME }, categories: [owner] }
+  render:
+    default: banner
+    formats:
+      - id: banner
+        surface: banner
+        mode: inline
+        view: default
+        separator: '//'
+        fields:
+          - name: Origin
+            fields:
+              - category: owner
+                separator: ' '
+              - category: level
+          - category: handling

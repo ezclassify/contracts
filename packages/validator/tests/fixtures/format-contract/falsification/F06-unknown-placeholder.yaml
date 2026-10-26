@@ -1,0 +1,43 @@
+# F06: a value containing braces and placeholder names.
+#
+# EXPECTS plan/unknown-placeholder.
+#
+# Named captures were the other half of `text_input.pattern`: a view could write
+# `{year}-{month}-{day}` and the engine would fill them from named groups of a
+# regex. The regex is gone, so the braces are just four characters, and a view
+# that still carries them prints them literally.
+#
+# A value that has to print in more than one shape says so with an encoding.
+# The 5.5 design fixture shows the replacement.
+scheme:
+  id: p1-f06
+  version: 1.0.0
+  name: 'F06: unknown placeholder'
+  default_scope: authority
+  scopes: [{ id: authority, label: Authority }]
+  data:
+    categories:
+      - id: declass
+        label: Declassification instruction
+        rollup: first
+        single: true
+        required: true
+    concepts:
+      inline:
+        - id: DECLASS_DATE
+          name: Specific date
+          views:
+            default: '{value}'
+            hyphenated: '{year}-{month}-{day}'
+          categories: [declass]
+          text_input: { label: Date, required: true }
+  render:
+    default: hyphenated
+    formats:
+      - id: hyphenated
+        surface: authority
+        mode: block
+        view: hyphenated
+        fields:
+          - category: declass
+            prefix: 'Declassify On: '

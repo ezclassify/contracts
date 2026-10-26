@@ -1,0 +1,49 @@
+# F12: the same two letters meaning different things by position.
+#
+# The alias carries the condition the domain actually states. Position is
+# measured in the original recognized region, after a wrapper is stripped and
+# before anything is reordered, so a malformed ordering is read by where its
+# characters were rather than by where a tidier version would have put them.
+scheme:
+  id: p1-f12
+  version: 1.0.0
+  name: 'F12: contextual position'
+  default_scope: banner
+  scopes: [{ id: banner, label: Banner }]
+  data:
+    categories:
+      - id: level
+        label: Level
+        rollup: max
+        single: true
+        required: true
+      - id: handling
+        label: Handling
+        rollup: union
+    concepts:
+      inline:
+        - { id: LEVEL_ONE, name: Level one, views: { default: ONE }, categories: [level] }
+        - id: NO_CONTRACTOR
+          name: No contractor dissemination
+          views: { default: NOCONTRACT }
+          categories: [handling]
+          input_aliases:
+            - { text: NC, position: non-leading }
+        - id: NORTHERN_COALITION
+          name: Northern coalition
+          views: { default: NORTHERN }
+          categories: [handling]
+          input_aliases:
+            - { text: NC, position: leading }
+  render:
+    default: banner
+    formats:
+      - id: banner
+        surface: banner
+        mode: inline
+        view: default
+        separator: '//'
+        fields:
+          - category: level
+          - category: handling
+            separator: '/'

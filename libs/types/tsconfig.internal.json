@@ -1,0 +1,8 @@
+{
+    "compilerOptions": {
+        "emitDeclarationOnly": true,
+        "outDir": "./dist/internal",
+        "stripInternal": false
+    },
+    "extends": "./tsconfig.build.json"
+}

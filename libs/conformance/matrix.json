@@ -1,0 +1,225 @@
+{
+    "description": "Per-SDK support level for each conformance plan. Runners read this matrix to skip plans that are not applicable to the SDK under test.",
+    "levels": {
+        "optional": "Tested when the operation is implemented; failures do not block SDK certification.",
+        "required": "Must pass for the SDK to be considered conformant at this capability.",
+        "skip": "Not applicable to this SDK (operation not exposed or not implemented by the SDK, or plan slice wrong for SDK type)."
+    },
+    "plans": [
+        {
+            "name": "process",
+            "path": "plans/v1/process.json",
+            "slice": "engine",
+            "support": {
+                "dotnet": "required",
+                "go": "required",
+                "java": "required",
+                "node": "required",
+                "python": "required"
+            }
+        },
+        {
+            "name": "aggregate",
+            "path": "plans/v1/aggregate.json",
+            "slice": "engine",
+            "support": {
+                "dotnet": "required",
+                "go": "required",
+                "java": "required",
+                "node": "required",
+                "python": "required"
+            }
+        },
+        {
+            "name": "suggest",
+            "path": "plans/v1/suggest.json",
+            "slice": "engine",
+            "support": {
+                "dotnet": "required",
+                "go": "required",
+                "java": "required",
+                "node": "required",
+                "python": "required"
+            }
+        },
+        {
+            "name": "scan",
+            "path": "plans/v1/scan.json",
+            "slice": "engine",
+            "support": {
+                "dotnet": "required",
+                "go": "required",
+                "java": "required",
+                "node": "required",
+                "python": "required"
+            }
+        },
+        {
+            "name": "validate",
+            "path": "plans/v1/validate.json",
+            "slice": "engine",
+            "support": {
+                "dotnet": "required",
+                "go": "required",
+                "java": "required",
+                "node": "required",
+                "python": "required"
+            }
+        },
+        {
+            "name": "normalize",
+            "path": "plans/v1/normalize.json",
+            "slice": "engine",
+            "support": {
+                "dotnet": "required",
+                "go": "required",
+                "java": "required",
+                "node": "required",
+                "python": "required"
+            }
+        },
+        {
+            "name": "render",
+            "path": "plans/v1/render.json",
+            "slice": "engine",
+            "support": {
+                "dotnet": "required",
+                "go": "required",
+                "java": "required",
+                "node": "required",
+                "python": "required"
+            }
+        },
+        {
+            "name": "diff",
+            "notes": "Required of the reference SDK; optional for the others.",
+            "path": "plans/v1/diff.json",
+            "slice": "engine",
+            "support": {
+                "dotnet": "optional",
+                "go": "optional",
+                "java": "optional",
+                "node": "required",
+                "python": "optional"
+            }
+        },
+        {
+            "name": "scope-transport",
+            "notes": "Assertion-state transport across the projection boundary against ref-scope-1 (default-scope + alternate-scope + capture-value categories). Covers process/render carrying scope-only and mixed sets, subset-format render at the coverage boundary, capture-value byte-preservation, and aggregateAssertions over scoped + capture sets. Embed SDKs ship the JS engine so they pass automatically; client SDKs pass once they implement the aggregateAssertions wire method, so the plan is optional for them.",
+            "path": "plans/v1/scope-transport.json",
+            "slice": "engine",
+            "support": {
+                "dotnet": "required",
+                "go": "optional",
+                "java": "required",
+                "node": "required",
+                "python": "required"
+            }
+        },
+        {
+            "name": "evaluate-guide",
+            "notes": "Covers evaluateGuide, evaluateMany, and guideScan methods.",
+            "path": "plans/v1/evaluate-guide.json",
+            "slice": "engine",
+            "support": {
+                "dotnet": "required",
+                "go": "required",
+                "java": "required",
+                "node": "required",
+                "python": "required"
+            }
+        },
+        {
+            "name": "from-layers",
+            "notes": "Per-request layer composition (SchemeEngine.fromLayers). No HTTP endpoint is exposed; client SDKs always receive a pre-composed scheme from the server.",
+            "path": "plans/v1/from-layers.json",
+            "slice": "engine",
+            "support": {
+                "dotnet": "skip",
+                "go": "skip",
+                "java": "required",
+                "node": "required",
+                "python": "skip"
+            }
+        },
+        {
+            "name": "check-access",
+            "path": "plans/v1/check-access.json",
+            "slice": "engine",
+            "support": {
+                "dotnet": "required",
+                "go": "required",
+                "java": "required",
+                "node": "required",
+                "python": "required"
+            }
+        },
+        {
+            "name": "registry",
+            "notes": "SchemeRegistry multi-scheme operations. Optional for non-reference SDKs.",
+            "path": "plans/v1/registry.json",
+            "slice": "engine",
+            "support": {
+                "dotnet": "optional",
+                "go": "optional",
+                "java": "optional",
+                "node": "required",
+                "python": "optional"
+            }
+        },
+        {
+            "name": "surfaces",
+            "notes": "Outputs declared by surface and view against ref-surfaces-1: recognition reports the view the text is read as and its role, never the form it happened to be read in; a read-only form reads as its view and stands for it as an output; a view id names what the text is read as and reads it in the forms that view writes, its case forms included, never in its read-only form; text the engine writes on two surfaces reads back uncorrected; an unnamed output follows the role; a wrapper makes a part; text read as a view of the role the request's context does not name departs from it, unless the request names the view.",
+            "path": "plans/v1/surfaces.json",
+            "slice": "engine",
+            "support": {
+                "dotnet": "required",
+                "go": "required",
+                "java": "required",
+                "node": "required",
+                "python": "required"
+            }
+        },
+        {
+            "name": "ctx-process",
+            "notes": "Context-based operations (ctxProcess, ctxScan, ctxDocumentAudit). Requires a live REST API server with a contexts file. Embed SDKs resolve ctx server-side; client SDKs call /api/ctx/* directly.",
+            "path": "plans/v1/ctx-process.json",
+            "slice": "server",
+            "support": {
+                "dotnet": "skip",
+                "go": "required",
+                "java": "skip",
+                "node": "skip",
+                "python": "skip"
+            }
+        }
+    ],
+    "sdks": [
+        {
+            "description": "Node.js reference runner (in-tree TypeScript)",
+            "id": "node",
+            "type": "embed"
+        },
+        {
+            "description": "Java embed SDK: ships the JS engine bundle and exposes a Java API",
+            "id": "java",
+            "type": "embed"
+        },
+        {
+            "description": ".NET embed SDK: ships the JS engine bundle and exposes a .NET API; runs the engine-slice conformance plans",
+            "id": "dotnet",
+            "type": "embed"
+        },
+        {
+            "description": "Python embed SDK: ships the JS engine bundle and exposes a Python API; runs the engine-slice conformance plans",
+            "id": "python",
+            "type": "embed"
+        },
+        {
+            "description": "Go HTTP client SDK: calls the REST API; no engine bundle",
+            "id": "go",
+            "type": "client"
+        }
+    ],
+    "version": "v1"
+}

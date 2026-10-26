@@ -1,0 +1,14 @@
+# Repo-local gitleaks config. Default rules remain enabled; this exception is
+# restricted to one worked SHA-256 lookup-key example in the replayer contract.
+
+minVersion = "8.30.1"
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "SHA-256 replayer lookup-key example"
+condition = "AND"
+targetRules = ["generic-api-key"]
+paths = ['''libs/conformance/replayer-contract/v1/README\.md''']
+regexes = ['''\b1a3932ae1540cfe94df375cd61fc711aad550db874cb18e5a382ee39fff4ec3a\b''']

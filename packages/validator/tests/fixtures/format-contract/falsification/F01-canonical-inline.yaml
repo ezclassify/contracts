@@ -1,0 +1,38 @@
+# F01: an ordinary canonical inline marking.
+#
+# The baseline. One level, one handling list, one separator each. Everything
+# harder in this directory is this shape with one thing changed.
+scheme:
+  id: p1-f01
+  version: 1.0.0
+  name: 'F01: canonical inline'
+  default_scope: banner
+  scopes: [{ id: banner, label: Banner }]
+  data:
+    categories:
+      - id: level
+        label: Level
+        rollup: max
+        single: true
+        required: true
+      - id: handling
+        label: Handling
+        rollup: union
+    concepts:
+      inline:
+        - { id: LEVEL_ONE, name: Level one, views: { default: ONE }, categories: [level] }
+        - { id: LEVEL_TWO, name: Level two, views: { default: TWO }, categories: [level] }
+        - { id: HANDLING_A, name: Handling A, views: { default: HA }, categories: [handling] }
+        - { id: HANDLING_B, name: Handling B, views: { default: HB }, categories: [handling] }
+  render:
+    default: banner
+    formats:
+      - id: banner
+        surface: banner
+        mode: inline
+        view: default
+        separator: '//'
+        fields:
+          - category: level
+          - category: handling
+            separator: '/'

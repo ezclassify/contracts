@@ -1,0 +1,54 @@
+# F10: the same citation supplied as a document, as a guide, or untyped.
+#
+# The citation and the kind of thing cited are two facts, so they are two
+# categories. A missing kind means unknown; it does not default to document, and
+# an unknown kind is not a grant of anything.
+#
+# The plain text form writes the citation only, so a kind supplied through
+# structured input is reported as omitted rather than quietly lost.
+scheme:
+  id: p1-f10
+  version: 1.0.0
+  name: 'F10: source and source kind'
+  default_scope: authority
+  scopes: [{ id: authority, label: Authority }]
+  data:
+    categories:
+      - id: derivative_source_type
+        label: Source
+        rollup: first
+        single: true
+        required: true
+      - id: derivative_source_kind
+        label: Source kind
+        rollup: first
+        single: true
+    concepts:
+      inline:
+        - id: SOURCE_CITATION
+          name: A named source
+          views: { default: '{value}', banner: '{value}', structured: '{value}' }
+          categories: [derivative_source_type]
+          text_input: { label: Source citation, required: true }
+        - id: MULTIPLE_SOURCES
+          name: Multiple sources
+          views: { default: Multiple Sources }
+          categories: [derivative_source_type]
+        - id: SOURCE_DOCUMENT
+          name: Source document
+          views: { default: Source document }
+          categories: [derivative_source_kind]
+        - id: CLASSIFICATION_GUIDE
+          name: Classification guide
+          views: { default: Classification guide }
+          categories: [derivative_source_kind]
+  render:
+    default: authority
+    formats:
+      - id: authority
+        surface: authority
+        mode: block
+        view: default
+        fields:
+          - category: derivative_source_type
+            prefix: 'Derived From: '

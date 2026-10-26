@@ -1,0 +1,45 @@
+# F03: two fields of one format claim the same concept.
+#
+# EXPECTS plan/overlapping-bindings.
+#
+# The design's case is two concepts sharing a label in a plausible slot, which a
+# reader must report as ambiguity rather than settle by declaration order. Its
+# compile-time half is this: a format whose own fields both claim a concept has
+# two places to put the same fact, so the reader's ambiguity was authored in.
+#
+# The fix is selection, not precedence: narrow one field with `concept`, or
+# exclude the concept from the other with `exclude_concepts`.
+scheme:
+  id: p1-f03
+  version: 1.0.0
+  name: 'F03: overlapping bindings'
+  default_scope: banner
+  scopes: [{ id: banner, label: Banner }]
+  data:
+    categories:
+      - id: handling
+        label: Handling
+        rollup: union
+        required: true
+    concepts:
+      inline:
+        - { id: HANDLING_HEADER, name: Handling header, views: { default: HEAD }, categories: [handling] }
+        - { id: HANDLING_A, name: Handling A, views: { default: HA }, categories: [handling] }
+  render:
+    default: banner
+    formats:
+      - id: banner
+        surface: banner
+        mode: inline
+        view: default
+        separator: '//'
+        fields:
+          - name: Header group
+            separator: ' '
+            fields:
+              - concept: HANDLING_HEADER
+                category: handling
+              - category: handling
+                separator: '/'
+          - category: handling
+            separator: '/'

@@ -1,0 +1,41 @@
+# F24a: the same fixed attribute with no `when`.
+#
+# EXPECTS plan/unresolved-condition.
+#
+# A fixed attribute is read back as the predicate it stands for. With no
+# predicate there is nothing to read back: the attribute is written for every
+# state, so finding it in an input tells the reader nothing it did not already
+# know, and not finding it is the only thing that could ever be wrong. That is a
+# constant belonging to the format's syntax, not a field.
+scheme:
+  id: p1-f24a
+  version: 1.0.0
+  name: 'F24a: unconditional fixed attribute'
+  default_scope: marking
+  scopes:
+    - id: marking
+      label: Marking
+  data:
+    categories:
+      - id: level
+        label: Level
+        rollup: max
+        single: true
+        required: true
+    concepts:
+      inline:
+        - { id: LEVEL_ONE, name: Level one, views: { default: ONE, structured: ONE }, categories: [level] }
+  render:
+    default: structured
+    formats:
+      - id: structured
+        surface: marking
+        mode: block
+        view: structured
+        syntax:
+          type: xml-attributes
+        fields:
+          - attribute: levelCode
+            category: level
+          - attribute: shared
+            value: 'true'

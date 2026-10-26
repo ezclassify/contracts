@@ -1,0 +1,82 @@
+# F19: whole and part roles, an authority surface, and hidden defaults.
+#
+# Three formats, three surfaces, one scheme. Every format names the surface it
+# writes, so validity is asked of the surface the input actually is rather than
+# of the marking as a whole.
+#
+# `omit_defaults` filters what the banner prints and changes nothing about what
+# a condition sees, which is the rule the old contract stated in prose on one
+# field and is now the only meaning the key has.
+scheme:
+  id: p1-f19
+  version: 1.0.0
+  name: 'F19: surfaces and defaults'
+  role_aware: true
+  default_scope: banner
+  scopes:
+    - { id: banner, label: Banner }
+    - { id: portion, label: Portion }
+    - { id: authority, label: Authority }
+  role_detection:
+    whole: [banner]
+    part: [portion]
+  data:
+    categories:
+      - id: level
+        label: Level
+        rollup: max
+        single: true
+        required: true
+        default_concept: LEVEL_OPEN
+      - id: source
+        label: Source
+        rollup: first
+        single: true
+        scopes: [authority]
+    concepts:
+      inline:
+        - { id: LEVEL_OPEN, name: Open, views: { default: OPEN, portion: O }, categories: [level] }
+        - { id: LEVEL_ONE, name: Level one, views: { default: ONE, portion: '1' }, categories: [level] }
+        - id: SOURCE_CITATION
+          name: A named source
+          views: { default: '{value}' }
+          categories: [source]
+          text_input: { label: Source citation, required: true }
+  rules:
+    - id: portion-level-required
+      name: A portion states its level
+      surfaces: [portion]
+      phases: [validate]
+      action: require
+      target: level
+      category: level
+      message: A portion marking states its level.
+  render:
+    default: banner
+    formats:
+      - id: banner
+        surface: banner
+        mode: inline
+        view: default
+        omit_defaults: true
+        separator: '//'
+        fields:
+          - category: level
+
+      - id: portion
+        surface: portion
+        mode: inline
+        view: portion
+        prefix: '('
+        suffix: ')'
+        separator: '//'
+        fields:
+          - category: level
+
+      - id: authority
+        surface: authority
+        mode: block
+        view: default
+        fields:
+          - category: source
+            prefix: 'Derived From: '

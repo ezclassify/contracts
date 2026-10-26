@@ -1,0 +1,77 @@
+# F22: a swapped field order in a format nothing frames unconditionally.
+#
+# EXPECTS no diagnostics.
+#
+# This is g0-6 with the one thing removed that was hiding the question: g0-6
+# gives its format an unconditional `//` prefix, so the empty-match check never
+# looked at the fields at all. A real banner writes its leading separator only
+# when there is something to lead, which is the conditional prefix below, and
+# then the whole weight falls on whether the alternation can come out empty.
+#
+# It cannot. `owner` is required, so every state holds one; the two options are
+# behind a named condition and its `none`, so exactly one of them is selected in
+# every state; and the selected one writes the required category. The old
+# boolean answer could not see any of that: it asked whether any option could be
+# empty, and an option behind a predicate always could, because not being
+# selected looked the same as being selected and silent.
+#
+# Read aloud: the origin phrase is written owner-first when the owner is the
+# home one, and level-first otherwise.
+scheme:
+  id: p1-f22
+  version: 1.0.0
+  name: 'F22: complementary alternatives'
+  default_scope: banner
+  scopes:
+    - id: banner
+      label: Banner
+  named_conditions:
+    owner-is-home:
+      has: OWNER_HOME
+    owner-is-not-home:
+      none:
+        - has: OWNER_HOME
+    owner-present:
+      category: owner
+  data:
+    categories:
+      - id: level
+        label: Level
+        rollup: max
+        single: true
+      - id: owner
+        label: Owner
+        rollup: union
+        required: true
+    concepts:
+      inline:
+        - { id: LEVEL_ONE, name: Level one, views: { default: ONE }, categories: [level] }
+        - { id: OWNER_HOME, name: Home owner, views: { default: HOME }, categories: [owner] }
+        - { id: OWNER_OTHER, name: Other owner, views: { default: OTHER }, categories: [owner] }
+  render:
+    default: banner
+    formats:
+      - id: banner
+        surface: banner
+        mode: inline
+        view: default
+        prefix:
+          - { text: '//', when: { named_condition: owner-present } }
+        separator: '//'
+        fields:
+          - name: Origin phrase
+            alternatives:
+              - name: Owner first
+                when: { named_condition: owner-is-home }
+                separator: ' '
+                fields:
+                  - category: owner
+                    separator: ' '
+                  - category: level
+              - name: Level first
+                when: { named_condition: owner-is-not-home }
+                separator: ' '
+                fields:
+                  - category: level
+                  - category: owner
+                    separator: ' '

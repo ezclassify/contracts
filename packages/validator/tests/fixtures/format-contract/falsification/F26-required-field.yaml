@@ -1,0 +1,74 @@
+# F26: a field its group is not a reading of without.
+#
+# EXPECTS no diagnostics.
+#
+# Every field is optional by default, and the read side takes that literally: a
+# group whose fields may all stand empty reads any one of them alone, so a
+# format binding an authority beside a level also reads a bare level and
+# becomes a second account of text the plain banner already reads whole. There
+# is nothing here to break the tie with, and nothing should be: order, position
+# and count settle nothing in this engine.
+#
+# `required` is the missing sentence. On the group it says the format has no
+# reading without that group; on the field inside it, the group has no reading
+# that leaves the authority unbound. The same word is read on the way out: a
+# state with no authority is a state this format does not write, and it writes
+# nothing rather than writing half of one.
+scheme:
+  id: p1-f26
+  version: 1.0.0
+  name: 'F26: a required field'
+  default_scope: banner
+  scopes: [{ id: banner, label: Banner }]
+  data:
+    categories:
+      - id: level
+        label: Level
+        rollup: max
+        single: true
+        required: true
+      - id: authority
+        label: Authority
+        rollup: union
+      - id: handling
+        label: Handling
+        rollup: union
+    concepts:
+      inline:
+        - {
+              id: LEVEL_ONE,
+              name: Level one,
+              views: { default: ONE },
+              categories: [level],
+          }
+        - {
+              id: AUTHORITY_A,
+              name: Authority A,
+              views: { default: AA },
+              categories: [authority],
+          }
+        - {
+              id: HANDLING_A,
+              name: Handling A,
+              views: { default: HA },
+              categories: [handling],
+          }
+  render:
+    default: banner
+    formats:
+      - id: banner
+        surface: banner
+        mode: inline
+        view: default
+        separator: '//'
+        fields:
+          - category: level
+          - name: Origin
+            required: true
+            separator: ' '
+            fields:
+              - category: authority
+                required: true
+                separator: ' '
+              - category: handling
+                separator: '/'

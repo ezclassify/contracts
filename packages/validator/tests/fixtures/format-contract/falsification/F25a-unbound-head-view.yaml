@@ -1,0 +1,44 @@
+# F25a: a head view no head declares.
+#
+# EXPECTS plan/unbound-tier-view.
+#
+# The head of a composed token is a concept like any other and can only be
+# written in a view it declares. `F25` is this document with a view the root
+# has; here the entry names one nothing declares, so the head half of every
+# composed token this field writes has nothing to print. The child's view is
+# fine, which is the point of checking the two halves separately: a diagnostic
+# covering both would not say which one cannot print.
+scheme:
+  id: p1-f25a
+  version: 1.0.0
+  name: 'F25a: unbound head view'
+  default_scope: banner
+  scopes: [{ id: banner, label: Banner }]
+  data:
+    categories:
+      - id: program
+        label: Programs
+        rollup: union
+        required: true
+    concepts:
+      inline:
+        - { id: PROGRAM_ROOT, name: Program root, views: { default: PROGRAM ROOT, abbreviated: PR }, categories: [program] }
+        - id: PROGRAM_PART
+          name: Program part
+          views: { default: PART, abbreviated: PT }
+          categories: [program]
+          parents: [PROGRAM_ROOT]
+          tier: subprogram
+  render:
+    default: banner
+    formats:
+      - id: banner
+        surface: banner
+        mode: inline
+        view: default
+        separator: '//'
+        fields:
+          - category: program
+            separator: '/'
+            tiers:
+              - { tier: subprogram, attached_by: '-', head_view: initials }

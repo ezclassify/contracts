@@ -1,0 +1,48 @@
+# F11: an origin group written canonically and read in either order.
+#
+# The group says the two fields are one phrase and what goes between them. That
+# is enough for a reader to accept the reversed order and report it as a
+# correction; it does not need a second declaration saying the order may also be
+# the other way round, and it does not need a pattern guessing at what an origin
+# code looks like. Origins are vocabulary, and the field names the category that
+# holds them.
+scheme:
+  id: p1-f11
+  version: 1.0.0
+  name: 'F11: group order'
+  default_scope: banner
+  scopes: [{ id: banner, label: Banner }]
+  data:
+    categories:
+      - id: owner
+        label: Owner
+        rollup: union
+        required: true
+      - id: level
+        label: Level
+        rollup: max
+        single: true
+    concepts:
+      inline:
+        - { id: OWNER_HOME, name: Home owner, views: { default: HOME }, categories: [owner] }
+        - { id: OWNER_OTHER, name: Other owner, views: { default: OTHER }, categories: [owner] }
+        - { id: LEVEL_ONE, name: Level one, views: { default: ONE }, categories: [level] }
+  render:
+    default: origin_banner
+    formats:
+      - id: origin_banner
+        surface: banner
+        mode: inline
+        view: default
+        prefix: '//'
+        separator: '//'
+        fields:
+          - name: Origin and level
+            separator: ' '
+            joins:
+              - between: [owner, level]
+                separator: ' '
+            fields:
+              - category: owner
+                separator: ' '
+              - category: level

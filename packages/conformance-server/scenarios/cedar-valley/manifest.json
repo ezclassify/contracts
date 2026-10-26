@@ -1,0 +1,34 @@
+{
+    "context": {
+        "id": "cedar-valley",
+        "version": "1.0.0"
+    },
+    "corpusVersion": "v1",
+    "coverage": {
+        "cases": 249,
+        "operationsCovered": 31
+    },
+    "generation": {
+        "contentDigest": "sha256:2aab2f7dae92a6a04d16eac5964b7949742870cd1e360612ab35ebbcd97b7612",
+        "generator": "ezclassify-integration-scenario-recorder",
+        "generatorDigest": "sha256:bd448a4d9e1fdc623db403c95ca9caca024b616bd6a316bfc59df59e06887e14"
+    },
+    "recordedResponseHeaders": [
+        "allow",
+        "cache-control",
+        "content-type",
+        "x-content-type-options",
+        "x-ezclassify-resolved-version"
+    ],
+    "runtime": {
+        "engineVersion": "1.0.0-dev.30",
+        "producerDigest": "sha256:9a25b38a77b580f61b00eb153f78cf6664e2ebfd127ad92f972096fb5951660d",
+        "restApiVersion": "1.0.0-dev.30"
+    },
+    "spec": {
+        "digest": "sha256:da547a662ab79fa3f79f7d1a53a0b6a2823b0cd001d15e3d5de2aa90a7da96ff",
+        "infoVersion": "1.0.0-dev.30",
+        "package": "@ezclassify/openapi",
+        "validationJsonDigest": "sha256:aca14771bc6d245cbbc2bad69dd474a105136b7f68b65d10d89c6fe52a9d4641"
+    }
+}

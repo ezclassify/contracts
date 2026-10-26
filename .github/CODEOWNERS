@@ -1,0 +1,9 @@
+# Default owner for everything not matched by a later, more specific rule.
+* @ezclassify/maintainers
+
+# The published contract: the OpenAPI document, the generated JSON Schemas and
+# the conformance corpus. The spec bot vendors these paths into every client
+# repository, so a change here reaches all of them.
+libs/openapi/openapi.yaml @ezclassify/maintainers
+libs/schemas/generated/ @ezclassify/maintainers
+libs/conformance/ @ezclassify/maintainers

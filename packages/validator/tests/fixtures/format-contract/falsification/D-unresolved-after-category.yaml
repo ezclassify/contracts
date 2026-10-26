@@ -1,0 +1,46 @@
+# A contextual alias keyed to a category that does not exist.
+#
+# EXPECTS plan/unresolved-reference.
+#
+# `after_category` states the domain's own rule for a positional alias. A
+# misspelling makes the alias unreachable rather than unconditional, which is
+# the kind of failure that hides in a passing test run: nothing rejects the
+# document, and the two-letter spelling simply never resolves.
+scheme:
+  id: p1-d-unresolved-after-category
+  version: 1.0.0
+  name: 'falsification fixture: unresolved after_category'
+  default_scope: banner
+  scopes: [{ id: banner, label: Banner }]
+  data:
+    categories:
+      - id: level
+        label: Level
+        rollup: max
+        single: true
+        required: true
+      - id: handling
+        label: Handling
+        rollup: union
+    concepts:
+      inline:
+        - { id: LEVEL_ONE, name: Level one, views: { default: ONE }, categories: [level] }
+        - id: HANDLING_ONE
+          name: Handling one
+          views: { default: H1 }
+          categories: [handling]
+          input_aliases:
+            - text: H
+              after_category: dissemination
+  render:
+    default: banner
+    formats:
+      - id: banner
+        surface: banner
+        mode: inline
+        view: default
+        separator: '//'
+        fields:
+          - category: level
+          - category: handling
+            separator: '/'

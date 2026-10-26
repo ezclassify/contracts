@@ -1,0 +1,16 @@
+{
+    "compilerOptions": {
+        "declaration": true,
+        "declarationMap": false,
+        "lib": ["ES2022", "DOM"],
+        "module": "ESNext",
+        "moduleResolution": "Bundler",
+        "outDir": "./dist",
+        "rootDir": "./src",
+        "sourceMap": false,
+        "stripInternal": true,
+        "types": []
+    },
+    "extends": "../../packages/tsconfig/library.json",
+    "include": ["src/**/*.ts"]
+}

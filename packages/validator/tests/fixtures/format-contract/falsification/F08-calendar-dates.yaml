@@ -1,0 +1,48 @@
+# F08: a valid leap day and an impossible date, in both input spellings.
+#
+# The encoding accepts two spellings, stores one, and prints the one each view
+# asks for. Validating real month lengths and leap years is the codec's job, not
+# a regex's: `\d{8}` accepts the thirty-first of February.
+#
+# Canonical storage is a named difference from what the old engine kept
+# (D-DATE-CANON), so it is P5's to land, not P4's.
+scheme:
+  id: p1-f08
+  version: 1.0.0
+  name: 'F08: calendar dates'
+  default_scope: authority
+  scopes: [{ id: authority, label: Authority }]
+  data:
+    categories:
+      - id: declass
+        label: Declassification instruction
+        rollup: first
+        single: true
+        required: true
+    concepts:
+      inline:
+        - id: DECLASS_DATE
+          name: Specific date
+          views: { default: '{value}', portion: '{value}', structured: '{value}' }
+          categories: [declass]
+          text_input:
+            label: Declassification date
+            required: true
+            encoding:
+              type: calendar-date
+              canonical: 'YYYY-MM-DD'
+              accepts: ['YYYYMMDD', 'YYYY-MM-DD']
+              views:
+                default: 'YYYYMMDD'
+                portion: 'YYYYMMDD'
+                structured: 'YYYY-MM-DD'
+  render:
+    default: authority
+    formats:
+      - id: authority
+        surface: authority
+        mode: block
+        view: default
+        fields:
+          - category: declass
+            prefix: 'Declassify On: '

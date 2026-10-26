@@ -1,0 +1,89 @@
+{
+    "name": "@ezclassify/validator",
+    "version": "1.0.0-dev.30",
+    "type": "module",
+    "description": "Schema-only validator for EzClassify scheme, guide, access, context, and crosswalk documents",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/ezclassify/contracts.git",
+        "directory": "packages/validator"
+    },
+    "homepage": "https://ezclassify.com",
+    "author": "EzClassify, LLC",
+    "license": "Apache-2.0",
+    "engines": {
+        "node": ">=22.0.0"
+    },
+    "bin": {
+        "ezclassify-validate": "./bin/ezclassify-validate.mjs"
+    },
+    "main": "./src/index.mjs",
+    "types": "./src/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./src/index.d.ts",
+            "default": "./src/index.mjs"
+        },
+        "./access": {
+            "types": "./src/access.d.ts",
+            "import": "./src/access.mjs",
+            "require": "./src/access.mjs"
+        },
+        "./context": {
+            "types": "./src/context.d.ts",
+            "import": "./src/context.mjs",
+            "require": "./src/context.mjs"
+        },
+        "./crosswalk": {
+            "types": "./src/crosswalk.d.ts",
+            "import": "./src/crosswalk.mjs",
+            "require": "./src/crosswalk.mjs"
+        },
+        "./guide": {
+            "types": "./src/guide.d.ts",
+            "import": "./src/guide.mjs",
+            "require": "./src/guide.mjs"
+        },
+        "./internal/plan": {
+            "types": "./src/plan.d.ts",
+            "default": "./src/plan.mjs"
+        },
+        "./scheme": {
+            "types": "./src/scheme.d.ts",
+            "import": "./src/scheme.mjs",
+            "require": "./src/scheme.mjs"
+        }
+    },
+    "files": [
+        "THIRD-PARTY-NOTICES.md",
+        "bin/",
+        "src/"
+    ],
+    "keywords": [
+        "ezclassify",
+        "classification",
+        "marking",
+        "scheme",
+        "validation",
+        "json-schema"
+    ],
+    "scripts": {
+        "check:standalone": "node scripts/generate-standalone.mjs --check",
+        "generate:standalone": "node scripts/generate-standalone.mjs",
+        "test": "npx vitest run --root ../.. packages/validator/tests/"
+    },
+    "dependencies": {
+        "@ezclassify/schemas": "^1.0.0-0",
+        "yaml": "^2.8.3"
+    },
+    "devDependencies": {
+        "ajv": "8.20.0",
+        "ajv-formats": "3.0.1",
+        "esbuild": "0.28.2",
+        "vitest": "^4.1.1"
+    },
+    "bundledThirdPartyDependencies": [
+        "ajv",
+        "ajv-formats"
+    ]
+}

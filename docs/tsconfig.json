@@ -1,0 +1,19 @@
+{
+    "compilerOptions": {
+        "noEmit": true,
+        "rootDir": ".."
+    },
+    "exclude": [
+        "../node_modules",
+        "../**/dist",
+        "../**/*.test.*",
+        "../**/*.spec.*"
+    ],
+    "extends": "../tsconfig.base.json",
+    "include": [
+        "../libs/types/src/**/*.ts",
+        "../libs/schemas/src/**/*.ts",
+        "../libs/openapi/src/**/*.ts",
+        "../packages/*/src/**/*.d.ts"
+    ]
+}

@@ -1,0 +1,70 @@
+# Design section 5.1: ordinary inline fields.
+#
+# The field list is the canonical output order. It does not require recognition
+# to see the categories in that order.
+#
+# Category ids are the design's. Concept ids are neutral: this repository is
+# public and holds no licensed scheme content, and the fragment proves a shape,
+# not a vocabulary.
+scheme:
+  id: p1-inline-fields
+  version: 1.0.0
+  name: 'format fixture: inline fields'
+  default_scope: banner
+  scopes:
+    - id: banner
+      label: Banner
+  data:
+    categories:
+      - id: level
+        required: true
+        label: Level
+        rollup: max
+        single: true
+      - id: handling
+        label: Compartments
+        rollup: union
+      - id: program
+        label: Programs
+        rollup: union
+    concepts:
+      inline:
+        - id: LEVEL_ONE
+          name: Level one
+          views: { default: ONE, banner: ONE }
+          categories: [level]
+        - id: LEVEL_TWO
+          name: Level two
+          views: { default: TWO, banner: TWO }
+          categories: [level]
+        - id: COMPARTMENT_A
+          name: Compartment A
+          views: { default: CA, banner: CA }
+          categories: [handling]
+        - id: COMPARTMENT_B
+          name: Compartment B
+          views: { default: CB, banner: CB }
+          categories: [handling]
+        - id: PROGRAM_ONE
+          name: Program one
+          views: { default: P1, banner: P1 }
+          categories: [program]
+        - id: PROGRAM_TWO
+          name: Program two
+          views: { default: P2, banner: P2 }
+          categories: [program]
+  render:
+    default: banner
+    formats:
+      - id: banner
+        surface: banner
+        mode: inline
+        view: banner
+        separator: '//'
+        fields:
+          - category: level
+          - category: handling
+            separator: '/'
+          - category: program
+            prefix: 'PROG-'
+            separator: '/'

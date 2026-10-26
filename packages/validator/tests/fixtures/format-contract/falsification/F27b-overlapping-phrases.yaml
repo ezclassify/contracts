@@ -1,0 +1,74 @@
+# F27b: two phrases of one field named for the same head.
+#
+# EXPECTS `plan/overlapping-phrases`.
+#
+# One concept has one position in its category's order, and a phrase is written
+# at that position. Two phrases written there is the document saying two things
+# about one place, and the only thing that could pick between them is which was
+# declared first. Declaration order decides nothing in this engine, so both are
+# refused rather than one being chosen.
+scheme:
+  id: p1-f27b
+  version: 1.0.0
+  name: 'F27b: one head, two phrases'
+  default_scope: banner
+  scopes: [{ id: banner, label: Banner }]
+  data:
+    categories:
+      - id: handling
+        label: Handling
+        rollup: union
+        sort: position
+      - id: recipients
+        label: Recipients
+        rollup: union
+        sort: position
+      - id: reviewers
+        label: Reviewers
+        rollup: union
+        sort: position
+    concepts:
+      inline:
+        - {
+              id: H_ONE,
+              name: Handling one,
+              views: { default: HONE },
+              categories: [handling],
+              position: 1,
+          }
+        - {
+              id: R_ONE,
+              name: Recipient one,
+              views: { default: RONE },
+              categories: [recipients],
+              position: 1,
+          }
+        - {
+              id: V_ONE,
+              name: Reviewer one,
+              views: { default: VONE },
+              categories: [reviewers],
+              position: 1,
+          }
+  render:
+    default: banner
+    formats:
+      - id: banner
+        surface: banner
+        mode: inline
+        view: default
+        separator: '//'
+        fields:
+          - category: handling
+            separator: '/'
+            phrases:
+              - head: H_ONE
+                separator: ' '
+                fields:
+                  - category: recipients
+                    separator: ', '
+              - head: H_ONE
+                separator: ' '
+                fields:
+                  - category: reviewers
+                    separator: ', '

@@ -1,0 +1,83 @@
+# F09: an event with and without its companion date.
+#
+# Two representations, two readiness questions. The human form has no place to
+# write the companion date and is complete without it; the structured form
+# requires it, and says so with a rule scoped to the formats that need it.
+#
+# `formats` on a rule is what makes that expressible. Rendering the human form
+# does not delete a date already in the state, and importing the human text into
+# a fresh state cannot recover one that was never written.
+scheme:
+  id: p1-f09
+  version: 1.0.0
+  name: 'F09: event and companion date'
+  default_scope: authority
+  scopes:
+    - { id: authority, label: Authority }
+    - { id: marking, label: Marking }
+  data:
+    categories:
+      - id: declass
+        label: Declassification instruction
+        rollup: first
+        single: true
+        required: true
+      - id: declass_event_date
+        label: Companion date
+        rollup: first
+        single: true
+    concepts:
+      inline:
+        - id: DECLASS_EVENT
+          name: Event
+          views: { default: '{value}', structured: '{value}' }
+          categories: [declass]
+          text_input:
+            label: Event description
+            required: true
+            recognition:
+              begins_with_word: [Upon, Completion, End, Termination, When]
+        - id: DECLASS_EVENT_DATE
+          name: Companion date
+          views: { default: '{value}', structured: '{value}' }
+          categories: [declass_event_date]
+          text_input:
+            label: Companion date
+            encoding:
+              type: calendar-date
+              canonical: 'YYYY-MM-DD'
+              accepts: ['YYYY-MM-DD']
+  rules:
+    - id: event-requires-companion-date
+      name: Structured event instructions include a companion date
+      formats: [structured]
+      phases: [validate]
+      when: DECLASS_EVENT
+      action: require
+      target: DECLASS_EVENT_DATE
+      category: declass_event_date
+      message: Provide the companion date to export this event instruction.
+  render:
+    default: authority
+    formats:
+      - id: authority
+        surface: authority
+        mode: block
+        view: default
+        fields:
+          - category: declass
+            prefix: 'Declassify On: '
+
+      - id: structured
+        surface: marking
+        mode: block
+        view: structured
+        syntax: { type: xml-attributes }
+        fields:
+          - attribute: declassEvent
+            concept: DECLASS_EVENT
+            category: declass
+          - attribute: declassDate
+            concept: DECLASS_EVENT_DATE
+            category: declass_event_date
+            when: DECLASS_EVENT
