@@ -6,22 +6,9 @@ import yaml from 'js-yaml';
 import { describe, expect, it } from 'vitest';
 
 /**
- * Guard for `.github/workflows/spec-contract-dispatch.yml`.
- *
- * That workflow is what tells the release pipeline a contract changed here. It
- * is a push-path-filtered trigger, which means it can fail in the one way
- * nothing else in this repository would notice: if a watched path stops
- * matching any tracked file (a directory renamed, a build output relocated, a
- * corpus moved under a new package), the trigger simply never fires again. No
- * job runs, no log line is written, and the mirrors go stale until somebody
- * happens to look.
- *
- * So the check cannot live inside that workflow; a workflow that does not fire
- * cannot audit its own trigger. It lives here, in the suite CI runs on every
- * push and pull request, and it re-derives the expected path set from the
- * source packages' OWN manifests rather than restating the workflow's list. A
- * second hardcoded copy of the same list would agree with the first one
- * forever, including while both were wrong.
+ * Canonical propagation starts only after the unfiltered official main CI.
+ * The source package declarations still define the complete input set; no
+ * push path filter may suppress the successful-CI dispatch for one of them.
  */
 
 const ROOT = path.resolve(
@@ -95,16 +82,11 @@ function expectedWatchPaths(): string[] {
     ];
 }
 
-/** The `on.push.paths` list the workflow actually declares. */
-function workflowWatchPaths(): string[] {
-    const doc = yaml.load(fs.readFileSync(WORKFLOW, 'utf8')) as Record<
+function workflowDocument(): Record<string, any> {
+    return yaml.load(fs.readFileSync(WORKFLOW, 'utf8')) as Record<
         string,
         any
     >;
-    // YAML 1.1 reads a bare `on` key as the boolean true. js-yaml follows it,
-    // so accept whichever key survived the parse instead of assuming.
-    const on = doc.on ?? doc[true as unknown as string];
-    return on?.push?.paths ?? [];
 }
 
 /**
@@ -129,16 +111,33 @@ function matchesFor(pattern: string, tracked: string[]): string[] {
     );
 }
 
-describe('spec-contract-dispatch path filter', () => {
-    it('watches exactly the locations the source packages declare', () => {
-        expect([...workflowWatchPaths()].sort()).toEqual(
-            [...expectedWatchPaths()].sort(),
+describe('spec-contract-dispatch CI qualification', () => {
+    it('waits for complete main CI without a source-path suppression filter', () => {
+        const workflow = workflowDocument();
+        expect(workflow.on.workflow_run).toEqual({
+            workflows: ['CI'],
+            types: ['completed'],
+            branches: ['main'],
+        });
+        expect(workflow.on.push).toBeUndefined();
+        expect(workflow.jobs.dispatch.if).toContain(
+            "github.repository == 'ezclassify/contracts'",
         );
+        expect(workflow.jobs.dispatch.if).toContain(
+            "github.event.workflow_run.conclusion == 'success'",
+        );
+        const ci = yaml.load(
+            fs.readFileSync(path.join(ROOT, '.github/workflows/ci.yml'), 'utf8'),
+        ) as Record<string, any>;
+        expect(ci.name).toBe('CI');
+        expect(ci.on.push.branches).toContain('main');
+        expect(ci.on.push.paths).toBeUndefined();
+        expect(ci.on.push['paths-ignore']).toBeUndefined();
     });
 
     it('has no glob that matches nothing', () => {
         const tracked = trackedFiles();
-        const empty = workflowWatchPaths().filter(
+        const empty = expectedWatchPaths().filter(
             (pattern) => matchesFor(pattern, tracked).length === 0,
         );
         expect(
@@ -150,7 +149,7 @@ describe('spec-contract-dispatch path filter', () => {
     it('covers the whole committed spec bundle', () => {
         const tracked = trackedFiles();
         const covered = new Set(
-            workflowWatchPaths().flatMap((pattern) =>
+            expectedWatchPaths().flatMap((pattern) =>
                 matchesFor(pattern, tracked),
             ),
         );
@@ -163,5 +162,17 @@ describe('spec-contract-dispatch path filter', () => {
     it('sends the event name the release pipeline listens for', () => {
         const text = fs.readFileSync(WORKFLOW, 'utf8');
         expect(text).toContain('event_type=contracts-spec-changed');
+        expect(text).toContain(
+            'client_payload[contracts_sha]=$CONTRACTS_SHA',
+        );
+        expect(text).toContain(
+            'client_payload[contracts_ci_run_id]=$CONTRACTS_CI_RUN_ID',
+        );
+        expect(text).toContain('.conclusion == "success"');
+        expect(text).toContain('.head_sha == $sha');
+        expect(text).toContain(
+            '.head_repository.full_name == "ezclassify/contracts"',
+        );
+        expect(text).not.toContain('provenance for a human');
     });
 });
