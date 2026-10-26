@@ -52,11 +52,11 @@ jobs:
           fi
           npm ci
 
-      - name: Build
-        run: npm run build
+      - name: Formatting
+        run: npm run format:check
 
-      - name: Test
-        run: npm test
+      - name: Audit dependencies
+        run: npm audit --audit-level=critical
 
       - name: Mirror publish list is complete and installable
         # The mirror carries 1.0.0-mirror.N only, and npm will not match a
@@ -66,6 +66,12 @@ jobs:
         # rather than only in the nightly publish, because the commit that
         # introduces it is where it is cheap to see.
         run: node scripts/check-mirror-list.mjs
+
+      - name: Build
+        run: npm run build
+
+      - name: Test
+        run: npm test
 
       - name: Public spec carries nothing private
         # This repository owns openapi.yaml, so the spec is checked here
@@ -91,15 +97,9 @@ jobs:
       - name: Working tree is clean after build
         run: git diff --exit-code && test -z "$(git status --porcelain)"
 
-      - name: Formatting
-        run: npm run format:check
-
       - name: Validator bin runs end-to-end
         # The validator ships a bin a community author is told to run on day
         # one, so the published entry point is exercised here and not just the
         # functions behind it.
         run: node packages/validator/bin/ezclassify-validate.mjs
           libs/types/examples/context-with-sources.yaml
-
-      - name: Audit dependencies
-        run: npm audit --audit-level=critical
