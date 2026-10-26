@@ -5,31 +5,40 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
+  workflow_dispatch: null
 
 permissions:
   contents: read
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name }}
   cancel-in-progress: true
 
 jobs:
+  policy:
+    uses: ezclassify/.github/.github/workflows/ci-policy.yml@a42ece80f520858a2926723d12bba2af2dca0474
+    with:
+      primary-version: '22'
+      full-versions: '["22","24"]'
   build-and-test:
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
     strategy:
       matrix:
-        node-version: [22, 24]
+        node-version: ${{ fromJSON(needs.policy.outputs.versions) }}
 
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+      - uses: ezclassify/.github/actions/setup-node-npm@a42ece80f520858a2926723d12bba2af2dca0474 # v7.0.0
         with:
           node-version: ${{ matrix.node-version }}
-      - name: Install supported npm
-        run: npm install -g npm@^11.10.0
 
       # This repository depends on no EzClassify package, so the install is
       # third-party only and needs no registry beyond npmjs. That is the point
@@ -85,6 +94,7 @@ jobs:
         # exported declaration, member or parameter without a doc comment, so
         # the API reference and every editor tooltip say what a field means.
         run: npm run docs:check
+        if: ${{ needs.policy.outputs.full == 'true' }}
 
       - name: Spec matches the route declarations it is generated from
         # libs/openapi/openapi.yaml is generated here from the route
@@ -101,5 +111,31 @@ jobs:
         # The validator ships a bin a community author is told to run on day
         # one, so the published entry point is exercised here and not just the
         # functions behind it.
-        run: node packages/validator/bin/ezclassify-validate.mjs
-          libs/types/examples/context-with-sources.yaml
+        run: node packages/validator/bin/ezclassify-validate.mjs libs/types/examples/context-with-sources.yaml
+    needs:
+      - policy
+    if: ${{ needs.policy.result == 'success' }}
+  qualification:
+    needs:
+      - policy
+      - build-and-test
+    if: ${{ always() && !cancelled() && needs.policy.result == 'success' && needs.policy.outputs.full == 'true' }}
+    uses: ezclassify/.github/.github/workflows/ci-result.yml@a42ece80f520858a2926723d12bba2af2dca0474
+    with:
+      results: ${{ toJSON(needs) }}
+      full: ${{ needs.policy.outputs.full == 'true' }}
+      full-only: '[]'
+      optional: '[]'
+  ci:
+    needs:
+      - policy
+      - build-and-test
+      - qualification
+    if: ${{ always() && !cancelled() }}
+    uses: ezclassify/.github/.github/workflows/ci-result.yml@a42ece80f520858a2926723d12bba2af2dca0474
+    with:
+      results: ${{ toJSON(needs) }}
+      full: ${{ needs.policy.outputs.full == 'true' }}
+      full-only: '["qualification"]'
+      optional: '[]'
+run-name: CI · ${{ github.event_name }} · ${{ github.ref_name }}

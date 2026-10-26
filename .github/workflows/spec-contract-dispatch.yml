@@ -14,7 +14,7 @@ permissions:
 
 jobs:
   dispatch:
-    if: ${{ github.repository == 'ezclassify/contracts' && github.ref == 'refs/heads/main' && (github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success') }}
+    if: ${{ github.repository == 'ezclassify/contracts' && github.ref == 'refs/heads/main' && (github.event_name != 'workflow_run' || (github.event.workflow_run.conclusion == 'success' && (github.event.workflow_run.event == 'workflow_dispatch' || github.event.workflow_run.event == 'schedule'))) }}
     name: Notify the release pipeline
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -31,14 +31,22 @@ jobs:
           if [ "$EVENT_NAME" = workflow_run ]; then
             run="$(gh api "repos/ezclassify/contracts/actions/runs/$EVENT_RUN_ID")"
           else
-            run="$(gh api "repos/ezclassify/contracts/actions/workflows/ci.yml/runs?branch=main&event=push&head_sha=$main_sha&per_page=1" --jq '.workflow_runs[0]')"
+            run="$(gh api "repos/ezclassify/contracts/actions/workflows/ci.yml/runs?branch=main&head_sha=$main_sha&per_page=100" --jq '[.workflow_runs[] | select(.event == "workflow_dispatch" or .event == "schedule")] | sort_by([.run_number,.run_attempt]) | last' )"
           fi
           jq -e --arg sha "$main_sha" '
-            .head_sha == $sha and .head_branch == "main" and .event == "push" and
+            .head_sha == $sha and .head_branch == "main" and (.event == "workflow_dispatch" or .event == "schedule") and
             .status == "completed" and .conclusion == "success" and
             .path == ".github/workflows/ci.yml" and
             .repository.full_name == "ezclassify/contracts" and
             .head_repository.full_name == "ezclassify/contracts"' <<< "$run" >/dev/null
+          run_id="$(jq -r .id <<< "$run")"
+          attempt="$(jq -r .run_attempt <<< "$run")"
+          jobs="$(gh api "repos/ezclassify/contracts/actions/runs/$run_id/attempts/$attempt/jobs?per_page=100")"
+          jq -e --arg sha "$main_sha" --argjson id "$run_id" --argjson attempt "$attempt" '
+            .total_count == (.jobs | length) and
+            ([.jobs[].name] as $names | all(["policy / plan","qualification / accept","ci / accept","build-and-test (22)","build-and-test (24)"][]; . as $name | $names | index($name))) and
+            all(.jobs[]; .status == "completed" and .conclusion == "success" and .head_sha == $sha and .run_id == $id and .run_attempt == $attempt)
+          ' <<< "$jobs" >/dev/null
           echo "contracts_sha=$main_sha" >> "$GITHUB_OUTPUT"
           echo "contracts_ci_run_id=$(jq -r .id <<< "$run")" >> "$GITHUB_OUTPUT"
 

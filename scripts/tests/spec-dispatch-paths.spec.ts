@@ -1,4 +1,4 @@
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -109,6 +109,74 @@ function matchesFor(pattern: string, tracked: string[]): string[] {
 }
 
 describe('spec-contract-dispatch CI qualification', () => {
+    it('executes the dispatch job proof and rejects incomplete full qualification', () => {
+        const workflow = workflowDocument();
+        const shell = workflow.jobs.dispatch.steps.find(
+            (step: any) => step.id === 'source',
+        ).run;
+        const program = shell.match(
+            /jq -e --arg sha "\$main_sha" --argjson id "\$run_id" --argjson attempt "\$attempt" '([\s\S]*?)' <<< "\$jobs"/,
+        )[1];
+        const sha = 'a'.repeat(40);
+        const names = [
+            'policy / plan',
+            'qualification / accept',
+            'ci / accept',
+            'build-and-test (22)',
+            'build-and-test (24)',
+        ];
+        const listing = () => ({
+            total_count: names.length,
+            jobs: names.map((name) => ({
+                name,
+                status: 'completed',
+                conclusion: 'success',
+                head_sha: sha,
+                run_id: 7,
+                run_attempt: 1,
+            })),
+        });
+        const accepts = (value: unknown) =>
+            spawnSync(
+                'jq',
+                [
+                    '-e',
+                    '--arg',
+                    'sha',
+                    sha,
+                    '--argjson',
+                    'id',
+                    '7',
+                    '--argjson',
+                    'attempt',
+                    '1',
+                    program,
+                ],
+                { input: JSON.stringify(value), encoding: 'utf8' },
+            ).status === 0;
+        expect(accepts(listing())).toBe(true);
+        for (const change of [
+            'missing',
+            'skipped',
+            'failed',
+            'attempt',
+            'head',
+            'truncated',
+        ]) {
+            const value = listing();
+            if (change === 'missing') {
+                value.jobs.pop();
+                value.total_count--;
+            }
+            if (change === 'skipped') value.jobs[1].conclusion = 'skipped';
+            if (change === 'failed') value.jobs[0].conclusion = 'failure';
+            if (change === 'attempt') value.jobs[0].run_attempt = 2;
+            if (change === 'head') value.jobs[0].head_sha = 'b'.repeat(40);
+            if (change === 'truncated') value.total_count++;
+            expect(accepts(value), change).toBe(false);
+        }
+    });
+
     it('waits for complete main CI without a source-path suppression filter', () => {
         const workflow = workflowDocument();
         expect(workflow.on.workflow_run).toEqual({
