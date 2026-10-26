@@ -6,9 +6,9 @@ import yaml from 'js-yaml';
 import { describe, expect, it } from 'vitest';
 
 /**
- * Canonical propagation starts only after the unfiltered official main CI.
- * The source package declarations still define the complete input set; no
- * push path filter may suppress the successful-CI dispatch for one of them.
+ * Canonical propagation starts only after the unfiltered official main CI. The
+ * source package declarations still define the complete input set; no push path
+ * filter may suppress the successful-CI dispatch for one of them.
  */
 
 const ROOT = path.resolve(
@@ -83,10 +83,7 @@ function expectedWatchPaths(): string[] {
 }
 
 function workflowDocument(): Record<string, any> {
-    return yaml.load(fs.readFileSync(WORKFLOW, 'utf8')) as Record<
-        string,
-        any
-    >;
+    return yaml.load(fs.readFileSync(WORKFLOW, 'utf8')) as Record<string, any>;
 }
 
 /**
@@ -127,7 +124,10 @@ describe('spec-contract-dispatch CI qualification', () => {
             "github.event.workflow_run.conclusion == 'success'",
         );
         const ci = yaml.load(
-            fs.readFileSync(path.join(ROOT, '.github/workflows/ci.yml'), 'utf8'),
+            fs.readFileSync(
+                path.join(ROOT, '.github/workflows/ci.yml'),
+                'utf8',
+            ),
         ) as Record<string, any>;
         expect(ci.name).toBe('CI');
         expect(ci.on.push.branches).toContain('main');
@@ -162,9 +162,7 @@ describe('spec-contract-dispatch CI qualification', () => {
     it('sends the event name the release pipeline listens for', () => {
         const text = fs.readFileSync(WORKFLOW, 'utf8');
         expect(text).toContain('event_type=contracts-spec-changed');
-        expect(text).toContain(
-            'client_payload[contracts_sha]=$CONTRACTS_SHA',
-        );
+        expect(text).toContain('client_payload[contracts_sha]=$CONTRACTS_SHA');
         expect(text).toContain(
             'client_payload[contracts_ci_run_id]=$CONTRACTS_CI_RUN_ID',
         );
