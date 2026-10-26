@@ -44,16 +44,13 @@ jobs:
       # days old and checks the result before anything installs.
       - name: Install dependencies
         run: |
-          test -f package-lock.json || npm run deps:relock
+          if [ -f package-lock.json ]; then
+            npm run check:lockfile-portable
+            npm run check:dependency-age
+          else
+            npm run deps:relock
+          fi
           npm ci
-
-      - name: Dependency quarantine window
-        # Holds a committed lockfile, or one a dependency update proposes, to
-        # the same seven-day window deps:relock resolves under. Pinned to one
-        # matrix leg: it asks the registry for publish dates, so it does not
-        # depend on the Node version.
-        if: matrix.node-version == 22
-        run: npm run check:dependency-age
 
       - name: Build
         run: npm run build
@@ -90,12 +87,6 @@ jobs:
         # spec, or a wire-type change that was never regenerated, cannot reach
         # a consumer.
         run: npm run check:openapi
-
-      - name: Regenerate the schema bundle
-        # libs/schemas/generated is committed so downstream language generators can
-        # consume it. Rebuilding it here and failing on a diff is what keeps the
-        # committed copy honest against the types it is derived from.
-        run: npm run bundle
 
       - name: Working tree is clean after build
         run: git diff --exit-code && test -z "$(git status --porcelain)"
