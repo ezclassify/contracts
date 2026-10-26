@@ -11,7 +11,7 @@
     "generation": {
         "contentDigest": "sha256:2aab2f7dae92a6a04d16eac5964b7949742870cd1e360612ab35ebbcd97b7612",
         "generator": "ezclassify-integration-scenario-recorder",
-        "generatorDigest": "sha256:bd448a4d9e1fdc623db403c95ca9caca024b616bd6a316bfc59df59e06887e14"
+        "generatorDigest": "sha256:1b5710d4d1254f9cf5f57ed7e3676570d0e4405c956c93d17d410a26692bd4f7"
     },
     "recordedResponseHeaders": [
         "allow",
@@ -22,7 +22,18 @@
     ],
     "runtime": {
         "engineVersion": "1.0.0-dev.30",
-        "producerDigest": "sha256:9a25b38a77b580f61b00eb153f78cf6664e2ebfd127ad92f972096fb5951660d",
+        "producerPackages": [
+            "@ezclassify/engine@1.0.0-dev.30",
+            "@ezclassify/runtime-host@1.0.0-dev.30",
+            "@ezclassify/trust@1.0.0-dev.30",
+            "@ezclassify/server-auth@1.0.0-dev.30",
+            "@ezclassify/loaders@1.0.0-dev.30",
+            "@ezclassify/runtime-types@1.0.0-dev.30",
+            "@ezclassify/types@1.0.0-dev.30",
+            "@ezclassify/schemas@1.0.0-dev.30",
+            "@ezclassify/validator@1.0.0-dev.30"
+        ],
+        "producerSourceDigest": "sha256:5c0897c929484baa95e7b356da4b1781eb32f004e2c634eb07d1b61a539ba25b",
         "restApiVersion": "1.0.0-dev.30"
     },
     "spec": {
