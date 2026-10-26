@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [ main ]
   pull_request:
-    branches: [main]
+    branches: [ main ]
 
 permissions:
   contents: read
@@ -20,7 +20,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [22, 24]
+        node-version: [ 22, 24 ]
 
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
@@ -28,6 +28,8 @@ jobs:
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: ${{ matrix.node-version }}
+      - name: Install supported npm
+        run: npm install -g npm@^11.10.0
 
       # This repository depends on no EzClassify package, so the install is
       # third-party only and needs no registry beyond npmjs. That is the point
@@ -105,7 +107,8 @@ jobs:
         # The validator ships a bin a community author is told to run on day
         # one, so the published entry point is exercised here and not just the
         # functions behind it.
-        run: node packages/validator/bin/ezclassify-validate.mjs libs/types/examples/context-with-sources.yaml
+        run: node packages/validator/bin/ezclassify-validate.mjs
+          libs/types/examples/context-with-sources.yaml
 
       - name: Audit dependencies
         run: npm audit --audit-level=critical
