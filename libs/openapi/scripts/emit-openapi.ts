@@ -436,7 +436,19 @@ export async function buildOpenApiSpec(): Promise<Record<string, unknown>> {
     for (const decl of routeDecls) {
         const oapiPath = expressPathToOpenApi(decl.path);
         if (!paths[oapiPath]) paths[oapiPath] = {};
-        paths[oapiPath][methodKey(decl.method)] = buildOperation(decl);
+        const operation = buildOperation(decl);
+        // Application credentials authorize only the Context data path. Other
+        // routes retain the default independent caller and Context credentials.
+        if (
+            (oapiPath === '/v1/ctx' || oapiPath.startsWith('/v1/ctx/')) &&
+            operation['security'] === undefined
+        ) {
+            operation['security'] = [
+                { bearerAuth: [], contextToken: [] },
+                { applicationCredential: [] },
+            ];
+        }
+        paths[oapiPath][methodKey(decl.method)] = operation;
     }
 
     const spec: Record<string, unknown> = {
@@ -499,11 +511,10 @@ export async function buildOpenApiSpec(): Promise<Record<string, unknown>> {
                 description: 'Local development',
             },
         ],
-        // Every data-path operation requires both independent credentials
-        // unless it declares itself anonymous: bearer identifies the caller;
-        // the Context token authorizes a deployed Context/version. OpenAPI
-        // spells AND by placing both schemes in the same requirement object.
-        // Stating it once here keeps new routes closed by default.
+        // Operations inherit both independent credentials by default: bearer
+        // identifies the caller and the Context token authorizes its Context.
+        // Anonymous probes opt out; Context paths also accept an application
+        // credential. The default keeps new routes closed by omission.
         security: [{ bearerAuth: [], contextToken: [] }],
         paths,
         components,

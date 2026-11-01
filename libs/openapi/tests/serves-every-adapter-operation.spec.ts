@@ -337,18 +337,38 @@ describe('the document says how a caller authenticates', () => {
         );
     });
 
-    it('requires it by default, so a new route is authenticated by omission', () => {
+    it('declares the opaque application credential carrier', () => {
+        expect(
+            spec.components.securitySchemes?.['applicationCredential'],
+        ).toMatchObject({
+            type: 'apiKey',
+            in: 'header',
+            name: 'x-ezclassify-application-grant',
+        });
+    });
+
+    it('keeps the default caller credentials and admits the separate application credential only on Context operations', () => {
         expect(spec.security).toEqual([{ bearerAuth: [], contextToken: [] }]);
 
+        let contextOperations = 0;
         for (const [route, item] of Object.entries(spec.paths)) {
             if (ANONYMOUS_ROUTES.includes(route)) continue;
             for (const [method, op] of Object.entries(item)) {
-                expect(
-                    (op as { security?: unknown }).security,
-                    `${method.toUpperCase()} ${route} must not opt out of auth`,
-                ).toBeUndefined();
+                const security = (op as { security?: unknown }).security;
+                const isContext =
+                    route === '/v1/ctx' || route.startsWith('/v1/ctx/');
+                if (isContext) contextOperations += 1;
+                expect(security, `${method.toUpperCase()} ${route}`).toEqual(
+                    isContext
+                        ? [
+                              { bearerAuth: [], contextToken: [] },
+                              { applicationCredential: [] },
+                          ]
+                        : undefined,
+                );
             }
         }
+        expect(contextOperations).toBeGreaterThan(0);
     });
 
     it.each(ANONYMOUS_ROUTES)(

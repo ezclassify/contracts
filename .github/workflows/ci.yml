@@ -79,6 +79,74 @@ jobs:
       - name: Build
         run: npm run build
 
+      # Keep generation CI-owned and retain its exact output for source review.
+      # A changed committed snapshot still fails the clean-tree check below.
+      - name: Generate the canonical OpenAPI document
+        if: ${{ needs.policy.outputs.full == 'true' }}
+        run: npm run codegen
+
+      - name: Generate native package notices
+        if: ${{ needs.policy.outputs.full == 'true' }}
+        run: npm run notices
+
+      - name: Capture native OpenAPI generation
+        if: ${{ needs.policy.outputs.full == 'true' && matrix.node-version == '22' }}
+        run: |
+          set -euo pipefail
+          proposal="$RUNNER_TEMP/openapi-generation"
+          mkdir -p "$proposal/libs/openapi/scripts"
+          cp libs/openapi/openapi.yaml libs/openapi/openapi.json "$proposal/libs/openapi/"
+          cp libs/openapi/scripts/components.generated.yaml "$proposal/libs/openapi/scripts/"
+          git rev-parse HEAD > "$proposal/source-sha"
+          (cd "$proposal" && sha256sum libs/openapi/openapi.yaml libs/openapi/openapi.json libs/openapi/scripts/components.generated.yaml > files.sha256)
+
+      - name: Retain native OpenAPI generation for review
+        if: ${{ needs.policy.outputs.full == 'true' && matrix.node-version == '22' }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: openapi-generation
+          path: ${{ runner.temp }}/openapi-generation
+          retention-days: 7
+          if-no-files-found: error
+
+      - name: Capture native package notices
+        if: ${{ needs.policy.outputs.full == 'true' && matrix.node-version == '22' }}
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import { execFileSync } from 'node:child_process';
+          import { createHash } from 'node:crypto';
+          import { copyFileSync, lstatSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
+          import { dirname, join, relative, resolve } from 'node:path';
+          import { workspacesNeedingNotices } from './scripts/generate-notices.mjs';
+          const source = execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
+          assert.equal(source, process.env.GITHUB_SHA);
+          const output = join(process.env.RUNNER_TEMP, 'notices-generation');
+          const files = {};
+          for (const { dir } of workspacesNeedingNotices()) {
+            const file = join(dir, 'THIRD-PARTY-NOTICES.md');
+            const name = relative(process.cwd(), file);
+            assert.ok(!name.startsWith('..') && !name.startsWith('/'), 'Notice path must remain in the owning checkout');
+            assert.ok(lstatSync(file).isFile(), 'Notice must be a regular file');
+            assert.equal(realpathSync(file), resolve(file), 'Notice path must not contain symlinks');
+            const target = join(output, name);
+            mkdirSync(dirname(target), { recursive: true });
+            copyFileSync(file, target);
+            files[name] = `sha256:${createHash('sha256').update(readFileSync(file)).digest('hex')}`;
+          }
+          assert.ok(Object.keys(files).length > 0, 'No native notice outputs found');
+          writeFileSync(join(output, 'source-receipt.json'), `${JSON.stringify({ source, files }, null, 2)}\n`);
+          NODE
+
+      - name: Retain native package notices for review
+        if: ${{ needs.policy.outputs.full == 'true' && matrix.node-version == '22' }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: notices-generation
+          path: ${{ runner.temp }}/notices-generation
+          retention-days: 7
+          if-no-files-found: error
+
       - name: Test
         run: npm test
 
