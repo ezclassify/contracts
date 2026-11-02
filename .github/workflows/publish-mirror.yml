@@ -40,11 +40,11 @@ jobs:
         # `force` input to get wrong.
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "manual dispatch: publishing"; echo "run=yes" >> "$GITHUB_OUTPUT"; exit 0
+            echo "manual dispatch: preparing"; echo "run=yes" >> "$GITHUB_OUTPUT"; exit 0
           fi
           age=$(( $(date +%s) - $(git show -s --format=%ct HEAD) ))
           if [ "$age" -lt 86400 ]; then
-            echo "HEAD is ${age}s old (<24h): publishing"; echo "run=yes" >> "$GITHUB_OUTPUT"
+            echo "HEAD is ${age}s old (<24h): preparing"; echo "run=yes" >> "$GITHUB_OUTPUT"
           else
             echo "HEAD is ${age}s old (>=24h): nothing landed today, skipping"; echo "run=no" >> "$GITHUB_OUTPUT"
           fi
@@ -73,7 +73,7 @@ jobs:
         #
         # The generate half is guarded rather than unconditional because
         # deps:relock deletes the lockfile before it re-resolves. With a
-        # committed lockfile, a publishing job that regenerated it every night
+        # committed lockfile, a preparing job that regenerated it every night
         # would build and publish against third-party versions nobody
         # reviewed, silently. Guarded, the step honors committed bytes
         # whenever they exist.
@@ -93,7 +93,7 @@ jobs:
       - name: Resolve the package list and the mirror version
         id: plan
         if: steps.gate.outputs.run == 'yes'
-        # One source of truth. The stamp loop, the build, the publish loop and
+        # One source of truth. The stamp loop, the build, the pack loop and
         # the post-publish check all read scripts/mirror-packages.json, so they
         # cannot drift apart the way two hand-copied lists do.
         run: |
@@ -149,7 +149,7 @@ jobs:
       contents: read
     steps:
       - id: conductor
-        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
         with:
           app-id: ${{ secrets.EZCLASSIFY_SPEC_BOT_APP_ID }}
           private-key: ${{ secrets.EZCLASSIFY_SPEC_BOT_PRIVATE_KEY }}

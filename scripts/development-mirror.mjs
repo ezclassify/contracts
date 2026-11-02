@@ -12,7 +12,7 @@ import {
     realpathSync,
     writeFileSync,
 } from 'node:fs';
-import { join, resolve } from 'node:path';
+import { join, resolve, sep } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 /**
@@ -20,6 +20,7 @@ import { pathToFileURL } from 'node:url';
  * attempt.
  */
 export function createMirrorRecord(root, directory, producer) {
+    root = realpathSync(root);
     if (
         producer?.repository !== 'ezclassify/contracts' ||
         !/^[a-f0-9]{40}$/.test(producer.sourceSha ?? '') ||
@@ -30,6 +31,8 @@ export function createMirrorRecord(root, directory, producer) {
     )
         throw new Error('Invalid official mirror producer');
     directory = realpathSync(directory);
+    if (directory === root || directory.startsWith(root + sep))
+        throw new Error('Mirror output must be outside source');
     const names = JSON.parse(
         readFileSync(join(root, 'scripts/mirror-packages.json')),
     ).packages;

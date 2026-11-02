@@ -22,11 +22,13 @@ const producer = {
     runAttempt: 2,
 };
 test('records the complete native npm file set with immutable preparation identity; rejects additions and links', () => {
-    const root = mkdtempSync(join(tmpdir(), 'ez-contracts-mirror-'));
+    const parent = mkdtempSync(join(tmpdir(), 'ez-contracts-mirror-'));
+    const root = join(parent, 'source');
+    mkdirSync(root);
     try {
         mkdirSync(join(root, 'scripts'));
         mkdirSync(join(root, 'package'));
-        mkdirSync(join(root, 'packed'));
+        mkdirSync(join(parent, 'packed'));
         writeFileSync(
             join(root, 'scripts/mirror-packages.json'),
             JSON.stringify({ packages: ['@ezclassify/types'] }),
@@ -44,7 +46,7 @@ test('records the complete native npm file set with immutable preparation identi
                 'pack',
                 '--ignore-scripts',
                 '--pack-destination',
-                join(root, 'packed'),
+                join(parent, 'packed'),
             ],
             {
                 cwd: join(root, 'package'),
@@ -52,13 +54,21 @@ test('records the complete native npm file set with immutable preparation identi
                 env: { ...process.env, NPM_CONFIG_CACHE: join(root, 'cache') },
             },
         );
-        const result = createMirrorRecord(root, join(root, 'packed'), producer);
+        const result = createMirrorRecord(
+            root,
+            join(parent, 'packed'),
+            producer,
+        );
         assert.deepEqual(result.producer, producer);
+        assert.throws(
+            () => createMirrorRecord(root, root, producer),
+            /outside source/,
+        );
         assert.equal(result.packages.length, 1);
         assert.match(result.packages[0].integrity, /^sha512-/);
         assert.throws(
             () =>
-                createMirrorRecord(root, join(root, 'packed'), {
+                createMirrorRecord(root, join(parent, 'packed'), {
                     ...producer,
                     repository: 'guydog28/contracts',
                 }),
@@ -66,31 +76,31 @@ test('records the complete native npm file set with immutable preparation identi
         );
         assert.throws(
             () =>
-                createMirrorRecord(root, join(root, 'packed'), {
+                createMirrorRecord(root, join(parent, 'packed'), {
                     ...producer,
                     runAttempt: 3,
                 }),
             /Unexpected/,
         );
-        writeFileSync(join(root, 'packed/extra.tgz'), 'outside');
+        writeFileSync(join(parent, 'packed/extra.tgz'), 'outside');
         assert.throws(
-            () => createMirrorRecord(root, join(root, 'packed'), producer),
+            () => createMirrorRecord(root, join(parent, 'packed'), producer),
             /manifest/,
         );
-        rmSync(join(root, 'packed/extra.tgz'));
+        rmSync(join(parent, 'packed/extra.tgz'));
         const packed = join(
-            root,
+            parent,
             'packed',
-            readdirSync(join(root, 'packed'))[0],
+            readdirSync(join(parent, 'packed'))[0],
         );
         rmSync(packed);
         symlinkSync(join(root, 'package/package.json'), packed);
         assert.throws(
-            () => createMirrorRecord(root, join(root, 'packed'), producer),
+            () => createMirrorRecord(root, join(parent, 'packed'), producer),
             /tarball/,
         );
     } finally {
-        rmSync(root, { recursive: true, force: true });
+        rmSync(parent, { recursive: true, force: true });
     }
 });
 
