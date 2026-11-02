@@ -61,8 +61,10 @@ The published OpenAPI document, generated JSON Schemas, and conformance corpus
 are vendored by the EzClassify spec bot into every client repository. Successful
 routine `main` push CI automatically starts full qualification through
 [`.github/workflows/spec-contract-dispatch.yml`](.github/workflows/spec-contract-dispatch.yml).
-Only successful full CI for the current official revision may dispatch the
-verified source to the receiver. No source-path filter may suppress this chain.
+The launcher waits for the exact returned full run to succeed, then explicitly
+starts the guarded dispatcher: GitHub suppresses the follow-on `workflow_run`
+event when CI was launched with `GITHUB_TOKEN`. Only successful full CI for the
+current official revision may dispatch the verified source to the receiver. No source-path filter may suppress this chain.
 [`scripts/tests/spec-dispatch-paths.spec.ts`](scripts/tests/spec-dispatch-paths.spec.ts)
 checks the launcher, refusal paths, full qualification proof and bundle inputs.
 
