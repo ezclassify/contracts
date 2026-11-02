@@ -35,7 +35,8 @@ components:
       scheme: bearer
       bearerFormat: JWT
       description: >
-        Bearer token presented on every data-path request. A deployment that
+        Bearer token used with the independent Context token on data-path
+        requests. A deployment that
         runs without authentication ignores it. One that requires it answers an
         unauthenticated request with the same not-found shape a missing
         resource gets, so a caller learns nothing about what exists from being
@@ -46,12 +47,29 @@ components:
       in: header
       name: x-ezclassify-context-token
       description: >
-        Signed, deployment-scoped Context authorization presented on every
-        Context data-path request. This credential is independent of caller
+        Signed, deployment-scoped Context authorization used with bearer
+        authentication on Context data-path requests. This credential is
+        independent of caller
         identity: the bearer token identifies the principal, while this token
         proves that the deployment authorizes the requested Context and
         version. Refusals use the same constant not-found response as every
         other authorization failure.
+
+    applicationCredential:
+      type: apiKey
+      in: header
+      name: x-ezclassify-application-grant
+      description: >
+        Opaque credential that the deployment's management plane issues to a
+        registered application as either a browser or a backend credential.
+        This is an alternative to bearer and Context token credentials for
+        Context data-path requests. A request that carries it together with an
+        Authorization header, x-ezclassify-context-token, or credentials accepted
+        by a deployment-configured broker is refused. Browser credentials are
+        admitted only from registered origins. Backend credentials are refused
+        on requests from a browser. The credential identifies the calling
+        application, not an end user. Refusals use the same constant not-found
+        response as other authorization failures.
 
   headers:
     ResolvedVersion:
