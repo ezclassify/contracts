@@ -14,16 +14,18 @@ permissions:
 
 jobs:
   # Routine merge CI is intentionally smaller than full qualification. Launch
-  # the existing full lane automatically; only its success may propagate.
+  # the existing full CI qualification automatically; only its success may propagate.
   qualify-main:
+    name: Qualify and propagate merged Contracts
     if: ${{ github.repository == 'ezclassify/contracts' && github.ref == 'refs/heads/main' && github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' }}
     permissions:
       contents: read
       actions: write
+      checks: read
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 25
     steps:
-      - name: Qualify the current successful merged revision
+      - name: Launch full qualification and continue after success
         env:
           GH_TOKEN: ${{ github.token }}
           SOURCE_SHA: ${{ github.event.workflow_run.head_sha }}
@@ -45,7 +47,12 @@ jobs:
             echo "A newer main revision owns qualification; skip the superseded merge."
             exit 0
           fi
-          gh workflow run ci.yml --repo ezclassify/contracts --ref main
+          started="$(gh api --method POST -H 'X-GitHub-Api-Version: 2026-03-10' repos/ezclassify/contracts/actions/workflows/ci.yml/dispatches -f ref=main)"
+          run_id="$(jq -er '.workflow_run_id | select(type == "number" and . > 0 and . <= 9007199254740991 and floor == .)' <<< "$started")"
+          gh run watch "$run_id" --repo ezclassify/contracts --exit-status --interval 10
+          # GITHUB_TOKEN starts CI but suppresses its subsequent workflow_run.
+          # Explicit continuation keeps the existing full-source proof as owner.
+          gh workflow run spec-contract-dispatch.yml --repo ezclassify/contracts --ref main
 
   dispatch:
     if: ${{ github.repository == 'ezclassify/contracts' && github.ref == 'refs/heads/main' && (github.event_name != 'workflow_run' || (github.event.workflow_run.conclusion == 'success' && (github.event.workflow_run.event == 'workflow_dispatch' || github.event.workflow_run.event == 'schedule'))) }}
@@ -64,6 +71,10 @@ jobs:
           main_sha="$(gh api repos/ezclassify/contracts/git/ref/heads/main --jq .object.sha)"
           if [ "$EVENT_NAME" = workflow_run ]; then
             run="$(gh api "repos/ezclassify/contracts/actions/runs/$EVENT_RUN_ID")"
+            if [ "$(jq -er .head_sha <<< "$run")" != "$main_sha" ]; then
+              echo "A newer main revision owns propagation; skip the superseded qualification."
+              exit 0
+            fi
           else
             run="$(gh api "repos/ezclassify/contracts/actions/workflows/ci.yml/runs?branch=main&head_sha=$main_sha&per_page=100" --jq '[.workflow_runs[] | select(.event == "workflow_dispatch" or .event == "schedule")] | sort_by([.run_number,.run_attempt]) | last' )"
           fi
@@ -85,10 +96,12 @@ jobs:
           echo "contracts_ci_run_id=$(jq -r .id <<< "$run")" >> "$GITHUB_OUTPUT"
 
       - name: Require the configured dispatch destination
+        if: ${{ steps.source.outputs.contracts_sha != '' }}
         env:
           DISPATCH_REPOSITORY: ${{ vars.EZCLASSIFY_SPEC_DISPATCH_REPOSITORY }}
         run: test -n "$DISPATCH_REPOSITORY"
       - name: Mint dispatch token
+        if: ${{ steps.source.outputs.contracts_sha != '' }}
         id: app-token
         uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
         with:
@@ -99,6 +112,7 @@ jobs:
           permission-contents: write
 
       - name: Dispatch verified canonical spec change
+        if: ${{ steps.source.outputs.contracts_sha != '' }}
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
           DISPATCH_REPOSITORY: ${{ vars.EZCLASSIFY_SPEC_DISPATCH_REPOSITORY }}
