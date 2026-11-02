@@ -57,12 +57,14 @@ them, and so drift shows up as a diff in review. Response schemas are generated
 open and request schemas closed; [`libs/schemas/build.mjs`](libs/schemas/build.mjs) and
 [`libs/openapi/scripts/emit-openapi.ts`](libs/openapi/scripts/emit-openapi.ts) own that decision.
 
-The published OpenAPI document, the generated JSON Schemas, and the conformance
-corpus are vendored by the EzClassify spec bot into every client repository. A
-push to `main` that touches those paths sends a notice through
-[`.github/workflows/spec-contract-dispatch.yml`](.github/workflows/spec-contract-dispatch.yml), and
-[`scripts/tests/spec-dispatch-paths.spec.ts`](scripts/tests/spec-dispatch-paths.spec.ts) holds that workflow's path filter
-equal to what is vendored.
+The published OpenAPI document, generated JSON Schemas, and conformance corpus
+are vendored by the EzClassify spec bot into every client repository. Successful
+routine `main` push CI automatically starts full qualification through
+[`.github/workflows/spec-contract-dispatch.yml`](.github/workflows/spec-contract-dispatch.yml).
+Only successful full CI for the current official revision may dispatch the
+verified source to the receiver. No source-path filter may suppress this chain.
+[`scripts/tests/spec-dispatch-paths.spec.ts`](scripts/tests/spec-dispatch-paths.spec.ts)
+checks the launcher, refusal paths, full qualification proof and bundle inputs.
 
 ## Handwritten seams
 

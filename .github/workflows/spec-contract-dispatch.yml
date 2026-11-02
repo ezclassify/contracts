@@ -13,6 +13,40 @@ permissions:
   actions: read
 
 jobs:
+  # Routine merge CI is intentionally smaller than full qualification. Launch
+  # the existing full lane automatically; only its success may propagate.
+  qualify-main:
+    if: ${{ github.repository == 'ezclassify/contracts' && github.ref == 'refs/heads/main' && github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' }}
+    permissions:
+      contents: read
+      actions: write
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Qualify the current successful merged revision
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_SHA: ${{ github.event.workflow_run.head_sha }}
+          EVENT_RUN_ID: ${{ github.event.workflow_run.id }}
+          EVENT_RUN_ATTEMPT: ${{ github.event.workflow_run.run_attempt }}
+        run: |
+          set -euo pipefail
+          run="$(gh api "repos/ezclassify/contracts/actions/runs/$EVENT_RUN_ID")"
+          jq -e --arg sha "$SOURCE_SHA" --argjson id "$EVENT_RUN_ID" --argjson attempt "$EVENT_RUN_ATTEMPT" '
+            .id == $id and .run_attempt == $attempt and
+            .head_sha == $sha and .head_branch == "main" and .event == "push" and
+            .status == "completed" and .conclusion == "success" and
+            .path == ".github/workflows/ci.yml" and
+            .repository.full_name == "ezclassify/contracts" and
+            .head_repository.full_name == "ezclassify/contracts"' <<< "$run" >/dev/null
+          main="$(gh api repos/ezclassify/contracts/git/ref/heads/main)"
+          main_sha="$(jq -r .object.sha <<< "$main")"
+          if [ "$main_sha" != "$SOURCE_SHA" ]; then
+            echo "A newer main revision owns qualification; skip the superseded merge."
+            exit 0
+          fi
+          gh workflow run ci.yml --repo ezclassify/contracts --ref main
+
   dispatch:
     if: ${{ github.repository == 'ezclassify/contracts' && github.ref == 'refs/heads/main' && (github.event_name != 'workflow_run' || (github.event.workflow_run.conclusion == 'success' && (github.event.workflow_run.event == 'workflow_dispatch' || github.event.workflow_run.event == 'schedule'))) }}
     name: Notify the release pipeline
