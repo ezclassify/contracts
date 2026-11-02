@@ -1,6 +1,7 @@
 import { execFileSync, spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
+import os from 'node:os';
 import { fileURLToPath } from 'node:url';
 import yaml from 'js-yaml';
 import { describe, expect, it } from 'vitest';
@@ -240,5 +241,158 @@ describe('spec-contract-dispatch CI qualification', () => {
             '.head_repository.full_name == "ezclassify/contracts"',
         );
         expect(text).not.toContain('provenance for a human');
+    });
+});
+
+describe('automatic main qualification before spec propagation', () => {
+    function qualificationJob() {
+        const job = workflowDocument().jobs['qualify-main'];
+        expect(
+            job,
+            'merge CI must automatically start full main qualification',
+        ).toBeDefined();
+        return job;
+    }
+
+    it('starts qualification only for successful official-main push CI', () => {
+        const job = qualificationJob();
+        expect(job.permissions).toEqual({ contents: 'read', actions: 'write' });
+        const accepts = (github: any) =>
+            new Function(
+                'github',
+                `return (${job.if.replace(/^\$\{\{\s*|\s*\}\}$/g, '')})`,
+            )(github);
+        const event = () => ({
+            repository: 'ezclassify/contracts',
+            ref: 'refs/heads/main',
+            event_name: 'workflow_run',
+            event: { workflow_run: { conclusion: 'success', event: 'push' } },
+        });
+        expect(accepts(event())).toBe(true);
+        for (const kind of [
+            'failed',
+            'pull-request',
+            'manual',
+            'scheduled',
+            'fork',
+            'branch',
+            'direct',
+        ]) {
+            const value = event();
+            if (kind === 'failed')
+                value.event.workflow_run.conclusion = 'failure';
+            if (kind === 'pull-request')
+                value.event.workflow_run.event = 'pull_request';
+            if (kind === 'manual')
+                value.event.workflow_run.event = 'workflow_dispatch';
+            if (kind === 'scheduled')
+                value.event.workflow_run.event = 'schedule';
+            if (kind === 'fork') value.repository = 'contributor/contracts';
+            if (kind === 'branch') value.ref = 'refs/heads/other';
+            if (kind === 'direct') value.event_name = 'workflow_dispatch';
+            expect(accepts(value), kind).toBe(false);
+        }
+        // Existing dispatch still waits for the full run: routine push cannot propagate.
+        const dispatch = workflowDocument().jobs.dispatch;
+        expect(dispatch.if).toContain(
+            "github.event.workflow_run.event == 'workflow_dispatch'",
+        );
+        expect(
+            dispatch.permissions?.actions ??
+                workflowDocument().permissions.actions,
+        ).toBe('read');
+    });
+
+    it.each([
+        'current',
+        'superseded',
+        'failed',
+        'foreign',
+        'wrong-head',
+        'wrong-workflow',
+        'wrong-attempt',
+        'pull-request',
+    ])('executes the qualification launcher against %s CI evidence', (kind) => {
+        const shell = qualificationJob().steps[0].run;
+        const root = fs.mkdtempSync(
+            path.join(os.tmpdir(), 'spec-qualification-'),
+        );
+        const sha = 'a'.repeat(40);
+        const run = {
+            id: 7,
+            head_sha: sha,
+            head_branch: 'main',
+            event: 'push',
+            status: 'completed',
+            conclusion: 'success',
+            path: '.github/workflows/ci.yml',
+            run_attempt: 1,
+            repository: { full_name: 'ezclassify/contracts' },
+            head_repository: { full_name: 'ezclassify/contracts' },
+        };
+        if (kind === 'failed') run.conclusion = 'failure';
+        if (kind === 'foreign')
+            run.head_repository.full_name = 'contributor/contracts';
+        if (kind === 'wrong-head') run.head_sha = 'b'.repeat(40);
+        if (kind === 'wrong-workflow') run.path = '.github/workflows/other.yml';
+        if (kind === 'wrong-attempt') run.run_attempt = 2;
+        if (kind === 'pull-request') run.event = 'pull_request';
+        try {
+            fs.writeFileSync(
+                path.join(root, 'gh'),
+                `#!/usr/bin/env node
+const fs = require('node:fs');
+const args = process.argv.slice(2);
+if (args[0] === 'api' && args[1].endsWith('/actions/runs/7')) console.log(process.env.FIXTURE_RUN);
+else if (args[0] === 'api' && args[1].endsWith('/git/ref/heads/main')) console.log(process.env.FIXTURE_MAIN);
+else if (args[0] === 'workflow') fs.writeFileSync(process.env.DISPATCH_LOG, JSON.stringify(args));
+else process.exit(9);
+`,
+                { mode: 0o755 },
+            );
+            const log = path.join(root, 'dispatch.json');
+            const result = spawnSync(
+                'bash',
+                ['-e', '-o', 'pipefail', '-c', shell],
+                {
+                    encoding: 'utf8',
+                    timeout: 5000,
+                    env: {
+                        ...process.env,
+                        PATH: `${root}:${process.env.PATH}`,
+                        SOURCE_SHA: sha,
+                        EVENT_RUN_ID: '7',
+                        EVENT_RUN_ATTEMPT: '1',
+                        GH_TOKEN: 'fixture',
+                        FIXTURE_RUN: JSON.stringify(run),
+                        FIXTURE_MAIN: JSON.stringify({
+                            object: {
+                                sha:
+                                    kind === 'superseded'
+                                        ? 'b'.repeat(40)
+                                        : sha,
+                            },
+                        }),
+                        DISPATCH_LOG: log,
+                    },
+                },
+            );
+            expect(result.status, result.stderr).toBe(
+                ['current', 'superseded'].includes(kind) ? 0 : 1,
+            );
+            if (kind === 'current')
+                expect(JSON.parse(fs.readFileSync(log, 'utf8'))).toEqual([
+                    'workflow',
+                    'run',
+                    'ci.yml',
+                    '--repo',
+                    'ezclassify/contracts',
+                    '--ref',
+                    'main',
+                ]);
+            else expect(fs.existsSync(log)).toBe(false);
+        } finally {
+            fs.rmSync(root, { recursive: true, force: true });
+        }
     });
 });
