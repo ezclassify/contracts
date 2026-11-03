@@ -424,6 +424,12 @@
             "operationId": "ctxDocumentAssessAccess",
             "request": {
                 "body": {
+                    "context": {
+                        "audit": {
+                            "resourceId": "comparison-resource",
+                            "userId": "comparison-user"
+                        }
+                    },
                     "responseProfile": "standard",
                     "text": "OPEN\nThis document is releasable.",
                     "userAttributes": {
