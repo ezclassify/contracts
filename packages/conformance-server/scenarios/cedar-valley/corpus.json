@@ -9245,6 +9245,12 @@
             "operationId": "ctxAccessCheck",
             "request": {
                 "body": {
+                    "context": {
+                        "audit": {
+                            "resourceId": "comparison-resource",
+                            "userId": "comparison-user"
+                        }
+                    },
                     "marking": "PUBLIC",
                     "userAttributes": {}
                 },
@@ -9394,6 +9400,12 @@
             "operationId": "ctxAccessCheck",
             "request": {
                 "body": {
+                    "context": {
+                        "audit": {
+                            "resourceId": "comparison-resource",
+                            "userId": "comparison-user"
+                        }
+                    },
                     "marking": "CONFIDENTIAL",
                     "userAttributes": {
                         "clearance": "CONFIDENTIAL",
@@ -9600,6 +9612,12 @@
             "operationId": "ctxAccessCheck",
             "request": {
                 "body": {
+                    "context": {
+                        "audit": {
+                            "resourceId": "comparison-resource",
+                            "userId": "comparison-user"
+                        }
+                    },
                     "marking": "CONFIDENTIAL",
                     "userAttributes": {}
                 },
@@ -10228,6 +10246,12 @@
             "operationId": "ctxAccessCheck",
             "request": {
                 "body": {
+                    "context": {
+                        "audit": {
+                            "resourceId": "comparison-resource",
+                            "userId": "comparison-user"
+                        }
+                    },
                     "marking": "CONFIDENTIAL//FINANCIAL INFORMATION/STUDENT INFORMATION//OAKWOOD/PINECREST//STUDENT TRANSPORTATION SERVICES//DO NOT FORWARD/REDACT BEFORE RELEASE",
                     "userAttributes": {
                         "clearance": "CONFIDENTIAL",
@@ -10520,6 +10544,12 @@
             "operationId": "ctxAccessCheck",
             "request": {
                 "body": {
+                    "context": {
+                        "audit": {
+                            "resourceId": "comparison-resource",
+                            "userId": "comparison-user"
+                        }
+                    },
                     "marking": "CONFIDENTIAL//FINANCIAL INFORMATION/STUDENT INFORMATION//OAKWOOD/PINECREST//STUDENT TRANSPORTATION SERVICES//DO NOT FORWARD/REDACT BEFORE RELEASE",
                     "userAttributes": {
                         "clearance": "INTERNAL",
@@ -10816,6 +10846,12 @@
             "operationId": "ctxAccessCheck",
             "request": {
                 "body": {
+                    "context": {
+                        "audit": {
+                            "resourceId": "comparison-resource",
+                            "userId": "comparison-user"
+                        }
+                    },
                     "marking": "CONFIDENTIAL//FINANCIAL INFORMATION/STUDENT INFORMATION//OAKWOOD/PINECREST//STUDENT TRANSPORTATION SERVICES//DO NOT FORWARD/REDACT BEFORE RELEASE",
                     "userAttributes": {
                         "clearance": "CONFIDENTIAL",
@@ -11110,6 +11146,12 @@
             "operationId": "ctxAccessCheck",
             "request": {
                 "body": {
+                    "context": {
+                        "audit": {
+                            "resourceId": "comparison-resource",
+                            "userId": "comparison-user"
+                        }
+                    },
                     "marking": "CONFIDENTIAL//FINANCIAL INFORMATION/STUDENT INFORMATION//OAKWOOD/PINECREST//STUDENT TRANSPORTATION SERVICES//DO NOT FORWARD/REDACT BEFORE RELEASE",
                     "userAttributes": {
                         "clearance": "CONFIDENTIAL",
@@ -11407,6 +11449,12 @@
             "operationId": "ctxAccessCheck",
             "request": {
                 "body": {
+                    "context": {
+                        "audit": {
+                            "resourceId": "comparison-resource",
+                            "userId": "comparison-user"
+                        }
+                    },
                     "marking": "CONFIDENTIAL//FINANCIAL INFORMATION/STUDENT INFORMATION//OAKWOOD/PINECREST//STUDENT TRANSPORTATION SERVICES//DO NOT FORWARD/REDACT BEFORE RELEASE",
                     "userAttributes": {
                         "clearance": "CONFIDENTIAL",
@@ -11704,6 +11752,12 @@
             "operationId": "ctxAccessCheck",
             "request": {
                 "body": {
+                    "context": {
+                        "audit": {
+                            "resourceId": "comparison-resource",
+                            "userId": "comparison-user"
+                        }
+                    },
                     "marking": "CONFIDENTIAL//FINANCIAL INFORMATION/STUDENT INFORMATION//OAKWOOD/PINECREST//STUDENT TRANSPORTATION SERVICES//DO NOT FORWARD/REDACT BEFORE RELEASE",
                     "userAttributes": {}
                 },
@@ -30579,6 +30633,12 @@
                             "source": "parse"
                         }
                     ],
+                    "context": {
+                        "audit": {
+                            "resourceId": "comparison-resource",
+                            "userId": "comparison-user"
+                        }
+                    },
                     "userAttributes": {
                         "clearance": "CONFIDENTIAL",
                         "recipient_organizations": [
@@ -30870,6 +30930,12 @@
             "operationId": "ctxDocumentAssessAccess",
             "request": {
                 "body": {
+                    "context": {
+                        "audit": {
+                            "resourceId": "comparison-resource",
+                            "userId": "comparison-user"
+                        }
+                    },
                     "responseProfile": "summary",
                     "text": "CONFIDENTIAL//CEDAR VALLEY DISTRICT\nPurchasing and student records.",
                     "userAttributes": {
@@ -31111,6 +31177,12 @@
             "operationId": "ctxDocumentAssessAccess",
             "request": {
                 "body": {
+                    "context": {
+                        "audit": {
+                            "resourceId": "comparison-resource",
+                            "userId": "comparison-user"
+                        }
+                    },
                     "responseProfile": "summary",
                     "text": "CONFIDENTIAL//CEDAR VALLEY DISTRICT\nPurchasing and student records.",
                     "userAttributes": {}
@@ -31362,6 +31434,12 @@
             "operationId": "ctxDocumentAssessAccess",
             "request": {
                 "body": {
+                    "context": {
+                        "audit": {
+                            "resourceId": "comparison-resource",
+                            "userId": "comparison-user"
+                        }
+                    },
                     "responseProfile": "summary",
                     "text": "CONFIDENTIAL//FINANCIAL INFORMATION/STUDENT INFORMATION//OAKWOOD/PINECREST//STUDENT TRANSPORTATION SERVICES//DO NOT FORWARD/REDACT BEFORE RELEASE\nPurchasing and student records.",
                     "userAttributes": {
@@ -31746,6 +31824,12 @@
             "operationId": "ctxDocumentAssessAccess",
             "request": {
                 "body": {
+                    "context": {
+                        "audit": {
+                            "resourceId": "comparison-resource",
+                            "userId": "comparison-user"
+                        }
+                    },
                     "responseProfile": "summary",
                     "text": "A file without an authored marking.",
                     "userAttributes": {
@@ -31921,6 +32005,12 @@
             "operationId": "ctxDocumentAssessAccess",
             "request": {
                 "body": {
+                    "context": {
+                        "audit": {
+                            "resourceId": "comparison-resource",
+                            "userId": "comparison-user"
+                        }
+                    },
                     "responseProfile": "summary",
                     "text": "PUBLIC\nCONFIDENTIAL//CEDAR VALLEY DISTRICT\nPurchasing and student records.",
                     "userAttributes": {
