@@ -11,7 +11,7 @@ Generated from the production dependency tree and declared bundled-code inputs b
 | `ajv`                  | 8.20.0  | MIT          |
 | `ajv-formats`          | 3.0.1   | MIT          |
 | `fast-deep-equal`      | 3.1.3   | MIT          |
-| `fast-uri`             | 3.1.8   | BSD-3-Clause |
+| `fast-uri`             | 3.1.9   | BSD-3-Clause |
 | `json-schema-traverse` | 1.0.0   | MIT          |
 | `require-from-string`  | 2.0.2   | MIT          |
 
@@ -99,7 +99,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-## fast-uri 3.1.8
+## fast-uri 3.1.9
 
 License: BSD-3-Clause
 
