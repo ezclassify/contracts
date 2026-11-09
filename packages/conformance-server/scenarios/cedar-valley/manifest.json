@@ -11,7 +11,7 @@
     "generation": {
         "contentDigest": "sha256:2aab2f7dae92a6a04d16eac5964b7949742870cd1e360612ab35ebbcd97b7612",
         "generator": "ezclassify-integration-scenario-recorder",
-        "generatorDigest": "sha256:7ebba8377877ec4a960a592dad3ed22c9c1efe9814cb30a8ee0a5bbd48b67826"
+        "generatorDigest": "sha256:14e79aea4d308c5ee3fe84b4d5d57b26743776c0e8904b17fddbac93887fe092"
     },
     "recordedResponseHeaders": [
         "allow",
@@ -24,6 +24,7 @@
         "engineVersion": "1.0.0-dev.30",
         "producerPackages": [
             "@ezclassify/engine@1.0.0-dev.30",
+            "@ezclassify/engine-wasm@1.0.0-dev.30",
             "@ezclassify/runtime-host@1.0.0-dev.30",
             "@ezclassify/trust@1.0.0-dev.30",
             "@ezclassify/server-auth@1.0.0-dev.30",
@@ -33,13 +34,13 @@
             "@ezclassify/schemas@1.0.0-dev.30",
             "@ezclassify/validator@1.0.0-dev.30"
         ],
-        "producerSourceDigest": "sha256:8f95308a2634f810209b80c336fc313a6eb4e4360fb5188a9a5cee1ba055190a",
+        "producerSourceDigest": "sha256:a0f032f890982a1db31fa66cc080404e6e625b4af0810e87d2c2fdf9354115b7",
         "restApiVersion": "1.0.0-dev.30"
     },
     "spec": {
-        "digest": "sha256:c5c3cfa4244ddfb7968d13a9ced6e0a31d82b9706baef1b523b5457d988ff313",
+        "digest": "sha256:54692081c905f1f975cc122f3f985717423824655da966607096f8baf5124c0e",
         "infoVersion": "1.0.0-dev.30",
         "package": "@ezclassify/openapi",
-        "validationJsonDigest": "sha256:f185d008b69edb1399b37ca9c83e66f9a3e2d4d2e1cb19c2c0f2a7a356664dc4"
+        "validationJsonDigest": "sha256:51d4ecb3306e314baa7ac43f2b4437db855994f011b8d482b6199c7b7257c0bc"
     }
 }
