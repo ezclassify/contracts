@@ -263,8 +263,11 @@ export interface UnreadMark {
      */
     inner: string;
     /**
-     * Whether the mark leads its paragraph: nothing comes before it on its
-     * line.
+     * Whether the mark leads its line. The line starts at the beginning of the
+     * text or just after the last line feed before `start`, and the mark leads
+     * it when only whitespace lies between that point and `start`. Another
+     * mark is not whitespace, whether it was read or not: in `(S)(QQ)` and in
+     * `(S) (QQ)`, `(S)` leads its line and `(QQ)` does not.
      */
     leading: boolean;
 }

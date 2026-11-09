@@ -3359,7 +3359,7 @@ components:
         pattern:
           type: string
           description: >-
-            RegExp source (no flags) whose first capture group is the raw marking text. Example: `\((.+)\)` for a
+            RegExp source (no flags) whose first capture group is the raw marking text. Example: `\(([^)]+)\)` for a
             marking in parentheses.
         template:
           type: string
@@ -6629,7 +6629,11 @@ components:
           description: "The text inside the wrapper: the capture group of the scheme's `embeddedMarking` pattern."
         leading:
           type: boolean
-          description: "Whether the mark leads its paragraph: nothing comes before it on its line."
+          description: >-
+            Whether the mark leads its line. The line starts at the beginning of the text or just after the last line
+            feed before `start`, and the mark leads it when only whitespace lies between that point and `start`. Another
+            mark is not whitespace, whether it was read or not: in `(S)(QQ)` and in `(S) (QQ)`, `(S)` leads its line and
+            `(QQ)` does not.
       required:
         - text
         - start

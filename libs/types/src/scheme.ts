@@ -2261,7 +2261,7 @@ export type EmbeddedMarkingStyleAutoInsert =
 export interface EmbeddedMarkingStyle {
     /**
      * RegExp source (no flags) whose first capture group is the raw marking
-     * text. Example: `\((.+)\)` for a marking in parentheses.
+     * text. Example: `\(([^)]+)\)` for a marking in parentheses.
      */
     pattern: string;
     /**
