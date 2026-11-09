@@ -2899,16 +2899,40 @@ export type LocalContextSchemeEngineAdapter =
         Omit<RemoteContextSchemeEngineAdapter,
             'getConceptsInCategory' | 'getFormatCoverage' | 'diff' | 'destroy'>
     > & {
-        /** Return the concepts in the named category. */
+        /**
+         * Return the concepts in the named category.
+         *
+         * @param categoryId - Id of the category.
+         */
         getConceptsInCategory(categoryId: string): ConceptView[];
-        /** Return category concepts with their display-tree depth. */
+        /**
+         * Return category concepts with their display-tree depth.
+         *
+         * @param categoryId - Id of the category.
+         * @param options - `{ nested: true }` selects the nested form.
+         */
         getConceptsInCategory(
             categoryId: string,
             options: { nested: true },
-        ): Array<{ concept: ConceptView; depth: number }>;
-        /** Describe input and rendering coverage for a format. */
+        ): Array<{
+            /** The concept, as a display view. */
+            concept: ConceptView;
+            /** Nesting depth: 0 for a root, 1 for its child, and so on. */
+            depth: number;
+        }>;
+        /**
+         * Describe input and rendering coverage for a format.
+         *
+         * @param formatId - Format to report on. Omit it for the default format.
+         */
         getFormatCoverage(formatId?: string): FormatCoverage;
-        /** Compare fact identity using the format both inputs are written in. */
+        /**
+         * Compare fact identity using the format both inputs are written in.
+         *
+         * @param a - The first marking.
+         * @param b - The second marking, compared against the first.
+         * @param options - The input format and a cancellation signal.
+         */
         diff(
             a: string,
             b: string,
