@@ -186,9 +186,6 @@
                         "min",
                         "union",
                         "intersection",
-                        "symmetric_difference",
-                        "exclusive_or",
-                        "complement",
                         "first",
                         "last",
                         "least_upper_bound",
@@ -2368,14 +2365,10 @@
                 "require_any",
                 "restrict",
                 "copy",
-                "move",
                 "inherit_parents",
                 "expand_group",
                 "cardinality",
                 "supersede",
-                "intersect",
-                "union",
-                "max",
                 "warn"
             ],
             "type": "string"
@@ -2669,7 +2662,7 @@
                     "type": "string"
                 },
                 "exclude": {
-                    "description": "For move: concept ID to exclude from the move.",
+                    "description": "For copy: a concept that is never copied.",
                     "type": "string"
                 },
                 "explanation": {
@@ -2684,18 +2677,8 @@
                     "type": "array"
                 },
                 "from": {
-                    "anyOf": [
-                        {
-                            "type": "string"
-                        },
-                        {
-                            "items": {
-                                "type": "string"
-                            },
-                            "type": "array"
-                        }
-                    ],
-                    "description": "Source category ID(s). String for copy/move/inherit_parents, array for intersect/union."
+                    "description": "For copy: the category concepts are copied from.",
+                    "type": "string"
                 },
                 "id": {
                     "description": "Unique rule identifier within the scheme. An id that begins with `_` is refused: the engine keeps that prefix for its own ids, the ones it reports its own errors under as `constraintId` and writes as `sourceRule` on assertions its structure added.",
@@ -2765,7 +2748,7 @@
                     "description": "What the action acts on: a concept or category id, a list of them, or a selector such as `{ children_of: PROGRAM }` that names concepts by their place in the hierarchy. See `RuleTargetSelectorDoc`."
                 },
                 "to": {
-                    "description": "For copy/move: destination category ID.",
+                    "description": "For copy: the category concepts are copied into. For inherit_parents: the category an inherited parent goes in by preference.",
                     "type": "string"
                 },
                 "when": {

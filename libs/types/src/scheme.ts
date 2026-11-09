@@ -239,9 +239,6 @@ export type Rollup =
     | 'min'
     | 'union'
     | 'intersection'
-    | 'symmetric_difference'
-    | 'exclusive_or'
-    | 'complement'
     | 'first'
     | 'last'
     | 'least_upper_bound'
@@ -1523,8 +1520,8 @@ export interface Category {
 
 /**
  * Supported action types for rules. Each action is a constraint, an inference,
- * an aggregation, or an advisory; see {@link ConstraintRule},
- * {@link InferenceRule}, {@link AggregationRule} and {@link AdvisoryRule}.
+ * or an advisory; see {@link ConstraintRule}, {@link InferenceRule} and
+ * {@link AdvisoryRule}.
  *
  * @internal
  */
@@ -1535,14 +1532,10 @@ export type RuleAction =
     | 'require_any'
     | 'restrict'
     | 'copy'
-    | 'move'
     | 'inherit_parents'
     | 'expand_group'
     | 'cardinality'
     | 'supersede'
-    | 'intersect'
-    | 'union'
-    | 'max'
     | 'warn';
 
 /**
@@ -1724,14 +1717,14 @@ export interface Rule {
                   category: string;
               }>
           >;
+    /** For copy: the category concepts are copied from. */
+    from?: string;
     /**
-     * For copy, move, inherit_parents: source category ID. For intersect,
-     * union: source category IDs (string or array).
+     * For copy: the category concepts are copied into. For inherit_parents: the
+     * category an inherited parent goes in by preference.
      */
-    from?: string | string[];
-    /** For copy, move: destination category ID */
     to?: string;
-    /** For move/copy: concept ID(s) to exclude from the operation */
+    /** For copy: the concepts that are never copied. */
     exclude?: string | string[];
     /** For cardinality: minimum count */
     min?: number;
@@ -1776,8 +1769,8 @@ export type ConstraintRule = Rule & {
  * assertions during the infer stage.
  *
  * An `InferenceRule` runs before validation and may change `assertions` in
- * `ProcessResult`. Actions: `copy`/`move` transfers concepts between
- * categories, `inherit_parents` walks the concept hierarchy, `expand_group`
+ * `ProcessResult`. Actions: `copy` copies concepts from one category into
+ * another, `inherit_parents` walks the concept hierarchy, `expand_group`
  * replaces a group concept with its members, and `supersede` replaces
  * deprecated concepts.
  *
@@ -1787,20 +1780,9 @@ export type InferenceRule = Rule & {
     /** One of the inference actions. */
     action:
         | 'copy'
-        | 'move'
         | 'inherit_parents'
         | 'expand_group'
         | 'supersede';
-};
-
-/**
- * Narrowed rule type for aggregation actions that combine assertion sets.
- *
- * @internal
- */
-export type AggregationRule = Rule & {
-    /** One of the aggregation actions. */
-    action: 'intersect' | 'union' | 'max';
 };
 
 /**
@@ -3511,19 +3493,11 @@ export interface DiffResult {
  * holds several values, values the parent states beyond the picked one are not
  * reported.
  *
- * In a `symmetric_difference`, `exclusive_or` or `complement` category the
- * children roll up to a set and the rollup has no restrictive direction, so
- * the parent must state exactly that set. Rolled-up values the parent does not
- * state are missing. Values the parent states beyond that set are excess:
- * stated, but not what the children roll up to. Neither side is more
- * restrictive than the other here.
- *
  * In a category where the scheme has an `expand_group` rule, a parent that
  * carries every member a group declares in that category states the group,
  * and the group is not missing from it. This does not apply to a category
- * whose rollup has no restrictive direction (`first`, `last`,
- * `symmetric_difference`, `exclusive_or`, `complement`),
- * where the parent must state what the children roll up to as it is.
+ * whose rollup has no restrictive direction (`first`, `last`), where the
+ * parent must state what the children roll up to as it is.
  *
  * In a `union` or `pipeline` category the scheme marks as a hierarchy root, a
  * parent value ranked at or above a needed value also covers it.
@@ -3560,13 +3534,11 @@ export interface CoverageReport {
     missingLabels: string[];
     /**
      * Concepts the parent carries that the children do not account for,
-     * judged per category as described on this type. In a
-     * `symmetric_difference`, `exclusive_or` or `complement` category that
-     * means values the parent states beyond the set the children roll up to.
-     * In a `pipeline` category whose findings are not narrowed it means every
-     * parent value the rollup of parent and children drops, which can include
-     * values the children carry. Everywhere else it means values the children
-     * do not allow.
+     * judged per category as described on this type. In a `pipeline`
+     * category whose findings are not narrowed it means every parent value the
+     * rollup of parent and children drops, which can include values the
+     * children carry. Everywhere else it means values the children do not
+     * allow.
      *
      * Concepts appear as the author wrote them. When a written value brought
      * others with it, such as a group that stands for its members, only the

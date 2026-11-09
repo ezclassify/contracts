@@ -2488,9 +2488,6 @@
                             "min",
                             "union",
                             "intersection",
-                            "symmetric_difference",
-                            "exclusive_or",
-                            "complement",
                             "first",
                             "last",
                             "least_upper_bound",
@@ -4521,14 +4518,10 @@
                     "require_any",
                     "restrict",
                     "copy",
-                    "move",
                     "inherit_parents",
                     "expand_group",
                     "cardinality",
                     "supersede",
-                    "intersect",
-                    "union",
-                    "max",
                     "warn"
                 ],
                 "type": "string"
@@ -4802,17 +4795,7 @@
                         "type": "array"
                     },
                     "from": {
-                        "anyOf": [
-                            {
-                                "type": "string"
-                            },
-                            {
-                                "items": {
-                                    "type": "string"
-                                },
-                                "type": "array"
-                            }
-                        ]
+                        "type": "string"
                     },
                     "id": {
                         "minLength": 1,

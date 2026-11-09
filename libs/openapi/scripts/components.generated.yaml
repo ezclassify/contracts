@@ -874,10 +874,9 @@ components:
             $ref: "#/components/schemas/Assertion"
           description: >-
             Concepts the parent carries that the children do not account for, judged per category as described on this
-            type. In a `symmetric_difference`, `exclusive_or` or `complement` category that means values the parent
-            states beyond the set the children roll up to. In a `pipeline` category whose findings are not narrowed it
-            means every parent value the rollup of parent and children drops, which can include values the children
-            carry. Everywhere else it means values the children do not allow.
+            type. In a `pipeline` category whose findings are not narrowed it means every parent value the rollup of
+            parent and children drops, which can include values the children carry. Everywhere else it means values the
+            children do not allow.
 
 
             Concepts appear as the author wrote them. When a written value brought others with it, such as a group that
@@ -977,16 +976,10 @@ components:
         parent states beyond the picked one are not reported.
 
 
-        In a `symmetric_difference`, `exclusive_or` or `complement` category the children roll up to a set and the
-        rollup has no restrictive direction, so the parent must state exactly that set. Rolled-up values the parent does
-        not state are missing. Values the parent states beyond that set are excess: stated, but not what the children
-        roll up to. Neither side is more restrictive than the other here.
-
-
         In a category where the scheme has an `expand_group` rule, a parent that carries every member a group declares
         in that category states the group, and the group is not missing from it. This does not apply to a category whose
-        rollup has no restrictive direction (`first`, `last`, `symmetric_difference`, `exclusive_or`, `complement`),
-        where the parent must state what the children roll up to as it is.
+        rollup has no restrictive direction (`first`, `last`), where the parent must state what the children roll up to
+        as it is.
 
 
         In a `union` or `pipeline` category the scheme marks as a hierarchy root, a parent value ranked at or above a
@@ -5723,9 +5716,6 @@ components:
         - min
         - union
         - intersection
-        - symmetric_difference
-        - exclusive_or
-        - complement
         - first
         - last
         - least_upper_bound

@@ -385,14 +385,10 @@ export type RuleActionDoc =
     | 'require_any'
     | 'restrict'
     | 'copy'
-    | 'move'
     | 'inherit_parents'
     | 'expand_group'
     | 'cardinality'
     | 'supersede'
-    | 'intersect'
-    | 'union'
-    | 'max'
     | 'warn';
 
 /**
@@ -511,14 +507,14 @@ export interface SchemeRuleDoc {
     category?: string;
     /** For supersede: what replaces the target. */
     with?: string | Record<string, unknown>;
+    /** For copy: the category concepts are copied from. */
+    from?: string;
     /**
-     * Source category ID(s). String for copy/move/inherit_parents, array for
-     * intersect/union.
+     * For copy: the category concepts are copied into. For inherit_parents: the
+     * category an inherited parent goes in by preference.
      */
-    from?: string | string[];
-    /** For copy/move: destination category ID. */
     to?: string;
-    /** For move: concept ID to exclude from the move. */
+    /** For copy: a concept that is never copied. */
     exclude?: string;
     /**
      * For cardinality: minimum concept count.
@@ -873,9 +869,6 @@ export interface CategoryDoc {
         | 'min'
         | 'union'
         | 'intersection'
-        | 'symmetric_difference'
-        | 'exclusive_or'
-        | 'complement'
         | 'first'
         | 'last'
         | 'least_upper_bound'
