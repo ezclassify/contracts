@@ -33,6 +33,7 @@ import type {
     RenderResult,
     RuleDescription,
     SchemeEngineAdapter,
+    SchemeGrammar,
     SchemeStructuralView,
     SuggestResult,
     ValidateResult,
@@ -295,6 +296,15 @@ expectTypeOf(
 expectTypeOf(
     remoteContext.translate({ crosswalkId: 'x', marking: 'SECRET' }),
 ).toEqualTypeOf<Promise<ContextOperationResult<CrosswalkTranslationResult>>>();
+
+// The grammar is part of the scheme profile a remote Context reads when it
+// connects, so both modes answer it synchronously, and from the Context's own
+// scheme rather than a selected one.
+expectTypeOf(localContext.scheme.getGrammar()).toEqualTypeOf<SchemeGrammar>();
+expectTypeOf(remoteContext.scheme.getGrammar()).toEqualTypeOf<SchemeGrammar>();
+expectTypeOf<
+    RemoteContextSchemeEngineAdapter['getGrammar']
+>().parameters.toEqualTypeOf<[]>();
 
 // A remote Context owns its composition. Its marking surface therefore has no
 // lifecycle methods and no selector in the operation position.

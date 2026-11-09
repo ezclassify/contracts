@@ -41,6 +41,7 @@ import type {
     SchemeStructuralView,
     FilterResult,
     FormatView,
+    SchemeGrammar,
     SchemeMetaView,
     CategoryView,
     ConceptView,
@@ -1693,6 +1694,16 @@ export interface SchemeEngineAdapter {
     getSchemeMeta(schemeId?: string): SchemeMetaView;
 
     /**
+     * Return how the scheme's reader compares a spelling it finds against the
+     * vocabulary: its letter-case and whitespace policy, with the scheme's
+     * defaults applied. Operates synchronously on the loaded scheme.
+     *
+     * @param schemeId - Scheme to inspect; defaults to the loaded default
+     *   scheme.
+     */
+    getGrammar(schemeId?: string): SchemeGrammar;
+
+    /**
      * Return resolved category views for every category in the scheme.
      *
      * @param schemeId - Scheme to inspect; defaults to the loaded default
@@ -2228,6 +2239,7 @@ export interface LocalSchemeEngineAdapter extends SchemeEngineAdapter {
         depth: number;
     }>;
     getSchemeMeta(schemeId?: string): SchemeMetaView;
+    getGrammar(schemeId?: string): SchemeGrammar;
     listCategories(schemeId?: string): CategoryView[];
     checkCoverage(
         children: string[],
@@ -3106,6 +3118,7 @@ export interface RemoteContextSchemeEngineAdapter
         | 'listCategoriesFlat'
         | 'getConceptsInCategory'
         | 'getSchemeMeta'
+        | 'getGrammar'
         | 'listCategories'
         | 'uncoveredAssertions'
         | 'checkCoverage'
@@ -3498,6 +3511,11 @@ export interface RemoteContextSchemeEngineAdapter
      * SchemeEngineAdapter.getSchemeMeta}.
      */
     getSchemeMeta(): SchemeMetaView;
+    /**
+     * Returns the scheme's reading policy. See {@link
+     * SchemeEngineAdapter.getGrammar}.
+     */
+    getGrammar(): SchemeGrammar;
     /**
      * Returns every category view. See {@link
      * SchemeEngineAdapter.listCategories}.

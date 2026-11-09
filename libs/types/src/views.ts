@@ -408,6 +408,35 @@ export interface SchemeMetaView {
     }>;
 }
 
+/**
+ * How a scheme's reader compares a spelling it finds against the vocabulary,
+ * with the defaults applied where the scheme states neither `parse` key.
+ *
+ * Returned by `SchemeEngineAdapter.getGrammar()`, and by the Context REST
+ * grammar resource.
+ *
+ * Neither flag splits text. Every boundary in a marking belongs to the format
+ * field that writes it, so there is no separator here, and whitespace around a
+ * spelling always separates it from its neighbors.
+ */
+export interface SchemeGrammar {
+    /**
+     * Whether a spelling matches only in its authored letter case. When false,
+     * text and spellings are compared after full, locale-independent Unicode
+     * lowercasing. It is also the case mode of the scheme's authored patterns,
+     * except a recognizer that states its own `case_sensitive`. False when the
+     * scheme states no `parse.case_sensitive`.
+     */
+    caseSensitive: boolean;
+    /**
+     * Whether each run of whitespace inside a spelling reads as one space, and
+     * a free-text value is read without its surrounding whitespace. When false,
+     * whitespace inside a spelling must match as authored. True when the
+     * scheme states no `parse.strip_whitespace`.
+     */
+    stripWhitespace: boolean;
+}
+
 /** How a format's text is framed: plain text or XML attributes on one element. */
 export type FormatSyntaxType = SyntaxDoc['type'];
 

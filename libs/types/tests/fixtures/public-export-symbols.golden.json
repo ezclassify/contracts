@@ -314,6 +314,7 @@
     "SchemeDataDoc",
     "SchemeDefinition",
     "SchemeEngineAdapter",
+    "SchemeGrammar",
     "SchemeMetaView",
     "SchemePublicView",
     "SchemeRuleDoc",
