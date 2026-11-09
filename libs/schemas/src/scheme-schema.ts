@@ -177,8 +177,8 @@ export const rollupPipelineSchema = itemFragment(
  * Sub-schema for a single normalize/repair rule within
  * `scheme.parse.normalize[]`.
  *
- * Required fields: `id`, `type` (one of `alias | reorder | separator | dedup |
- * case | infer_missing`), `confidence` (`safe` or `uncertain`), `explanation`.
+ * Required fields: `id`, `type` (one of `separator | dedup | case`),
+ * `confidence` (`safe` or `uncertain`), `explanation`.
  * Canonical rewrite fields: `pattern` and `correction`. Used by validators and
  * repair-rule editors.
  */

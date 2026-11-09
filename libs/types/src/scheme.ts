@@ -1881,15 +1881,10 @@ export interface Recognizer {
  *
  * Repair rules come from the scheme's `parse.normalize` list and run in the repair
  * stage, before inference and validation. `type` selects the correction
- * strategy: `'alias'` resolves alternate spellings, `'reorder'` sorts concepts
- * into canonical order, `'separator'` rewrites separator text, `'dedup'`
- * removes duplicate assertions, `'case'` normalizes casing, and
- * `'infer_missing'` adds a required concept when no match was found. Every
- * required addition is applied only when it conflicts with no existing fact.
- * Repair never removes an author-stated concept to satisfy a rule; validation
- * reports the unmet requirement and process proposes choices for the author.
- * `confidence` is recorded with the repair in the
- * explanation trace.
+ * strategy: `'separator'` rewrites separator text, `'dedup'` removes repeated
+ * tokens, and `'case'` normalizes casing. Each rewrites the input text only;
+ * none adds or removes a concept. `confidence` is recorded with the repair in
+ * the explanation trace.
  *
  * @internal
  */
@@ -1897,13 +1892,7 @@ export interface RepairRule {
     /** Rule id. */
     id: string;
     /** The correction strategy. */
-    type:
-        | 'alias'
-        | 'reorder'
-        | 'separator'
-        | 'dedup'
-        | 'case'
-        | 'infer_missing';
+    type: 'separator' | 'dedup' | 'case';
     /** Human-readable description of the correction. */
     description: string;
     /**

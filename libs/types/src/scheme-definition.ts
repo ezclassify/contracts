@@ -238,7 +238,6 @@ export type RankSpecDoc =
 /** Comparison operator for a structured `when:` condition. */
 export type ConditionOperator =
     | 'has_content'
-    | 'has_no_content'
     | 'has_concept'
     | 'not_has_concept'
     | 'every_has_concept'
@@ -1020,14 +1019,11 @@ export interface RecognizerDoc {
 export interface NormalizeRuleDoc {
     /** Rule identifier. */
     id: string;
-    /** Repair type. */
-    type:
-        | 'alias'
-        | 'reorder'
-        | 'separator'
-        | 'dedup'
-        | 'case'
-        | 'infer_missing';
+    /**
+     * Repair type: `separator` rewrites separator text, `dedup` removes
+     * repeated tokens, and `case` corrects letter case.
+     */
+    type: 'separator' | 'dedup' | 'case';
     /** Confidence level. */
     confidence: RepairConfidence;
     /** Human-readable explanation. */

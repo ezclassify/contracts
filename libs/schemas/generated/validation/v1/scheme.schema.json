@@ -848,7 +848,6 @@
             "description": "Comparison operator for a structured `when:` condition.",
             "enum": [
                 "has_content",
-                "has_no_content",
                 "has_concept",
                 "not_has_concept",
                 "every_has_concept",
@@ -1777,15 +1776,8 @@
                     "type": "string"
                 },
                 "type": {
-                    "description": "Repair type.",
-                    "enum": [
-                        "alias",
-                        "reorder",
-                        "separator",
-                        "dedup",
-                        "case",
-                        "infer_missing"
-                    ],
+                    "description": "Repair type: `separator` rewrites separator text, `dedup` removes repeated tokens, and `case` corrects letter case.",
+                    "enum": ["separator", "dedup", "case"],
                     "type": "string"
                 }
             },

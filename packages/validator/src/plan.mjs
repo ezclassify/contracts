@@ -561,9 +561,6 @@ function literalOf(node) {
     if (operator === 'has_content' && typeof category === 'string') {
         return { key: `content:${category}`, value: true };
     }
-    if (operator === 'has_no_content' && typeof category === 'string') {
-        return { key: `content:${category}`, value: false };
-    }
     if (
         operator === undefined &&
         typeof category === 'string' &&

@@ -3149,7 +3149,6 @@
             "ConditionOperator": {
                 "enum": [
                     "has_content",
-                    "has_no_content",
                     "has_concept",
                     "not_has_concept",
                     "every_has_concept",
@@ -4075,12 +4074,9 @@
                     },
                     "type": {
                         "enum": [
-                            "alias",
-                            "reorder",
                             "separator",
                             "dedup",
-                            "case",
-                            "infer_missing"
+                            "case"
                         ],
                         "type": "string"
                     }

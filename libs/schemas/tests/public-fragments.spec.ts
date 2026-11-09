@@ -82,15 +82,15 @@ const schemeFragments = [
         schema: repairRuleSchema,
         valid: {
             id: 'r',
-            type: 'alias',
+            type: 'dedup',
             confidence: 'safe',
-            explanation: 'Known spelling.',
+            explanation: 'A token is written once.',
         },
         invalid: {
             id: 'r',
-            type: 'alias',
+            type: 'dedup',
             confidence: 'certain',
-            explanation: 'Known spelling.',
+            explanation: 'A token is written once.',
         },
     },
 ] as const;
