@@ -28,6 +28,7 @@ const EXPECTED_SCHEMAS = [
     'explanation-trace.schema.json',
     'scan-limits.schema.json',
     'scan-result.schema.json',
+    'unread-mark.schema.json',
     'access-rule-result.schema.json',
     'access-decision.schema.json',
     'category-access-result.schema.json',

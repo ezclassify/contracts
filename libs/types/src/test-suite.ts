@@ -93,10 +93,11 @@ export interface TestOperationResults {
     /** The result of a `suggestForCategories` case. */
     suggestForCategories: SuggestResultsByCategory;
     /**
-     * The result of a `schemeScan` case: the markings found and how far the
-     * scan got. A case passes only when the scan read the whole text, unless
-     * one of its assertions is on `limits.status`, which is how a case says
-     * it expects the scan to stop early.
+     * The result of a `schemeScan` case: the markings found, the wrapped
+     * marks it could not read, and how far the scan got. A case passes only
+     * when the scan read the whole text, unless one of its assertions is on
+     * `limits.status`, which is how a case says it expects the scan to stop
+     * early.
      */
     schemeScan: ScanOutcome;
     /** The result of a `guideScan` case. */

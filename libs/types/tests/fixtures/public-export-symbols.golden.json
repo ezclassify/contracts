@@ -364,6 +364,7 @@
     "TraceInference",
     "TraceRepair",
     "TraceValidationIssue",
+    "UnreadMark",
     "UnrepresentableFact",
     "UnrepresentableFactReason",
     "UnrepresentableOutput",

@@ -8194,11 +8194,20 @@ components:
           items:
             $ref: "#/components/schemas/ScanResult"
           description: The markings the scan found, in document order.
+        unread:
+          type: array
+          items:
+            $ref: "#/components/schemas/UnreadMark"
+          description: >-
+            The wrapped marks the scan found but could not read, in document order. Empty when every wrapped mark it
+            reached was read. Text past where the scan stopped was never offered to recognition, so none of it is
+            listed.
         limits:
           $ref: "#/components/schemas/ScanLimits"
           description: How far the scan got, and what stopped it.
       required:
         - results
+        - unread
         - limits
       description: >-
         What a scan answers on the wire.
@@ -8821,6 +8830,38 @@ components:
         Validation issue recorded in an explanation trace: the constraint that failed and its message, and nothing else.
         The category, severity and concepts of the error it came from belong to the error, which a validate or process
         result reports in `errors`.
+    UnreadMark:
+      type: object
+      properties:
+        text:
+          type: string
+          description: The wrapped text as found in the document, wrapper included.
+        start:
+          type: integer
+          description: Start position in the input text
+        end:
+          type: integer
+          description: End position in the input text
+        inner:
+          type: string
+          description: "The text inside the wrapper: the capture group of the scheme's `embeddedMarking` pattern."
+        leading:
+          type: boolean
+          description: "Whether the mark leads its paragraph: nothing comes before it on its line."
+      required:
+        - text
+        - start
+        - end
+        - inner
+        - leading
+      description: >-
+        A wrapped mark a scan found but could not read.
+
+
+        The text matched the scheme's `embeddedMarking` pattern, which is how a part marking is written, but recognition
+        read no marking in it, and it has no entry in `ScanOutcome.results`. Text that looks like a marking and carries
+        none is reported rather than dropped, so a reader can see it and correct it. `start`/`end` are offsets in UTF-16
+        code units in the input text, as on `ScanResult`.
     UnrepresentableFact:
       type: object
       properties:

@@ -96,6 +96,7 @@ const types = [
     // libs/types/src/engine.ts
     { type: 'ScanResult', path: 'libs/types/src/engine.ts' },
     { type: 'ScanLimits', path: 'libs/types/src/engine.ts' },
+    { type: 'UnreadMark', path: 'libs/types/src/engine.ts' },
     // libs/types/src/access.ts
     { type: 'AccessRuleResult', path: 'libs/types/src/access.ts' },
     { type: 'AccessDecision', path: 'libs/types/src/access.ts' },

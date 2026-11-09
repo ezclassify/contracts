@@ -233,6 +233,43 @@ export interface ScanResult {
 }
 
 /**
+ * A wrapped mark a scan found but could not read.
+ *
+ * The text matched the scheme's `embeddedMarking` pattern, which is how a part
+ * marking is written, but recognition read no marking in it, and it has no
+ * entry in `ScanOutcome.results`. Text that looks like a marking and carries
+ * none is reported rather than dropped, so a reader can see it and correct it.
+ * `start`/`end` are offsets in UTF-16 code units in the input text, as on
+ * `ScanResult`.
+ */
+export interface UnreadMark {
+    /** The wrapped text as found in the document, wrapper included. */
+    text: string;
+    /**
+     * Start position in the input text
+     *
+     * @asType integer
+     */
+    start: number;
+    /**
+     * End position in the input text
+     *
+     * @asType integer
+     */
+    end: number;
+    /**
+     * The text inside the wrapper: the capture group of the scheme's
+     * `embeddedMarking` pattern.
+     */
+    inner: string;
+    /**
+     * Whether the mark leads its paragraph: nothing comes before it on its
+     * line.
+     */
+    leading: boolean;
+}
+
+/**
  * How far a scan got.
  *
  * `complete` means the whole document was offered to recognition. `truncated`
@@ -276,16 +313,24 @@ export interface ScanLimits {
 }
 
 /**
- * What `scan` returns: the markings it found, and how far it got.
+ * What `scan` returns: the markings it found, the wrapped marks it could not
+ * read, and how far it got.
  *
  * An empty list is what a clean document and an abandoned one both look like,
  * so the limit report travels beside the markings on every scan instead of
  * behind a second call. A caller whose next step depends on completeness reads
- * `limits`; one that only highlights matches reads `results`.
+ * `limits`; one that only highlights matches reads `results`. A caller that
+ * shows the author what is wrong with the document reads `unread` too.
  */
 export interface ScanOutcome {
     /** The markings the scan found, in document order. */
     results: ScanResult[];
+    /**
+     * The wrapped marks the scan found but could not read, in document order.
+     * Empty when every wrapped mark it reached was read. Text past where the
+     * scan stopped was never offered to recognition, so none of it is listed.
+     */
+    unread: UnreadMark[];
     /** How far the scan got, and what stopped it. */
     limits: ScanLimits;
 }

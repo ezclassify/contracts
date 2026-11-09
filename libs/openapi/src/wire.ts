@@ -45,6 +45,7 @@ import type {
     RuleDescription,
     ScanLimits,
     ScanResult,
+    UnreadMark,
     Vocabulary,
     SchemeStructuralView,
     SuggestResult,
@@ -941,6 +942,12 @@ export type ContextSchemeFilterConceptsResult =
 export interface ScanResponseBody {
     /** The markings the scan found, in document order. */
     results: ScanResult[];
+    /**
+     * The wrapped marks the scan found but could not read, in document order.
+     * Empty when every wrapped mark it reached was read. Text past where the
+     * scan stopped was never offered to recognition, so none of it is listed.
+     */
+    unread: UnreadMark[];
     /** How far the scan got, and what stopped it. */
     limits: ScanLimits;
 }

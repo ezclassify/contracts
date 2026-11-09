@@ -3374,7 +3374,7 @@
         },
         "ScanOutcome": {
             "additionalProperties": false,
-            "description": "What `scan` returns: the markings it found, and how far it got.\n\nAn empty list is what a clean document and an abandoned one both look like, so the limit report travels beside the markings on every scan instead of behind a second call. A caller whose next step depends on completeness reads `limits`; one that only highlights matches reads `results`.",
+            "description": "What `scan` returns: the markings it found, the wrapped marks it could not read, and how far it got.\n\nAn empty list is what a clean document and an abandoned one both look like, so the limit report travels beside the markings on every scan instead of behind a second call. A caller whose next step depends on completeness reads `limits`; one that only highlights matches reads `results`. A caller that shows the author what is wrong with the document reads `unread` too.",
             "properties": {
                 "limits": {
                     "$ref": "#/definitions/ScanLimits",
@@ -3386,9 +3386,16 @@
                         "$ref": "#/definitions/ScanResult"
                     },
                     "type": "array"
+                },
+                "unread": {
+                    "description": "The wrapped marks the scan found but could not read, in document order. Empty when every wrapped mark it reached was read. Text past where the scan stopped was never offered to recognition, so none of it is listed.",
+                    "items": {
+                        "$ref": "#/definitions/UnreadMark"
+                    },
+                    "type": "array"
                 }
             },
-            "required": ["results", "limits"],
+            "required": ["results", "unread", "limits"],
             "type": "object"
         },
         "ScanResult": {
@@ -3707,6 +3714,34 @@
             "required": ["constraintId", "message"],
             "type": "object"
         },
+        "UnreadMark": {
+            "additionalProperties": false,
+            "description": "A wrapped mark a scan found but could not read.\n\nThe text matched the scheme's `embeddedMarking` pattern, which is how a part marking is written, but recognition read no marking in it, and it has no entry in `ScanOutcome.results`. Text that looks like a marking and carries none is reported rather than dropped, so a reader can see it and correct it. `start`/`end` are offsets in UTF-16 code units in the input text, as on `ScanResult`.",
+            "properties": {
+                "end": {
+                    "description": "End position in the input text",
+                    "type": "integer"
+                },
+                "inner": {
+                    "description": "The text inside the wrapper: the capture group of the scheme's `embeddedMarking` pattern.",
+                    "type": "string"
+                },
+                "leading": {
+                    "description": "Whether the mark leads its paragraph: nothing comes before it on its line.",
+                    "type": "boolean"
+                },
+                "start": {
+                    "description": "Start position in the input text",
+                    "type": "integer"
+                },
+                "text": {
+                    "description": "The wrapped text as found in the document, wrapper included.",
+                    "type": "string"
+                }
+            },
+            "required": ["text", "start", "end", "inner", "leading"],
+            "type": "object"
+        },
         "UnrepresentableFact": {
             "additionalProperties": false,
             "description": "A fact this format has no way to write.",
@@ -4000,7 +4035,7 @@
         },
         "schemeScan": {
             "$ref": "#/definitions/ScanOutcome",
-            "description": "The result of a `schemeScan` case: the markings found and how far the scan got. A case passes only when the scan read the whole text, unless one of its assertions is on `limits.status`, which is how a case says it expects the scan to stop early."
+            "description": "The result of a `schemeScan` case: the markings found, the wrapped marks it could not read, and how far the scan got. A case passes only when the scan read the whole text, unless one of its assertions is on `limits.status`, which is how a case says it expects the scan to stop early."
         },
         "suggest": {
             "$ref": "#/definitions/SuggestResult",
