@@ -5,13 +5,13 @@
     },
     "corpusVersion": "v1",
     "coverage": {
-        "cases": 247,
+        "cases": 248,
         "operationsCovered": 30
     },
     "generation": {
         "contentDigest": "sha256:c9f55a2152a363fcf5b9678eb2eaea4fee9f8fbad1bdde978d1fc324dba98c6c",
         "generator": "ezclassify-integration-scenario-recorder",
-        "generatorDigest": "sha256:bcf3f76cfbf75f94bb013827e20b33e93ed18fe3cccdbe9db41ea9a6aa6eab87"
+        "generatorDigest": "sha256:be2424c5da9063c06ac0434cb50c2d2cec3e38eed74ddc3a4b6e57504ce116fd"
     },
     "recordedResponseHeaders": [
         "allow",

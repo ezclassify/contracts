@@ -33568,6 +33568,122 @@
                 "credential": "context-token",
                 "deployment": "open"
             },
+            "id": "document-form.load.aggregate.5",
+            "operationId": "ctxSchemeAggregate",
+            "request": {
+                "body": {
+                    "assertionSets": [
+                        [
+                            {
+                                "categoryId": "level",
+                                "conceptId": "INTERNAL",
+                                "confidence": "certain",
+                                "source": "parse"
+                            },
+                            {
+                                "categoryId": "allow_sharing_with",
+                                "conceptId": "CEDAR_VALLEY_DISTRICT",
+                                "confidence": "inferred",
+                                "source": "infer",
+                                "sourceRule": "nonpublic-is-internal-by-default"
+                            }
+                        ],
+                        [
+                            {
+                                "categoryId": "level",
+                                "conceptId": "CONFIDENTIAL",
+                                "confidence": "certain",
+                                "source": "aggregate"
+                            },
+                            {
+                                "categoryId": "allow_sharing_with",
+                                "conceptId": "CEDAR_VALLEY_DISTRICT",
+                                "confidence": "inferred",
+                                "source": "aggregate"
+                            }
+                        ]
+                    ]
+                },
+                "headers": {
+                    "content-type": "application/json"
+                },
+                "method": "POST",
+                "path": "/v1/ctx/cedar-valley/1.0.0/scheme/aggregate",
+                "pathTemplate": "/v1/ctx/{ctxId}/{version}/scheme/aggregate"
+            },
+            "response": {
+                "body": {
+                    "operationLimitations": [],
+                    "resolution": {
+                        "artifacts": [
+                            {
+                                "id": "cedar-valley",
+                                "kind": "scheme",
+                                "version": "1.0.0"
+                            },
+                            {
+                                "id": "cedar-valley-guide",
+                                "kind": "guide",
+                                "version": "1.0.0"
+                            },
+                            {
+                                "id": "cedar-valley-access",
+                                "kind": "access",
+                                "version": "1.0.0"
+                            },
+                            {
+                                "id": "cedar-valley",
+                                "kind": "context",
+                                "version": "1.0.0"
+                            }
+                        ],
+                        "contextId": "cedar-valley",
+                        "requestedVersion": "1.0.0",
+                        "resolvedVersion": "1.0.0",
+                        "sources": []
+                    },
+                    "result": {
+                        "appliedFixes": [],
+                        "assertions": [
+                            {
+                                "categoryId": "level",
+                                "conceptId": "CONFIDENTIAL",
+                                "confidence": "certain",
+                                "source": "aggregate"
+                            },
+                            {
+                                "categoryId": "allow_sharing_with",
+                                "conceptId": "CEDAR_VALLEY_DISTRICT",
+                                "confidence": "inferred",
+                                "source": "aggregate"
+                            }
+                        ],
+                        "displayColor": {
+                            "background": "#6a1b9a",
+                            "text": "#ffffff"
+                        },
+                        "errors": [],
+                        "notices": [],
+                        "proposedFixes": [],
+                        "rendered": "CONFIDENTIAL",
+                        "valid": true,
+                        "warnings": []
+                    }
+                },
+                "headers": {
+                    "content-type": "application/json",
+                    "x-ezclassify-resolved-version": "1.0.0"
+                },
+                "status": 200,
+                "statusDeclaredInContract": true
+            },
+            "summary": "document-form: load: aggregate: 5"
+        },
+        {
+            "auth": {
+                "credential": "context-token",
+                "deployment": "open"
+            },
             "id": "document-form.load.process.15",
             "operationId": "ctxSchemeProcess",
             "request": {
