@@ -91,7 +91,9 @@ describe('The ?scheme= selector', () => {
         expect(description).toMatch(/primary scheme answers/);
         // Marking integrity fails closed: an unknown selector is refused, not
         // quietly answered in the primary.
-        expect(description).toMatch(/answers 404 with code `scheme_not_found`; it never falls back/);
+        expect(description).toMatch(
+            /answers 404 with code `scheme_not_found`; it never falls back/,
+        );
     });
 
     it('is not offered outside the scheme routes', () => {
