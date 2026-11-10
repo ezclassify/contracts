@@ -34,13 +34,13 @@
             "@ezclassify/schemas@1.0.0-dev.30",
             "@ezclassify/validator@1.0.0-dev.30"
         ],
-        "producerSourceDigest": "sha256:9b22a771cd96e67102d3b1d2c94bb67ec2a3d68e70d3612f735c940abd9601dd",
+        "producerSourceDigest": "sha256:a8d1ebe0737b526a73f9025d00d2943d5916beb1ac553ebb0e55e4e6b9c048b6",
         "restApiVersion": "1.0.0-dev.30"
     },
     "spec": {
-        "digest": "sha256:5d390282d1e39c62d2e0d1a1b588e37e30e1261206e8f0e5a829b5ebb0e019f5",
+        "digest": "sha256:65cd29d9216ffb5f587d8bae8c7861666430ef1a5145d74b9c320927ee4f44b1",
         "infoVersion": "1.0.0-dev.30",
         "package": "@ezclassify/openapi",
-        "validationJsonDigest": "sha256:9344b3c86a65d395a4f2d14866c0b360f4d6be440a9d1156aca48a99299b2ed4"
+        "validationJsonDigest": "sha256:77cee618856a7a06009e729a268fbbf2cb32a366f2ec2a369ea88772c5676a9b"
     }
 }
