@@ -7,6 +7,7 @@ import type {
     Assertion,
     ContextAdapter,
     ContextCompositionPresence,
+    ContextCrosswalkDescriptor,
     ConceptView,
     ContextOperationResult,
     CrosswalkTranslationResult,
@@ -211,9 +212,6 @@ declare const remoteGuide: RemoteGuideEngineAdapter;
 expectTypeOf(guide.evaluate('guide', ['rule'])).toEqualTypeOf<
     MaybePromise<EvaluationResult>
 >();
-expectTypeOf(guide.evaluateAll(['rule'])).toEqualTypeOf<
-    MaybePromise<EvaluationResult[]>
->();
 expectTypeOf(
     guide.evaluateMany([{ guideId: 'guide', ruleId: 'rule' }]),
 ).toEqualTypeOf<MaybePromise<EvaluationResult>>();
@@ -300,6 +298,24 @@ expectTypeOf(
 expectTypeOf(
     remoteContext.translate({ crosswalkId: 'x', marking: 'SECRET' }),
 ).toEqualTypeOf<Promise<ContextOperationResult<CrosswalkTranslationResult>>>();
+
+// Crosswalks are described the way schemes are: bare descriptors, no
+// resolution envelope, sync locally and a Promise remotely.
+expectTypeOf(context.describeCrosswalks()).toEqualTypeOf<
+    MaybePromise<ContextCrosswalkDescriptor[]>
+>();
+expectTypeOf(localContext.describeCrosswalks()).toEqualTypeOf<
+    ContextCrosswalkDescriptor[]
+>();
+expectTypeOf(remoteContext.describeCrosswalks()).toEqualTypeOf<
+    Promise<ContextCrosswalkDescriptor[]>
+>();
+// A crosswalk names its schemes by Context-local selector, the value
+// describeSchemes reports and translate's views compare against.
+expectTypeOf<ContextCrosswalkDescriptor['source']>().toEqualTypeOf<string>();
+expectTypeOf<
+    ContextCrosswalkDescriptor['selections'][number]['candidates'][number]['disposition']
+>().toEqualTypeOf<'carry' | 'review' | 'omit' | 'forbid'>();
 
 // The grammar is part of the scheme profile a remote Context reads when it
 // connects, so both modes answer it synchronously, and from the Context's own

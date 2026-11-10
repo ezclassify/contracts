@@ -23,6 +23,7 @@ import type {
     Assertion,
     CollectedNotice,
     ConceptDescription,
+    ContextCrosswalkDescriptor,
     ContextOperationResult,
     ContextSchemeDescriptor,
     CoverageReport,
@@ -906,6 +907,19 @@ export interface CtxAccessRulesResponseBody {
     rules: AccessRuleDescription[];
 }
 
+/**
+ * Response body for GET /v1/ctx/{ctxId}/{version?}/crosswalk/describe: every
+ * crosswalk the context holds.
+ *
+ * A dedicated read rather than a member of the context description, because a
+ * crosswalk's reviewed mappings run to tens of kilobytes and every client reads
+ * the description when it connects, translating or not.
+ */
+export interface CtxCrosswalkDescribeResponseBody {
+    /** Every crosswalk in the context, in declaration order. */
+    crosswalks: ContextCrosswalkDescriptor[];
+}
+
 // Concrete Context operation envelopes. Each alias is a schema root so
 // generated clients receive one stable named model per composed route.
 
@@ -1119,7 +1133,8 @@ export interface CtxDescribeResponseBody {
     /**
      * Crosswalk components in declaration order, or omitted when the context
      * declares none. A crosswalk the context follows at `latest` reports here
-     * the concrete version that answered.
+     * the concrete version that answered. This is provenance; the source and
+     * target schemes and the reviewed mappings are on `crosswalk/describe`.
      */
     crosswalks?: CtxComponentDescriptor[];
 }

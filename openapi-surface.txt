@@ -2,6 +2,7 @@ GET /v1/ctx ctxList
 GET /v1/ctx/{ctxId} ctxVersions
 GET /v1/ctx/{ctxId}/{version} ctxDescribe
 GET /v1/ctx/{ctxId}/{version}/access/rules ctxAccessRules
+GET /v1/ctx/{ctxId}/{version}/crosswalk/describe ctxCrosswalkDescribe
 GET /v1/ctx/{ctxId}/{version}/scheme ctxSchemeSummary
 GET /v1/ctx/{ctxId}/{version}/scheme/categories ctxSchemeCategories
 GET /v1/ctx/{ctxId}/{version}/scheme/concepts ctxSchemeConcepts

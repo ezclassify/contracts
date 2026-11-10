@@ -2,11 +2,13 @@ import { expectTypeOf } from 'vitest';
 import type {
     Assertion,
     CrosswalkTranslationInput,
+    RemoteContextAdapter,
     RemoteContextSchemeEngineAdapter,
     RemoteSchemeEngineAdapter,
     SchemeEngineAdapter,
 } from '@ezclassify/types';
 import type {
+    CtxCrosswalkDescribeResponseBody,
     CtxCrosswalkTranslateRequestBody,
     CtxDescribeResponseBody,
     CtxComponentDescriptor,
@@ -169,4 +171,13 @@ expectTypeOf<
 >().toEqualTypeOf<CtxComponentDescriptor>();
 expectTypeOf<CtxComponentDescriptor['layers']>().toEqualTypeOf<
     CtxComponentDescriptor[] | undefined
+>();
+
+// The crosswalk read carries exactly what describeCrosswalks answers, wrapped
+// in one named member so the body stays an object a generator can extend.
+expectTypeOf<
+    keyof CtxCrosswalkDescribeResponseBody
+>().toEqualTypeOf<'crosswalks'>();
+expectTypeOf<CtxCrosswalkDescribeResponseBody['crosswalks']>().toEqualTypeOf<
+    Awaited<ReturnType<RemoteContextAdapter['describeCrosswalks']>>
 >();

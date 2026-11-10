@@ -57,6 +57,10 @@ import type {
     AccessRequirementsDescription,
 } from './access';
 import type {
+    CrosswalkDisposition,
+    CrosswalkMapping,
+    CrosswalkSelectionCandidate,
+    CrosswalkSelectionStrategy,
     CrosswalkTranslationInput,
     CrosswalkTranslationResult,
 } from './crosswalk';
@@ -465,15 +469,6 @@ export interface GuideEngineAdapter {
         selections: GuideRuleSelection[],
     ): MaybePromise<EvaluationResult>;
     /**
-     * Evaluate every loaded guide (fan-out). Returned in load order. A remote
-     * adapter fans out over the guides it already holds metadata for; the
-     * composition is settled at load time, so there is nothing to ask the
-     * server about first.
-     *
-     * @param selectedRuleIds - Ids of the rules the user selected.
-     */
-    evaluateAll(selectedRuleIds: string[]): MaybePromise<EvaluationResult[]>;
-    /**
      * Describe one rule: its outcome and activation text, the rules it depends
      * on, and the rules it overrides. Omit `guideId` for the primary guide.
      *
@@ -504,7 +499,7 @@ export interface GuideEngineAdapter {
     /**
      * Build render-ready structural views for every loaded guide. Used by
      * Guidebook-style components to display guide rules grouped by category.
-     * Fans out per guide the same way {@link evaluateAll} does.
+     * One view per loaded guide, in load order.
      */
     buildGuideViews(): MaybePromise<GuideStructuralView[]>;
 }
@@ -548,7 +543,6 @@ export interface LocalGuideEngineAdapter extends GuideEngineAdapter {
         selection: string[] | Selectable[],
         processor: MarkingProcessorAdapter,
     ): EvaluationResult;
-    evaluateAll(selectedRuleIds: string[]): EvaluationResult[];
     evaluateMany(selections: GuideRuleSelection[]): EvaluationResult;
     /**
      * In-process roll-up with an explicitly supplied marking processor.
@@ -613,7 +607,6 @@ export interface RemoteGuideEngineAdapter extends GuideEngineAdapter {
         guideId: string,
         selectedRuleIds: string[],
     ): Promise<EvaluationResult>;
-    evaluateAll(selectedRuleIds: string[]): Promise<EvaluationResult[]>;
     evaluateMany(selections: GuideRuleSelection[]): Promise<EvaluationResult>;
     describeRule(ruleId: string, guideId?: string): Promise<RuleDescription>;
     filterRules(query: string, guideId?: string): Promise<FilterResult>;
@@ -2907,6 +2900,66 @@ export interface ContextSchemeDescriptor {
 }
 
 /**
+ * One crosswalk a Context holds, with the reviewed decisions it applies.
+ *
+ * Read it as a sentence: this Context translates markings from the scheme
+ * `source` selects to the scheme `target` selects with crosswalk `id` at
+ * `version`, and these are its mappings and selections.
+ *
+ * `source` and `target` are scheme selectors, the `selector` values
+ * `describeSchemes` reports, not scheme ids. A view bound to one of the
+ * Context's schemes finds the crosswalk that reads from it by comparing
+ * selectors. The mappings and selections are the effective set after any
+ * crosswalk layer the Context stacks, which is the set a translation applies.
+ */
+export interface ContextCrosswalkDescriptor {
+    /** Crosswalk id, from the crosswalk document; what `translate` takes. */
+    id: string;
+    /** Concrete crosswalk version that answers in this Context. */
+    version: string;
+    /** Human-readable crosswalk name. */
+    name: string;
+    /** Selector of the scheme this crosswalk translates from. */
+    source: string;
+    /** Selector of the scheme this crosswalk translates to. */
+    target: string;
+    /** General usage and review guidance, when the crosswalk declares it. */
+    guidance?: string;
+    /** Primary citation for the crosswalk, when it declares one. */
+    citation?: string;
+    /** How each source assertion translates, in declared order. */
+    mappings: CrosswalkMapping[];
+    /** Cross-field decisions, in declared order. Empty when there are none. */
+    selections: ContextCrosswalkSelection[];
+}
+
+/**
+ * One cross-field decision a Context's crosswalk applies.
+ *
+ * The document form of a selection, with every candidate's treatment written
+ * out.
+ */
+export interface ContextCrosswalkSelection {
+    /** Selection id, as reviewed. */
+    id: string;
+    /** How one candidate is chosen. */
+    strategy: CrosswalkSelectionStrategy;
+    /** Candidates in declared order; order breaks ties, a fallback is last. */
+    candidates: ContextCrosswalkCandidate[];
+}
+
+/**
+ * One candidate of a cross-field decision a Context's crosswalk applies.
+ *
+ * A candidate document may leave its disposition out to mean `carry`. The
+ * description always states it, so a reader never applies that default itself.
+ */
+export interface ContextCrosswalkCandidate extends CrosswalkSelectionCandidate {
+    /** Treatment applied when this candidate is selected. */
+    disposition: CrosswalkDisposition;
+}
+
+/**
  * Synchronous presence facts for optional artifact families in a resolved
  * Context composition.
  *
@@ -3039,6 +3092,16 @@ export interface ContextAdapter {
      */
     describeSchemes(): MaybePromise<ContextSchemeDescriptor[]>;
     /**
+     * Every crosswalk this composition holds, in declaration order. Empty when
+     * it declares none.
+     *
+     * Each one names its source and target by the selectors
+     * {@link describeSchemes} reports, so a translation view bound to a scheme
+     * picks the crosswalk that reads from it, and a crosswalk handbook renders
+     * the mappings and selections a translation applies.
+     */
+    describeCrosswalks(): MaybePromise<ContextCrosswalkDescriptor[]>;
+    /**
      * Scheme-shaped view of this composition. Implementations may return
      * themselves.
      */
@@ -3105,6 +3168,7 @@ export interface LocalContextAdapter extends ContextAdapter {
     readonly guide?: LocalContextGuideEngineAdapter;
     readonly access?: LocalAccessEngineAdapter;
     describeSchemes(): ContextSchemeDescriptor[];
+    describeCrosswalks(): ContextCrosswalkDescriptor[];
     audit(
         input: DocumentAssessmentInput,
     ): ContextOperationResult<DocumentAuditReport>;
@@ -3599,6 +3663,7 @@ export interface RemoteContextAdapter extends ContextAdapter {
     readonly guide?: RemoteGuideEngineAdapter;
     readonly access?: RemoteAccessEngineAdapter;
     describeSchemes(): Promise<ContextSchemeDescriptor[]>;
+    describeCrosswalks(): Promise<ContextCrosswalkDescriptor[]>;
     audit(
         input: DocumentAssessmentInput,
     ): Promise<ContextOperationResult<DocumentAuditReport>>;

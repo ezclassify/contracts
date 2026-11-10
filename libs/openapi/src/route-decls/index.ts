@@ -47,6 +47,7 @@ import { decl as ctxGuideDescribeRule } from './ctx-guide-describe-rule.js';
 import { decl as ctxGuideFilterRules } from './ctx-guide-filter-rules.js';
 import { decl as ctxGuideView } from './ctx-guide-view.js';
 import { decl as ctxCrosswalkTranslate } from './ctx-crosswalk-translate.js';
+import { decl as ctxCrosswalkDescribe } from './ctx-crosswalk-describe.js';
 
 /** All route declarations, in the order a runtime registers them. */
 export const routeDecls: ReadonlyArray<RouteDecl> = [
@@ -89,6 +90,7 @@ export const routeDecls: ReadonlyArray<RouteDecl> = [
     ctxGuideFilterRules,
     ctxGuideView,
     ctxCrosswalkTranslate,
+    ctxCrosswalkDescribe,
 ];
 
 export type {

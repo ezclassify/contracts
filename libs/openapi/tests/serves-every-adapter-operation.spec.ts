@@ -278,6 +278,54 @@ describe('the wire serves what the adapter contract promises', () => {
         });
     });
 
+    it('describes every crosswalk in one call, outside the connect payload', () => {
+        const route = '/v1/ctx/{ctxId}/{version}/crosswalk/describe';
+        expect(operation(route, 'get').operationId).toBe(
+            'ctxCrosswalkDescribe',
+        );
+        expect(responseRef(route, 'get')).toBe(
+            '#/components/schemas/CtxCrosswalkDescribeResponseBody',
+        );
+        expect(
+            schema('CtxCrosswalkDescribeResponseBody').properties?.[
+                'crosswalks'
+            ],
+        ).toEqual({
+            type: 'array',
+            items: { $ref: '#/components/schemas/ContextCrosswalkDescriptor' },
+            description: expect.any(String),
+        });
+
+        const descriptor = schema('ContextCrosswalkDescriptor');
+        expect(descriptor.required).toEqual(
+            expect.arrayContaining([
+                'id',
+                'version',
+                'name',
+                'source',
+                'target',
+                'mappings',
+                'selections',
+            ]),
+        );
+        // A described candidate always states its treatment, so no reader has
+        // to know that a document candidate without one carries.
+        expect(schema('ContextCrosswalkCandidate').required).toEqual(
+            expect.arrayContaining(['id', 'disposition', 'reason']),
+        );
+        expect(schema('CrosswalkMapping').required).toEqual(
+            expect.arrayContaining(['id', 'disposition', 'reason']),
+        );
+
+        // The context description every client reads on connect names its
+        // crosswalks by provenance only; the reviewed mappings stay on the
+        // dedicated read.
+        const describe = schema('CtxDescribeResponseBody');
+        expect(describe.properties?.['crosswalks']).toMatchObject({
+            items: { $ref: '#/components/schemas/CtxComponentDescriptor' },
+        });
+    });
+
     it('requires the access-check subject the REST handler refuses to omit', () => {
         const route = '/v1/ctx/{ctxId}/{version}/access/check';
         expect(requestRef(route, 'post')).toBe(
