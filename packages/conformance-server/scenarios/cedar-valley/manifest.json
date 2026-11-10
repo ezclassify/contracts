@@ -34,7 +34,7 @@
             "@ezclassify/schemas@1.0.0-dev.30",
             "@ezclassify/validator@1.0.0-dev.30"
         ],
-        "producerSourceDigest": "sha256:e785fd76f20ac417699f67f554271b545215eda516f126e84909c8a7d7db129b",
+        "producerSourceDigest": "sha256:0523e64432d76ed2465dc25d785879ff0d8d505f1b83160ebe83ae5e7ca0018f",
         "restApiVersion": "1.0.0-dev.30"
     },
     "spec": {
