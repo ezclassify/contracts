@@ -2569,9 +2569,14 @@ export interface Scheme {
     /** Usage notes, restrictions, or guidelines for the scheme. */
     guidance?: string;
     /**
+     * The scheme document's own overall marking, from `scheme.marking`.
+     * Carried for display and never interpreted.
+     */
+    marking?: string;
+    /**
      * Optional display-term overrides consulted by runtime UI components
      * (forms, Handbook, reports). Keys are consumer-defined (e.g. "concept",
-     * "marking"); each consumer merges with its own defaults via
+     * "rule"); each consumer merges with its own defaults via
      * `resolveVocabulary`. The `"handbook"` key renames this scheme's own
      * reference-surface noun (e.g. `{ handbook: { singular: "Shelving Guide" }
      * }`); read the resolved word off {@link Scheme.referenceSurfaceLabel}

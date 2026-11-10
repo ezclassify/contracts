@@ -86,6 +86,8 @@ const schemeMetadataKeys = new Set([
     'id',
     'version',
     'name',
+    'marking_scheme',
+    'marking',
     'description',
     'definition',
     'guidance',

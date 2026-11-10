@@ -228,6 +228,7 @@
     "ManualGuideSelectionInput",
     "MarkingColorRule",
     "MarkingColorRuleDoc",
+    "MarkingSchemeRefDoc",
     "MarkingValidation",
     "MatchAllNode",
     "MatchAnyNode",

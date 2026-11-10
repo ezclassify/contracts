@@ -125,6 +125,18 @@ describe('public scheme fragments', () => {
             }),
         ).toBe(false);
     });
+
+    it('scheme metadata carries the whole marking and the scheme it is written in', () => {
+        const validate = new Ajv({ strict: false }).compile(schemeMetaSchema);
+        const meta = { id: 'demo', version: '1.0.0', name: 'Demo' };
+        for (const marking_scheme of ['self', { id: 'other', version: '2.0.0' }])
+            expect(
+                validate({ ...meta, marking_scheme, marking: 'HIGH' }),
+                JSON.stringify(validate.errors),
+            ).toBe(true);
+        expect(validate({ ...meta, marking: 7 })).toBe(false);
+        expect(validate({ ...meta, marking_scheme: 'other' })).toBe(false);
+    });
 });
 
 describe('public guide metadata fragment', () => {

@@ -63,6 +63,7 @@ expectTypeOf<SchemeSummaryResponseBody>().toEqualTypeOf<
             | 'description'
             | 'definition'
             | 'guidance'
+            | 'marking'
             | 'colorFrom'
             | 'colorRules'
             | 'roleAware'

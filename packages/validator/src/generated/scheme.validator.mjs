@@ -38,10 +38,11 @@ var require_ucs2length = __commonJS({
 // scheme.validator.mjs
 var validate = validate10;
 var scheme_validator_default = validate10;
-var schema12 = { "additionalProperties": false, "description": "The body inside the top-level `scheme:` envelope.", "properties": { "data": { "$ref": "#/definitions/SchemeDataDoc", "description": "Categories, concepts, and bulk-concept groups." }, "default_scope": { "description": "The scope a marking is in when nothing names one: one of `scopes`, by id.\n\nRequired whenever a scheme declares at least one scope, and the only way to name the default: the scheme names its default scope once, as a surface names its default view. A layer may leave it out and keep the default of the stack it sits on, or state it to name another; a layer that gives the stack its first scopes names one.", "type": "string" }, "definition": { "description": "Official description or definition of this scheme.", "type": "string" }, "deprecated": { "description": "Whether this scheme as a whole is deprecated.", "type": "boolean" }, "deprecated_since": { "description": "Date the scheme was deprecated, as `YYYY-MM-DD`.", "type": "string" }, "description": { "description": "Longer description of what this scheme covers.", "type": "string" }, "embedded_marking": { "description": "Embedded-marking styles for inline parsing/rendering.", "items": { "$ref": "#/definitions/EmbeddedMarkingStyleDoc" }, "type": "array" }, "filters": { "description": "View filters.", "items": { "$ref": "#/definitions/FilterDoc" }, "type": "array" }, "guidance": { "description": "Usage notes, restrictions, or guidelines for this scheme.", "type": "string" }, "id": { "description": "Unique scheme identifier (e.g. 'tlp-v2', 'cedar-valley-protection').", "type": "string" }, "layer": { "$ref": "#/definitions/LayerBlockDoc", "description": "The scheme family's layer payload. Required when `type: 'layer'`, forbidden otherwise." }, "license": { "description": "License label shown with the scheme, such as `enterprise`. Informational only: it does not grant or restrict use.", "type": "string" }, "name": { "description": "Human-readable scheme name.", "type": "string" }, "named_conditions": { "$ref": "#/definitions/Record%3Cstring%2CWhenDoc%3E", "description": "Reusable `when` trees referenced with `{ named_condition: <id> }`. A layer may also reference definitions inherited from its base and required layers." }, "parse": { "$ref": "#/definitions/ParseConfigDoc", "description": "Parse configuration." }, "part_scope": { "description": "How much text a part marking governs in a document audit: `'paragraph'` (default, the mark's own line(s)), `'until-next'` (through to the next part marking, a section style), or `'document'`. Lets schemes that place/scope markings differently audit correctly. Maps to runtime `Scheme.partScope`.", "enum": ["paragraph", "until-next", "document"], "type": "string" }, "render": { "$ref": "#/definitions/RenderConfigDoc", "description": "Render configuration." }, "replaced_by": { "description": "Scheme id that supersedes this one.", "type": "string" }, "role_aware": { "description": "When true, this scheme reads a marking in the role its context gives, and a part's rules can read the whole it is part of. Whether or not it is, `process`, `validate` and `explain` compare a part that is valid on its own with a whole that reads and is valid.", "type": "boolean" }, "role_detection": { "additionalProperties": false, "description": "When a marking in each role is required and, for a scheme without `render.surfaces`, the formats each role is read in.\n\nA role's `required_when` condition evaluates after discovery against authored whole assertions and authored part contributors. Omitted, a whole is optional and a part required. Named conditions use the same scheme condition registry.\n\nA scheme that declares `render.surfaces` lists no formats here: each of its views states its own `role`, and a role is read in the forms of the views that state it. A role takes `{ required_when: ... }` and nothing else, and a list, flat or under `views`, is refused.\n\nA scheme without `render.surfaces` lists the format ids each role is read in, in one of two shapes:\n\n- Flat: `{ whole: ['full'], part: ['wrapped'] }`.\n- Nested: `{ whole: { views: [...] }, part: { views: [...] } }`: the same list under `views`, beside an optional `required_when`.\n\nEither way the lists are about reading. The view or format a marking in each role is written in, when a request names none, comes from the surface's `default`, or from `render.default`. A role entry that says nothing is refused.", "properties": { "part": { "anyOf": [{ "items": { "type": "string" }, "type": "array" }, { "additionalProperties": false, "properties": { "required_when": { "$ref": "#/definitions/WhenDoc", "description": "The condition under which a part marking is required." }, "views": { "description": "The format ids a part marking is read in.", "items": { "type": "string" }, "type": "array" } }, "type": "object" }], "description": "How a part marking is detected." }, "whole": { "anyOf": [{ "items": { "type": "string" }, "type": "array" }, { "additionalProperties": false, "properties": { "required_when": { "$ref": "#/definitions/WhenDoc", "description": "The condition under which a whole marking is required." }, "views": { "description": "The format ids a whole marking is read in.", "items": { "type": "string" }, "type": "array" } }, "type": "object" }], "description": "How a whole marking is detected." } }, "type": "object" }, "rollup_pipelines": { "description": "Rollup pipelines for categories with `rollup: pipeline`.", "items": { "$ref": "#/definitions/RollupPipelineDoc" }, "type": "array" }, "rules": { "description": "Scheme rules: conditions and the actions they trigger.", "items": { "$ref": "#/definitions/SchemeRuleDoc" }, "type": "array" }, "scope_label": { "description": "Display label for the scope selector.", "type": "string" }, "scopes": { "description": "Scope definitions, in the order a selector offers them.", "items": { "additionalProperties": false, "properties": { "id": { "description": "The scope id.", "type": "string" }, "label": { "description": "The scope's display label.", "type": "string" } }, "required": ["id", "label"], "type": "object" }, "type": "array" }, "tier": { "description": "Distribution tier this document belongs to. Names which catalog carries it; it grants nothing and is read by packaging, not by the engine.", "type": "string" }, "type": { "description": "What kind of document this is. Absent means `'scheme'`.\n\nThe single discriminator for layer-ness: `type: 'layer'` requires the `layer` block and `type: 'scheme'` forbids it, both enforced at load.\n\nEvery layerable family wears this same envelope; see `LayerBinding`.", "enum": ["scheme", "layer"], "type": "string" }, "ui": { "$ref": "#/definitions/Record%3Cstring%2Cunknown%3E", "description": "UI metadata: engine knows `label_presets` and `wizard_questions`; other keys opaque. `vocabulary` is a top-level SchemeBlock field, not a `ui` sub-key, so it is schema-validated the same way as guide's and access's." }, "version": { "description": "Semantic version (e.g. `3.0.0`, `20161231.0.0`).", "type": "string" }, "vocabulary": { "$ref": "#/definitions/Vocabulary", "description": 'Display-term overrides consulted by runtime UI components. Same shape and chokepoint as guide\'s and access\'s own top-level `vocabulary` block: an open map from a term key to a `{ singular, plural }` pair (or a bare `singular`, auto-pluralized). Reserved scheme keys are `handbook`, which renames the scheme\'s reference surface, and `whole` / `part`, which name the structural context roles. For example: `{ handbook: { singular: "Register" }, whole: { singular: "banner" } }`.' } }, "required": ["id", "version", "name", "data"], "type": "object" };
+var schema12 = { "additionalProperties": false, "description": "The body inside the top-level `scheme:` envelope.", "properties": { "data": { "$ref": "#/definitions/SchemeDataDoc", "description": "Categories, concepts, and bulk-concept groups." }, "default_scope": { "description": "The scope a marking is in when nothing names one: one of `scopes`, by id.\n\nRequired whenever a scheme declares at least one scope, and the only way to name the default: the scheme names its default scope once, as a surface names its default view. A layer may leave it out and keep the default of the stack it sits on, or state it to name another; a layer that gives the stack its first scopes names one.", "type": "string" }, "definition": { "description": "Official description or definition of this scheme.", "type": "string" }, "deprecated": { "description": "Whether this scheme as a whole is deprecated.", "type": "boolean" }, "deprecated_since": { "description": "Date the scheme was deprecated, as `YYYY-MM-DD`.", "type": "string" }, "description": { "description": "Longer description of what this scheme covers.", "type": "string" }, "embedded_marking": { "description": "Embedded-marking styles for inline parsing/rendering.", "items": { "$ref": "#/definitions/EmbeddedMarkingStyleDoc" }, "type": "array" }, "filters": { "description": "View filters.", "items": { "$ref": "#/definitions/FilterDoc" }, "type": "array" }, "guidance": { "description": "Usage notes, restrictions, or guidelines for this scheme.", "type": "string" }, "id": { "description": "Unique scheme identifier (e.g. 'tlp-v2', 'cedar-valley-protection').", "type": "string" }, "layer": { "$ref": "#/definitions/LayerBlockDoc", "description": "The scheme family's layer payload. Required when `type: 'layer'`, forbidden otherwise." }, "license": { "description": "License label shown with the scheme, such as `enterprise`. Informational only: it does not grant or restrict use.", "type": "string" }, "marking": { "description": "The whole marking of this scheme document, written in the scheme `marking_scheme` names. Every `marking` on an element of this document is a part of it.\n\nText, never interpreted: no engine parses it, checks it, or acts on it. A scheme summary reports it unchanged for display.", "type": "string" }, "marking_scheme": { "anyOf": [{ "$ref": "#/definitions/MarkingSchemeRefDoc" }, { "const": "self", "type": "string" }], "description": "The scheme this document's markings are written in: a reference to another scheme, or `self` when this scheme marks itself.\n\nWith `self`, the markings are read against this scheme at this document's own version, so the id and version are not repeated and a version bump needs no edit here.\n\nAuthoring data only. Loading and compiling the scheme never read it, and no engine resolves the scheme it names." }, "name": { "description": "Human-readable scheme name.", "type": "string" }, "named_conditions": { "$ref": "#/definitions/Record%3Cstring%2CWhenDoc%3E", "description": "Reusable `when` trees referenced with `{ named_condition: <id> }`. A layer may also reference definitions inherited from its base and required layers." }, "parse": { "$ref": "#/definitions/ParseConfigDoc", "description": "Parse configuration." }, "part_scope": { "description": "How much text a part marking governs in a document audit: `'paragraph'` (default, the mark's own line(s)), `'until-next'` (through to the next part marking, a section style), or `'document'`. Lets schemes that place/scope markings differently audit correctly. Maps to runtime `Scheme.partScope`.", "enum": ["paragraph", "until-next", "document"], "type": "string" }, "render": { "$ref": "#/definitions/RenderConfigDoc", "description": "Render configuration." }, "replaced_by": { "description": "Scheme id that supersedes this one.", "type": "string" }, "role_aware": { "description": "When true, this scheme reads a marking in the role its context gives, and a part's rules can read the whole it is part of. Whether or not it is, `process`, `validate` and `explain` compare a part that is valid on its own with a whole that reads and is valid.", "type": "boolean" }, "role_detection": { "additionalProperties": false, "description": "When a marking in each role is required and, for a scheme without `render.surfaces`, the formats each role is read in.\n\nA role's `required_when` condition evaluates after discovery against authored whole assertions and authored part contributors. Omitted, a whole is optional and a part required. Named conditions use the same scheme condition registry.\n\nA scheme that declares `render.surfaces` lists no formats here: each of its views states its own `role`, and a role is read in the forms of the views that state it. A role takes `{ required_when: ... }` and nothing else, and a list, flat or under `views`, is refused.\n\nA scheme without `render.surfaces` lists the format ids each role is read in, in one of two shapes:\n\n- Flat: `{ whole: ['full'], part: ['wrapped'] }`.\n- Nested: `{ whole: { views: [...] }, part: { views: [...] } }`: the same list under `views`, beside an optional `required_when`.\n\nEither way the lists are about reading. The view or format a marking in each role is written in, when a request names none, comes from the surface's `default`, or from `render.default`. A role entry that says nothing is refused.", "properties": { "part": { "anyOf": [{ "items": { "type": "string" }, "type": "array" }, { "additionalProperties": false, "properties": { "required_when": { "$ref": "#/definitions/WhenDoc", "description": "The condition under which a part marking is required." }, "views": { "description": "The format ids a part marking is read in.", "items": { "type": "string" }, "type": "array" } }, "type": "object" }], "description": "How a part marking is detected." }, "whole": { "anyOf": [{ "items": { "type": "string" }, "type": "array" }, { "additionalProperties": false, "properties": { "required_when": { "$ref": "#/definitions/WhenDoc", "description": "The condition under which a whole marking is required." }, "views": { "description": "The format ids a whole marking is read in.", "items": { "type": "string" }, "type": "array" } }, "type": "object" }], "description": "How a whole marking is detected." } }, "type": "object" }, "rollup_pipelines": { "description": "Rollup pipelines for categories with `rollup: pipeline`.", "items": { "$ref": "#/definitions/RollupPipelineDoc" }, "type": "array" }, "rules": { "description": "Scheme rules: conditions and the actions they trigger.", "items": { "$ref": "#/definitions/SchemeRuleDoc" }, "type": "array" }, "scope_label": { "description": "Display label for the scope selector.", "type": "string" }, "scopes": { "description": "Scope definitions, in the order a selector offers them.", "items": { "additionalProperties": false, "properties": { "id": { "description": "The scope id.", "type": "string" }, "label": { "description": "The scope's display label.", "type": "string" } }, "required": ["id", "label"], "type": "object" }, "type": "array" }, "tier": { "description": "Distribution tier this document belongs to. Names which catalog carries it; it grants nothing and is read by packaging, not by the engine.", "type": "string" }, "type": { "description": "What kind of document this is. Absent means `'scheme'`.\n\nThe single discriminator for layer-ness: `type: 'layer'` requires the `layer` block and `type: 'scheme'` forbids it, both enforced at load.\n\nEvery layerable family wears this same envelope; see `LayerBinding`.", "enum": ["scheme", "layer"], "type": "string" }, "ui": { "$ref": "#/definitions/Record%3Cstring%2Cunknown%3E", "description": "UI metadata: engine knows `label_presets` and `wizard_questions`; other keys opaque. `vocabulary` is a top-level SchemeBlock field, not a `ui` sub-key, so it is schema-validated the same way as guide's and access's." }, "version": { "description": "Semantic version (e.g. `3.0.0`, `20161231.0.0`).", "type": "string" }, "vocabulary": { "$ref": "#/definitions/Vocabulary", "description": 'Display-term overrides consulted by runtime UI components. Same shape and chokepoint as guide\'s and access\'s own top-level `vocabulary` block: an open map from a term key to a `{ singular, plural }` pair (or a bare `singular`, auto-pluralized). Reserved scheme keys are `handbook`, which renames the scheme\'s reference surface, `whole` / `part`, which name the structural context roles, and `marking`, the word a document written in this scheme labels its `marking` fields with (a host shows "Marking" when the marking scheme declares none). For example: `{ handbook: { singular: "Register" }, whole: { singular: "banner" }, marking: { singular: "label" } }`.' } }, "required": ["id", "version", "name", "data"], "type": "object" };
 var schema69 = { "additionalProperties": false, "description": "Embedded-marking style: pattern wrapping an inner marking in free text.", "properties": { "auto_insert": { "description": "When the host UI should auto-prompt for a marking.", "enum": ["every-paragraph", "first-line", "manual"], "type": "string" }, "pattern": { "description": "Regex with one capture group around the inner marking text.", "type": "string" }, "template": { "description": "Output template when re-emitting the wrapper. `{marking}` is replaced. Required: an insertion has to round-trip through this scheme's own `pattern`, so the engine cannot supply a wrapper syntax of its own.", "type": "string" } }, "required": ["pattern", "template"], "type": "object" };
 var func2 = Object.prototype.hasOwnProperty;
-var schema14 = { "additionalProperties": false, "description": "A category: a dimension of a marking that groups related concepts.", "properties": { "allowed_concepts": { "description": "If set, only these concept IDs are valid (overrides categories[] membership).", "items": { "type": "string" }, "type": "array" }, "citation": { "description": "Where in the governing document this category was read from. Free text, e.g. `2016 IC Markings Register, Table 3 row 24`.\n\nProvenance only: nothing parses it, matches on it, or renders it.", "type": "string" }, "collapse_groups": { "description": "When true, a group concept present together with every one of its members is rendered alone, with the members folded into it. A member named by `group_exclude` does not count toward that check. A group missing any member is rendered as stated, beside whichever members are present.", "type": "boolean" }, "default_concept": { "anyOf": [{ "type": "string" }, { "$ref": "#/definitions/ConditionalDefaultConceptDoc" }], "description": "Default concept when this category is empty; a string is unconditional." }, "format_hint": { "description": "Advisory shape of this category's free-text values, for a host that wants to hint at the expected form in an input box. Provenance and UI only: nothing parses it, matches on it, or validates against it. A value's real shape is its concept's `text_input.encoding`.", "type": "string" }, "group_exclude": { "description": 'Concept ID excluded from the "all members present" check for collapse.', "type": "string" }, "hierarchy_root": { "description": "When true, the category grades its concepts by severity `rank`: every concept it grades must declare one or the scheme fails to load, and a coverage comparison counts a whole-marking concept here as covering a part's concept of equal or lower rank. It does not change rendering.", "type": "boolean" }, "id": { "description": "Unique category identifier.", "type": "string" }, "label": { "$ref": "#/definitions/CategoryLabelDoc", "description": "Human-readable label for UI display." }, "position": { "description": "Position of the category within the rendered output (lower = earlier).\n\nAny number, not only a whole one: a fraction is how a category is slotted between two others without renumbering the rest.", "type": "number" }, "position_overrides": { "$ref": "#/definitions/Record%3Cstring%2Cnumber%3E", "description": "Numeric positions keyed by concept ID, used by this category's `position` sort instead of the concept's resolved position. Other concepts retain their own positions. Equal positions use the next sort key, then declared concept order. These values affect only this category and never severity." }, "required": { "description": "Whether at least one concept must be present for a valid marking.", "type": "boolean" }, "rollup": { "description": "Rollup operator used when aggregating multiple markings.\n\n`pipeline` means the category is resolved by an entry in `scheme.rollup_pipelines[]`.", "enum": ["max", "min", "union", "intersection", "first", "last", "least_upper_bound", "pipeline"], "type": "string" }, "scopes": { "description": "Scope IDs this category is visible in.", "items": { "type": "string" }, "type": "array" }, "single": { "description": "When true, only one concept can be selected.", "type": "boolean" }, "sort": { "anyOf": [{ "const": "position", "type": "string" }, { "const": "alphabetical", "type": "string" }, { "const": "numeric", "type": "string" }, { "items": { "enum": ["position", "alphabetical", "numeric"], "type": "string" }, "type": "array" }], "description": "Sort order for concepts within this category during rendering." }, "suppress_if_subset_of": { "description": "Suppress this category if its concept set is a subset of another category's set.", "type": "string" }, "views": { "$ref": "#/definitions/Record%3Cstring%2Cstring%3E", "description": "Additional display views keyed by view name." } }, "required": ["id", "label", "rollup"], "type": "object" };
+var func7 = require_ucs2length().default;
+var schema14 = { "additionalProperties": false, "description": "A category: a dimension of a marking that groups related concepts.", "properties": { "allowed_concepts": { "description": "If set, only these concept IDs are valid (overrides categories[] membership).", "items": { "type": "string" }, "type": "array" }, "citation": { "description": "Where in the governing document this category was read from. Free text, e.g. `2016 IC Markings Register, Table 3 row 24`.\n\nProvenance only: nothing parses it, matches on it, or renders it.", "type": "string" }, "collapse_groups": { "description": "When true, a group concept present together with every one of its members is rendered alone, with the members folded into it. A member named by `group_exclude` does not count toward that check. A group missing any member is rendered as stated, beside whichever members are present.", "type": "boolean" }, "default_concept": { "anyOf": [{ "type": "string" }, { "$ref": "#/definitions/ConditionalDefaultConceptDoc" }], "description": "Default concept when this category is empty; a string is unconditional." }, "format_hint": { "description": "Advisory shape of this category's free-text values, for a host that wants to hint at the expected form in an input box. Provenance and UI only: nothing parses it, matches on it, or validates against it. A value's real shape is its concept's `text_input.encoding`.", "type": "string" }, "group_exclude": { "description": 'Concept ID excluded from the "all members present" check for collapse.', "type": "string" }, "hierarchy_root": { "description": "When true, the category grades its concepts by severity `rank`: every concept it grades must declare one or the scheme fails to load, and a coverage comparison counts a whole-marking concept here as covering a part's concept of equal or lower rank. It does not change rendering.", "type": "boolean" }, "id": { "description": "Unique category identifier.", "type": "string" }, "label": { "$ref": "#/definitions/CategoryLabelDoc", "description": "Human-readable label for UI display." }, "marking": { "description": "This category's part marking, written in the scheme the document's `marking_scheme` names. Text, never interpreted: no engine parses it, checks it, acts on it, or reports it.", "type": "string" }, "position": { "description": "Position of the category within the rendered output (lower = earlier).\n\nAny number, not only a whole one: a fraction is how a category is slotted between two others without renumbering the rest.", "type": "number" }, "position_overrides": { "$ref": "#/definitions/Record%3Cstring%2Cnumber%3E", "description": "Numeric positions keyed by concept ID, used by this category's `position` sort instead of the concept's resolved position. Other concepts retain their own positions. Equal positions use the next sort key, then declared concept order. These values affect only this category and never severity." }, "required": { "description": "Whether at least one concept must be present for a valid marking.", "type": "boolean" }, "rollup": { "description": "Rollup operator used when aggregating multiple markings.\n\n`pipeline` means the category is resolved by an entry in `scheme.rollup_pipelines[]`.", "enum": ["max", "min", "union", "intersection", "first", "last", "least_upper_bound", "pipeline"], "type": "string" }, "scopes": { "description": "Scope IDs this category is visible in.", "items": { "type": "string" }, "type": "array" }, "single": { "description": "When true, only one concept can be selected.", "type": "boolean" }, "sort": { "anyOf": [{ "const": "position", "type": "string" }, { "const": "alphabetical", "type": "string" }, { "const": "numeric", "type": "string" }, { "items": { "enum": ["position", "alphabetical", "numeric"], "type": "string" }, "type": "array" }], "description": "Sort order for concepts within this category during rendering." }, "suppress_if_subset_of": { "description": "Suppress this category if its concept set is a subset of another category's set.", "type": "string" }, "views": { "$ref": "#/definitions/Record%3Cstring%2Cstring%3E", "description": "Additional display views keyed by view name." } }, "required": ["id", "label", "rollup"], "type": "object" };
 var schema17 = { "additionalProperties": false, "description": "A single condition in a rule's `when:` block.\n\nRule conditions name their category via `category`; structured `when:` blocks elsewhere (categories, render formats, rollup pipelines, filters) use `category_id`. The shorthand `is:` packs an operator+value into one string (e.g. `'has_content'`, `'count_eq 1'`). `has:` is shorthand for `operator: has_concept, value: <id>`.", "properties": { "category": { "description": "Category ID to evaluate against (rule conditions).", "type": "string" }, "category_id": { "description": "Category ID to evaluate against (structured `when:` blocks).", "type": "string" }, "has": { "description": "Shorthand: equivalent to `operator: has_concept, value: <concept-id>`.", "type": "string" }, "is": { "description": "Combined operator+value shorthand (e.g. `'has_content'`, `'count_eq 1'`).", "type": "string" }, "operator": { "$ref": "#/definitions/ConditionOperator", "description": "Explicit operator (used when `is`/`has` is not a fit)." }, "role": { "$ref": "#/definitions/ProcessingRole", "description": "Processing-context role filter ('whole' or 'part')." }, "target": { "$ref": "#/definitions/RuleConditionTarget", "description": "Which assertion set to evaluate: 'self' (default), 'context' (whole marking), or 'contributors' (every set that fed an aggregate; the condition holds only when all of them satisfy it)." }, "value": { "description": "Operand for the operator: a concept id for the concept tests, a category id for `subset_of` and `shares_concept_with`, and a number for the `count_*`, `min_order` and `min_rank` tests.", "type": ["string", "number"] } }, "type": "object" };
 var schema18 = { "description": "Comparison operator for a structured `when:` condition.", "enum": ["has_content", "has_concept", "not_has_concept", "every_has_concept", "any_lacks_concept", "count_gt", "count_gte", "count_eq", "count_lt", "count_unique_gt", "count_unique_gte", "count_unique_eq", "count_unique_lt", "count_unique_lte", "min_order", "min_rank", "subset_of", "shares_concept_with"], "type": "string" };
 var schema19 = { "description": "Structural role of a marking within a processing operation.", "enum": ["whole", "part"], "type": "string" };
@@ -1135,9 +1136,9 @@ function validate13(data, { instancePath = "", parentData, parentDataProperty, r
         }
       }
     }
-    if (data.position !== void 0) {
-      if (!(typeof data.position == "number")) {
-        const err20 = { instancePath: instancePath + "/position", schemaPath: "#/properties/position/type", keyword: "type", params: { type: "number" }, message: "must be number" };
+    if (data.marking !== void 0) {
+      if (typeof data.marking !== "string") {
+        const err20 = { instancePath: instancePath + "/marking", schemaPath: "#/properties/marking/type", keyword: "type", params: { type: "string" }, message: "must be string" };
         if (vErrors === null) {
           vErrors = [err20];
         } else {
@@ -1146,33 +1147,33 @@ function validate13(data, { instancePath = "", parentData, parentDataProperty, r
         errors++;
       }
     }
+    if (data.position !== void 0) {
+      if (!(typeof data.position == "number")) {
+        const err21 = { instancePath: instancePath + "/position", schemaPath: "#/properties/position/type", keyword: "type", params: { type: "number" }, message: "must be number" };
+        if (vErrors === null) {
+          vErrors = [err21];
+        } else {
+          vErrors.push(err21);
+        }
+        errors++;
+      }
+    }
     if (data.position_overrides !== void 0) {
-      let data13 = data.position_overrides;
-      if (data13 && typeof data13 == "object" && !Array.isArray(data13)) {
-        for (const key2 in data13) {
-          if (!(typeof data13[key2] == "number")) {
-            const err21 = { instancePath: instancePath + "/position_overrides/" + key2.replace(/~/g, "~0").replace(/\//g, "~1"), schemaPath: "#/definitions/Record%3Cstring%2Cnumber%3E/additionalProperties/type", keyword: "type", params: { type: "number" }, message: "must be number" };
+      let data14 = data.position_overrides;
+      if (data14 && typeof data14 == "object" && !Array.isArray(data14)) {
+        for (const key2 in data14) {
+          if (!(typeof data14[key2] == "number")) {
+            const err22 = { instancePath: instancePath + "/position_overrides/" + key2.replace(/~/g, "~0").replace(/\//g, "~1"), schemaPath: "#/definitions/Record%3Cstring%2Cnumber%3E/additionalProperties/type", keyword: "type", params: { type: "number" }, message: "must be number" };
             if (vErrors === null) {
-              vErrors = [err21];
+              vErrors = [err22];
             } else {
-              vErrors.push(err21);
+              vErrors.push(err22);
             }
             errors++;
           }
         }
       } else {
-        const err22 = { instancePath: instancePath + "/position_overrides", schemaPath: "#/definitions/Record%3Cstring%2Cnumber%3E/type", keyword: "type", params: { type: "object" }, message: "must be object" };
-        if (vErrors === null) {
-          vErrors = [err22];
-        } else {
-          vErrors.push(err22);
-        }
-        errors++;
-      }
-    }
-    if (data.required !== void 0) {
-      if (typeof data.required !== "boolean") {
-        const err23 = { instancePath: instancePath + "/required", schemaPath: "#/properties/required/type", keyword: "type", params: { type: "boolean" }, message: "must be boolean" };
+        const err23 = { instancePath: instancePath + "/position_overrides", schemaPath: "#/definitions/Record%3Cstring%2Cnumber%3E/type", keyword: "type", params: { type: "object" }, message: "must be object" };
         if (vErrors === null) {
           vErrors = [err23];
         } else {
@@ -1181,10 +1182,9 @@ function validate13(data, { instancePath = "", parentData, parentDataProperty, r
         errors++;
       }
     }
-    if (data.rollup !== void 0) {
-      let data16 = data.rollup;
-      if (typeof data16 !== "string") {
-        const err24 = { instancePath: instancePath + "/rollup", schemaPath: "#/properties/rollup/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+    if (data.required !== void 0) {
+      if (typeof data.required !== "boolean") {
+        const err24 = { instancePath: instancePath + "/required", schemaPath: "#/properties/required/type", keyword: "type", params: { type: "boolean" }, message: "must be boolean" };
         if (vErrors === null) {
           vErrors = [err24];
         } else {
@@ -1192,8 +1192,11 @@ function validate13(data, { instancePath = "", parentData, parentDataProperty, r
         }
         errors++;
       }
-      if (!(data16 === "max" || data16 === "min" || data16 === "union" || data16 === "intersection" || data16 === "first" || data16 === "last" || data16 === "least_upper_bound" || data16 === "pipeline")) {
-        const err25 = { instancePath: instancePath + "/rollup", schemaPath: "#/properties/rollup/enum", keyword: "enum", params: { allowedValues: schema14.properties.rollup.enum }, message: "must be equal to one of the allowed values" };
+    }
+    if (data.rollup !== void 0) {
+      let data17 = data.rollup;
+      if (typeof data17 !== "string") {
+        const err25 = { instancePath: instancePath + "/rollup", schemaPath: "#/properties/rollup/type", keyword: "type", params: { type: "string" }, message: "must be string" };
         if (vErrors === null) {
           vErrors = [err25];
         } else {
@@ -1201,35 +1204,33 @@ function validate13(data, { instancePath = "", parentData, parentDataProperty, r
         }
         errors++;
       }
+      if (!(data17 === "max" || data17 === "min" || data17 === "union" || data17 === "intersection" || data17 === "first" || data17 === "last" || data17 === "least_upper_bound" || data17 === "pipeline")) {
+        const err26 = { instancePath: instancePath + "/rollup", schemaPath: "#/properties/rollup/enum", keyword: "enum", params: { allowedValues: schema14.properties.rollup.enum }, message: "must be equal to one of the allowed values" };
+        if (vErrors === null) {
+          vErrors = [err26];
+        } else {
+          vErrors.push(err26);
+        }
+        errors++;
+      }
     }
     if (data.scopes !== void 0) {
-      let data17 = data.scopes;
-      if (Array.isArray(data17)) {
-        const len1 = data17.length;
+      let data18 = data.scopes;
+      if (Array.isArray(data18)) {
+        const len1 = data18.length;
         for (let i1 = 0; i1 < len1; i1++) {
-          if (typeof data17[i1] !== "string") {
-            const err26 = { instancePath: instancePath + "/scopes/" + i1, schemaPath: "#/properties/scopes/items/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+          if (typeof data18[i1] !== "string") {
+            const err27 = { instancePath: instancePath + "/scopes/" + i1, schemaPath: "#/properties/scopes/items/type", keyword: "type", params: { type: "string" }, message: "must be string" };
             if (vErrors === null) {
-              vErrors = [err26];
+              vErrors = [err27];
             } else {
-              vErrors.push(err26);
+              vErrors.push(err27);
             }
             errors++;
           }
         }
       } else {
-        const err27 = { instancePath: instancePath + "/scopes", schemaPath: "#/properties/scopes/type", keyword: "type", params: { type: "array" }, message: "must be array" };
-        if (vErrors === null) {
-          vErrors = [err27];
-        } else {
-          vErrors.push(err27);
-        }
-        errors++;
-      }
-    }
-    if (data.single !== void 0) {
-      if (typeof data.single !== "boolean") {
-        const err28 = { instancePath: instancePath + "/single", schemaPath: "#/properties/single/type", keyword: "type", params: { type: "boolean" }, message: "must be boolean" };
+        const err28 = { instancePath: instancePath + "/scopes", schemaPath: "#/properties/scopes/type", keyword: "type", params: { type: "array" }, message: "must be array" };
         if (vErrors === null) {
           vErrors = [err28];
         } else {
@@ -1238,13 +1239,9 @@ function validate13(data, { instancePath = "", parentData, parentDataProperty, r
         errors++;
       }
     }
-    if (data.sort !== void 0) {
-      let data20 = data.sort;
-      const _errs54 = errors;
-      let valid12 = false;
-      const _errs55 = errors;
-      if (typeof data20 !== "string") {
-        const err29 = { instancePath: instancePath + "/sort", schemaPath: "#/properties/sort/anyOf/0/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+    if (data.single !== void 0) {
+      if (typeof data.single !== "boolean") {
+        const err29 = { instancePath: instancePath + "/single", schemaPath: "#/properties/single/type", keyword: "type", params: { type: "boolean" }, message: "must be boolean" };
         if (vErrors === null) {
           vErrors = [err29];
         } else {
@@ -1252,8 +1249,14 @@ function validate13(data, { instancePath = "", parentData, parentDataProperty, r
         }
         errors++;
       }
-      if ("position" !== data20) {
-        const err30 = { instancePath: instancePath + "/sort", schemaPath: "#/properties/sort/anyOf/0/const", keyword: "const", params: { allowedValue: "position" }, message: "must be equal to constant" };
+    }
+    if (data.sort !== void 0) {
+      let data21 = data.sort;
+      const _errs56 = errors;
+      let valid12 = false;
+      const _errs57 = errors;
+      if (typeof data21 !== "string") {
+        const err30 = { instancePath: instancePath + "/sort", schemaPath: "#/properties/sort/anyOf/0/type", keyword: "type", params: { type: "string" }, message: "must be string" };
         if (vErrors === null) {
           vErrors = [err30];
         } else {
@@ -1261,21 +1264,21 @@ function validate13(data, { instancePath = "", parentData, parentDataProperty, r
         }
         errors++;
       }
-      var _valid2 = _errs55 === errors;
+      if ("position" !== data21) {
+        const err31 = { instancePath: instancePath + "/sort", schemaPath: "#/properties/sort/anyOf/0/const", keyword: "const", params: { allowedValue: "position" }, message: "must be equal to constant" };
+        if (vErrors === null) {
+          vErrors = [err31];
+        } else {
+          vErrors.push(err31);
+        }
+        errors++;
+      }
+      var _valid2 = _errs57 === errors;
       valid12 = valid12 || _valid2;
       if (!valid12) {
-        const _errs57 = errors;
-        if (typeof data20 !== "string") {
-          const err31 = { instancePath: instancePath + "/sort", schemaPath: "#/properties/sort/anyOf/1/type", keyword: "type", params: { type: "string" }, message: "must be string" };
-          if (vErrors === null) {
-            vErrors = [err31];
-          } else {
-            vErrors.push(err31);
-          }
-          errors++;
-        }
-        if ("alphabetical" !== data20) {
-          const err32 = { instancePath: instancePath + "/sort", schemaPath: "#/properties/sort/anyOf/1/const", keyword: "const", params: { allowedValue: "alphabetical" }, message: "must be equal to constant" };
+        const _errs59 = errors;
+        if (typeof data21 !== "string") {
+          const err32 = { instancePath: instancePath + "/sort", schemaPath: "#/properties/sort/anyOf/1/type", keyword: "type", params: { type: "string" }, message: "must be string" };
           if (vErrors === null) {
             vErrors = [err32];
           } else {
@@ -1283,21 +1286,21 @@ function validate13(data, { instancePath = "", parentData, parentDataProperty, r
           }
           errors++;
         }
-        var _valid2 = _errs57 === errors;
+        if ("alphabetical" !== data21) {
+          const err33 = { instancePath: instancePath + "/sort", schemaPath: "#/properties/sort/anyOf/1/const", keyword: "const", params: { allowedValue: "alphabetical" }, message: "must be equal to constant" };
+          if (vErrors === null) {
+            vErrors = [err33];
+          } else {
+            vErrors.push(err33);
+          }
+          errors++;
+        }
+        var _valid2 = _errs59 === errors;
         valid12 = valid12 || _valid2;
         if (!valid12) {
-          const _errs59 = errors;
-          if (typeof data20 !== "string") {
-            const err33 = { instancePath: instancePath + "/sort", schemaPath: "#/properties/sort/anyOf/2/type", keyword: "type", params: { type: "string" }, message: "must be string" };
-            if (vErrors === null) {
-              vErrors = [err33];
-            } else {
-              vErrors.push(err33);
-            }
-            errors++;
-          }
-          if ("numeric" !== data20) {
-            const err34 = { instancePath: instancePath + "/sort", schemaPath: "#/properties/sort/anyOf/2/const", keyword: "const", params: { allowedValue: "numeric" }, message: "must be equal to constant" };
+          const _errs61 = errors;
+          if (typeof data21 !== "string") {
+            const err34 = { instancePath: instancePath + "/sort", schemaPath: "#/properties/sort/anyOf/2/type", keyword: "type", params: { type: "string" }, message: "must be string" };
             if (vErrors === null) {
               vErrors = [err34];
             } else {
@@ -1305,25 +1308,25 @@ function validate13(data, { instancePath = "", parentData, parentDataProperty, r
             }
             errors++;
           }
-          var _valid2 = _errs59 === errors;
+          if ("numeric" !== data21) {
+            const err35 = { instancePath: instancePath + "/sort", schemaPath: "#/properties/sort/anyOf/2/const", keyword: "const", params: { allowedValue: "numeric" }, message: "must be equal to constant" };
+            if (vErrors === null) {
+              vErrors = [err35];
+            } else {
+              vErrors.push(err35);
+            }
+            errors++;
+          }
+          var _valid2 = _errs61 === errors;
           valid12 = valid12 || _valid2;
           if (!valid12) {
-            const _errs61 = errors;
-            if (Array.isArray(data20)) {
-              const len2 = data20.length;
+            const _errs63 = errors;
+            if (Array.isArray(data21)) {
+              const len2 = data21.length;
               for (let i2 = 0; i2 < len2; i2++) {
-                let data21 = data20[i2];
-                if (typeof data21 !== "string") {
-                  const err35 = { instancePath: instancePath + "/sort/" + i2, schemaPath: "#/properties/sort/anyOf/3/items/type", keyword: "type", params: { type: "string" }, message: "must be string" };
-                  if (vErrors === null) {
-                    vErrors = [err35];
-                  } else {
-                    vErrors.push(err35);
-                  }
-                  errors++;
-                }
-                if (!(data21 === "position" || data21 === "alphabetical" || data21 === "numeric")) {
-                  const err36 = { instancePath: instancePath + "/sort/" + i2, schemaPath: "#/properties/sort/anyOf/3/items/enum", keyword: "enum", params: { allowedValues: schema14.properties.sort.anyOf[3].items.enum }, message: "must be equal to one of the allowed values" };
+                let data22 = data21[i2];
+                if (typeof data22 !== "string") {
+                  const err36 = { instancePath: instancePath + "/sort/" + i2, schemaPath: "#/properties/sort/anyOf/3/items/type", keyword: "type", params: { type: "string" }, message: "must be string" };
                   if (vErrors === null) {
                     vErrors = [err36];
                   } else {
@@ -1331,34 +1334,43 @@ function validate13(data, { instancePath = "", parentData, parentDataProperty, r
                   }
                   errors++;
                 }
+                if (!(data22 === "position" || data22 === "alphabetical" || data22 === "numeric")) {
+                  const err37 = { instancePath: instancePath + "/sort/" + i2, schemaPath: "#/properties/sort/anyOf/3/items/enum", keyword: "enum", params: { allowedValues: schema14.properties.sort.anyOf[3].items.enum }, message: "must be equal to one of the allowed values" };
+                  if (vErrors === null) {
+                    vErrors = [err37];
+                  } else {
+                    vErrors.push(err37);
+                  }
+                  errors++;
+                }
               }
             } else {
-              const err37 = { instancePath: instancePath + "/sort", schemaPath: "#/properties/sort/anyOf/3/type", keyword: "type", params: { type: "array" }, message: "must be array" };
+              const err38 = { instancePath: instancePath + "/sort", schemaPath: "#/properties/sort/anyOf/3/type", keyword: "type", params: { type: "array" }, message: "must be array" };
               if (vErrors === null) {
-                vErrors = [err37];
+                vErrors = [err38];
               } else {
-                vErrors.push(err37);
+                vErrors.push(err38);
               }
               errors++;
             }
-            var _valid2 = _errs61 === errors;
+            var _valid2 = _errs63 === errors;
             valid12 = valid12 || _valid2;
           }
         }
       }
       if (!valid12) {
-        const err38 = { instancePath: instancePath + "/sort", schemaPath: "#/properties/sort/anyOf", keyword: "anyOf", params: {}, message: "must match a schema in anyOf" };
+        const err39 = { instancePath: instancePath + "/sort", schemaPath: "#/properties/sort/anyOf", keyword: "anyOf", params: {}, message: "must match a schema in anyOf" };
         if (vErrors === null) {
-          vErrors = [err38];
+          vErrors = [err39];
         } else {
-          vErrors.push(err38);
+          vErrors.push(err39);
         }
         errors++;
       } else {
-        errors = _errs54;
+        errors = _errs56;
         if (vErrors !== null) {
-          if (_errs54) {
-            vErrors.length = _errs54;
+          if (_errs56) {
+            vErrors.length = _errs56;
           } else {
             vErrors = null;
           }
@@ -1367,45 +1379,45 @@ function validate13(data, { instancePath = "", parentData, parentDataProperty, r
     }
     if (data.suppress_if_subset_of !== void 0) {
       if (typeof data.suppress_if_subset_of !== "string") {
-        const err39 = { instancePath: instancePath + "/suppress_if_subset_of", schemaPath: "#/properties/suppress_if_subset_of/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+        const err40 = { instancePath: instancePath + "/suppress_if_subset_of", schemaPath: "#/properties/suppress_if_subset_of/type", keyword: "type", params: { type: "string" }, message: "must be string" };
         if (vErrors === null) {
-          vErrors = [err39];
+          vErrors = [err40];
         } else {
-          vErrors.push(err39);
+          vErrors.push(err40);
         }
         errors++;
       }
     }
     if (data.views !== void 0) {
-      let data23 = data.views;
-      if (data23 && typeof data23 == "object" && !Array.isArray(data23)) {
-        for (const key3 in data23) {
-          if (typeof data23[key3] !== "string") {
-            const err40 = { instancePath: instancePath + "/views/" + key3.replace(/~/g, "~0").replace(/\//g, "~1"), schemaPath: "#/definitions/Record%3Cstring%2Cstring%3E/additionalProperties/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+      let data24 = data.views;
+      if (data24 && typeof data24 == "object" && !Array.isArray(data24)) {
+        for (const key3 in data24) {
+          if (typeof data24[key3] !== "string") {
+            const err41 = { instancePath: instancePath + "/views/" + key3.replace(/~/g, "~0").replace(/\//g, "~1"), schemaPath: "#/definitions/Record%3Cstring%2Cstring%3E/additionalProperties/type", keyword: "type", params: { type: "string" }, message: "must be string" };
             if (vErrors === null) {
-              vErrors = [err40];
+              vErrors = [err41];
             } else {
-              vErrors.push(err40);
+              vErrors.push(err41);
             }
             errors++;
           }
         }
       } else {
-        const err41 = { instancePath: instancePath + "/views", schemaPath: "#/definitions/Record%3Cstring%2Cstring%3E/type", keyword: "type", params: { type: "object" }, message: "must be object" };
+        const err42 = { instancePath: instancePath + "/views", schemaPath: "#/definitions/Record%3Cstring%2Cstring%3E/type", keyword: "type", params: { type: "object" }, message: "must be object" };
         if (vErrors === null) {
-          vErrors = [err41];
+          vErrors = [err42];
         } else {
-          vErrors.push(err41);
+          vErrors.push(err42);
         }
         errors++;
       }
     }
   } else {
-    const err42 = { instancePath, schemaPath: "#/type", keyword: "type", params: { type: "object" }, message: "must be object" };
+    const err43 = { instancePath, schemaPath: "#/type", keyword: "type", params: { type: "object" }, message: "must be object" };
     if (vErrors === null) {
-      vErrors = [err42];
+      vErrors = [err43];
     } else {
-      vErrors.push(err42);
+      vErrors.push(err43);
     }
     errors++;
   }
@@ -6093,7 +6105,7 @@ function validate29(data, { instancePath = "", parentData, parentDataProperty, r
   validate29.errors = vErrors;
   return errors === 0;
 }
-var schema54 = { "additionalProperties": false, "description": "A concept: the core unit of a scheme.", "properties": { "aliases": { "description": "Alternative strings that parse to this concept (case-insensitive).", "items": { "type": "string" }, "type": "array" }, "applicability": { "$ref": "#/definitions/ConceptApplicabilityDoc", "description": "Applicability metadata." }, "categories": { "description": "Category IDs this concept belongs to.", "items": { "type": "string" }, "type": "array" }, "citation": { "description": "Where in the governing document this concept was read from. Free text, e.g. `NARA CUI Registry, General Privacy, retrieved 2026-07-25` or `32 CFR 2002.20(b)(1)`.\n\nProvenance only: nothing parses it, matches on it, or renders it. Distinct from `definition` (what the concept means) and `guidance` (what the controlling authority says about handling it).", "type": "string" }, "color": { "$ref": "#/definitions/ConceptColor", "description": "Portable scheme-default display color pair (`{ background, text }`, both CSS hex). In category mode it is allowed only on concepts in the category named by `render.color_from`. Hosts may override it." }, "definition": { "description": "Human-readable definition of this concept from its governing authority.", "type": "string" }, "deprecated": { "description": "Whether this concept is deprecated.", "type": "boolean" }, "deprecated_message": { "description": "Human-readable deprecation message.", "type": "string" }, "deprecated_replacement": { "description": "Concept ID that should be used instead of this deprecated concept.", "type": "string" }, "guidance": { "description": "Usage guidance for when and how to apply this concept.", "type": "string" }, "id": { "description": "Unique concept identifier within the scheme.", "type": "string" }, "input_aliases": { "description": "Aliases that mean this concept only in a stated position.", "items": { "$ref": "#/definitions/InputAliasDoc" }, "type": "array" }, "members": { "description": "For group concepts: the member concept IDs.", "items": { "type": "string" }, "type": "array" }, "metadata": { "$ref": "#/definitions/Record%3Cstring%2Cunknown%3E", "description": "Opaque host metadata carried with the concept. The engine neither reads nor interprets it; it travels so a host can hang its own record on a concept without a second file keyed by id." }, "name": { "description": "Human-readable display name.", "type": "string" }, "notices": { "description": "Regulatory or handling notices attached to this concept.", "items": { "$ref": "#/definitions/ConceptNoticeDoc" }, "type": "array" }, "parents": { "description": "Broader concept IDs forming a hierarchy chain.", "items": { "type": "string" }, "type": "array" }, "position": { "$ref": "#/definitions/PositionSpecDoc", "description": "Position spec: relative ordering within a category." }, "rank": { "$ref": "#/definitions/RankSpecDoc", "description": "Rank spec: severity ordering for max/min rollup." }, "scopes": { "description": "Scope IDs this concept is visible in.", "items": { "type": "string" }, "type": "array" }, "stands_for_whole": { "description": "A category whose values this concept stands for: the values the whole holds in it.\n\nSome schemes let a part leave out a list because it is the same as its whole's, and write a word in its place. The concept is that word. When a part holding it is read against a whole, the part takes the whole's values in the named category, so its rules judge the list the word stands for. The concept stays in the part, and a format that sets `omit_whole_values` writes the part back the way it was read. A part read without a whole, or one that writes values of its own in the category, takes nothing; whether a word with nothing behind it is an error is the scheme's call, made in its own rules. In a rollup the word goes through its own category's rollup like any other concept.\n\nNames a category declared in the same scheme.", "type": "string" }, "supersedes": { "description": "Concept IDs that this concept supersedes.", "items": { "type": "string" }, "type": "array" }, "synonyms": { "$ref": "#/definitions/Record%3Cstring%2Cstring%3E", "description": "Locale-specific display labels: locale code \u2192 display string." }, "text_input": { "$ref": "#/definitions/TextInputDoc", "description": "Free-text input configuration." }, "tier": { "description": "Tier label. Marks this concept as a partial marking that must attach to a parent.", "type": "string" }, "views": { "anyOf": [{ "type": "string" }, { "additionalProperties": { "type": "string" }, "properties": { "default": { "description": "The representation used when no other view is asked for.", "type": "string" } }, "required": ["default"], "type": "object" }], "description": "Display representations keyed by view name; must include 'default'. A plain string expands to all view keys.\n\nA view value may carry one placeholder, `{value}`, which the renderer fills with the assertion's free-text value. Any other placeholder is invalid and causes a compile error. Alternate representations live in typed text-input encodings, which define parsing and rendering per declared view.\n\nA value that has to print in more than one shape per view says so in its own `text_input.encoding`, which states both directions. A `calendar-date` stores one canonical spelling and names a per-view spelling; a `composite` names its components." } }, "required": ["id", "name", "views", "categories"], "type": "object" };
+var schema54 = { "additionalProperties": false, "description": "A concept: the core unit of a scheme.", "properties": { "aliases": { "description": "Alternative strings that parse to this concept (case-insensitive).", "items": { "type": "string" }, "type": "array" }, "applicability": { "$ref": "#/definitions/ConceptApplicabilityDoc", "description": "Applicability metadata." }, "categories": { "description": "Category IDs this concept belongs to.", "items": { "type": "string" }, "type": "array" }, "citation": { "description": "Where in the governing document this concept was read from. Free text, e.g. `NARA CUI Registry, General Privacy, retrieved 2026-07-25` or `32 CFR 2002.20(b)(1)`.\n\nProvenance only: nothing parses it, matches on it, or renders it. Distinct from `definition` (what the concept means) and `guidance` (what the controlling authority says about handling it).", "type": "string" }, "color": { "$ref": "#/definitions/ConceptColor", "description": "Portable scheme-default display color pair (`{ background, text }`, both CSS hex). In category mode it is allowed only on concepts in the category named by `render.color_from`. Hosts may override it." }, "definition": { "description": "Human-readable definition of this concept from its governing authority.", "type": "string" }, "deprecated": { "description": "Whether this concept is deprecated.", "type": "boolean" }, "deprecated_message": { "description": "Human-readable deprecation message.", "type": "string" }, "deprecated_replacement": { "description": "Concept ID that should be used instead of this deprecated concept.", "type": "string" }, "guidance": { "description": "Usage guidance for when and how to apply this concept.", "type": "string" }, "id": { "description": "Unique concept identifier within the scheme.", "type": "string" }, "input_aliases": { "description": "Aliases that mean this concept only in a stated position.", "items": { "$ref": "#/definitions/InputAliasDoc" }, "type": "array" }, "marking": { "description": "This concept's part marking, written in the scheme the document's `marking_scheme` names. Text, never interpreted: no engine parses it, checks it, acts on it, or reports it.", "type": "string" }, "members": { "description": "For group concepts: the member concept IDs.", "items": { "type": "string" }, "type": "array" }, "metadata": { "$ref": "#/definitions/Record%3Cstring%2Cunknown%3E", "description": "Opaque host metadata carried with the concept. The engine neither reads nor interprets it; it travels so a host can hang its own record on a concept without a second file keyed by id." }, "name": { "description": "Human-readable display name.", "type": "string" }, "notices": { "description": "Regulatory or handling notices attached to this concept.", "items": { "$ref": "#/definitions/ConceptNoticeDoc" }, "type": "array" }, "parents": { "description": "Broader concept IDs forming a hierarchy chain.", "items": { "type": "string" }, "type": "array" }, "position": { "$ref": "#/definitions/PositionSpecDoc", "description": "Position spec: relative ordering within a category." }, "rank": { "$ref": "#/definitions/RankSpecDoc", "description": "Rank spec: severity ordering for max/min rollup." }, "scopes": { "description": "Scope IDs this concept is visible in.", "items": { "type": "string" }, "type": "array" }, "stands_for_whole": { "description": "A category whose values this concept stands for: the values the whole holds in it.\n\nSome schemes let a part leave out a list because it is the same as its whole's, and write a word in its place. The concept is that word. When a part holding it is read against a whole, the part takes the whole's values in the named category, so its rules judge the list the word stands for. The concept stays in the part, and a format that sets `omit_whole_values` writes the part back the way it was read. A part read without a whole, or one that writes values of its own in the category, takes nothing; whether a word with nothing behind it is an error is the scheme's call, made in its own rules. In a rollup the word goes through its own category's rollup like any other concept.\n\nNames a category declared in the same scheme.", "type": "string" }, "supersedes": { "description": "Concept IDs that this concept supersedes.", "items": { "type": "string" }, "type": "array" }, "synonyms": { "$ref": "#/definitions/Record%3Cstring%2Cstring%3E", "description": "Locale-specific display labels: locale code \u2192 display string." }, "text_input": { "$ref": "#/definitions/TextInputDoc", "description": "Free-text input configuration." }, "tier": { "description": "Tier label. Marks this concept as a partial marking that must attach to a parent.", "type": "string" }, "views": { "anyOf": [{ "type": "string" }, { "additionalProperties": { "type": "string" }, "properties": { "default": { "description": "The representation used when no other view is asked for.", "type": "string" } }, "required": ["default"], "type": "object" }], "description": "Display representations keyed by view name; must include 'default'. A plain string expands to all view keys.\n\nA view value may carry one placeholder, `{value}`, which the renderer fills with the assertion's free-text value. Any other placeholder is invalid and causes a compile error. Alternate representations live in typed text-input encodings, which define parsing and rendering per declared view.\n\nA value that has to print in more than one shape per view says so in its own `text_input.encoding`, which states both directions. A `calendar-date` stores one canonical spelling and names a per-view spelling; a `composite` names its components." } }, "required": ["id", "name", "views", "categories"], "type": "object" };
 var schema57 = { "additionalProperties": false, "description": "An alias that only means this concept in a particular position.\n\nThe plain `aliases` list is unconditional. This one carries the condition the domain actually states, so a two-letter token that means one thing at the head of a marking and another after a category does not have to be guessed at by the engine. `position` is measured in the original recognized region, after any wrapper is stripped and before any reordering.", "properties": { "after_category": { "description": "The category this text must follow, when that is the domain's rule.", "type": "string" }, "position": { "description": "Where in the marking region the text must appear.", "enum": ["leading", "non-leading"], "type": "string" }, "text": { "description": "The text recognized as this concept.", "type": "string" } }, "required": ["text"], "type": "object" };
 var pattern1 = new RegExp("^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$", "u");
 var schema59 = { "additionalProperties": false, "description": "A regulatory or handling notice attached to a concept: the text the marking requires, plus how it is categorized, whether it is mandatory, and an optional condition. Where the text is placed in a document is the host's convention, not part of the scheme.", "properties": { "condition": { "description": "Concept ID: only show this notice when this concept is also present.", "type": "string" }, "required": { "description": "Whether this notice MUST be displayed (regulatory requirement).", "type": "boolean" }, "text": { "description": "The notice text to display.", "type": "string" }, "type": { "description": "Notice category.", "enum": ["warning", "handling", "admonition", "distribution", "info"], "type": "string" }, "views": { "$ref": "#/definitions/Record%3Cstring%2Cstring%3E", "description": "The value this notice is registered under in a view's own notice vocabulary, keyed by view name, e.g. `{ ism: 'RD' }`.\n\nOnly for a view that has such a vocabulary. A view with no entry here carries the notice unregistered, which is what a view says when its vocabulary does not enumerate this notice. The registration sits on the notice rather than on a format because it is a property of the notice: a concept carrying two notices registers each one separately, and a format that writes the notice is not the thing that names it." } }, "required": ["type", "required", "text"], "type": "object" };
@@ -7261,36 +7273,34 @@ function validate37(data, { instancePath = "", parentData, parentDataProperty, r
         errors++;
       }
     }
+    if (data.marking !== void 0) {
+      if (typeof data.marking !== "string") {
+        const err37 = { instancePath: instancePath + "/marking", schemaPath: "#/properties/marking/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+        if (vErrors === null) {
+          vErrors = [err37];
+        } else {
+          vErrors.push(err37);
+        }
+        errors++;
+      }
+    }
     if (data.members !== void 0) {
-      let data23 = data.members;
-      if (Array.isArray(data23)) {
-        const len4 = data23.length;
+      let data24 = data.members;
+      if (Array.isArray(data24)) {
+        const len4 = data24.length;
         for (let i4 = 0; i4 < len4; i4++) {
-          if (typeof data23[i4] !== "string") {
-            const err37 = { instancePath: instancePath + "/members/" + i4, schemaPath: "#/properties/members/items/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+          if (typeof data24[i4] !== "string") {
+            const err38 = { instancePath: instancePath + "/members/" + i4, schemaPath: "#/properties/members/items/type", keyword: "type", params: { type: "string" }, message: "must be string" };
             if (vErrors === null) {
-              vErrors = [err37];
+              vErrors = [err38];
             } else {
-              vErrors.push(err37);
+              vErrors.push(err38);
             }
             errors++;
           }
         }
       } else {
-        const err38 = { instancePath: instancePath + "/members", schemaPath: "#/properties/members/type", keyword: "type", params: { type: "array" }, message: "must be array" };
-        if (vErrors === null) {
-          vErrors = [err38];
-        } else {
-          vErrors.push(err38);
-        }
-        errors++;
-      }
-    }
-    if (data.metadata !== void 0) {
-      let data25 = data.metadata;
-      if (data25 && typeof data25 == "object" && !Array.isArray(data25)) {
-      } else {
-        const err39 = { instancePath: instancePath + "/metadata", schemaPath: "#/definitions/Record%3Cstring%2Cunknown%3E/type", keyword: "type", params: { type: "object" }, message: "must be object" };
+        const err39 = { instancePath: instancePath + "/members", schemaPath: "#/properties/members/type", keyword: "type", params: { type: "array" }, message: "must be array" };
         if (vErrors === null) {
           vErrors = [err39];
         } else {
@@ -7299,9 +7309,11 @@ function validate37(data, { instancePath = "", parentData, parentDataProperty, r
         errors++;
       }
     }
-    if (data.name !== void 0) {
-      if (typeof data.name !== "string") {
-        const err40 = { instancePath: instancePath + "/name", schemaPath: "#/properties/name/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+    if (data.metadata !== void 0) {
+      let data26 = data.metadata;
+      if (data26 && typeof data26 == "object" && !Array.isArray(data26)) {
+      } else {
+        const err40 = { instancePath: instancePath + "/metadata", schemaPath: "#/definitions/Record%3Cstring%2Cunknown%3E/type", keyword: "type", params: { type: "object" }, message: "must be object" };
         if (vErrors === null) {
           vErrors = [err40];
         } else {
@@ -7310,18 +7322,9 @@ function validate37(data, { instancePath = "", parentData, parentDataProperty, r
         errors++;
       }
     }
-    if (data.notices !== void 0) {
-      let data27 = data.notices;
-      if (Array.isArray(data27)) {
-        const len5 = data27.length;
-        for (let i5 = 0; i5 < len5; i5++) {
-          if (!validate38(data27[i5], { instancePath: instancePath + "/notices/" + i5, parentData: data27, parentDataProperty: i5, rootData })) {
-            vErrors = vErrors === null ? validate38.errors : vErrors.concat(validate38.errors);
-            errors = vErrors.length;
-          }
-        }
-      } else {
-        const err41 = { instancePath: instancePath + "/notices", schemaPath: "#/properties/notices/type", keyword: "type", params: { type: "array" }, message: "must be array" };
+    if (data.name !== void 0) {
+      if (typeof data.name !== "string") {
+        const err41 = { instancePath: instancePath + "/name", schemaPath: "#/properties/name/type", keyword: "type", params: { type: "string" }, message: "must be string" };
         if (vErrors === null) {
           vErrors = [err41];
         } else {
@@ -7330,38 +7333,43 @@ function validate37(data, { instancePath = "", parentData, parentDataProperty, r
         errors++;
       }
     }
+    if (data.notices !== void 0) {
+      let data28 = data.notices;
+      if (Array.isArray(data28)) {
+        const len5 = data28.length;
+        for (let i5 = 0; i5 < len5; i5++) {
+          if (!validate38(data28[i5], { instancePath: instancePath + "/notices/" + i5, parentData: data28, parentDataProperty: i5, rootData })) {
+            vErrors = vErrors === null ? validate38.errors : vErrors.concat(validate38.errors);
+            errors = vErrors.length;
+          }
+        }
+      } else {
+        const err42 = { instancePath: instancePath + "/notices", schemaPath: "#/properties/notices/type", keyword: "type", params: { type: "array" }, message: "must be array" };
+        if (vErrors === null) {
+          vErrors = [err42];
+        } else {
+          vErrors.push(err42);
+        }
+        errors++;
+      }
+    }
     if (data.parents !== void 0) {
-      let data29 = data.parents;
-      if (Array.isArray(data29)) {
-        const len6 = data29.length;
+      let data30 = data.parents;
+      if (Array.isArray(data30)) {
+        const len6 = data30.length;
         for (let i6 = 0; i6 < len6; i6++) {
-          if (typeof data29[i6] !== "string") {
-            const err42 = { instancePath: instancePath + "/parents/" + i6, schemaPath: "#/properties/parents/items/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+          if (typeof data30[i6] !== "string") {
+            const err43 = { instancePath: instancePath + "/parents/" + i6, schemaPath: "#/properties/parents/items/type", keyword: "type", params: { type: "string" }, message: "must be string" };
             if (vErrors === null) {
-              vErrors = [err42];
+              vErrors = [err43];
             } else {
-              vErrors.push(err42);
+              vErrors.push(err43);
             }
             errors++;
           }
         }
       } else {
-        const err43 = { instancePath: instancePath + "/parents", schemaPath: "#/properties/parents/type", keyword: "type", params: { type: "array" }, message: "must be array" };
-        if (vErrors === null) {
-          vErrors = [err43];
-        } else {
-          vErrors.push(err43);
-        }
-        errors++;
-      }
-    }
-    if (data.position !== void 0) {
-      let data31 = data.position;
-      const _errs73 = errors;
-      let valid23 = false;
-      const _errs74 = errors;
-      if (typeof data31 !== "string") {
-        const err44 = { instancePath: instancePath + "/position", schemaPath: "#/definitions/PositionSpecDoc/anyOf/0/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+        const err44 = { instancePath: instancePath + "/parents", schemaPath: "#/properties/parents/type", keyword: "type", params: { type: "array" }, message: "must be array" };
         if (vErrors === null) {
           vErrors = [err44];
         } else {
@@ -7369,8 +7377,14 @@ function validate37(data, { instancePath = "", parentData, parentDataProperty, r
         }
         errors++;
       }
-      if ("first" !== data31) {
-        const err45 = { instancePath: instancePath + "/position", schemaPath: "#/definitions/PositionSpecDoc/anyOf/0/const", keyword: "const", params: { allowedValue: "first" }, message: "must be equal to constant" };
+    }
+    if (data.position !== void 0) {
+      let data32 = data.position;
+      const _errs75 = errors;
+      let valid23 = false;
+      const _errs76 = errors;
+      if (typeof data32 !== "string") {
+        const err45 = { instancePath: instancePath + "/position", schemaPath: "#/definitions/PositionSpecDoc/anyOf/0/type", keyword: "type", params: { type: "string" }, message: "must be string" };
         if (vErrors === null) {
           vErrors = [err45];
         } else {
@@ -7378,21 +7392,21 @@ function validate37(data, { instancePath = "", parentData, parentDataProperty, r
         }
         errors++;
       }
-      var _valid0 = _errs74 === errors;
+      if ("first" !== data32) {
+        const err46 = { instancePath: instancePath + "/position", schemaPath: "#/definitions/PositionSpecDoc/anyOf/0/const", keyword: "const", params: { allowedValue: "first" }, message: "must be equal to constant" };
+        if (vErrors === null) {
+          vErrors = [err46];
+        } else {
+          vErrors.push(err46);
+        }
+        errors++;
+      }
+      var _valid0 = _errs76 === errors;
       valid23 = valid23 || _valid0;
       if (!valid23) {
-        const _errs76 = errors;
-        if (typeof data31 !== "string") {
-          const err46 = { instancePath: instancePath + "/position", schemaPath: "#/definitions/PositionSpecDoc/anyOf/1/type", keyword: "type", params: { type: "string" }, message: "must be string" };
-          if (vErrors === null) {
-            vErrors = [err46];
-          } else {
-            vErrors.push(err46);
-          }
-          errors++;
-        }
-        if ("last" !== data31) {
-          const err47 = { instancePath: instancePath + "/position", schemaPath: "#/definitions/PositionSpecDoc/anyOf/1/const", keyword: "const", params: { allowedValue: "last" }, message: "must be equal to constant" };
+        const _errs78 = errors;
+        if (typeof data32 !== "string") {
+          const err47 = { instancePath: instancePath + "/position", schemaPath: "#/definitions/PositionSpecDoc/anyOf/1/type", keyword: "type", params: { type: "string" }, message: "must be string" };
           if (vErrors === null) {
             vErrors = [err47];
           } else {
@@ -7400,47 +7414,45 @@ function validate37(data, { instancePath = "", parentData, parentDataProperty, r
           }
           errors++;
         }
-        var _valid0 = _errs76 === errors;
+        if ("last" !== data32) {
+          const err48 = { instancePath: instancePath + "/position", schemaPath: "#/definitions/PositionSpecDoc/anyOf/1/const", keyword: "const", params: { allowedValue: "last" }, message: "must be equal to constant" };
+          if (vErrors === null) {
+            vErrors = [err48];
+          } else {
+            vErrors.push(err48);
+          }
+          errors++;
+        }
+        var _valid0 = _errs78 === errors;
         valid23 = valid23 || _valid0;
         if (!valid23) {
-          const _errs78 = errors;
-          if (!(typeof data31 == "number")) {
-            const err48 = { instancePath: instancePath + "/position", schemaPath: "#/definitions/PositionSpecDoc/anyOf/2/type", keyword: "type", params: { type: "number" }, message: "must be number" };
+          const _errs80 = errors;
+          if (!(typeof data32 == "number")) {
+            const err49 = { instancePath: instancePath + "/position", schemaPath: "#/definitions/PositionSpecDoc/anyOf/2/type", keyword: "type", params: { type: "number" }, message: "must be number" };
             if (vErrors === null) {
-              vErrors = [err48];
+              vErrors = [err49];
             } else {
-              vErrors.push(err48);
+              vErrors.push(err49);
             }
             errors++;
           }
-          var _valid0 = _errs78 === errors;
+          var _valid0 = _errs80 === errors;
           valid23 = valid23 || _valid0;
           if (!valid23) {
-            const _errs80 = errors;
-            if (data31 && typeof data31 == "object" && !Array.isArray(data31)) {
-              if (data31.after === void 0) {
-                const err49 = { instancePath: instancePath + "/position", schemaPath: "#/definitions/PositionSpecDoc/anyOf/3/required", keyword: "required", params: { missingProperty: "after" }, message: "must have required property 'after'" };
+            const _errs82 = errors;
+            if (data32 && typeof data32 == "object" && !Array.isArray(data32)) {
+              if (data32.after === void 0) {
+                const err50 = { instancePath: instancePath + "/position", schemaPath: "#/definitions/PositionSpecDoc/anyOf/3/required", keyword: "required", params: { missingProperty: "after" }, message: "must have required property 'after'" };
                 if (vErrors === null) {
-                  vErrors = [err49];
+                  vErrors = [err50];
                 } else {
-                  vErrors.push(err49);
+                  vErrors.push(err50);
                 }
                 errors++;
               }
-              for (const key4 in data31) {
+              for (const key4 in data32) {
                 if (!(key4 === "after")) {
-                  const err50 = { instancePath: instancePath + "/position", schemaPath: "#/definitions/PositionSpecDoc/anyOf/3/additionalProperties", keyword: "additionalProperties", params: { additionalProperty: key4 }, message: "must NOT have additional properties" };
-                  if (vErrors === null) {
-                    vErrors = [err50];
-                  } else {
-                    vErrors.push(err50);
-                  }
-                  errors++;
-                }
-              }
-              if (data31.after !== void 0) {
-                if (typeof data31.after !== "string") {
-                  const err51 = { instancePath: instancePath + "/position/after", schemaPath: "#/definitions/PositionSpecDoc/anyOf/3/properties/after/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+                  const err51 = { instancePath: instancePath + "/position", schemaPath: "#/definitions/PositionSpecDoc/anyOf/3/additionalProperties", keyword: "additionalProperties", params: { additionalProperty: key4 }, message: "must NOT have additional properties" };
                   if (vErrors === null) {
                     vErrors = [err51];
                   } else {
@@ -7449,43 +7461,43 @@ function validate37(data, { instancePath = "", parentData, parentDataProperty, r
                   errors++;
                 }
               }
-            } else {
-              const err52 = { instancePath: instancePath + "/position", schemaPath: "#/definitions/PositionSpecDoc/anyOf/3/type", keyword: "type", params: { type: "object" }, message: "must be object" };
-              if (vErrors === null) {
-                vErrors = [err52];
-              } else {
-                vErrors.push(err52);
-              }
-              errors++;
-            }
-            var _valid0 = _errs80 === errors;
-            valid23 = valid23 || _valid0;
-            if (!valid23) {
-              const _errs85 = errors;
-              if (data31 && typeof data31 == "object" && !Array.isArray(data31)) {
-                if (data31.before === void 0) {
-                  const err53 = { instancePath: instancePath + "/position", schemaPath: "#/definitions/PositionSpecDoc/anyOf/4/required", keyword: "required", params: { missingProperty: "before" }, message: "must have required property 'before'" };
+              if (data32.after !== void 0) {
+                if (typeof data32.after !== "string") {
+                  const err52 = { instancePath: instancePath + "/position/after", schemaPath: "#/definitions/PositionSpecDoc/anyOf/3/properties/after/type", keyword: "type", params: { type: "string" }, message: "must be string" };
                   if (vErrors === null) {
-                    vErrors = [err53];
+                    vErrors = [err52];
                   } else {
-                    vErrors.push(err53);
+                    vErrors.push(err52);
                   }
                   errors++;
                 }
-                for (const key5 in data31) {
-                  if (!(key5 === "before")) {
-                    const err54 = { instancePath: instancePath + "/position", schemaPath: "#/definitions/PositionSpecDoc/anyOf/4/additionalProperties", keyword: "additionalProperties", params: { additionalProperty: key5 }, message: "must NOT have additional properties" };
-                    if (vErrors === null) {
-                      vErrors = [err54];
-                    } else {
-                      vErrors.push(err54);
-                    }
-                    errors++;
+              }
+            } else {
+              const err53 = { instancePath: instancePath + "/position", schemaPath: "#/definitions/PositionSpecDoc/anyOf/3/type", keyword: "type", params: { type: "object" }, message: "must be object" };
+              if (vErrors === null) {
+                vErrors = [err53];
+              } else {
+                vErrors.push(err53);
+              }
+              errors++;
+            }
+            var _valid0 = _errs82 === errors;
+            valid23 = valid23 || _valid0;
+            if (!valid23) {
+              const _errs87 = errors;
+              if (data32 && typeof data32 == "object" && !Array.isArray(data32)) {
+                if (data32.before === void 0) {
+                  const err54 = { instancePath: instancePath + "/position", schemaPath: "#/definitions/PositionSpecDoc/anyOf/4/required", keyword: "required", params: { missingProperty: "before" }, message: "must have required property 'before'" };
+                  if (vErrors === null) {
+                    vErrors = [err54];
+                  } else {
+                    vErrors.push(err54);
                   }
+                  errors++;
                 }
-                if (data31.before !== void 0) {
-                  if (typeof data31.before !== "string") {
-                    const err55 = { instancePath: instancePath + "/position/before", schemaPath: "#/definitions/PositionSpecDoc/anyOf/4/properties/before/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+                for (const key5 in data32) {
+                  if (!(key5 === "before")) {
+                    const err55 = { instancePath: instancePath + "/position", schemaPath: "#/definitions/PositionSpecDoc/anyOf/4/additionalProperties", keyword: "additionalProperties", params: { additionalProperty: key5 }, message: "must NOT have additional properties" };
                     if (vErrors === null) {
                       vErrors = [err55];
                     } else {
@@ -7494,54 +7506,56 @@ function validate37(data, { instancePath = "", parentData, parentDataProperty, r
                     errors++;
                   }
                 }
-              } else {
-                const err56 = { instancePath: instancePath + "/position", schemaPath: "#/definitions/PositionSpecDoc/anyOf/4/type", keyword: "type", params: { type: "object" }, message: "must be object" };
-                if (vErrors === null) {
-                  vErrors = [err56];
-                } else {
-                  vErrors.push(err56);
-                }
-                errors++;
-              }
-              var _valid0 = _errs85 === errors;
-              valid23 = valid23 || _valid0;
-              if (!valid23) {
-                const _errs90 = errors;
-                if (data31 && typeof data31 == "object" && !Array.isArray(data31)) {
-                  if (data31.between === void 0) {
-                    const err57 = { instancePath: instancePath + "/position", schemaPath: "#/definitions/PositionSpecDoc/anyOf/5/required", keyword: "required", params: { missingProperty: "between" }, message: "must have required property 'between'" };
+                if (data32.before !== void 0) {
+                  if (typeof data32.before !== "string") {
+                    const err56 = { instancePath: instancePath + "/position/before", schemaPath: "#/definitions/PositionSpecDoc/anyOf/4/properties/before/type", keyword: "type", params: { type: "string" }, message: "must be string" };
                     if (vErrors === null) {
-                      vErrors = [err57];
+                      vErrors = [err56];
                     } else {
-                      vErrors.push(err57);
+                      vErrors.push(err56);
                     }
                     errors++;
                   }
-                  for (const key6 in data31) {
+                }
+              } else {
+                const err57 = { instancePath: instancePath + "/position", schemaPath: "#/definitions/PositionSpecDoc/anyOf/4/type", keyword: "type", params: { type: "object" }, message: "must be object" };
+                if (vErrors === null) {
+                  vErrors = [err57];
+                } else {
+                  vErrors.push(err57);
+                }
+                errors++;
+              }
+              var _valid0 = _errs87 === errors;
+              valid23 = valid23 || _valid0;
+              if (!valid23) {
+                const _errs92 = errors;
+                if (data32 && typeof data32 == "object" && !Array.isArray(data32)) {
+                  if (data32.between === void 0) {
+                    const err58 = { instancePath: instancePath + "/position", schemaPath: "#/definitions/PositionSpecDoc/anyOf/5/required", keyword: "required", params: { missingProperty: "between" }, message: "must have required property 'between'" };
+                    if (vErrors === null) {
+                      vErrors = [err58];
+                    } else {
+                      vErrors.push(err58);
+                    }
+                    errors++;
+                  }
+                  for (const key6 in data32) {
                     if (!(key6 === "between")) {
-                      const err58 = { instancePath: instancePath + "/position", schemaPath: "#/definitions/PositionSpecDoc/anyOf/5/additionalProperties", keyword: "additionalProperties", params: { additionalProperty: key6 }, message: "must NOT have additional properties" };
+                      const err59 = { instancePath: instancePath + "/position", schemaPath: "#/definitions/PositionSpecDoc/anyOf/5/additionalProperties", keyword: "additionalProperties", params: { additionalProperty: key6 }, message: "must NOT have additional properties" };
                       if (vErrors === null) {
-                        vErrors = [err58];
+                        vErrors = [err59];
                       } else {
-                        vErrors.push(err58);
+                        vErrors.push(err59);
                       }
                       errors++;
                     }
                   }
-                  if (data31.between !== void 0) {
-                    let data34 = data31.between;
-                    if (Array.isArray(data34)) {
-                      if (data34.length > 2) {
-                        const err59 = { instancePath: instancePath + "/position/between", schemaPath: "#/definitions/PositionSpecDoc/anyOf/5/properties/between/maxItems", keyword: "maxItems", params: { limit: 2 }, message: "must NOT have more than 2 items" };
-                        if (vErrors === null) {
-                          vErrors = [err59];
-                        } else {
-                          vErrors.push(err59);
-                        }
-                        errors++;
-                      }
-                      if (data34.length < 2) {
-                        const err60 = { instancePath: instancePath + "/position/between", schemaPath: "#/definitions/PositionSpecDoc/anyOf/5/properties/between/minItems", keyword: "minItems", params: { limit: 2 }, message: "must NOT have fewer than 2 items" };
+                  if (data32.between !== void 0) {
+                    let data35 = data32.between;
+                    if (Array.isArray(data35)) {
+                      if (data35.length > 2) {
+                        const err60 = { instancePath: instancePath + "/position/between", schemaPath: "#/definitions/PositionSpecDoc/anyOf/5/properties/between/maxItems", keyword: "maxItems", params: { limit: 2 }, message: "must NOT have more than 2 items" };
                         if (vErrors === null) {
                           vErrors = [err60];
                         } else {
@@ -7549,38 +7563,47 @@ function validate37(data, { instancePath = "", parentData, parentDataProperty, r
                         }
                         errors++;
                       }
-                      const len7 = data34.length;
+                      if (data35.length < 2) {
+                        const err61 = { instancePath: instancePath + "/position/between", schemaPath: "#/definitions/PositionSpecDoc/anyOf/5/properties/between/minItems", keyword: "minItems", params: { limit: 2 }, message: "must NOT have fewer than 2 items" };
+                        if (vErrors === null) {
+                          vErrors = [err61];
+                        } else {
+                          vErrors.push(err61);
+                        }
+                        errors++;
+                      }
+                      const len7 = data35.length;
                       for (let i7 = 0; i7 < len7; i7++) {
-                        if (typeof data34[i7] !== "string") {
-                          const err61 = { instancePath: instancePath + "/position/between/" + i7, schemaPath: "#/definitions/PositionSpecDoc/anyOf/5/properties/between/items/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+                        if (typeof data35[i7] !== "string") {
+                          const err62 = { instancePath: instancePath + "/position/between/" + i7, schemaPath: "#/definitions/PositionSpecDoc/anyOf/5/properties/between/items/type", keyword: "type", params: { type: "string" }, message: "must be string" };
                           if (vErrors === null) {
-                            vErrors = [err61];
+                            vErrors = [err62];
                           } else {
-                            vErrors.push(err61);
+                            vErrors.push(err62);
                           }
                           errors++;
                         }
                       }
                     } else {
-                      const err62 = { instancePath: instancePath + "/position/between", schemaPath: "#/definitions/PositionSpecDoc/anyOf/5/properties/between/type", keyword: "type", params: { type: "array" }, message: "must be array" };
+                      const err63 = { instancePath: instancePath + "/position/between", schemaPath: "#/definitions/PositionSpecDoc/anyOf/5/properties/between/type", keyword: "type", params: { type: "array" }, message: "must be array" };
                       if (vErrors === null) {
-                        vErrors = [err62];
+                        vErrors = [err63];
                       } else {
-                        vErrors.push(err62);
+                        vErrors.push(err63);
                       }
                       errors++;
                     }
                   }
                 } else {
-                  const err63 = { instancePath: instancePath + "/position", schemaPath: "#/definitions/PositionSpecDoc/anyOf/5/type", keyword: "type", params: { type: "object" }, message: "must be object" };
+                  const err64 = { instancePath: instancePath + "/position", schemaPath: "#/definitions/PositionSpecDoc/anyOf/5/type", keyword: "type", params: { type: "object" }, message: "must be object" };
                   if (vErrors === null) {
-                    vErrors = [err63];
+                    vErrors = [err64];
                   } else {
-                    vErrors.push(err63);
+                    vErrors.push(err64);
                   }
                   errors++;
                 }
-                var _valid0 = _errs90 === errors;
+                var _valid0 = _errs92 === errors;
                 valid23 = valid23 || _valid0;
               }
             }
@@ -7588,18 +7611,18 @@ function validate37(data, { instancePath = "", parentData, parentDataProperty, r
         }
       }
       if (!valid23) {
-        const err64 = { instancePath: instancePath + "/position", schemaPath: "#/definitions/PositionSpecDoc/anyOf", keyword: "anyOf", params: {}, message: "must match a schema in anyOf" };
+        const err65 = { instancePath: instancePath + "/position", schemaPath: "#/definitions/PositionSpecDoc/anyOf", keyword: "anyOf", params: {}, message: "must match a schema in anyOf" };
         if (vErrors === null) {
-          vErrors = [err64];
+          vErrors = [err65];
         } else {
-          vErrors.push(err64);
+          vErrors.push(err65);
         }
         errors++;
       } else {
-        errors = _errs73;
+        errors = _errs75;
         if (vErrors !== null) {
-          if (_errs73) {
-            vErrors.length = _errs73;
+          if (_errs75) {
+            vErrors.length = _errs75;
           } else {
             vErrors = null;
           }
@@ -7607,21 +7630,12 @@ function validate37(data, { instancePath = "", parentData, parentDataProperty, r
       }
     }
     if (data.rank !== void 0) {
-      let data36 = data.rank;
-      const _errs99 = errors;
+      let data37 = data.rank;
+      const _errs101 = errors;
       let valid30 = false;
-      const _errs100 = errors;
-      if (typeof data36 !== "string") {
-        const err65 = { instancePath: instancePath + "/rank", schemaPath: "#/definitions/RankSpecDoc/anyOf/0/type", keyword: "type", params: { type: "string" }, message: "must be string" };
-        if (vErrors === null) {
-          vErrors = [err65];
-        } else {
-          vErrors.push(err65);
-        }
-        errors++;
-      }
-      if ("top" !== data36) {
-        const err66 = { instancePath: instancePath + "/rank", schemaPath: "#/definitions/RankSpecDoc/anyOf/0/const", keyword: "const", params: { allowedValue: "top" }, message: "must be equal to constant" };
+      const _errs102 = errors;
+      if (typeof data37 !== "string") {
+        const err66 = { instancePath: instancePath + "/rank", schemaPath: "#/definitions/RankSpecDoc/anyOf/0/type", keyword: "type", params: { type: "string" }, message: "must be string" };
         if (vErrors === null) {
           vErrors = [err66];
         } else {
@@ -7629,21 +7643,21 @@ function validate37(data, { instancePath = "", parentData, parentDataProperty, r
         }
         errors++;
       }
-      var _valid1 = _errs100 === errors;
+      if ("top" !== data37) {
+        const err67 = { instancePath: instancePath + "/rank", schemaPath: "#/definitions/RankSpecDoc/anyOf/0/const", keyword: "const", params: { allowedValue: "top" }, message: "must be equal to constant" };
+        if (vErrors === null) {
+          vErrors = [err67];
+        } else {
+          vErrors.push(err67);
+        }
+        errors++;
+      }
+      var _valid1 = _errs102 === errors;
       valid30 = valid30 || _valid1;
       if (!valid30) {
-        const _errs102 = errors;
-        if (typeof data36 !== "string") {
-          const err67 = { instancePath: instancePath + "/rank", schemaPath: "#/definitions/RankSpecDoc/anyOf/1/type", keyword: "type", params: { type: "string" }, message: "must be string" };
-          if (vErrors === null) {
-            vErrors = [err67];
-          } else {
-            vErrors.push(err67);
-          }
-          errors++;
-        }
-        if ("bottom" !== data36) {
-          const err68 = { instancePath: instancePath + "/rank", schemaPath: "#/definitions/RankSpecDoc/anyOf/1/const", keyword: "const", params: { allowedValue: "bottom" }, message: "must be equal to constant" };
+        const _errs104 = errors;
+        if (typeof data37 !== "string") {
+          const err68 = { instancePath: instancePath + "/rank", schemaPath: "#/definitions/RankSpecDoc/anyOf/1/type", keyword: "type", params: { type: "string" }, message: "must be string" };
           if (vErrors === null) {
             vErrors = [err68];
           } else {
@@ -7651,47 +7665,45 @@ function validate37(data, { instancePath = "", parentData, parentDataProperty, r
           }
           errors++;
         }
-        var _valid1 = _errs102 === errors;
+        if ("bottom" !== data37) {
+          const err69 = { instancePath: instancePath + "/rank", schemaPath: "#/definitions/RankSpecDoc/anyOf/1/const", keyword: "const", params: { allowedValue: "bottom" }, message: "must be equal to constant" };
+          if (vErrors === null) {
+            vErrors = [err69];
+          } else {
+            vErrors.push(err69);
+          }
+          errors++;
+        }
+        var _valid1 = _errs104 === errors;
         valid30 = valid30 || _valid1;
         if (!valid30) {
-          const _errs104 = errors;
-          if (!(typeof data36 == "number")) {
-            const err69 = { instancePath: instancePath + "/rank", schemaPath: "#/definitions/RankSpecDoc/anyOf/2/type", keyword: "type", params: { type: "number" }, message: "must be number" };
+          const _errs106 = errors;
+          if (!(typeof data37 == "number")) {
+            const err70 = { instancePath: instancePath + "/rank", schemaPath: "#/definitions/RankSpecDoc/anyOf/2/type", keyword: "type", params: { type: "number" }, message: "must be number" };
             if (vErrors === null) {
-              vErrors = [err69];
+              vErrors = [err70];
             } else {
-              vErrors.push(err69);
+              vErrors.push(err70);
             }
             errors++;
           }
-          var _valid1 = _errs104 === errors;
+          var _valid1 = _errs106 === errors;
           valid30 = valid30 || _valid1;
           if (!valid30) {
-            const _errs106 = errors;
-            if (data36 && typeof data36 == "object" && !Array.isArray(data36)) {
-              if (data36.above === void 0) {
-                const err70 = { instancePath: instancePath + "/rank", schemaPath: "#/definitions/RankSpecDoc/anyOf/3/required", keyword: "required", params: { missingProperty: "above" }, message: "must have required property 'above'" };
+            const _errs108 = errors;
+            if (data37 && typeof data37 == "object" && !Array.isArray(data37)) {
+              if (data37.above === void 0) {
+                const err71 = { instancePath: instancePath + "/rank", schemaPath: "#/definitions/RankSpecDoc/anyOf/3/required", keyword: "required", params: { missingProperty: "above" }, message: "must have required property 'above'" };
                 if (vErrors === null) {
-                  vErrors = [err70];
+                  vErrors = [err71];
                 } else {
-                  vErrors.push(err70);
+                  vErrors.push(err71);
                 }
                 errors++;
               }
-              for (const key7 in data36) {
+              for (const key7 in data37) {
                 if (!(key7 === "above")) {
-                  const err71 = { instancePath: instancePath + "/rank", schemaPath: "#/definitions/RankSpecDoc/anyOf/3/additionalProperties", keyword: "additionalProperties", params: { additionalProperty: key7 }, message: "must NOT have additional properties" };
-                  if (vErrors === null) {
-                    vErrors = [err71];
-                  } else {
-                    vErrors.push(err71);
-                  }
-                  errors++;
-                }
-              }
-              if (data36.above !== void 0) {
-                if (typeof data36.above !== "string") {
-                  const err72 = { instancePath: instancePath + "/rank/above", schemaPath: "#/definitions/RankSpecDoc/anyOf/3/properties/above/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+                  const err72 = { instancePath: instancePath + "/rank", schemaPath: "#/definitions/RankSpecDoc/anyOf/3/additionalProperties", keyword: "additionalProperties", params: { additionalProperty: key7 }, message: "must NOT have additional properties" };
                   if (vErrors === null) {
                     vErrors = [err72];
                   } else {
@@ -7700,43 +7712,43 @@ function validate37(data, { instancePath = "", parentData, parentDataProperty, r
                   errors++;
                 }
               }
-            } else {
-              const err73 = { instancePath: instancePath + "/rank", schemaPath: "#/definitions/RankSpecDoc/anyOf/3/type", keyword: "type", params: { type: "object" }, message: "must be object" };
-              if (vErrors === null) {
-                vErrors = [err73];
-              } else {
-                vErrors.push(err73);
-              }
-              errors++;
-            }
-            var _valid1 = _errs106 === errors;
-            valid30 = valid30 || _valid1;
-            if (!valid30) {
-              const _errs111 = errors;
-              if (data36 && typeof data36 == "object" && !Array.isArray(data36)) {
-                if (data36.below === void 0) {
-                  const err74 = { instancePath: instancePath + "/rank", schemaPath: "#/definitions/RankSpecDoc/anyOf/4/required", keyword: "required", params: { missingProperty: "below" }, message: "must have required property 'below'" };
+              if (data37.above !== void 0) {
+                if (typeof data37.above !== "string") {
+                  const err73 = { instancePath: instancePath + "/rank/above", schemaPath: "#/definitions/RankSpecDoc/anyOf/3/properties/above/type", keyword: "type", params: { type: "string" }, message: "must be string" };
                   if (vErrors === null) {
-                    vErrors = [err74];
+                    vErrors = [err73];
                   } else {
-                    vErrors.push(err74);
+                    vErrors.push(err73);
                   }
                   errors++;
                 }
-                for (const key8 in data36) {
-                  if (!(key8 === "below")) {
-                    const err75 = { instancePath: instancePath + "/rank", schemaPath: "#/definitions/RankSpecDoc/anyOf/4/additionalProperties", keyword: "additionalProperties", params: { additionalProperty: key8 }, message: "must NOT have additional properties" };
-                    if (vErrors === null) {
-                      vErrors = [err75];
-                    } else {
-                      vErrors.push(err75);
-                    }
-                    errors++;
+              }
+            } else {
+              const err74 = { instancePath: instancePath + "/rank", schemaPath: "#/definitions/RankSpecDoc/anyOf/3/type", keyword: "type", params: { type: "object" }, message: "must be object" };
+              if (vErrors === null) {
+                vErrors = [err74];
+              } else {
+                vErrors.push(err74);
+              }
+              errors++;
+            }
+            var _valid1 = _errs108 === errors;
+            valid30 = valid30 || _valid1;
+            if (!valid30) {
+              const _errs113 = errors;
+              if (data37 && typeof data37 == "object" && !Array.isArray(data37)) {
+                if (data37.below === void 0) {
+                  const err75 = { instancePath: instancePath + "/rank", schemaPath: "#/definitions/RankSpecDoc/anyOf/4/required", keyword: "required", params: { missingProperty: "below" }, message: "must have required property 'below'" };
+                  if (vErrors === null) {
+                    vErrors = [err75];
+                  } else {
+                    vErrors.push(err75);
                   }
+                  errors++;
                 }
-                if (data36.below !== void 0) {
-                  if (typeof data36.below !== "string") {
-                    const err76 = { instancePath: instancePath + "/rank/below", schemaPath: "#/definitions/RankSpecDoc/anyOf/4/properties/below/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+                for (const key8 in data37) {
+                  if (!(key8 === "below")) {
+                    const err76 = { instancePath: instancePath + "/rank", schemaPath: "#/definitions/RankSpecDoc/anyOf/4/additionalProperties", keyword: "additionalProperties", params: { additionalProperty: key8 }, message: "must NOT have additional properties" };
                     if (vErrors === null) {
                       vErrors = [err76];
                     } else {
@@ -7745,54 +7757,56 @@ function validate37(data, { instancePath = "", parentData, parentDataProperty, r
                     errors++;
                   }
                 }
-              } else {
-                const err77 = { instancePath: instancePath + "/rank", schemaPath: "#/definitions/RankSpecDoc/anyOf/4/type", keyword: "type", params: { type: "object" }, message: "must be object" };
-                if (vErrors === null) {
-                  vErrors = [err77];
-                } else {
-                  vErrors.push(err77);
-                }
-                errors++;
-              }
-              var _valid1 = _errs111 === errors;
-              valid30 = valid30 || _valid1;
-              if (!valid30) {
-                const _errs116 = errors;
-                if (data36 && typeof data36 == "object" && !Array.isArray(data36)) {
-                  if (data36.between === void 0) {
-                    const err78 = { instancePath: instancePath + "/rank", schemaPath: "#/definitions/RankSpecDoc/anyOf/5/required", keyword: "required", params: { missingProperty: "between" }, message: "must have required property 'between'" };
+                if (data37.below !== void 0) {
+                  if (typeof data37.below !== "string") {
+                    const err77 = { instancePath: instancePath + "/rank/below", schemaPath: "#/definitions/RankSpecDoc/anyOf/4/properties/below/type", keyword: "type", params: { type: "string" }, message: "must be string" };
                     if (vErrors === null) {
-                      vErrors = [err78];
+                      vErrors = [err77];
                     } else {
-                      vErrors.push(err78);
+                      vErrors.push(err77);
                     }
                     errors++;
                   }
-                  for (const key9 in data36) {
+                }
+              } else {
+                const err78 = { instancePath: instancePath + "/rank", schemaPath: "#/definitions/RankSpecDoc/anyOf/4/type", keyword: "type", params: { type: "object" }, message: "must be object" };
+                if (vErrors === null) {
+                  vErrors = [err78];
+                } else {
+                  vErrors.push(err78);
+                }
+                errors++;
+              }
+              var _valid1 = _errs113 === errors;
+              valid30 = valid30 || _valid1;
+              if (!valid30) {
+                const _errs118 = errors;
+                if (data37 && typeof data37 == "object" && !Array.isArray(data37)) {
+                  if (data37.between === void 0) {
+                    const err79 = { instancePath: instancePath + "/rank", schemaPath: "#/definitions/RankSpecDoc/anyOf/5/required", keyword: "required", params: { missingProperty: "between" }, message: "must have required property 'between'" };
+                    if (vErrors === null) {
+                      vErrors = [err79];
+                    } else {
+                      vErrors.push(err79);
+                    }
+                    errors++;
+                  }
+                  for (const key9 in data37) {
                     if (!(key9 === "between")) {
-                      const err79 = { instancePath: instancePath + "/rank", schemaPath: "#/definitions/RankSpecDoc/anyOf/5/additionalProperties", keyword: "additionalProperties", params: { additionalProperty: key9 }, message: "must NOT have additional properties" };
+                      const err80 = { instancePath: instancePath + "/rank", schemaPath: "#/definitions/RankSpecDoc/anyOf/5/additionalProperties", keyword: "additionalProperties", params: { additionalProperty: key9 }, message: "must NOT have additional properties" };
                       if (vErrors === null) {
-                        vErrors = [err79];
+                        vErrors = [err80];
                       } else {
-                        vErrors.push(err79);
+                        vErrors.push(err80);
                       }
                       errors++;
                     }
                   }
-                  if (data36.between !== void 0) {
-                    let data39 = data36.between;
-                    if (Array.isArray(data39)) {
-                      if (data39.length > 2) {
-                        const err80 = { instancePath: instancePath + "/rank/between", schemaPath: "#/definitions/RankSpecDoc/anyOf/5/properties/between/maxItems", keyword: "maxItems", params: { limit: 2 }, message: "must NOT have more than 2 items" };
-                        if (vErrors === null) {
-                          vErrors = [err80];
-                        } else {
-                          vErrors.push(err80);
-                        }
-                        errors++;
-                      }
-                      if (data39.length < 2) {
-                        const err81 = { instancePath: instancePath + "/rank/between", schemaPath: "#/definitions/RankSpecDoc/anyOf/5/properties/between/minItems", keyword: "minItems", params: { limit: 2 }, message: "must NOT have fewer than 2 items" };
+                  if (data37.between !== void 0) {
+                    let data40 = data37.between;
+                    if (Array.isArray(data40)) {
+                      if (data40.length > 2) {
+                        const err81 = { instancePath: instancePath + "/rank/between", schemaPath: "#/definitions/RankSpecDoc/anyOf/5/properties/between/maxItems", keyword: "maxItems", params: { limit: 2 }, message: "must NOT have more than 2 items" };
                         if (vErrors === null) {
                           vErrors = [err81];
                         } else {
@@ -7800,38 +7814,47 @@ function validate37(data, { instancePath = "", parentData, parentDataProperty, r
                         }
                         errors++;
                       }
-                      const len8 = data39.length;
+                      if (data40.length < 2) {
+                        const err82 = { instancePath: instancePath + "/rank/between", schemaPath: "#/definitions/RankSpecDoc/anyOf/5/properties/between/minItems", keyword: "minItems", params: { limit: 2 }, message: "must NOT have fewer than 2 items" };
+                        if (vErrors === null) {
+                          vErrors = [err82];
+                        } else {
+                          vErrors.push(err82);
+                        }
+                        errors++;
+                      }
+                      const len8 = data40.length;
                       for (let i8 = 0; i8 < len8; i8++) {
-                        if (typeof data39[i8] !== "string") {
-                          const err82 = { instancePath: instancePath + "/rank/between/" + i8, schemaPath: "#/definitions/RankSpecDoc/anyOf/5/properties/between/items/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+                        if (typeof data40[i8] !== "string") {
+                          const err83 = { instancePath: instancePath + "/rank/between/" + i8, schemaPath: "#/definitions/RankSpecDoc/anyOf/5/properties/between/items/type", keyword: "type", params: { type: "string" }, message: "must be string" };
                           if (vErrors === null) {
-                            vErrors = [err82];
+                            vErrors = [err83];
                           } else {
-                            vErrors.push(err82);
+                            vErrors.push(err83);
                           }
                           errors++;
                         }
                       }
                     } else {
-                      const err83 = { instancePath: instancePath + "/rank/between", schemaPath: "#/definitions/RankSpecDoc/anyOf/5/properties/between/type", keyword: "type", params: { type: "array" }, message: "must be array" };
+                      const err84 = { instancePath: instancePath + "/rank/between", schemaPath: "#/definitions/RankSpecDoc/anyOf/5/properties/between/type", keyword: "type", params: { type: "array" }, message: "must be array" };
                       if (vErrors === null) {
-                        vErrors = [err83];
+                        vErrors = [err84];
                       } else {
-                        vErrors.push(err83);
+                        vErrors.push(err84);
                       }
                       errors++;
                     }
                   }
                 } else {
-                  const err84 = { instancePath: instancePath + "/rank", schemaPath: "#/definitions/RankSpecDoc/anyOf/5/type", keyword: "type", params: { type: "object" }, message: "must be object" };
+                  const err85 = { instancePath: instancePath + "/rank", schemaPath: "#/definitions/RankSpecDoc/anyOf/5/type", keyword: "type", params: { type: "object" }, message: "must be object" };
                   if (vErrors === null) {
-                    vErrors = [err84];
+                    vErrors = [err85];
                   } else {
-                    vErrors.push(err84);
+                    vErrors.push(err85);
                   }
                   errors++;
                 }
-                var _valid1 = _errs116 === errors;
+                var _valid1 = _errs118 === errors;
                 valid30 = valid30 || _valid1;
               }
             }
@@ -7839,18 +7862,18 @@ function validate37(data, { instancePath = "", parentData, parentDataProperty, r
         }
       }
       if (!valid30) {
-        const err85 = { instancePath: instancePath + "/rank", schemaPath: "#/definitions/RankSpecDoc/anyOf", keyword: "anyOf", params: {}, message: "must match a schema in anyOf" };
+        const err86 = { instancePath: instancePath + "/rank", schemaPath: "#/definitions/RankSpecDoc/anyOf", keyword: "anyOf", params: {}, message: "must match a schema in anyOf" };
         if (vErrors === null) {
-          vErrors = [err85];
+          vErrors = [err86];
         } else {
-          vErrors.push(err85);
+          vErrors.push(err86);
         }
         errors++;
       } else {
-        errors = _errs99;
+        errors = _errs101;
         if (vErrors !== null) {
-          if (_errs99) {
-            vErrors.length = _errs99;
+          if (_errs101) {
+            vErrors.length = _errs101;
           } else {
             vErrors = null;
           }
@@ -7858,33 +7881,22 @@ function validate37(data, { instancePath = "", parentData, parentDataProperty, r
       }
     }
     if (data.scopes !== void 0) {
-      let data41 = data.scopes;
-      if (Array.isArray(data41)) {
-        const len9 = data41.length;
+      let data42 = data.scopes;
+      if (Array.isArray(data42)) {
+        const len9 = data42.length;
         for (let i9 = 0; i9 < len9; i9++) {
-          if (typeof data41[i9] !== "string") {
-            const err86 = { instancePath: instancePath + "/scopes/" + i9, schemaPath: "#/properties/scopes/items/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+          if (typeof data42[i9] !== "string") {
+            const err87 = { instancePath: instancePath + "/scopes/" + i9, schemaPath: "#/properties/scopes/items/type", keyword: "type", params: { type: "string" }, message: "must be string" };
             if (vErrors === null) {
-              vErrors = [err86];
+              vErrors = [err87];
             } else {
-              vErrors.push(err86);
+              vErrors.push(err87);
             }
             errors++;
           }
         }
       } else {
-        const err87 = { instancePath: instancePath + "/scopes", schemaPath: "#/properties/scopes/type", keyword: "type", params: { type: "array" }, message: "must be array" };
-        if (vErrors === null) {
-          vErrors = [err87];
-        } else {
-          vErrors.push(err87);
-        }
-        errors++;
-      }
-    }
-    if (data.stands_for_whole !== void 0) {
-      if (typeof data.stands_for_whole !== "string") {
-        const err88 = { instancePath: instancePath + "/stands_for_whole", schemaPath: "#/properties/stands_for_whole/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+        const err88 = { instancePath: instancePath + "/scopes", schemaPath: "#/properties/scopes/type", keyword: "type", params: { type: "array" }, message: "must be array" };
         if (vErrors === null) {
           vErrors = [err88];
         } else {
@@ -7893,51 +7905,62 @@ function validate37(data, { instancePath = "", parentData, parentDataProperty, r
         errors++;
       }
     }
+    if (data.stands_for_whole !== void 0) {
+      if (typeof data.stands_for_whole !== "string") {
+        const err89 = { instancePath: instancePath + "/stands_for_whole", schemaPath: "#/properties/stands_for_whole/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+        if (vErrors === null) {
+          vErrors = [err89];
+        } else {
+          vErrors.push(err89);
+        }
+        errors++;
+      }
+    }
     if (data.supersedes !== void 0) {
-      let data44 = data.supersedes;
-      if (Array.isArray(data44)) {
-        const len10 = data44.length;
+      let data45 = data.supersedes;
+      if (Array.isArray(data45)) {
+        const len10 = data45.length;
         for (let i10 = 0; i10 < len10; i10++) {
-          if (typeof data44[i10] !== "string") {
-            const err89 = { instancePath: instancePath + "/supersedes/" + i10, schemaPath: "#/properties/supersedes/items/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+          if (typeof data45[i10] !== "string") {
+            const err90 = { instancePath: instancePath + "/supersedes/" + i10, schemaPath: "#/properties/supersedes/items/type", keyword: "type", params: { type: "string" }, message: "must be string" };
             if (vErrors === null) {
-              vErrors = [err89];
+              vErrors = [err90];
             } else {
-              vErrors.push(err89);
+              vErrors.push(err90);
             }
             errors++;
           }
         }
       } else {
-        const err90 = { instancePath: instancePath + "/supersedes", schemaPath: "#/properties/supersedes/type", keyword: "type", params: { type: "array" }, message: "must be array" };
+        const err91 = { instancePath: instancePath + "/supersedes", schemaPath: "#/properties/supersedes/type", keyword: "type", params: { type: "array" }, message: "must be array" };
         if (vErrors === null) {
-          vErrors = [err90];
+          vErrors = [err91];
         } else {
-          vErrors.push(err90);
+          vErrors.push(err91);
         }
         errors++;
       }
     }
     if (data.synonyms !== void 0) {
-      let data46 = data.synonyms;
-      if (data46 && typeof data46 == "object" && !Array.isArray(data46)) {
-        for (const key10 in data46) {
-          if (typeof data46[key10] !== "string") {
-            const err91 = { instancePath: instancePath + "/synonyms/" + key10.replace(/~/g, "~0").replace(/\//g, "~1"), schemaPath: "#/definitions/Record%3Cstring%2Cstring%3E/additionalProperties/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+      let data47 = data.synonyms;
+      if (data47 && typeof data47 == "object" && !Array.isArray(data47)) {
+        for (const key10 in data47) {
+          if (typeof data47[key10] !== "string") {
+            const err92 = { instancePath: instancePath + "/synonyms/" + key10.replace(/~/g, "~0").replace(/\//g, "~1"), schemaPath: "#/definitions/Record%3Cstring%2Cstring%3E/additionalProperties/type", keyword: "type", params: { type: "string" }, message: "must be string" };
             if (vErrors === null) {
-              vErrors = [err91];
+              vErrors = [err92];
             } else {
-              vErrors.push(err91);
+              vErrors.push(err92);
             }
             errors++;
           }
         }
       } else {
-        const err92 = { instancePath: instancePath + "/synonyms", schemaPath: "#/definitions/Record%3Cstring%2Cstring%3E/type", keyword: "type", params: { type: "object" }, message: "must be object" };
+        const err93 = { instancePath: instancePath + "/synonyms", schemaPath: "#/definitions/Record%3Cstring%2Cstring%3E/type", keyword: "type", params: { type: "object" }, message: "must be object" };
         if (vErrors === null) {
-          vErrors = [err92];
+          vErrors = [err93];
         } else {
-          vErrors.push(err92);
+          vErrors.push(err93);
         }
         errors++;
       }
@@ -7950,22 +7973,7 @@ function validate37(data, { instancePath = "", parentData, parentDataProperty, r
     }
     if (data.tier !== void 0) {
       if (typeof data.tier !== "string") {
-        const err93 = { instancePath: instancePath + "/tier", schemaPath: "#/properties/tier/type", keyword: "type", params: { type: "string" }, message: "must be string" };
-        if (vErrors === null) {
-          vErrors = [err93];
-        } else {
-          vErrors.push(err93);
-        }
-        errors++;
-      }
-    }
-    if (data.views !== void 0) {
-      let data50 = data.views;
-      const _errs143 = errors;
-      let valid42 = false;
-      const _errs144 = errors;
-      if (typeof data50 !== "string") {
-        const err94 = { instancePath: instancePath + "/views", schemaPath: "#/properties/views/anyOf/0/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+        const err94 = { instancePath: instancePath + "/tier", schemaPath: "#/properties/tier/type", keyword: "type", params: { type: "string" }, message: "must be string" };
         if (vErrors === null) {
           vErrors = [err94];
         } else {
@@ -7973,69 +7981,84 @@ function validate37(data, { instancePath = "", parentData, parentDataProperty, r
         }
         errors++;
       }
-      var _valid2 = _errs144 === errors;
+    }
+    if (data.views !== void 0) {
+      let data51 = data.views;
+      const _errs145 = errors;
+      let valid42 = false;
+      const _errs146 = errors;
+      if (typeof data51 !== "string") {
+        const err95 = { instancePath: instancePath + "/views", schemaPath: "#/properties/views/anyOf/0/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+        if (vErrors === null) {
+          vErrors = [err95];
+        } else {
+          vErrors.push(err95);
+        }
+        errors++;
+      }
+      var _valid2 = _errs146 === errors;
       valid42 = valid42 || _valid2;
       if (!valid42) {
-        const _errs146 = errors;
-        if (data50 && typeof data50 == "object" && !Array.isArray(data50)) {
-          if (data50.default === void 0) {
-            const err95 = { instancePath: instancePath + "/views", schemaPath: "#/properties/views/anyOf/1/required", keyword: "required", params: { missingProperty: "default" }, message: "must have required property 'default'" };
+        const _errs148 = errors;
+        if (data51 && typeof data51 == "object" && !Array.isArray(data51)) {
+          if (data51.default === void 0) {
+            const err96 = { instancePath: instancePath + "/views", schemaPath: "#/properties/views/anyOf/1/required", keyword: "required", params: { missingProperty: "default" }, message: "must have required property 'default'" };
             if (vErrors === null) {
-              vErrors = [err95];
+              vErrors = [err96];
             } else {
-              vErrors.push(err95);
+              vErrors.push(err96);
             }
             errors++;
           }
-          for (const key11 in data50) {
+          for (const key11 in data51) {
             if (!(key11 === "default")) {
-              if (typeof data50[key11] !== "string") {
-                const err96 = { instancePath: instancePath + "/views/" + key11.replace(/~/g, "~0").replace(/\//g, "~1"), schemaPath: "#/properties/views/anyOf/1/additionalProperties/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+              if (typeof data51[key11] !== "string") {
+                const err97 = { instancePath: instancePath + "/views/" + key11.replace(/~/g, "~0").replace(/\//g, "~1"), schemaPath: "#/properties/views/anyOf/1/additionalProperties/type", keyword: "type", params: { type: "string" }, message: "must be string" };
                 if (vErrors === null) {
-                  vErrors = [err96];
+                  vErrors = [err97];
                 } else {
-                  vErrors.push(err96);
+                  vErrors.push(err97);
                 }
                 errors++;
               }
             }
           }
-          if (data50.default !== void 0) {
-            if (typeof data50.default !== "string") {
-              const err97 = { instancePath: instancePath + "/views/default", schemaPath: "#/properties/views/anyOf/1/properties/default/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+          if (data51.default !== void 0) {
+            if (typeof data51.default !== "string") {
+              const err98 = { instancePath: instancePath + "/views/default", schemaPath: "#/properties/views/anyOf/1/properties/default/type", keyword: "type", params: { type: "string" }, message: "must be string" };
               if (vErrors === null) {
-                vErrors = [err97];
+                vErrors = [err98];
               } else {
-                vErrors.push(err97);
+                vErrors.push(err98);
               }
               errors++;
             }
           }
         } else {
-          const err98 = { instancePath: instancePath + "/views", schemaPath: "#/properties/views/anyOf/1/type", keyword: "type", params: { type: "object" }, message: "must be object" };
+          const err99 = { instancePath: instancePath + "/views", schemaPath: "#/properties/views/anyOf/1/type", keyword: "type", params: { type: "object" }, message: "must be object" };
           if (vErrors === null) {
-            vErrors = [err98];
+            vErrors = [err99];
           } else {
-            vErrors.push(err98);
+            vErrors.push(err99);
           }
           errors++;
         }
-        var _valid2 = _errs146 === errors;
+        var _valid2 = _errs148 === errors;
         valid42 = valid42 || _valid2;
       }
       if (!valid42) {
-        const err99 = { instancePath: instancePath + "/views", schemaPath: "#/properties/views/anyOf", keyword: "anyOf", params: {}, message: "must match a schema in anyOf" };
+        const err100 = { instancePath: instancePath + "/views", schemaPath: "#/properties/views/anyOf", keyword: "anyOf", params: {}, message: "must match a schema in anyOf" };
         if (vErrors === null) {
-          vErrors = [err99];
+          vErrors = [err100];
         } else {
-          vErrors.push(err99);
+          vErrors.push(err100);
         }
         errors++;
       } else {
-        errors = _errs143;
+        errors = _errs145;
         if (vErrors !== null) {
-          if (_errs143) {
-            vErrors.length = _errs143;
+          if (_errs145) {
+            vErrors.length = _errs145;
           } else {
             vErrors = null;
           }
@@ -8043,11 +8066,11 @@ function validate37(data, { instancePath = "", parentData, parentDataProperty, r
       }
     }
   } else {
-    const err100 = { instancePath, schemaPath: "#/type", keyword: "type", params: { type: "object" }, message: "must be object" };
+    const err101 = { instancePath, schemaPath: "#/type", keyword: "type", params: { type: "object" }, message: "must be object" };
     if (vErrors === null) {
-      vErrors = [err100];
+      vErrors = [err101];
     } else {
-      vErrors.push(err100);
+      vErrors.push(err101);
     }
     errors++;
   }
@@ -9628,8 +9651,8 @@ function validate52(data, { instancePath = "", parentData, parentDataProperty, r
   validate52.errors = vErrors;
   return errors === 0;
 }
-var schema76 = { "additionalProperties": false, "description": "A single normalize/repair rule: input rewrite during parse.", "properties": { "confidence": { "$ref": "#/definitions/RepairConfidence", "description": "Confidence level." }, "correction": { "description": "The correction to apply, read per type: replacement text for `separator`, and for `case` the grammar's canonical case, `'upper'` (the default) or `'lower'`.", "type": "string" }, "description": { "description": "Brief description (used by tooling alongside `explanation`).", "type": "string" }, "explanation": { "description": "Human-readable explanation.", "type": "string" }, "id": { "description": "Rule identifier.", "type": "string" }, "pattern": { "description": "Detection or match regex, read per type: for `case` it selects the input that needs correcting; for `separator` it matches the text to replace.", "type": "string" }, "type": { "description": "Repair type: `separator` rewrites separator text, `dedup` removes repeated tokens, and `case` corrects letter case.", "enum": ["separator", "dedup", "case"], "type": "string" } }, "required": ["id", "type", "confidence", "explanation"], "type": "object" };
-var schema77 = { "description": "Confidence assigned to a deterministic repair.", "enum": ["safe", "uncertain"], "type": "string" };
+var schema77 = { "additionalProperties": false, "description": "A single normalize/repair rule: input rewrite during parse.", "properties": { "confidence": { "$ref": "#/definitions/RepairConfidence", "description": "Confidence level." }, "correction": { "description": "The correction to apply, read per type: replacement text for `separator`, and for `case` the grammar's canonical case, `'upper'` (the default) or `'lower'`.", "type": "string" }, "description": { "description": "Brief description (used by tooling alongside `explanation`).", "type": "string" }, "explanation": { "description": "Human-readable explanation.", "type": "string" }, "id": { "description": "Rule identifier.", "type": "string" }, "pattern": { "description": "Detection or match regex, read per type: for `case` it selects the input that needs correcting; for `separator` it matches the text to replace.", "type": "string" }, "type": { "description": "Repair type: `separator` rewrites separator text, `dedup` removes repeated tokens, and `case` corrects letter case.", "enum": ["separator", "dedup", "case"], "type": "string" } }, "required": ["id", "type", "confidence", "explanation"], "type": "object" };
+var schema78 = { "description": "Confidence assigned to a deterministic repair.", "enum": ["safe", "uncertain"], "type": "string" };
 function validate56(data, { instancePath = "", parentData, parentDataProperty, rootData = data } = {}) {
   let vErrors = null;
   let errors = 0;
@@ -9693,7 +9716,7 @@ function validate56(data, { instancePath = "", parentData, parentDataProperty, r
         errors++;
       }
       if (!(data0 === "safe" || data0 === "uncertain")) {
-        const err6 = { instancePath: instancePath + "/confidence", schemaPath: "#/definitions/RepairConfidence/enum", keyword: "enum", params: { allowedValues: schema77.enum }, message: "must be equal to one of the allowed values" };
+        const err6 = { instancePath: instancePath + "/confidence", schemaPath: "#/definitions/RepairConfidence/enum", keyword: "enum", params: { allowedValues: schema78.enum }, message: "must be equal to one of the allowed values" };
         if (vErrors === null) {
           vErrors = [err6];
         } else {
@@ -9769,7 +9792,7 @@ function validate56(data, { instancePath = "", parentData, parentDataProperty, r
         errors++;
       }
       if (!(data6 === "separator" || data6 === "dedup" || data6 === "case")) {
-        const err13 = { instancePath: instancePath + "/type", schemaPath: "#/properties/type/enum", keyword: "enum", params: { allowedValues: schema76.properties.type.enum }, message: "must be equal to one of the allowed values" };
+        const err13 = { instancePath: instancePath + "/type", schemaPath: "#/properties/type/enum", keyword: "enum", params: { allowedValues: schema77.properties.type.enum }, message: "must be equal to one of the allowed values" };
         if (vErrors === null) {
           vErrors = [err13];
         } else {
@@ -10067,7 +10090,7 @@ function validate55(data, { instancePath = "", parentData, parentDataProperty, r
   validate55.errors = vErrors;
   return errors === 0;
 }
-var schema79 = { "additionalProperties": false, "description": "Render configuration: the formats a scheme reads and writes, and, when it declares them by surface, the outputs it offers.", "properties": { "color_from": { "anyOf": [{ "type": "string" }, { "items": { "$ref": "#/definitions/MarkingColorRuleDoc" }, "type": "array" }], "description": "Display-color source. A category ID takes its color from the resolved concept in that single-valued category. An ordered rule array supports compound defaults; first matching rule wins. The two modes are mutually exclusive." }, "default": { "description": "ID of the format used when none is specified. Not declared beside `surfaces`, where each surface names its own default view.", "type": "string" }, "formats": { "description": "Render formats.", "items": { "$ref": "#/definitions/FormatDoc" }, "type": "array" }, "of_invalid": { "description": "Render-of-invalid policy: how the renderer treats input tokens that match no concept. `preserve_unmatched` (the default) echoes them through to the output; `drop_unmatched` discards them; `refuse` renders nothing for an invalid marking. Consumed by the engine's scheme-mapper (D8).", "enum": ["preserve_unmatched", "drop_unmatched", "refuse"], "type": "string" }, "refusal_marker": { "description": "What the `refuse` policy renders in place of the marking. The optional `{tokens}` placeholder is replaced with the comma-joined unmatched tokens. Defaults to `[INVALID MARKING: unrecognized {tokens}]`. Only consulted when `of_invalid` is `refuse`.", "type": "string" }, "surface_separator": { "description": "Written between the outputs of two surfaces when one rendered string carries both, unless their syntax merges them, as attributes on one XML element do. Required when `surfaces` lists more than one surface, and not declared without `surfaces`.", "type": "string" }, "surfaces": { "description": "Named outputs per surface. When declared, these are the scheme's outputs and `formats` is the library of their forms: every format is a form of one view on each surface it serves, written by that view or only read in for it. A format that a surface it serves has no view for is refused, and so is one named by two views of a surface. The views that name one format on different surfaces state one role between them, or none, because text read in a form has one role. Results are keyed by output address, `surface/view`, one entry per view, surfaces in this order and views in theirs.\n\nText is read as a view of the surface whose categories it carries. Recognition settles the facts first, and views never change what they are. It then decides the view among the views of that surface whose forms read those facts:\n\n- The one view with a form that writes the text exactly as given.\n- Failing that, the one view with a form that read every token in its own spelling.\n- Failing that, a role: among the views still tied (those with a form that writes the text exactly, else those with a form that read every token in its own spelling, else every view whose forms read the facts), when all are of one role, that role, with the role's default view when it is one of them.\n- Otherwise no view and no role.\n\nWhere a view is decided, recognition takes its corrections from a form of that view, so no correction points at another view's spelling. Text a form writes exactly is not corrected, whether or not one view is decided.\n\nText that carries the categories of more than one surface, in one form views of those surfaces share or in parts read in different forms, is read as no one view. Each surface's part of it is decided as a view on its own, as above, and takes its corrections from the view decided for it. The text's role is the one those parts agree on, counting only the parts that have a role: a part read as a view with no role, or with no role decided, leaves the role to the others.\n\nWhat the engine writes for a valid marking, on one surface or several, must read back as right as written: `inputWasValid` is true, nothing is corrected, and the same output writes the same text again.\n\nRecognition reports the view in `recognition.inputFormat`, its surface in `recognition.surface` and the role in `recognition.role`, each only when it is decided, and never the form the text happened to be read in.\n\nA result writes the surfaces its input was read on: those of the categories it asserted, before or after repair, together with the surface a request's `surface` field names and the surfaces of the view or format a request names as its input format. With none of those it writes the default scope's surface, so the default scope is always one of the surfaces listed here. A fact inferred afterwards adds no surface. Neither does a request's output format: it only chooses how those surfaces are written, so `surface/view` for a surface the result does not write selects nothing there.\n\nWhen a request names no output, each surface the result writes is written in its default for the marking's role: the view its `default` names for that role, or the one view it names for every role. The role is the request's context role when it gives one. Otherwise it is the role recognition decides for the text, the one `recognition.role` reports. Text whose role is not decided has no role, and neither has a marking given as facts with no context role. A marking with no role is written as a whole. An aggregate's rollup is a whole and is written as one; the context role an aggregate request gives describes the parts it reads. This is the one rule for an unnamed output, and every operation follows it but a scan, which keeps a marking it finds in the view it was read as when that view writes the form it was read in, and writes each one in the output its `ScanResult.type` names. Wherever the list below says a surface writes its default, it is this default for the marking's role.\n\nWherever a request takes an output format, it names one of these:\n\n- A view id, such as `full`. Every surface the result writes uses that view, and a surface that does not declare it writes its default.\n- `surface/view`. That surface writes that view, or its default when it declares no view by that id, and every other surface writes its default. A surface this list does not declare is refused, never guessed.\n- The id of a format that exactly one view names as one of its forms, written or only read. It stands for that view's `surface/view`.\n\nA view id wins over a format id spelled the same way, so a bare `x` that is a view of one surface and a form of another surface's view asks every surface for view `x`. A declared surface id, or a format that views on several surfaces name, names no output: every surface writes its default, as it does when the request names no output. An undeclared id is refused; it is never answered as though the request had named none.\n\nWherever a request takes an input format, it names what the text is read as:\n\n- A view id. The text is read in the forms the views by that id write, each one's `format` and case formats, on every surface that declares one, and in no other format.\n- `surface/view`. The text is read in the forms that view writes only.\n- The id of a format. The text is read in that form alone.\n\nA form a view is only read in, one its `also_read_in` lists, is read when the request names no input format, or names that form by its own id. Naming the view does not read it: a view's written forms are how it spells a marking, and a form it is only read in is a spelling the scheme still tolerates, not one the view stands for.\n\nA view id wins over a format id spelled the same way here too, and any other id is refused. Whatever the request names, recognition reports the view the text was read as, decided as above among the views it allows.\n\nEach id in an address is percent-encoded the way `encodeURIComponent` encodes it, in requests and in result keys alike, so an id may hold a `/`. An address is split on its one literal `/` before its parts are decoded, and one with more than one literal `/` or a malformed escape is refused. Every field that carries an output address (the keys of `renders`, `RenderFormatLayout.id`, `FormatView.id`, `defaultRenderFormat` and the role defaults, `ScanResult.type`, `recognition.inputFormat`, `UnrepresentableOutput.output`) holds the same encoded string.\n\nAbsent, every format is an output under its own id and `default` picks one. The two are not combined.", "items": { "$ref": "#/definitions/SurfaceOutputDoc" }, "minItems": 1, "type": "array" } }, "type": "object" };
+var schema80 = { "additionalProperties": false, "description": "Render configuration: the formats a scheme reads and writes, and, when it declares them by surface, the outputs it offers.", "properties": { "color_from": { "anyOf": [{ "type": "string" }, { "items": { "$ref": "#/definitions/MarkingColorRuleDoc" }, "type": "array" }], "description": "Display-color source. A category ID takes its color from the resolved concept in that single-valued category. An ordered rule array supports compound defaults; first matching rule wins. The two modes are mutually exclusive." }, "default": { "description": "ID of the format used when none is specified. Not declared beside `surfaces`, where each surface names its own default view.", "type": "string" }, "formats": { "description": "Render formats.", "items": { "$ref": "#/definitions/FormatDoc" }, "type": "array" }, "of_invalid": { "description": "Render-of-invalid policy: how the renderer treats input tokens that match no concept. `preserve_unmatched` (the default) echoes them through to the output; `drop_unmatched` discards them; `refuse` renders nothing for an invalid marking. Consumed by the engine's scheme-mapper (D8).", "enum": ["preserve_unmatched", "drop_unmatched", "refuse"], "type": "string" }, "refusal_marker": { "description": "What the `refuse` policy renders in place of the marking. The optional `{tokens}` placeholder is replaced with the comma-joined unmatched tokens. Defaults to `[INVALID MARKING: unrecognized {tokens}]`. Only consulted when `of_invalid` is `refuse`.", "type": "string" }, "surface_separator": { "description": "Written between the outputs of two surfaces when one rendered string carries both, unless their syntax merges them, as attributes on one XML element do. Required when `surfaces` lists more than one surface, and not declared without `surfaces`.", "type": "string" }, "surfaces": { "description": "Named outputs per surface. When declared, these are the scheme's outputs and `formats` is the library of their forms: every format is a form of one view on each surface it serves, written by that view or only read in for it. A format that a surface it serves has no view for is refused, and so is one named by two views of a surface. The views that name one format on different surfaces state one role between them, or none, because text read in a form has one role. Results are keyed by output address, `surface/view`, one entry per view, surfaces in this order and views in theirs.\n\nText is read as a view of the surface whose categories it carries. Recognition settles the facts first, and views never change what they are. It then decides the view among the views of that surface whose forms read those facts:\n\n- The one view with a form that writes the text exactly as given.\n- Failing that, the one view with a form that read every token in its own spelling.\n- Failing that, a role: among the views still tied (those with a form that writes the text exactly, else those with a form that read every token in its own spelling, else every view whose forms read the facts), when all are of one role, that role, with the role's default view when it is one of them.\n- Otherwise no view and no role.\n\nWhere a view is decided, recognition takes its corrections from a form of that view, so no correction points at another view's spelling. Text a form writes exactly is not corrected, whether or not one view is decided.\n\nText that carries the categories of more than one surface, in one form views of those surfaces share or in parts read in different forms, is read as no one view. Each surface's part of it is decided as a view on its own, as above, and takes its corrections from the view decided for it. The text's role is the one those parts agree on, counting only the parts that have a role: a part read as a view with no role, or with no role decided, leaves the role to the others.\n\nWhat the engine writes for a valid marking, on one surface or several, must read back as right as written: `inputWasValid` is true, nothing is corrected, and the same output writes the same text again.\n\nRecognition reports the view in `recognition.inputFormat`, its surface in `recognition.surface` and the role in `recognition.role`, each only when it is decided, and never the form the text happened to be read in.\n\nA result writes the surfaces its input was read on: those of the categories it asserted, before or after repair, together with the surface a request's `surface` field names and the surfaces of the view or format a request names as its input format. With none of those it writes the default scope's surface, so the default scope is always one of the surfaces listed here. A fact inferred afterwards adds no surface. Neither does a request's output format: it only chooses how those surfaces are written, so `surface/view` for a surface the result does not write selects nothing there.\n\nWhen a request names no output, each surface the result writes is written in its default for the marking's role: the view its `default` names for that role, or the one view it names for every role. The role is the request's context role when it gives one. Otherwise it is the role recognition decides for the text, the one `recognition.role` reports. Text whose role is not decided has no role, and neither has a marking given as facts with no context role. A marking with no role is written as a whole. An aggregate's rollup is a whole and is written as one; the context role an aggregate request gives describes the parts it reads. This is the one rule for an unnamed output, and every operation follows it but a scan, which keeps a marking it finds in the view it was read as when that view writes the form it was read in, and writes each one in the output its `ScanResult.type` names. Wherever the list below says a surface writes its default, it is this default for the marking's role.\n\nWherever a request takes an output format, it names one of these:\n\n- A view id, such as `full`. Every surface the result writes uses that view, and a surface that does not declare it writes its default.\n- `surface/view`. That surface writes that view, or its default when it declares no view by that id, and every other surface writes its default. A surface this list does not declare is refused, never guessed.\n- The id of a format that exactly one view names as one of its forms, written or only read. It stands for that view's `surface/view`.\n\nA view id wins over a format id spelled the same way, so a bare `x` that is a view of one surface and a form of another surface's view asks every surface for view `x`. A declared surface id, or a format that views on several surfaces name, names no output: every surface writes its default, as it does when the request names no output. An undeclared id is refused; it is never answered as though the request had named none.\n\nWherever a request takes an input format, it names what the text is read as:\n\n- A view id. The text is read in the forms the views by that id write, each one's `format` and case formats, on every surface that declares one, and in no other format.\n- `surface/view`. The text is read in the forms that view writes only.\n- The id of a format. The text is read in that form alone.\n\nA form a view is only read in, one its `also_read_in` lists, is read when the request names no input format, or names that form by its own id. Naming the view does not read it: a view's written forms are how it spells a marking, and a form it is only read in is a spelling the scheme still tolerates, not one the view stands for.\n\nA view id wins over a format id spelled the same way here too, and any other id is refused. Whatever the request names, recognition reports the view the text was read as, decided as above among the views it allows.\n\nEach id in an address is percent-encoded the way `encodeURIComponent` encodes it, in requests and in result keys alike, so an id may hold a `/`. An address is split on its one literal `/` before its parts are decoded, and one with more than one literal `/` or a malformed escape is refused. Every field that carries an output address (the keys of `renders`, `RenderFormatLayout.id`, `FormatView.id`, `defaultRenderFormat` and the role defaults, `ScanResult.type`, `recognition.inputFormat`, `UnrepresentableOutput.output`) holds the same encoded string.\n\nAbsent, every format is an output under its own id and `default` picks one. The two are not combined.", "items": { "$ref": "#/definitions/SurfaceOutputDoc" }, "minItems": 1, "type": "array" } }, "type": "object" };
 function validate60(data, { instancePath = "", parentData, parentDataProperty, rootData = data } = {}) {
   let vErrors = null;
   let errors = 0;
@@ -10196,10 +10219,10 @@ function validate60(data, { instancePath = "", parentData, parentDataProperty, r
   validate60.errors = vErrors;
   return errors === 0;
 }
-var schema82 = { "anyOf": [{ "additionalProperties": false, "properties": { "fields": { "description": "The fields, in the order they are written.", "items": { "$ref": "#/definitions/FieldDoc" }, "type": "array" }, "id": { "description": "Format identifier. `render.default` and the views of `render.surfaces` refer to it, and callers name it as an input format. In a scheme without `render.surfaces` it is also an output format. In a scheme with them it is a form of one view on each surface it serves, and it names an output only when exactly one view names it; see `RenderConfigDoc.surfaces`.", "type": "string" }, "joins": { "description": "Separators for particular boundaries between adjacent top-level fields.", "items": { "$ref": "#/definitions/JoinDoc" }, "type": "array" }, "mode": { "description": "Layout: `inline` runs the fields together, `block` puts each on its own line.", "enum": ["inline", "block"], "type": "string" }, "omit_defaults": { "description": "Leave assertions with `source: 'default'` out of the printed output. A print filter only: every condition in this format still sees the real, unfiltered state.", "type": "boolean" }, "omit_empty": { "description": "Skip empty fields. Defaults to true for `block`, false for `inline`.", "type": "boolean" }, "omit_whole_values": { "description": "Write a part's stand-in in place of the values it took from its whole.\n\nA part that holds a stand-in (a concept that declares `stands_for_whole`) and was read against a whole holds the whole's values in the category the stand-in names. This format leaves those values out, so the part is written back with the word it was read with. It applies only to a part read on its own: a rollup is a whole, and is always written with its values. A print filter only, like `omit_defaults`: every condition in this format still sees the values.", "type": "boolean" }, "prefix": { "$ref": "#/definitions/AffixDoc", "description": "Written once before the nonempty whole." }, "separator": { "description": "Joins the nonempty top-level fields. Required once there is more than one field and no `joins` entry covers the boundary.", "type": "string" }, "separator_aliases": { "description": "Spellings of this format's own separator that are read and never written.\n\nThe same word as on a field, said of the boundary between the format's top-level fields. See `FieldCommonDoc.separator_aliases`: tolerant pass only, never written, every use a `separator` correction, and no spelling here may be another field's separator or another field's prefix.", "items": { "type": "string" }, "type": "array" }, "suffix": { "$ref": "#/definitions/AffixDoc", "description": "Written once after the nonempty whole." }, "surface": { "description": "The semantic part of a marking this format writes: a scheme scope id. `surfaces` is absent.", "type": "string" }, "syntax": { "$ref": "#/definitions/SyntaxDoc", "description": "Encoding. Absent means plain text." }, "view": { "description": "Default concept view for fields that do not name one.", "type": "string" } }, "required": ["fields", "id", "mode", "surface"], "type": "object" }, { "additionalProperties": false, "properties": { "fields": { "description": "The fields, in the order they are written.", "items": { "$ref": "#/definitions/FieldDoc" }, "type": "array" }, "id": { "description": "Format identifier. `render.default` and the views of `render.surfaces` refer to it, and callers name it as an input format. In a scheme without `render.surfaces` it is also an output format. In a scheme with them it is a form of one view on each surface it serves, and it names an output only when exactly one view names it; see `RenderConfigDoc.surfaces`.", "type": "string" }, "joins": { "description": "Separators for particular boundaries between adjacent top-level fields.", "items": { "$ref": "#/definitions/JoinDoc" }, "type": "array" }, "mode": { "description": "Layout: `inline` runs the fields together, `block` puts each on its own line.", "enum": ["inline", "block"], "type": "string" }, "omit_defaults": { "description": "Leave assertions with `source: 'default'` out of the printed output. A print filter only: every condition in this format still sees the real, unfiltered state.", "type": "boolean" }, "omit_empty": { "description": "Skip empty fields. Defaults to true for `block`, false for `inline`.", "type": "boolean" }, "omit_whole_values": { "description": "Write a part's stand-in in place of the values it took from its whole.\n\nA part that holds a stand-in (a concept that declares `stands_for_whole`) and was read against a whole holds the whole's values in the category the stand-in names. This format leaves those values out, so the part is written back with the word it was read with. It applies only to a part read on its own: a rollup is a whole, and is always written with its values. A print filter only, like `omit_defaults`: every condition in this format still sees the values.", "type": "boolean" }, "prefix": { "$ref": "#/definitions/AffixDoc", "description": "Written once before the nonempty whole." }, "separator": { "description": "Joins the nonempty top-level fields. Required once there is more than one field and no `joins` entry covers the boundary.", "type": "string" }, "separator_aliases": { "description": "Spellings of this format's own separator that are read and never written.\n\nThe same word as on a field, said of the boundary between the format's top-level fields. See `FieldCommonDoc.separator_aliases`: tolerant pass only, never written, every use a `separator` correction, and no spelling here may be another field's separator or another field's prefix.", "items": { "type": "string" }, "type": "array" }, "suffix": { "$ref": "#/definitions/AffixDoc", "description": "Written once after the nonempty whole." }, "surfaces": { "description": "The scheme scope ids this format writes together, two or more and each once. Declared only in a scheme with `render.surfaces`. `surface` is absent.", "items": { "type": "string" }, "minItems": 2, "type": "array" }, "syntax": { "$ref": "#/definitions/SyntaxDoc", "description": "Encoding. Absent means plain text." }, "view": { "description": "Default concept view for fields that do not name one.", "type": "string" } }, "required": ["fields", "id", "mode", "surfaces"], "type": "object" }], "description": "A format: one way this scheme's markings are written.\n\nThe field list is the canonical output order. It does not demand that input arrive in that order; the same tree recognizes a reordered marking and says what it corrected.\n\nA format writes one surface, named in `surface`, or several at once, named in `surfaces`, when its syntax carries more than one part of a marking in one place, such as one XML attribute list. Exactly one of the two is declared. A format writes several surfaces only in a scheme that declares its outputs by surface in `render.surfaces`: without them every format is an output under its own id, and an output writes one surface." };
-var schema97 = { "anyOf": [{ "additionalProperties": false, "properties": { "escape": { "description": "How a character the syntax cannot frame is escaped.", "enum": ["none", "backslash"], "type": "string" }, "type": { "const": "text", "description": "Plain text.", "type": "string" } }, "required": ["type"], "type": "object" }, { "additionalProperties": false, "properties": { "namespace": { "additionalProperties": false, "description": "Namespace to write the attributes in, when the format has one.", "properties": { "prefix": { "description": "The namespace prefix the attributes are written with.", "type": "string" }, "uri": { "description": "The namespace URI the prefix is bound to.", "type": "string" } }, "required": ["prefix", "uri"], "type": "object" }, "type": { "const": "xml-attributes", "description": "XML attributes on one element.", "type": "string" } }, "required": ["type"], "type": "object" }], "description": "How a format's text is framed: its encoding, not its layout." };
-var schema84 = { "anyOf": [{ "additionalProperties": false, "properties": { "attribute": { "description": "`xml-attributes` syntax only: the attribute's local name.", "type": "string" }, "category": { "description": "The category this field writes.", "type": "string" }, "concept": { "description": "Narrow the binding to one concept: a fixed slot such as a header.", "type": "string" }, "each": { "$ref": "#/definitions/EachAffixDoc", "description": "Affix written around each value, as opposed to once around all of them." }, "exclude_concepts": { "description": "Concepts bound by another field of this format, excluded here so the two bindings are disjoint. Selection metadata, not parser precedence.", "items": { "type": "string" }, "type": "array" }, "name": { "description": "Human label for the field. Required on groups and alternatives, because a `joins` entry and a diagnostic both have to be able to name them.", "type": "string" }, "phrases": { "description": "Concepts of this category that are written with fields of their own.\n\nEach phrase is emitted at the position its head holds in the category's own order, so one field can write a control before a list-bearing control and another after it without any field knowing where a control sits.", "items": { "$ref": "#/definitions/PhraseDoc" }, "type": "array" }, "prefix": { "$ref": "#/definitions/AffixDoc", "description": "Written once before the field's nonempty result." }, "prefix_aliases": { "description": "Spellings of this field's prefix that are read and never written.\n\nA format writes one spelling of a line and documents in the wild carry more than one. A block whose classifier line opens `Classified By: ` also arrives spelled out for a derivative classifier, and a reader that accounts for every character refuses that spelling unless the format names it. Two `alternatives` that can both write one state are a conflict by design and never a winner by order, and a `Recognizer` describes a whole region rather than one line inside a block.\n\nThis is the tolerant half of the tree, written down. The canonical pass reads `prefix` and nothing else; a spelling named here is admitted only by the tolerant pass, beside the case difference, the declared alias, a concept's spelling in another of its views and the separator substitution it already admits, and every use is reported as an `alias` correction against the characters it read. The render side never reads this, which is what \"never written\" means. A format that declares none reads only `prefix`.\n\nOnly meaningful beside `prefix`, and no two fields of one format may claim one spelling, as a prefix or as an alias of one. A line that opens two fields is not a reading a format can settle, and nothing here is settled by declaration order.", "items": { "type": "string" }, "type": "array" }, "required": { "description": "Whether the field standing empty is a state of this group at all.\n\nEvery field is optional by default, and on the read side that default is load-bearing in a way it is easy to miss: a group all of whose fields may stand empty reads any one of them on its own. A format that binds two categories beside a level therefore also reads a bare level, and becomes a rival account of text another format already reads whole. The alternative is not a tie-break, because nothing here is settled by declaration order, position or count. It is saying the thing the document could not say: a reading in which this field matched nothing is not a reading of this group.\n\nSymmetric, because a representation that cannot be read is not one. Set here, the field is bound in every reading of the group that encloses it, and a state holding nothing for it is a state the group does not write: the group comes out empty, the facts its other fields would have carried are reported omitted, and another field or another format writes them. An omission, not a conflict: the group declined, and declining is what a format that does not represent a state is supposed to do.\n\nThe same word at a format's top level says it of the whole format, whose fields are one sequence. Inside `alternatives` it belongs to the option it is written in and says nothing about the others, because each option is a whole representation of the field and they do not share a reading.\n\nIt is a statement about this group's shape, never about the concept the field binds and never about whether a marking is well formed: a category that must be filled for a marking to make sense is `required` on the category, which is a different question with a different answer.", "type": "boolean" }, "separator": { "description": "What this field joins: its own values on a category field, its nonempty children on a group.", "type": "string" }, "separator_aliases": { "description": "Spellings of this field's separator that are read and never written.\n\nThe sibling of `prefix_aliases`, one level down: a prefix says where a field opens and a separator says where one of its values ends, and a document in the wild spells the second as freely as the first. A list a format writes with `, ` arrives joined by `; ` or by a bare space, and a reader that accounts for every character reads the whole run as one value rather than quietly guessing a boundary.\n\nNot the same as the substitutions the tolerant pass already makes. Those are spacing and de-doubling variants of the declared separator, and they deliberately invent no boundary the declared separator does not already put in the same place. This is the author saying that these other characters are that boundary, in this field, which is a statement only the document can make.\n\nTolerant pass only, never written, and every use is reported as a `separator` correction naming the characters read and the separator the format writes instead: the same correction a spacing substitution carries, because it is the same claim about the same boundary. The render side never reads this.\n\nOnly meaningful beside `separator`. A spelling named here may not be another field's declared separator or another field's prefix in the same format: a boundary that is also a field's own syntax is not a reading the format can settle, and nothing here is settled by declaration order.", "items": { "type": "string" }, "type": "array" }, "suffix": { "$ref": "#/definitions/AffixDoc", "description": "Written once after the field's nonempty result." }, "tiers": { "description": "How a tiered concept composes inside this field.", "items": { "$ref": "#/definitions/TierCompositionDoc" }, "type": "array" }, "unspelled": { "description": "Concepts of this field's category its view deliberately does not spell.\n\nA `view_only` field leaves out a concept its view has no spelling for, and a scheme check warns about each one, because most often the author meant the field to carry it and forgot the spelling. Naming a concept here says the omission is the vocabulary's, not the author's: the check stays quiet about it, and the render still leaves it out and still reports it as omitted.\n\nOnly with `view_only`. An entry that names no concept this field binds, or one the field's view does spell, is reported: the field writes the same output, but the declaration no longer says what it does.", "items": { "type": "string" }, "type": "array" }, "view": { "description": "Concept view for this field, overriding the enclosing view.", "type": "string" }, "view_only": { "description": "Whether this field writes only what its own view spells.\n\nA concept's spelling in a view falls back to `default`, which is what lets a scheme name a view on the concepts that differ in it and leave the rest alone. A field standing for a closed set cannot take that fallback: an attribute whose published vocabulary enumerates exactly what it accepts has no spelling for anything else, and writing the `default` one puts a token in it that nothing reads back.\n\nSet here, a concept with no spelling in this field's view is left out of this field and reported as omitted; every other field still writes it, and the render stands, because an omission is the answer a closed set gives rather than a fact the output lost. Recognition is unchanged: this engine reads more tolerantly than it writes everywhere, and a field told what it may write has not been told to stop understanding things.\n\nIt is a statement about the field's vocabulary, never about the concept, and never about which of two readings is right.", "type": "boolean" }, "when": { "$ref": "#/definitions/WhenDoc", "description": "When this field applies. One predicate, read by both sides: the field is written only when it holds, and a reading of the input that would make it false is not a reading of this field." } }, "required": ["category"], "type": "object" }, { "additionalProperties": false, "properties": { "attribute": { "description": "`xml-attributes` syntax only: the attribute's local name.", "type": "string" }, "category": { "description": "The category this field writes. Omitted, `concept` determines it, which it can only do when it belongs to exactly one category.", "type": "string" }, "concept": { "description": "The single concept this field writes.", "type": "string" }, "each": { "$ref": "#/definitions/EachAffixDoc", "description": "Affix written around each value, as opposed to once around all of them." }, "exclude_concepts": { "description": "Concepts bound by another field of this format, excluded here so the two bindings are disjoint. Selection metadata, not parser precedence.", "items": { "type": "string" }, "type": "array" }, "name": { "description": "Human label for the field. Required on groups and alternatives, because a `joins` entry and a diagnostic both have to be able to name them.", "type": "string" }, "phrases": { "description": "Concepts of this category that are written with fields of their own.\n\nEach phrase is emitted at the position its head holds in the category's own order, so one field can write a control before a list-bearing control and another after it without any field knowing where a control sits.", "items": { "$ref": "#/definitions/PhraseDoc" }, "type": "array" }, "prefix": { "$ref": "#/definitions/AffixDoc", "description": "Written once before the field's nonempty result." }, "prefix_aliases": { "description": "Spellings of this field's prefix that are read and never written.\n\nA format writes one spelling of a line and documents in the wild carry more than one. A block whose classifier line opens `Classified By: ` also arrives spelled out for a derivative classifier, and a reader that accounts for every character refuses that spelling unless the format names it. Two `alternatives` that can both write one state are a conflict by design and never a winner by order, and a `Recognizer` describes a whole region rather than one line inside a block.\n\nThis is the tolerant half of the tree, written down. The canonical pass reads `prefix` and nothing else; a spelling named here is admitted only by the tolerant pass, beside the case difference, the declared alias, a concept's spelling in another of its views and the separator substitution it already admits, and every use is reported as an `alias` correction against the characters it read. The render side never reads this, which is what \"never written\" means. A format that declares none reads only `prefix`.\n\nOnly meaningful beside `prefix`, and no two fields of one format may claim one spelling, as a prefix or as an alias of one. A line that opens two fields is not a reading a format can settle, and nothing here is settled by declaration order.", "items": { "type": "string" }, "type": "array" }, "required": { "description": "Whether the field standing empty is a state of this group at all.\n\nEvery field is optional by default, and on the read side that default is load-bearing in a way it is easy to miss: a group all of whose fields may stand empty reads any one of them on its own. A format that binds two categories beside a level therefore also reads a bare level, and becomes a rival account of text another format already reads whole. The alternative is not a tie-break, because nothing here is settled by declaration order, position or count. It is saying the thing the document could not say: a reading in which this field matched nothing is not a reading of this group.\n\nSymmetric, because a representation that cannot be read is not one. Set here, the field is bound in every reading of the group that encloses it, and a state holding nothing for it is a state the group does not write: the group comes out empty, the facts its other fields would have carried are reported omitted, and another field or another format writes them. An omission, not a conflict: the group declined, and declining is what a format that does not represent a state is supposed to do.\n\nThe same word at a format's top level says it of the whole format, whose fields are one sequence. Inside `alternatives` it belongs to the option it is written in and says nothing about the others, because each option is a whole representation of the field and they do not share a reading.\n\nIt is a statement about this group's shape, never about the concept the field binds and never about whether a marking is well formed: a category that must be filled for a marking to make sense is `required` on the category, which is a different question with a different answer.", "type": "boolean" }, "separator": { "description": "What this field joins: its own values on a category field, its nonempty children on a group.", "type": "string" }, "separator_aliases": { "description": "Spellings of this field's separator that are read and never written.\n\nThe sibling of `prefix_aliases`, one level down: a prefix says where a field opens and a separator says where one of its values ends, and a document in the wild spells the second as freely as the first. A list a format writes with `, ` arrives joined by `; ` or by a bare space, and a reader that accounts for every character reads the whole run as one value rather than quietly guessing a boundary.\n\nNot the same as the substitutions the tolerant pass already makes. Those are spacing and de-doubling variants of the declared separator, and they deliberately invent no boundary the declared separator does not already put in the same place. This is the author saying that these other characters are that boundary, in this field, which is a statement only the document can make.\n\nTolerant pass only, never written, and every use is reported as a `separator` correction naming the characters read and the separator the format writes instead: the same correction a spacing substitution carries, because it is the same claim about the same boundary. The render side never reads this.\n\nOnly meaningful beside `separator`. A spelling named here may not be another field's declared separator or another field's prefix in the same format: a boundary that is also a field's own syntax is not a reading the format can settle, and nothing here is settled by declaration order.", "items": { "type": "string" }, "type": "array" }, "suffix": { "$ref": "#/definitions/AffixDoc", "description": "Written once after the field's nonempty result." }, "tiers": { "description": "How a tiered concept composes inside this field.", "items": { "$ref": "#/definitions/TierCompositionDoc" }, "type": "array" }, "unspelled": { "description": "Concepts of this field's category its view deliberately does not spell.\n\nA `view_only` field leaves out a concept its view has no spelling for, and a scheme check warns about each one, because most often the author meant the field to carry it and forgot the spelling. Naming a concept here says the omission is the vocabulary's, not the author's: the check stays quiet about it, and the render still leaves it out and still reports it as omitted.\n\nOnly with `view_only`. An entry that names no concept this field binds, or one the field's view does spell, is reported: the field writes the same output, but the declaration no longer says what it does.", "items": { "type": "string" }, "type": "array" }, "view": { "description": "Concept view for this field, overriding the enclosing view.", "type": "string" }, "view_only": { "description": "Whether this field writes only what its own view spells.\n\nA concept's spelling in a view falls back to `default`, which is what lets a scheme name a view on the concepts that differ in it and leave the rest alone. A field standing for a closed set cannot take that fallback: an attribute whose published vocabulary enumerates exactly what it accepts has no spelling for anything else, and writing the `default` one puts a token in it that nothing reads back.\n\nSet here, a concept with no spelling in this field's view is left out of this field and reported as omitted; every other field still writes it, and the render stands, because an omission is the answer a closed set gives rather than a fact the output lost. Recognition is unchanged: this engine reads more tolerantly than it writes everywhere, and a field told what it may write has not been told to stop understanding things.\n\nIt is a statement about the field's vocabulary, never about the concept, and never about which of two readings is right.", "type": "boolean" }, "when": { "$ref": "#/definitions/WhenDoc", "description": "When this field applies. One predicate, read by both sides: the field is written only when it holds, and a reading of the input that would make it false is not a reading of this field." } }, "required": ["concept"], "type": "object" }], "description": "A field bound to a category, optionally narrowed to particular concepts.\n\nWritten one of two ways, and a field that does neither has no binding at all: it names the category, or it names a concept that determines one. Naming a concept that belongs to exactly one category makes `category` redundant, and writing it out anyway puts two facts in the document where one decides the other. A concept in several categories is a real choice and the field has to make it, which is why the second form still accepts `category`." };
-var schema86 = { "additionalProperties": false, "description": "One concept of a field's category, written together with the fields that belong to it.\n\nA category's own order says where each of its concepts is written. Some of them introduce something: a release control is written with the countries it releases to, and the control and the list are one phrase rather than two fields that happen to be adjacent. Written as two fields, the list has to sit somewhere in the format's own sequence, and the rest of the category has to sit beside it, which means the format has decided, once, whether the plain controls come before the list or after. A register that writes one control before the list and another after it has no such answer, and neither choice is right for more than half of them.\n\nA phrase is the sentence that says it. The head is a concept of this field's category, so the category's order already places it, and the phrase is written at the head's position among the field's other values. Nothing else moves: the plain controls keep their own places, before or after, because the order decides and no field had to know where a control sits.\n\nRead back as one unit, for the same reason. The head and its fields are one value of this field, so a reading that takes the head without its list, or the list without its head, is not a reading of this phrase.\n\nThe head is excluded from the field's plain values automatically. It is written here, and `exclude_concepts` is for a concept another field writes.", "properties": { "fields": { "description": "The fields written with the head.", "items": { "$ref": "#/definitions/FieldDoc" }, "type": "array" }, "head": { "description": "The concept of this field's category that heads the phrase, and whose position in that category's order the phrase is written at.", "type": "string" }, "head_position": { "description": "Where the head sits relative to its fields. `first` by default, which is a heading; `last` is the list that names its control afterwards.", "enum": ["first", "last"], "type": "string" }, "prefix": { "$ref": "#/definitions/AffixDoc", "description": "Written once before the phrase." }, "separator": { "description": "What joins the head to its fields, and the fields to each other.", "type": "string" }, "suffix": { "$ref": "#/definitions/AffixDoc", "description": "Written once after the phrase." } }, "required": ["head", "fields"], "type": "object" };
+var schema83 = { "anyOf": [{ "additionalProperties": false, "properties": { "fields": { "description": "The fields, in the order they are written.", "items": { "$ref": "#/definitions/FieldDoc" }, "type": "array" }, "id": { "description": "Format identifier. `render.default` and the views of `render.surfaces` refer to it, and callers name it as an input format. In a scheme without `render.surfaces` it is also an output format. In a scheme with them it is a form of one view on each surface it serves, and it names an output only when exactly one view names it; see `RenderConfigDoc.surfaces`.", "type": "string" }, "joins": { "description": "Separators for particular boundaries between adjacent top-level fields.", "items": { "$ref": "#/definitions/JoinDoc" }, "type": "array" }, "marking": { "description": "This format's part marking, written in the scheme the document's `marking_scheme` names. Text, never interpreted: no engine parses it, checks it, acts on it, or reports it.", "type": "string" }, "mode": { "description": "Layout: `inline` runs the fields together, `block` puts each on its own line.", "enum": ["inline", "block"], "type": "string" }, "omit_defaults": { "description": "Leave assertions with `source: 'default'` out of the printed output. A print filter only: every condition in this format still sees the real, unfiltered state.", "type": "boolean" }, "omit_empty": { "description": "Skip empty fields. Defaults to true for `block`, false for `inline`.", "type": "boolean" }, "omit_whole_values": { "description": "Write a part's stand-in in place of the values it took from its whole.\n\nA part that holds a stand-in (a concept that declares `stands_for_whole`) and was read against a whole holds the whole's values in the category the stand-in names. This format leaves those values out, so the part is written back with the word it was read with. It applies only to a part read on its own: a rollup is a whole, and is always written with its values. A print filter only, like `omit_defaults`: every condition in this format still sees the values.", "type": "boolean" }, "prefix": { "$ref": "#/definitions/AffixDoc", "description": "Written once before the nonempty whole." }, "separator": { "description": "Joins the nonempty top-level fields. Required once there is more than one field and no `joins` entry covers the boundary.", "type": "string" }, "separator_aliases": { "description": "Spellings of this format's own separator that are read and never written.\n\nThe same word as on a field, said of the boundary between the format's top-level fields. See `FieldCommonDoc.separator_aliases`: tolerant pass only, never written, every use a `separator` correction, and no spelling here may be another field's separator or another field's prefix.", "items": { "type": "string" }, "type": "array" }, "suffix": { "$ref": "#/definitions/AffixDoc", "description": "Written once after the nonempty whole." }, "surface": { "description": "The semantic part of a marking this format writes: a scheme scope id. `surfaces` is absent.", "type": "string" }, "syntax": { "$ref": "#/definitions/SyntaxDoc", "description": "Encoding. Absent means plain text." }, "view": { "description": "Default concept view for fields that do not name one.", "type": "string" } }, "required": ["fields", "id", "mode", "surface"], "type": "object" }, { "additionalProperties": false, "properties": { "fields": { "description": "The fields, in the order they are written.", "items": { "$ref": "#/definitions/FieldDoc" }, "type": "array" }, "id": { "description": "Format identifier. `render.default` and the views of `render.surfaces` refer to it, and callers name it as an input format. In a scheme without `render.surfaces` it is also an output format. In a scheme with them it is a form of one view on each surface it serves, and it names an output only when exactly one view names it; see `RenderConfigDoc.surfaces`.", "type": "string" }, "joins": { "description": "Separators for particular boundaries between adjacent top-level fields.", "items": { "$ref": "#/definitions/JoinDoc" }, "type": "array" }, "marking": { "description": "This format's part marking, written in the scheme the document's `marking_scheme` names. Text, never interpreted: no engine parses it, checks it, acts on it, or reports it.", "type": "string" }, "mode": { "description": "Layout: `inline` runs the fields together, `block` puts each on its own line.", "enum": ["inline", "block"], "type": "string" }, "omit_defaults": { "description": "Leave assertions with `source: 'default'` out of the printed output. A print filter only: every condition in this format still sees the real, unfiltered state.", "type": "boolean" }, "omit_empty": { "description": "Skip empty fields. Defaults to true for `block`, false for `inline`.", "type": "boolean" }, "omit_whole_values": { "description": "Write a part's stand-in in place of the values it took from its whole.\n\nA part that holds a stand-in (a concept that declares `stands_for_whole`) and was read against a whole holds the whole's values in the category the stand-in names. This format leaves those values out, so the part is written back with the word it was read with. It applies only to a part read on its own: a rollup is a whole, and is always written with its values. A print filter only, like `omit_defaults`: every condition in this format still sees the values.", "type": "boolean" }, "prefix": { "$ref": "#/definitions/AffixDoc", "description": "Written once before the nonempty whole." }, "separator": { "description": "Joins the nonempty top-level fields. Required once there is more than one field and no `joins` entry covers the boundary.", "type": "string" }, "separator_aliases": { "description": "Spellings of this format's own separator that are read and never written.\n\nThe same word as on a field, said of the boundary between the format's top-level fields. See `FieldCommonDoc.separator_aliases`: tolerant pass only, never written, every use a `separator` correction, and no spelling here may be another field's separator or another field's prefix.", "items": { "type": "string" }, "type": "array" }, "suffix": { "$ref": "#/definitions/AffixDoc", "description": "Written once after the nonempty whole." }, "surfaces": { "description": "The scheme scope ids this format writes together, two or more and each once. Declared only in a scheme with `render.surfaces`. `surface` is absent.", "items": { "type": "string" }, "minItems": 2, "type": "array" }, "syntax": { "$ref": "#/definitions/SyntaxDoc", "description": "Encoding. Absent means plain text." }, "view": { "description": "Default concept view for fields that do not name one.", "type": "string" } }, "required": ["fields", "id", "mode", "surfaces"], "type": "object" }], "description": "A format: one way this scheme's markings are written.\n\nThe field list is the canonical output order. It does not demand that input arrive in that order; the same tree recognizes a reordered marking and says what it corrected.\n\nA format writes one surface, named in `surface`, or several at once, named in `surfaces`, when its syntax carries more than one part of a marking in one place, such as one XML attribute list. Exactly one of the two is declared. A format writes several surfaces only in a scheme that declares its outputs by surface in `render.surfaces`: without them every format is an output under its own id, and an output writes one surface." };
+var schema98 = { "anyOf": [{ "additionalProperties": false, "properties": { "escape": { "description": "How a character the syntax cannot frame is escaped.", "enum": ["none", "backslash"], "type": "string" }, "type": { "const": "text", "description": "Plain text.", "type": "string" } }, "required": ["type"], "type": "object" }, { "additionalProperties": false, "properties": { "namespace": { "additionalProperties": false, "description": "Namespace to write the attributes in, when the format has one.", "properties": { "prefix": { "description": "The namespace prefix the attributes are written with.", "type": "string" }, "uri": { "description": "The namespace URI the prefix is bound to.", "type": "string" } }, "required": ["prefix", "uri"], "type": "object" }, "type": { "const": "xml-attributes", "description": "XML attributes on one element.", "type": "string" } }, "required": ["type"], "type": "object" }], "description": "How a format's text is framed: its encoding, not its layout." };
+var schema85 = { "anyOf": [{ "additionalProperties": false, "properties": { "attribute": { "description": "`xml-attributes` syntax only: the attribute's local name.", "type": "string" }, "category": { "description": "The category this field writes.", "type": "string" }, "concept": { "description": "Narrow the binding to one concept: a fixed slot such as a header.", "type": "string" }, "each": { "$ref": "#/definitions/EachAffixDoc", "description": "Affix written around each value, as opposed to once around all of them." }, "exclude_concepts": { "description": "Concepts bound by another field of this format, excluded here so the two bindings are disjoint. Selection metadata, not parser precedence.", "items": { "type": "string" }, "type": "array" }, "name": { "description": "Human label for the field. Required on groups and alternatives, because a `joins` entry and a diagnostic both have to be able to name them.", "type": "string" }, "phrases": { "description": "Concepts of this category that are written with fields of their own.\n\nEach phrase is emitted at the position its head holds in the category's own order, so one field can write a control before a list-bearing control and another after it without any field knowing where a control sits.", "items": { "$ref": "#/definitions/PhraseDoc" }, "type": "array" }, "prefix": { "$ref": "#/definitions/AffixDoc", "description": "Written once before the field's nonempty result." }, "prefix_aliases": { "description": "Spellings of this field's prefix that are read and never written.\n\nA format writes one spelling of a line and documents in the wild carry more than one. A block whose classifier line opens `Classified By: ` also arrives spelled out for a derivative classifier, and a reader that accounts for every character refuses that spelling unless the format names it. Two `alternatives` that can both write one state are a conflict by design and never a winner by order, and a `Recognizer` describes a whole region rather than one line inside a block.\n\nThis is the tolerant half of the tree, written down. The canonical pass reads `prefix` and nothing else; a spelling named here is admitted only by the tolerant pass, beside the case difference, the declared alias, a concept's spelling in another of its views and the separator substitution it already admits, and every use is reported as an `alias` correction against the characters it read. The render side never reads this, which is what \"never written\" means. A format that declares none reads only `prefix`.\n\nOnly meaningful beside `prefix`, and no two fields of one format may claim one spelling, as a prefix or as an alias of one. A line that opens two fields is not a reading a format can settle, and nothing here is settled by declaration order.", "items": { "type": "string" }, "type": "array" }, "required": { "description": "Whether the field standing empty is a state of this group at all.\n\nEvery field is optional by default, and on the read side that default is load-bearing in a way it is easy to miss: a group all of whose fields may stand empty reads any one of them on its own. A format that binds two categories beside a level therefore also reads a bare level, and becomes a rival account of text another format already reads whole. The alternative is not a tie-break, because nothing here is settled by declaration order, position or count. It is saying the thing the document could not say: a reading in which this field matched nothing is not a reading of this group.\n\nSymmetric, because a representation that cannot be read is not one. Set here, the field is bound in every reading of the group that encloses it, and a state holding nothing for it is a state the group does not write: the group comes out empty, the facts its other fields would have carried are reported omitted, and another field or another format writes them. An omission, not a conflict: the group declined, and declining is what a format that does not represent a state is supposed to do.\n\nThe same word at a format's top level says it of the whole format, whose fields are one sequence. Inside `alternatives` it belongs to the option it is written in and says nothing about the others, because each option is a whole representation of the field and they do not share a reading.\n\nIt is a statement about this group's shape, never about the concept the field binds and never about whether a marking is well formed: a category that must be filled for a marking to make sense is `required` on the category, which is a different question with a different answer.", "type": "boolean" }, "separator": { "description": "What this field joins: its own values on a category field, its nonempty children on a group.", "type": "string" }, "separator_aliases": { "description": "Spellings of this field's separator that are read and never written.\n\nThe sibling of `prefix_aliases`, one level down: a prefix says where a field opens and a separator says where one of its values ends, and a document in the wild spells the second as freely as the first. A list a format writes with `, ` arrives joined by `; ` or by a bare space, and a reader that accounts for every character reads the whole run as one value rather than quietly guessing a boundary.\n\nNot the same as the substitutions the tolerant pass already makes. Those are spacing and de-doubling variants of the declared separator, and they deliberately invent no boundary the declared separator does not already put in the same place. This is the author saying that these other characters are that boundary, in this field, which is a statement only the document can make.\n\nTolerant pass only, never written, and every use is reported as a `separator` correction naming the characters read and the separator the format writes instead: the same correction a spacing substitution carries, because it is the same claim about the same boundary. The render side never reads this.\n\nOnly meaningful beside `separator`. A spelling named here may not be another field's declared separator or another field's prefix in the same format: a boundary that is also a field's own syntax is not a reading the format can settle, and nothing here is settled by declaration order.", "items": { "type": "string" }, "type": "array" }, "suffix": { "$ref": "#/definitions/AffixDoc", "description": "Written once after the field's nonempty result." }, "tiers": { "description": "How a tiered concept composes inside this field.", "items": { "$ref": "#/definitions/TierCompositionDoc" }, "type": "array" }, "unspelled": { "description": "Concepts of this field's category its view deliberately does not spell.\n\nA `view_only` field leaves out a concept its view has no spelling for, and a scheme check warns about each one, because most often the author meant the field to carry it and forgot the spelling. Naming a concept here says the omission is the vocabulary's, not the author's: the check stays quiet about it, and the render still leaves it out and still reports it as omitted.\n\nOnly with `view_only`. An entry that names no concept this field binds, or one the field's view does spell, is reported: the field writes the same output, but the declaration no longer says what it does.", "items": { "type": "string" }, "type": "array" }, "view": { "description": "Concept view for this field, overriding the enclosing view.", "type": "string" }, "view_only": { "description": "Whether this field writes only what its own view spells.\n\nA concept's spelling in a view falls back to `default`, which is what lets a scheme name a view on the concepts that differ in it and leave the rest alone. A field standing for a closed set cannot take that fallback: an attribute whose published vocabulary enumerates exactly what it accepts has no spelling for anything else, and writing the `default` one puts a token in it that nothing reads back.\n\nSet here, a concept with no spelling in this field's view is left out of this field and reported as omitted; every other field still writes it, and the render stands, because an omission is the answer a closed set gives rather than a fact the output lost. Recognition is unchanged: this engine reads more tolerantly than it writes everywhere, and a field told what it may write has not been told to stop understanding things.\n\nIt is a statement about the field's vocabulary, never about the concept, and never about which of two readings is right.", "type": "boolean" }, "when": { "$ref": "#/definitions/WhenDoc", "description": "When this field applies. One predicate, read by both sides: the field is written only when it holds, and a reading of the input that would make it false is not a reading of this field." } }, "required": ["category"], "type": "object" }, { "additionalProperties": false, "properties": { "attribute": { "description": "`xml-attributes` syntax only: the attribute's local name.", "type": "string" }, "category": { "description": "The category this field writes. Omitted, `concept` determines it, which it can only do when it belongs to exactly one category.", "type": "string" }, "concept": { "description": "The single concept this field writes.", "type": "string" }, "each": { "$ref": "#/definitions/EachAffixDoc", "description": "Affix written around each value, as opposed to once around all of them." }, "exclude_concepts": { "description": "Concepts bound by another field of this format, excluded here so the two bindings are disjoint. Selection metadata, not parser precedence.", "items": { "type": "string" }, "type": "array" }, "name": { "description": "Human label for the field. Required on groups and alternatives, because a `joins` entry and a diagnostic both have to be able to name them.", "type": "string" }, "phrases": { "description": "Concepts of this category that are written with fields of their own.\n\nEach phrase is emitted at the position its head holds in the category's own order, so one field can write a control before a list-bearing control and another after it without any field knowing where a control sits.", "items": { "$ref": "#/definitions/PhraseDoc" }, "type": "array" }, "prefix": { "$ref": "#/definitions/AffixDoc", "description": "Written once before the field's nonempty result." }, "prefix_aliases": { "description": "Spellings of this field's prefix that are read and never written.\n\nA format writes one spelling of a line and documents in the wild carry more than one. A block whose classifier line opens `Classified By: ` also arrives spelled out for a derivative classifier, and a reader that accounts for every character refuses that spelling unless the format names it. Two `alternatives` that can both write one state are a conflict by design and never a winner by order, and a `Recognizer` describes a whole region rather than one line inside a block.\n\nThis is the tolerant half of the tree, written down. The canonical pass reads `prefix` and nothing else; a spelling named here is admitted only by the tolerant pass, beside the case difference, the declared alias, a concept's spelling in another of its views and the separator substitution it already admits, and every use is reported as an `alias` correction against the characters it read. The render side never reads this, which is what \"never written\" means. A format that declares none reads only `prefix`.\n\nOnly meaningful beside `prefix`, and no two fields of one format may claim one spelling, as a prefix or as an alias of one. A line that opens two fields is not a reading a format can settle, and nothing here is settled by declaration order.", "items": { "type": "string" }, "type": "array" }, "required": { "description": "Whether the field standing empty is a state of this group at all.\n\nEvery field is optional by default, and on the read side that default is load-bearing in a way it is easy to miss: a group all of whose fields may stand empty reads any one of them on its own. A format that binds two categories beside a level therefore also reads a bare level, and becomes a rival account of text another format already reads whole. The alternative is not a tie-break, because nothing here is settled by declaration order, position or count. It is saying the thing the document could not say: a reading in which this field matched nothing is not a reading of this group.\n\nSymmetric, because a representation that cannot be read is not one. Set here, the field is bound in every reading of the group that encloses it, and a state holding nothing for it is a state the group does not write: the group comes out empty, the facts its other fields would have carried are reported omitted, and another field or another format writes them. An omission, not a conflict: the group declined, and declining is what a format that does not represent a state is supposed to do.\n\nThe same word at a format's top level says it of the whole format, whose fields are one sequence. Inside `alternatives` it belongs to the option it is written in and says nothing about the others, because each option is a whole representation of the field and they do not share a reading.\n\nIt is a statement about this group's shape, never about the concept the field binds and never about whether a marking is well formed: a category that must be filled for a marking to make sense is `required` on the category, which is a different question with a different answer.", "type": "boolean" }, "separator": { "description": "What this field joins: its own values on a category field, its nonempty children on a group.", "type": "string" }, "separator_aliases": { "description": "Spellings of this field's separator that are read and never written.\n\nThe sibling of `prefix_aliases`, one level down: a prefix says where a field opens and a separator says where one of its values ends, and a document in the wild spells the second as freely as the first. A list a format writes with `, ` arrives joined by `; ` or by a bare space, and a reader that accounts for every character reads the whole run as one value rather than quietly guessing a boundary.\n\nNot the same as the substitutions the tolerant pass already makes. Those are spacing and de-doubling variants of the declared separator, and they deliberately invent no boundary the declared separator does not already put in the same place. This is the author saying that these other characters are that boundary, in this field, which is a statement only the document can make.\n\nTolerant pass only, never written, and every use is reported as a `separator` correction naming the characters read and the separator the format writes instead: the same correction a spacing substitution carries, because it is the same claim about the same boundary. The render side never reads this.\n\nOnly meaningful beside `separator`. A spelling named here may not be another field's declared separator or another field's prefix in the same format: a boundary that is also a field's own syntax is not a reading the format can settle, and nothing here is settled by declaration order.", "items": { "type": "string" }, "type": "array" }, "suffix": { "$ref": "#/definitions/AffixDoc", "description": "Written once after the field's nonempty result." }, "tiers": { "description": "How a tiered concept composes inside this field.", "items": { "$ref": "#/definitions/TierCompositionDoc" }, "type": "array" }, "unspelled": { "description": "Concepts of this field's category its view deliberately does not spell.\n\nA `view_only` field leaves out a concept its view has no spelling for, and a scheme check warns about each one, because most often the author meant the field to carry it and forgot the spelling. Naming a concept here says the omission is the vocabulary's, not the author's: the check stays quiet about it, and the render still leaves it out and still reports it as omitted.\n\nOnly with `view_only`. An entry that names no concept this field binds, or one the field's view does spell, is reported: the field writes the same output, but the declaration no longer says what it does.", "items": { "type": "string" }, "type": "array" }, "view": { "description": "Concept view for this field, overriding the enclosing view.", "type": "string" }, "view_only": { "description": "Whether this field writes only what its own view spells.\n\nA concept's spelling in a view falls back to `default`, which is what lets a scheme name a view on the concepts that differ in it and leave the rest alone. A field standing for a closed set cannot take that fallback: an attribute whose published vocabulary enumerates exactly what it accepts has no spelling for anything else, and writing the `default` one puts a token in it that nothing reads back.\n\nSet here, a concept with no spelling in this field's view is left out of this field and reported as omitted; every other field still writes it, and the render stands, because an omission is the answer a closed set gives rather than a fact the output lost. Recognition is unchanged: this engine reads more tolerantly than it writes everywhere, and a field told what it may write has not been told to stop understanding things.\n\nIt is a statement about the field's vocabulary, never about the concept, and never about which of two readings is right.", "type": "boolean" }, "when": { "$ref": "#/definitions/WhenDoc", "description": "When this field applies. One predicate, read by both sides: the field is written only when it holds, and a reading of the input that would make it false is not a reading of this field." } }, "required": ["concept"], "type": "object" }], "description": "A field bound to a category, optionally narrowed to particular concepts.\n\nWritten one of two ways, and a field that does neither has no binding at all: it names the category, or it names a concept that determines one. Naming a concept that belongs to exactly one category makes `category` redundant, and writing it out anyway puts two facts in the document where one decides the other. A concept in several categories is a real choice and the field has to make it, which is why the second form still accepts `category`." };
+var schema87 = { "additionalProperties": false, "description": "One concept of a field's category, written together with the fields that belong to it.\n\nA category's own order says where each of its concepts is written. Some of them introduce something: a release control is written with the countries it releases to, and the control and the list are one phrase rather than two fields that happen to be adjacent. Written as two fields, the list has to sit somewhere in the format's own sequence, and the rest of the category has to sit beside it, which means the format has decided, once, whether the plain controls come before the list or after. A register that writes one control before the list and another after it has no such answer, and neither choice is right for more than half of them.\n\nA phrase is the sentence that says it. The head is a concept of this field's category, so the category's order already places it, and the phrase is written at the head's position among the field's other values. Nothing else moves: the plain controls keep their own places, before or after, because the order decides and no field had to know where a control sits.\n\nRead back as one unit, for the same reason. The head and its fields are one value of this field, so a reading that takes the head without its list, or the list without its head, is not a reading of this phrase.\n\nThe head is excluded from the field's plain values automatically. It is written here, and `exclude_concepts` is for a concept another field writes.", "properties": { "fields": { "description": "The fields written with the head.", "items": { "$ref": "#/definitions/FieldDoc" }, "type": "array" }, "head": { "description": "The concept of this field's category that heads the phrase, and whose position in that category's order the phrase is written at.", "type": "string" }, "head_position": { "description": "Where the head sits relative to its fields. `first` by default, which is a heading; `last` is the list that names its control afterwards.", "enum": ["first", "last"], "type": "string" }, "prefix": { "$ref": "#/definitions/AffixDoc", "description": "Written once before the phrase." }, "separator": { "description": "What joins the head to its fields, and the fields to each other.", "type": "string" }, "suffix": { "$ref": "#/definitions/AffixDoc", "description": "Written once after the phrase." } }, "required": ["head", "fields"], "type": "object" };
 var wrapper3 = { validate: validate64 };
 function validate68(data, { instancePath = "", parentData, parentDataProperty, rootData = data } = {}) {
   let vErrors = null;
@@ -10390,7 +10413,7 @@ function validate66(data, { instancePath = "", parentData, parentDataProperty, r
         errors++;
       }
       if (!(data3 === "first" || data3 === "last")) {
-        const err6 = { instancePath: instancePath + "/head_position", schemaPath: "#/properties/head_position/enum", keyword: "enum", params: { allowedValues: schema86.properties.head_position.enum }, message: "must be equal to one of the allowed values" };
+        const err6 = { instancePath: instancePath + "/head_position", schemaPath: "#/properties/head_position/enum", keyword: "enum", params: { allowedValues: schema87.properties.head_position.enum }, message: "must be equal to one of the allowed values" };
         if (vErrors === null) {
           vErrors = [err6];
         } else {
@@ -10451,7 +10474,7 @@ function validate65(data, { instancePath = "", parentData, parentDataProperty, r
       errors++;
     }
     for (const key0 in data) {
-      if (!func2.call(schema84.anyOf[0].properties, key0)) {
+      if (!func2.call(schema85.anyOf[0].properties, key0)) {
         const err1 = { instancePath, schemaPath: "#/anyOf/0/additionalProperties", keyword: "additionalProperties", params: { additionalProperty: key0 }, message: "must NOT have additional properties" };
         if (vErrors === null) {
           vErrors = [err1];
@@ -10857,7 +10880,7 @@ function validate65(data, { instancePath = "", parentData, parentDataProperty, r
         errors++;
       }
       for (const key3 in data) {
-        if (!func2.call(schema84.anyOf[1].properties, key3)) {
+        if (!func2.call(schema85.anyOf[1].properties, key3)) {
           const err34 = { instancePath, schemaPath: "#/anyOf/1/additionalProperties", keyword: "additionalProperties", params: { additionalProperty: key3 }, message: "must NOT have additional properties" };
           if (vErrors === null) {
             vErrors = [err34];
@@ -11272,7 +11295,7 @@ function validate65(data, { instancePath = "", parentData, parentDataProperty, r
   validate65.errors = vErrors;
   return errors === 0;
 }
-var schema92 = { "additionalProperties": false, "description": "A field made of ordered child fields.", "properties": { "attribute": { "description": "`xml-attributes` syntax only: the attribute's local name.", "type": "string" }, "fields": { "description": "The children, in the order they are written.", "items": { "$ref": "#/definitions/FieldDoc" }, "type": "array" }, "joins": { "description": "Separators for particular boundaries between adjacent children.", "items": { "$ref": "#/definitions/JoinDoc" }, "type": "array" }, "name": { "description": "Human label for the field. Required on groups and alternatives, because a `joins` entry and a diagnostic both have to be able to name them.", "type": "string" }, "prefix": { "$ref": "#/definitions/AffixDoc", "description": "Written once before the field's nonempty result." }, "prefix_aliases": { "description": "Spellings of this field's prefix that are read and never written.\n\nA format writes one spelling of a line and documents in the wild carry more than one. A block whose classifier line opens `Classified By: ` also arrives spelled out for a derivative classifier, and a reader that accounts for every character refuses that spelling unless the format names it. Two `alternatives` that can both write one state are a conflict by design and never a winner by order, and a `Recognizer` describes a whole region rather than one line inside a block.\n\nThis is the tolerant half of the tree, written down. The canonical pass reads `prefix` and nothing else; a spelling named here is admitted only by the tolerant pass, beside the case difference, the declared alias, a concept's spelling in another of its views and the separator substitution it already admits, and every use is reported as an `alias` correction against the characters it read. The render side never reads this, which is what \"never written\" means. A format that declares none reads only `prefix`.\n\nOnly meaningful beside `prefix`, and no two fields of one format may claim one spelling, as a prefix or as an alias of one. A line that opens two fields is not a reading a format can settle, and nothing here is settled by declaration order.", "items": { "type": "string" }, "type": "array" }, "required": { "description": "Whether the field standing empty is a state of this group at all.\n\nEvery field is optional by default, and on the read side that default is load-bearing in a way it is easy to miss: a group all of whose fields may stand empty reads any one of them on its own. A format that binds two categories beside a level therefore also reads a bare level, and becomes a rival account of text another format already reads whole. The alternative is not a tie-break, because nothing here is settled by declaration order, position or count. It is saying the thing the document could not say: a reading in which this field matched nothing is not a reading of this group.\n\nSymmetric, because a representation that cannot be read is not one. Set here, the field is bound in every reading of the group that encloses it, and a state holding nothing for it is a state the group does not write: the group comes out empty, the facts its other fields would have carried are reported omitted, and another field or another format writes them. An omission, not a conflict: the group declined, and declining is what a format that does not represent a state is supposed to do.\n\nThe same word at a format's top level says it of the whole format, whose fields are one sequence. Inside `alternatives` it belongs to the option it is written in and says nothing about the others, because each option is a whole representation of the field and they do not share a reading.\n\nIt is a statement about this group's shape, never about the concept the field binds and never about whether a marking is well formed: a category that must be filled for a marking to make sense is `required` on the category, which is a different question with a different answer.", "type": "boolean" }, "separator": { "description": "What this field joins: its own values on a category field, its nonempty children on a group.", "type": "string" }, "separator_aliases": { "description": "Spellings of this field's separator that are read and never written.\n\nThe sibling of `prefix_aliases`, one level down: a prefix says where a field opens and a separator says where one of its values ends, and a document in the wild spells the second as freely as the first. A list a format writes with `, ` arrives joined by `; ` or by a bare space, and a reader that accounts for every character reads the whole run as one value rather than quietly guessing a boundary.\n\nNot the same as the substitutions the tolerant pass already makes. Those are spacing and de-doubling variants of the declared separator, and they deliberately invent no boundary the declared separator does not already put in the same place. This is the author saying that these other characters are that boundary, in this field, which is a statement only the document can make.\n\nTolerant pass only, never written, and every use is reported as a `separator` correction naming the characters read and the separator the format writes instead: the same correction a spacing substitution carries, because it is the same claim about the same boundary. The render side never reads this.\n\nOnly meaningful beside `separator`. A spelling named here may not be another field's declared separator or another field's prefix in the same format: a boundary that is also a field's own syntax is not a reading the format can settle, and nothing here is settled by declaration order.", "items": { "type": "string" }, "type": "array" }, "suffix": { "$ref": "#/definitions/AffixDoc", "description": "Written once after the field's nonempty result." }, "view": { "description": "Concept view for this field, overriding the enclosing view.", "type": "string" }, "when": { "$ref": "#/definitions/WhenDoc", "description": "When this field applies. One predicate, read by both sides: the field is written only when it holds, and a reading of the input that would make it false is not a reading of this field." } }, "required": ["fields"], "type": "object" };
+var schema93 = { "additionalProperties": false, "description": "A field made of ordered child fields.", "properties": { "attribute": { "description": "`xml-attributes` syntax only: the attribute's local name.", "type": "string" }, "fields": { "description": "The children, in the order they are written.", "items": { "$ref": "#/definitions/FieldDoc" }, "type": "array" }, "joins": { "description": "Separators for particular boundaries between adjacent children.", "items": { "$ref": "#/definitions/JoinDoc" }, "type": "array" }, "name": { "description": "Human label for the field. Required on groups and alternatives, because a `joins` entry and a diagnostic both have to be able to name them.", "type": "string" }, "prefix": { "$ref": "#/definitions/AffixDoc", "description": "Written once before the field's nonempty result." }, "prefix_aliases": { "description": "Spellings of this field's prefix that are read and never written.\n\nA format writes one spelling of a line and documents in the wild carry more than one. A block whose classifier line opens `Classified By: ` also arrives spelled out for a derivative classifier, and a reader that accounts for every character refuses that spelling unless the format names it. Two `alternatives` that can both write one state are a conflict by design and never a winner by order, and a `Recognizer` describes a whole region rather than one line inside a block.\n\nThis is the tolerant half of the tree, written down. The canonical pass reads `prefix` and nothing else; a spelling named here is admitted only by the tolerant pass, beside the case difference, the declared alias, a concept's spelling in another of its views and the separator substitution it already admits, and every use is reported as an `alias` correction against the characters it read. The render side never reads this, which is what \"never written\" means. A format that declares none reads only `prefix`.\n\nOnly meaningful beside `prefix`, and no two fields of one format may claim one spelling, as a prefix or as an alias of one. A line that opens two fields is not a reading a format can settle, and nothing here is settled by declaration order.", "items": { "type": "string" }, "type": "array" }, "required": { "description": "Whether the field standing empty is a state of this group at all.\n\nEvery field is optional by default, and on the read side that default is load-bearing in a way it is easy to miss: a group all of whose fields may stand empty reads any one of them on its own. A format that binds two categories beside a level therefore also reads a bare level, and becomes a rival account of text another format already reads whole. The alternative is not a tie-break, because nothing here is settled by declaration order, position or count. It is saying the thing the document could not say: a reading in which this field matched nothing is not a reading of this group.\n\nSymmetric, because a representation that cannot be read is not one. Set here, the field is bound in every reading of the group that encloses it, and a state holding nothing for it is a state the group does not write: the group comes out empty, the facts its other fields would have carried are reported omitted, and another field or another format writes them. An omission, not a conflict: the group declined, and declining is what a format that does not represent a state is supposed to do.\n\nThe same word at a format's top level says it of the whole format, whose fields are one sequence. Inside `alternatives` it belongs to the option it is written in and says nothing about the others, because each option is a whole representation of the field and they do not share a reading.\n\nIt is a statement about this group's shape, never about the concept the field binds and never about whether a marking is well formed: a category that must be filled for a marking to make sense is `required` on the category, which is a different question with a different answer.", "type": "boolean" }, "separator": { "description": "What this field joins: its own values on a category field, its nonempty children on a group.", "type": "string" }, "separator_aliases": { "description": "Spellings of this field's separator that are read and never written.\n\nThe sibling of `prefix_aliases`, one level down: a prefix says where a field opens and a separator says where one of its values ends, and a document in the wild spells the second as freely as the first. A list a format writes with `, ` arrives joined by `; ` or by a bare space, and a reader that accounts for every character reads the whole run as one value rather than quietly guessing a boundary.\n\nNot the same as the substitutions the tolerant pass already makes. Those are spacing and de-doubling variants of the declared separator, and they deliberately invent no boundary the declared separator does not already put in the same place. This is the author saying that these other characters are that boundary, in this field, which is a statement only the document can make.\n\nTolerant pass only, never written, and every use is reported as a `separator` correction naming the characters read and the separator the format writes instead: the same correction a spacing substitution carries, because it is the same claim about the same boundary. The render side never reads this.\n\nOnly meaningful beside `separator`. A spelling named here may not be another field's declared separator or another field's prefix in the same format: a boundary that is also a field's own syntax is not a reading the format can settle, and nothing here is settled by declaration order.", "items": { "type": "string" }, "type": "array" }, "suffix": { "$ref": "#/definitions/AffixDoc", "description": "Written once after the field's nonempty result." }, "view": { "description": "Concept view for this field, overriding the enclosing view.", "type": "string" }, "when": { "$ref": "#/definitions/WhenDoc", "description": "When this field applies. One predicate, read by both sides: the field is written only when it holds, and a reading of the input that would make it false is not a reading of this field." } }, "required": ["fields"], "type": "object" };
 function validate82(data, { instancePath = "", parentData, parentDataProperty, rootData = data } = {}) {
   let vErrors = null;
   let errors = 0;
@@ -11287,7 +11310,7 @@ function validate82(data, { instancePath = "", parentData, parentDataProperty, r
       errors++;
     }
     for (const key0 in data) {
-      if (!func2.call(schema92.properties, key0)) {
+      if (!func2.call(schema93.properties, key0)) {
         const err1 = { instancePath, schemaPath: "#/additionalProperties", keyword: "additionalProperties", params: { additionalProperty: key0 }, message: "must NOT have additional properties" };
         if (vErrors === null) {
           vErrors = [err1];
@@ -11562,7 +11585,7 @@ function validate82(data, { instancePath = "", parentData, parentDataProperty, r
   validate82.errors = vErrors;
   return errors === 0;
 }
-var schema94 = { "additionalProperties": false, "description": "One semantic field with several possible representations.\n\nNot first-match-wins: exactly one binding is active for any given state, and two active at render is a representation conflict, never a silent pick. Inside this field a descendant may stand for an already-implied, value-free ancestor, following the full parent graph; it never hides an explicit, distinct, or contradictory instruction.", "properties": { "alternatives": { "description": "The possible representations of this one field.", "items": { "$ref": "#/definitions/FieldDoc" }, "type": "array" }, "attribute": { "description": "`xml-attributes` syntax only: the attribute's local name.", "type": "string" }, "name": { "description": "Human label for the field. Required on groups and alternatives, because a `joins` entry and a diagnostic both have to be able to name them.", "type": "string" }, "prefix": { "$ref": "#/definitions/AffixDoc", "description": "Written once before the field's nonempty result." }, "prefix_aliases": { "description": "Spellings of this field's prefix that are read and never written.\n\nA format writes one spelling of a line and documents in the wild carry more than one. A block whose classifier line opens `Classified By: ` also arrives spelled out for a derivative classifier, and a reader that accounts for every character refuses that spelling unless the format names it. Two `alternatives` that can both write one state are a conflict by design and never a winner by order, and a `Recognizer` describes a whole region rather than one line inside a block.\n\nThis is the tolerant half of the tree, written down. The canonical pass reads `prefix` and nothing else; a spelling named here is admitted only by the tolerant pass, beside the case difference, the declared alias, a concept's spelling in another of its views and the separator substitution it already admits, and every use is reported as an `alias` correction against the characters it read. The render side never reads this, which is what \"never written\" means. A format that declares none reads only `prefix`.\n\nOnly meaningful beside `prefix`, and no two fields of one format may claim one spelling, as a prefix or as an alias of one. A line that opens two fields is not a reading a format can settle, and nothing here is settled by declaration order.", "items": { "type": "string" }, "type": "array" }, "required": { "description": "Whether the field standing empty is a state of this group at all.\n\nEvery field is optional by default, and on the read side that default is load-bearing in a way it is easy to miss: a group all of whose fields may stand empty reads any one of them on its own. A format that binds two categories beside a level therefore also reads a bare level, and becomes a rival account of text another format already reads whole. The alternative is not a tie-break, because nothing here is settled by declaration order, position or count. It is saying the thing the document could not say: a reading in which this field matched nothing is not a reading of this group.\n\nSymmetric, because a representation that cannot be read is not one. Set here, the field is bound in every reading of the group that encloses it, and a state holding nothing for it is a state the group does not write: the group comes out empty, the facts its other fields would have carried are reported omitted, and another field or another format writes them. An omission, not a conflict: the group declined, and declining is what a format that does not represent a state is supposed to do.\n\nThe same word at a format's top level says it of the whole format, whose fields are one sequence. Inside `alternatives` it belongs to the option it is written in and says nothing about the others, because each option is a whole representation of the field and they do not share a reading.\n\nIt is a statement about this group's shape, never about the concept the field binds and never about whether a marking is well formed: a category that must be filled for a marking to make sense is `required` on the category, which is a different question with a different answer.", "type": "boolean" }, "separator": { "description": "What this field joins: its own values on a category field, its nonempty children on a group.", "type": "string" }, "separator_aliases": { "description": "Spellings of this field's separator that are read and never written.\n\nThe sibling of `prefix_aliases`, one level down: a prefix says where a field opens and a separator says where one of its values ends, and a document in the wild spells the second as freely as the first. A list a format writes with `, ` arrives joined by `; ` or by a bare space, and a reader that accounts for every character reads the whole run as one value rather than quietly guessing a boundary.\n\nNot the same as the substitutions the tolerant pass already makes. Those are spacing and de-doubling variants of the declared separator, and they deliberately invent no boundary the declared separator does not already put in the same place. This is the author saying that these other characters are that boundary, in this field, which is a statement only the document can make.\n\nTolerant pass only, never written, and every use is reported as a `separator` correction naming the characters read and the separator the format writes instead: the same correction a spacing substitution carries, because it is the same claim about the same boundary. The render side never reads this.\n\nOnly meaningful beside `separator`. A spelling named here may not be another field's declared separator or another field's prefix in the same format: a boundary that is also a field's own syntax is not a reading the format can settle, and nothing here is settled by declaration order.", "items": { "type": "string" }, "type": "array" }, "suffix": { "$ref": "#/definitions/AffixDoc", "description": "Written once after the field's nonempty result." }, "view": { "description": "Concept view for this field, overriding the enclosing view.", "type": "string" }, "when": { "$ref": "#/definitions/WhenDoc", "description": "When this field applies. One predicate, read by both sides: the field is written only when it holds, and a reading of the input that would make it false is not a reading of this field." } }, "required": ["alternatives"], "type": "object" };
+var schema95 = { "additionalProperties": false, "description": "One semantic field with several possible representations.\n\nNot first-match-wins: exactly one binding is active for any given state, and two active at render is a representation conflict, never a silent pick. Inside this field a descendant may stand for an already-implied, value-free ancestor, following the full parent graph; it never hides an explicit, distinct, or contradictory instruction.", "properties": { "alternatives": { "description": "The possible representations of this one field.", "items": { "$ref": "#/definitions/FieldDoc" }, "type": "array" }, "attribute": { "description": "`xml-attributes` syntax only: the attribute's local name.", "type": "string" }, "name": { "description": "Human label for the field. Required on groups and alternatives, because a `joins` entry and a diagnostic both have to be able to name them.", "type": "string" }, "prefix": { "$ref": "#/definitions/AffixDoc", "description": "Written once before the field's nonempty result." }, "prefix_aliases": { "description": "Spellings of this field's prefix that are read and never written.\n\nA format writes one spelling of a line and documents in the wild carry more than one. A block whose classifier line opens `Classified By: ` also arrives spelled out for a derivative classifier, and a reader that accounts for every character refuses that spelling unless the format names it. Two `alternatives` that can both write one state are a conflict by design and never a winner by order, and a `Recognizer` describes a whole region rather than one line inside a block.\n\nThis is the tolerant half of the tree, written down. The canonical pass reads `prefix` and nothing else; a spelling named here is admitted only by the tolerant pass, beside the case difference, the declared alias, a concept's spelling in another of its views and the separator substitution it already admits, and every use is reported as an `alias` correction against the characters it read. The render side never reads this, which is what \"never written\" means. A format that declares none reads only `prefix`.\n\nOnly meaningful beside `prefix`, and no two fields of one format may claim one spelling, as a prefix or as an alias of one. A line that opens two fields is not a reading a format can settle, and nothing here is settled by declaration order.", "items": { "type": "string" }, "type": "array" }, "required": { "description": "Whether the field standing empty is a state of this group at all.\n\nEvery field is optional by default, and on the read side that default is load-bearing in a way it is easy to miss: a group all of whose fields may stand empty reads any one of them on its own. A format that binds two categories beside a level therefore also reads a bare level, and becomes a rival account of text another format already reads whole. The alternative is not a tie-break, because nothing here is settled by declaration order, position or count. It is saying the thing the document could not say: a reading in which this field matched nothing is not a reading of this group.\n\nSymmetric, because a representation that cannot be read is not one. Set here, the field is bound in every reading of the group that encloses it, and a state holding nothing for it is a state the group does not write: the group comes out empty, the facts its other fields would have carried are reported omitted, and another field or another format writes them. An omission, not a conflict: the group declined, and declining is what a format that does not represent a state is supposed to do.\n\nThe same word at a format's top level says it of the whole format, whose fields are one sequence. Inside `alternatives` it belongs to the option it is written in and says nothing about the others, because each option is a whole representation of the field and they do not share a reading.\n\nIt is a statement about this group's shape, never about the concept the field binds and never about whether a marking is well formed: a category that must be filled for a marking to make sense is `required` on the category, which is a different question with a different answer.", "type": "boolean" }, "separator": { "description": "What this field joins: its own values on a category field, its nonempty children on a group.", "type": "string" }, "separator_aliases": { "description": "Spellings of this field's separator that are read and never written.\n\nThe sibling of `prefix_aliases`, one level down: a prefix says where a field opens and a separator says where one of its values ends, and a document in the wild spells the second as freely as the first. A list a format writes with `, ` arrives joined by `; ` or by a bare space, and a reader that accounts for every character reads the whole run as one value rather than quietly guessing a boundary.\n\nNot the same as the substitutions the tolerant pass already makes. Those are spacing and de-doubling variants of the declared separator, and they deliberately invent no boundary the declared separator does not already put in the same place. This is the author saying that these other characters are that boundary, in this field, which is a statement only the document can make.\n\nTolerant pass only, never written, and every use is reported as a `separator` correction naming the characters read and the separator the format writes instead: the same correction a spacing substitution carries, because it is the same claim about the same boundary. The render side never reads this.\n\nOnly meaningful beside `separator`. A spelling named here may not be another field's declared separator or another field's prefix in the same format: a boundary that is also a field's own syntax is not a reading the format can settle, and nothing here is settled by declaration order.", "items": { "type": "string" }, "type": "array" }, "suffix": { "$ref": "#/definitions/AffixDoc", "description": "Written once after the field's nonempty result." }, "view": { "description": "Concept view for this field, overriding the enclosing view.", "type": "string" }, "when": { "$ref": "#/definitions/WhenDoc", "description": "When this field applies. One predicate, read by both sides: the field is written only when it holds, and a reading of the input that would make it false is not a reading of this field." } }, "required": ["alternatives"], "type": "object" };
 function validate87(data, { instancePath = "", parentData, parentDataProperty, rootData = data } = {}) {
   let vErrors = null;
   let errors = 0;
@@ -11577,7 +11600,7 @@ function validate87(data, { instancePath = "", parentData, parentDataProperty, r
       errors++;
     }
     for (const key0 in data) {
-      if (!func2.call(schema94.properties, key0)) {
+      if (!func2.call(schema95.properties, key0)) {
         const err1 = { instancePath, schemaPath: "#/additionalProperties", keyword: "additionalProperties", params: { additionalProperty: key0 }, message: "must NOT have additional properties" };
         if (vErrors === null) {
           vErrors = [err1];
@@ -11973,7 +11996,7 @@ function validate63(data, { instancePath = "", parentData, parentDataProperty, r
       errors++;
     }
     for (const key0 in data) {
-      if (!func2.call(schema82.anyOf[0].properties, key0)) {
+      if (!func2.call(schema83.anyOf[0].properties, key0)) {
         const err4 = { instancePath, schemaPath: "#/anyOf/0/additionalProperties", keyword: "additionalProperties", params: { additionalProperty: key0 }, message: "must NOT have additional properties" };
         if (vErrors === null) {
           vErrors = [err4];
@@ -12124,10 +12147,9 @@ function validate63(data, { instancePath = "", parentData, parentDataProperty, r
         errors++;
       }
     }
-    if (data.mode !== void 0) {
-      let data8 = data.mode;
-      if (typeof data8 !== "string") {
-        const err17 = { instancePath: instancePath + "/mode", schemaPath: "#/anyOf/0/properties/mode/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+    if (data.marking !== void 0) {
+      if (typeof data.marking !== "string") {
+        const err17 = { instancePath: instancePath + "/marking", schemaPath: "#/anyOf/0/properties/marking/type", keyword: "type", params: { type: "string" }, message: "must be string" };
         if (vErrors === null) {
           vErrors = [err17];
         } else {
@@ -12135,8 +12157,11 @@ function validate63(data, { instancePath = "", parentData, parentDataProperty, r
         }
         errors++;
       }
-      if (!(data8 === "inline" || data8 === "block")) {
-        const err18 = { instancePath: instancePath + "/mode", schemaPath: "#/anyOf/0/properties/mode/enum", keyword: "enum", params: { allowedValues: schema82.anyOf[0].properties.mode.enum }, message: "must be equal to one of the allowed values" };
+    }
+    if (data.mode !== void 0) {
+      let data9 = data.mode;
+      if (typeof data9 !== "string") {
+        const err18 = { instancePath: instancePath + "/mode", schemaPath: "#/anyOf/0/properties/mode/type", keyword: "type", params: { type: "string" }, message: "must be string" };
         if (vErrors === null) {
           vErrors = [err18];
         } else {
@@ -12144,10 +12169,8 @@ function validate63(data, { instancePath = "", parentData, parentDataProperty, r
         }
         errors++;
       }
-    }
-    if (data.omit_defaults !== void 0) {
-      if (typeof data.omit_defaults !== "boolean") {
-        const err19 = { instancePath: instancePath + "/omit_defaults", schemaPath: "#/anyOf/0/properties/omit_defaults/type", keyword: "type", params: { type: "boolean" }, message: "must be boolean" };
+      if (!(data9 === "inline" || data9 === "block")) {
+        const err19 = { instancePath: instancePath + "/mode", schemaPath: "#/anyOf/0/properties/mode/enum", keyword: "enum", params: { allowedValues: schema83.anyOf[0].properties.mode.enum }, message: "must be equal to one of the allowed values" };
         if (vErrors === null) {
           vErrors = [err19];
         } else {
@@ -12156,9 +12179,9 @@ function validate63(data, { instancePath = "", parentData, parentDataProperty, r
         errors++;
       }
     }
-    if (data.omit_empty !== void 0) {
-      if (typeof data.omit_empty !== "boolean") {
-        const err20 = { instancePath: instancePath + "/omit_empty", schemaPath: "#/anyOf/0/properties/omit_empty/type", keyword: "type", params: { type: "boolean" }, message: "must be boolean" };
+    if (data.omit_defaults !== void 0) {
+      if (typeof data.omit_defaults !== "boolean") {
+        const err20 = { instancePath: instancePath + "/omit_defaults", schemaPath: "#/anyOf/0/properties/omit_defaults/type", keyword: "type", params: { type: "boolean" }, message: "must be boolean" };
         if (vErrors === null) {
           vErrors = [err20];
         } else {
@@ -12167,13 +12190,24 @@ function validate63(data, { instancePath = "", parentData, parentDataProperty, r
         errors++;
       }
     }
-    if (data.omit_whole_values !== void 0) {
-      if (typeof data.omit_whole_values !== "boolean") {
-        const err21 = { instancePath: instancePath + "/omit_whole_values", schemaPath: "#/anyOf/0/properties/omit_whole_values/type", keyword: "type", params: { type: "boolean" }, message: "must be boolean" };
+    if (data.omit_empty !== void 0) {
+      if (typeof data.omit_empty !== "boolean") {
+        const err21 = { instancePath: instancePath + "/omit_empty", schemaPath: "#/anyOf/0/properties/omit_empty/type", keyword: "type", params: { type: "boolean" }, message: "must be boolean" };
         if (vErrors === null) {
           vErrors = [err21];
         } else {
           vErrors.push(err21);
+        }
+        errors++;
+      }
+    }
+    if (data.omit_whole_values !== void 0) {
+      if (typeof data.omit_whole_values !== "boolean") {
+        const err22 = { instancePath: instancePath + "/omit_whole_values", schemaPath: "#/anyOf/0/properties/omit_whole_values/type", keyword: "type", params: { type: "boolean" }, message: "must be boolean" };
+        if (vErrors === null) {
+          vErrors = [err22];
+        } else {
+          vErrors.push(err22);
         }
         errors++;
       }
@@ -12186,36 +12220,36 @@ function validate63(data, { instancePath = "", parentData, parentDataProperty, r
     }
     if (data.separator !== void 0) {
       if (typeof data.separator !== "string") {
-        const err22 = { instancePath: instancePath + "/separator", schemaPath: "#/anyOf/0/properties/separator/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+        const err23 = { instancePath: instancePath + "/separator", schemaPath: "#/anyOf/0/properties/separator/type", keyword: "type", params: { type: "string" }, message: "must be string" };
         if (vErrors === null) {
-          vErrors = [err22];
+          vErrors = [err23];
         } else {
-          vErrors.push(err22);
+          vErrors.push(err23);
         }
         errors++;
       }
     }
     if (data.separator_aliases !== void 0) {
-      let data14 = data.separator_aliases;
-      if (Array.isArray(data14)) {
-        const len3 = data14.length;
+      let data15 = data.separator_aliases;
+      if (Array.isArray(data15)) {
+        const len3 = data15.length;
         for (let i3 = 0; i3 < len3; i3++) {
-          if (typeof data14[i3] !== "string") {
-            const err23 = { instancePath: instancePath + "/separator_aliases/" + i3, schemaPath: "#/anyOf/0/properties/separator_aliases/items/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+          if (typeof data15[i3] !== "string") {
+            const err24 = { instancePath: instancePath + "/separator_aliases/" + i3, schemaPath: "#/anyOf/0/properties/separator_aliases/items/type", keyword: "type", params: { type: "string" }, message: "must be string" };
             if (vErrors === null) {
-              vErrors = [err23];
+              vErrors = [err24];
             } else {
-              vErrors.push(err23);
+              vErrors.push(err24);
             }
             errors++;
           }
         }
       } else {
-        const err24 = { instancePath: instancePath + "/separator_aliases", schemaPath: "#/anyOf/0/properties/separator_aliases/type", keyword: "type", params: { type: "array" }, message: "must be array" };
+        const err25 = { instancePath: instancePath + "/separator_aliases", schemaPath: "#/anyOf/0/properties/separator_aliases/type", keyword: "type", params: { type: "array" }, message: "must be array" };
         if (vErrors === null) {
-          vErrors = [err24];
+          vErrors = [err25];
         } else {
-          vErrors.push(err24);
+          vErrors.push(err25);
         }
         errors++;
       }
@@ -12228,45 +12262,33 @@ function validate63(data, { instancePath = "", parentData, parentDataProperty, r
     }
     if (data.surface !== void 0) {
       if (typeof data.surface !== "string") {
-        const err25 = { instancePath: instancePath + "/surface", schemaPath: "#/anyOf/0/properties/surface/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+        const err26 = { instancePath: instancePath + "/surface", schemaPath: "#/anyOf/0/properties/surface/type", keyword: "type", params: { type: "string" }, message: "must be string" };
         if (vErrors === null) {
-          vErrors = [err25];
+          vErrors = [err26];
         } else {
-          vErrors.push(err25);
+          vErrors.push(err26);
         }
         errors++;
       }
     }
     if (data.syntax !== void 0) {
-      let data18 = data.syntax;
-      const _errs41 = errors;
+      let data19 = data.syntax;
+      const _errs43 = errors;
       let valid13 = false;
-      const _errs42 = errors;
-      if (data18 && typeof data18 == "object" && !Array.isArray(data18)) {
-        if (data18.type === void 0) {
-          const err26 = { instancePath: instancePath + "/syntax", schemaPath: "#/definitions/SyntaxDoc/anyOf/0/required", keyword: "required", params: { missingProperty: "type" }, message: "must have required property 'type'" };
+      const _errs44 = errors;
+      if (data19 && typeof data19 == "object" && !Array.isArray(data19)) {
+        if (data19.type === void 0) {
+          const err27 = { instancePath: instancePath + "/syntax", schemaPath: "#/definitions/SyntaxDoc/anyOf/0/required", keyword: "required", params: { missingProperty: "type" }, message: "must have required property 'type'" };
           if (vErrors === null) {
-            vErrors = [err26];
+            vErrors = [err27];
           } else {
-            vErrors.push(err26);
+            vErrors.push(err27);
           }
           errors++;
         }
-        for (const key2 in data18) {
+        for (const key2 in data19) {
           if (!(key2 === "escape" || key2 === "type")) {
-            const err27 = { instancePath: instancePath + "/syntax", schemaPath: "#/definitions/SyntaxDoc/anyOf/0/additionalProperties", keyword: "additionalProperties", params: { additionalProperty: key2 }, message: "must NOT have additional properties" };
-            if (vErrors === null) {
-              vErrors = [err27];
-            } else {
-              vErrors.push(err27);
-            }
-            errors++;
-          }
-        }
-        if (data18.escape !== void 0) {
-          let data19 = data18.escape;
-          if (typeof data19 !== "string") {
-            const err28 = { instancePath: instancePath + "/syntax/escape", schemaPath: "#/definitions/SyntaxDoc/anyOf/0/properties/escape/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+            const err28 = { instancePath: instancePath + "/syntax", schemaPath: "#/definitions/SyntaxDoc/anyOf/0/additionalProperties", keyword: "additionalProperties", params: { additionalProperty: key2 }, message: "must NOT have additional properties" };
             if (vErrors === null) {
               vErrors = [err28];
             } else {
@@ -12274,8 +12296,11 @@ function validate63(data, { instancePath = "", parentData, parentDataProperty, r
             }
             errors++;
           }
-          if (!(data19 === "none" || data19 === "backslash")) {
-            const err29 = { instancePath: instancePath + "/syntax/escape", schemaPath: "#/definitions/SyntaxDoc/anyOf/0/properties/escape/enum", keyword: "enum", params: { allowedValues: schema97.anyOf[0].properties.escape.enum }, message: "must be equal to one of the allowed values" };
+        }
+        if (data19.escape !== void 0) {
+          let data20 = data19.escape;
+          if (typeof data20 !== "string") {
+            const err29 = { instancePath: instancePath + "/syntax/escape", schemaPath: "#/definitions/SyntaxDoc/anyOf/0/properties/escape/type", keyword: "type", params: { type: "string" }, message: "must be string" };
             if (vErrors === null) {
               vErrors = [err29];
             } else {
@@ -12283,11 +12308,8 @@ function validate63(data, { instancePath = "", parentData, parentDataProperty, r
             }
             errors++;
           }
-        }
-        if (data18.type !== void 0) {
-          let data20 = data18.type;
-          if (typeof data20 !== "string") {
-            const err30 = { instancePath: instancePath + "/syntax/type", schemaPath: "#/definitions/SyntaxDoc/anyOf/0/properties/type/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+          if (!(data20 === "none" || data20 === "backslash")) {
+            const err30 = { instancePath: instancePath + "/syntax/escape", schemaPath: "#/definitions/SyntaxDoc/anyOf/0/properties/escape/enum", keyword: "enum", params: { allowedValues: schema98.anyOf[0].properties.escape.enum }, message: "must be equal to one of the allowed values" };
             if (vErrors === null) {
               vErrors = [err30];
             } else {
@@ -12295,8 +12317,11 @@ function validate63(data, { instancePath = "", parentData, parentDataProperty, r
             }
             errors++;
           }
-          if ("text" !== data20) {
-            const err31 = { instancePath: instancePath + "/syntax/type", schemaPath: "#/definitions/SyntaxDoc/anyOf/0/properties/type/const", keyword: "const", params: { allowedValue: "text" }, message: "must be equal to constant" };
+        }
+        if (data19.type !== void 0) {
+          let data21 = data19.type;
+          if (typeof data21 !== "string") {
+            const err31 = { instancePath: instancePath + "/syntax/type", schemaPath: "#/definitions/SyntaxDoc/anyOf/0/properties/type/type", keyword: "type", params: { type: "string" }, message: "must be string" };
             if (vErrors === null) {
               vErrors = [err31];
             } else {
@@ -12304,55 +12329,55 @@ function validate63(data, { instancePath = "", parentData, parentDataProperty, r
             }
             errors++;
           }
-        }
-      } else {
-        const err32 = { instancePath: instancePath + "/syntax", schemaPath: "#/definitions/SyntaxDoc/anyOf/0/type", keyword: "type", params: { type: "object" }, message: "must be object" };
-        if (vErrors === null) {
-          vErrors = [err32];
-        } else {
-          vErrors.push(err32);
-        }
-        errors++;
-      }
-      var _valid1 = _errs42 === errors;
-      valid13 = valid13 || _valid1;
-      if (!valid13) {
-        const _errs49 = errors;
-        if (data18 && typeof data18 == "object" && !Array.isArray(data18)) {
-          if (data18.type === void 0) {
-            const err33 = { instancePath: instancePath + "/syntax", schemaPath: "#/definitions/SyntaxDoc/anyOf/1/required", keyword: "required", params: { missingProperty: "type" }, message: "must have required property 'type'" };
+          if ("text" !== data21) {
+            const err32 = { instancePath: instancePath + "/syntax/type", schemaPath: "#/definitions/SyntaxDoc/anyOf/0/properties/type/const", keyword: "const", params: { allowedValue: "text" }, message: "must be equal to constant" };
             if (vErrors === null) {
-              vErrors = [err33];
+              vErrors = [err32];
             } else {
-              vErrors.push(err33);
+              vErrors.push(err32);
             }
             errors++;
           }
-          for (const key3 in data18) {
+        }
+      } else {
+        const err33 = { instancePath: instancePath + "/syntax", schemaPath: "#/definitions/SyntaxDoc/anyOf/0/type", keyword: "type", params: { type: "object" }, message: "must be object" };
+        if (vErrors === null) {
+          vErrors = [err33];
+        } else {
+          vErrors.push(err33);
+        }
+        errors++;
+      }
+      var _valid1 = _errs44 === errors;
+      valid13 = valid13 || _valid1;
+      if (!valid13) {
+        const _errs51 = errors;
+        if (data19 && typeof data19 == "object" && !Array.isArray(data19)) {
+          if (data19.type === void 0) {
+            const err34 = { instancePath: instancePath + "/syntax", schemaPath: "#/definitions/SyntaxDoc/anyOf/1/required", keyword: "required", params: { missingProperty: "type" }, message: "must have required property 'type'" };
+            if (vErrors === null) {
+              vErrors = [err34];
+            } else {
+              vErrors.push(err34);
+            }
+            errors++;
+          }
+          for (const key3 in data19) {
             if (!(key3 === "namespace" || key3 === "type")) {
-              const err34 = { instancePath: instancePath + "/syntax", schemaPath: "#/definitions/SyntaxDoc/anyOf/1/additionalProperties", keyword: "additionalProperties", params: { additionalProperty: key3 }, message: "must NOT have additional properties" };
+              const err35 = { instancePath: instancePath + "/syntax", schemaPath: "#/definitions/SyntaxDoc/anyOf/1/additionalProperties", keyword: "additionalProperties", params: { additionalProperty: key3 }, message: "must NOT have additional properties" };
               if (vErrors === null) {
-                vErrors = [err34];
+                vErrors = [err35];
               } else {
-                vErrors.push(err34);
+                vErrors.push(err35);
               }
               errors++;
             }
           }
-          if (data18.namespace !== void 0) {
-            let data21 = data18.namespace;
-            if (data21 && typeof data21 == "object" && !Array.isArray(data21)) {
-              if (data21.prefix === void 0) {
-                const err35 = { instancePath: instancePath + "/syntax/namespace", schemaPath: "#/definitions/SyntaxDoc/anyOf/1/properties/namespace/required", keyword: "required", params: { missingProperty: "prefix" }, message: "must have required property 'prefix'" };
-                if (vErrors === null) {
-                  vErrors = [err35];
-                } else {
-                  vErrors.push(err35);
-                }
-                errors++;
-              }
-              if (data21.uri === void 0) {
-                const err36 = { instancePath: instancePath + "/syntax/namespace", schemaPath: "#/definitions/SyntaxDoc/anyOf/1/properties/namespace/required", keyword: "required", params: { missingProperty: "uri" }, message: "must have required property 'uri'" };
+          if (data19.namespace !== void 0) {
+            let data22 = data19.namespace;
+            if (data22 && typeof data22 == "object" && !Array.isArray(data22)) {
+              if (data22.prefix === void 0) {
+                const err36 = { instancePath: instancePath + "/syntax/namespace", schemaPath: "#/definitions/SyntaxDoc/anyOf/1/properties/namespace/required", keyword: "required", params: { missingProperty: "prefix" }, message: "must have required property 'prefix'" };
                 if (vErrors === null) {
                   vErrors = [err36];
                 } else {
@@ -12360,20 +12385,18 @@ function validate63(data, { instancePath = "", parentData, parentDataProperty, r
                 }
                 errors++;
               }
-              for (const key4 in data21) {
-                if (!(key4 === "prefix" || key4 === "uri")) {
-                  const err37 = { instancePath: instancePath + "/syntax/namespace", schemaPath: "#/definitions/SyntaxDoc/anyOf/1/properties/namespace/additionalProperties", keyword: "additionalProperties", params: { additionalProperty: key4 }, message: "must NOT have additional properties" };
-                  if (vErrors === null) {
-                    vErrors = [err37];
-                  } else {
-                    vErrors.push(err37);
-                  }
-                  errors++;
+              if (data22.uri === void 0) {
+                const err37 = { instancePath: instancePath + "/syntax/namespace", schemaPath: "#/definitions/SyntaxDoc/anyOf/1/properties/namespace/required", keyword: "required", params: { missingProperty: "uri" }, message: "must have required property 'uri'" };
+                if (vErrors === null) {
+                  vErrors = [err37];
+                } else {
+                  vErrors.push(err37);
                 }
+                errors++;
               }
-              if (data21.prefix !== void 0) {
-                if (typeof data21.prefix !== "string") {
-                  const err38 = { instancePath: instancePath + "/syntax/namespace/prefix", schemaPath: "#/definitions/SyntaxDoc/anyOf/1/properties/namespace/properties/prefix/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+              for (const key4 in data22) {
+                if (!(key4 === "prefix" || key4 === "uri")) {
+                  const err38 = { instancePath: instancePath + "/syntax/namespace", schemaPath: "#/definitions/SyntaxDoc/anyOf/1/properties/namespace/additionalProperties", keyword: "additionalProperties", params: { additionalProperty: key4 }, message: "must NOT have additional properties" };
                   if (vErrors === null) {
                     vErrors = [err38];
                   } else {
@@ -12382,9 +12405,9 @@ function validate63(data, { instancePath = "", parentData, parentDataProperty, r
                   errors++;
                 }
               }
-              if (data21.uri !== void 0) {
-                if (typeof data21.uri !== "string") {
-                  const err39 = { instancePath: instancePath + "/syntax/namespace/uri", schemaPath: "#/definitions/SyntaxDoc/anyOf/1/properties/namespace/properties/uri/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+              if (data22.prefix !== void 0) {
+                if (typeof data22.prefix !== "string") {
+                  const err39 = { instancePath: instancePath + "/syntax/namespace/prefix", schemaPath: "#/definitions/SyntaxDoc/anyOf/1/properties/namespace/properties/prefix/type", keyword: "type", params: { type: "string" }, message: "must be string" };
                   if (vErrors === null) {
                     vErrors = [err39];
                   } else {
@@ -12393,20 +12416,19 @@ function validate63(data, { instancePath = "", parentData, parentDataProperty, r
                   errors++;
                 }
               }
-            } else {
-              const err40 = { instancePath: instancePath + "/syntax/namespace", schemaPath: "#/definitions/SyntaxDoc/anyOf/1/properties/namespace/type", keyword: "type", params: { type: "object" }, message: "must be object" };
-              if (vErrors === null) {
-                vErrors = [err40];
-              } else {
-                vErrors.push(err40);
+              if (data22.uri !== void 0) {
+                if (typeof data22.uri !== "string") {
+                  const err40 = { instancePath: instancePath + "/syntax/namespace/uri", schemaPath: "#/definitions/SyntaxDoc/anyOf/1/properties/namespace/properties/uri/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+                  if (vErrors === null) {
+                    vErrors = [err40];
+                  } else {
+                    vErrors.push(err40);
+                  }
+                  errors++;
+                }
               }
-              errors++;
-            }
-          }
-          if (data18.type !== void 0) {
-            let data24 = data18.type;
-            if (typeof data24 !== "string") {
-              const err41 = { instancePath: instancePath + "/syntax/type", schemaPath: "#/definitions/SyntaxDoc/anyOf/1/properties/type/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+            } else {
+              const err41 = { instancePath: instancePath + "/syntax/namespace", schemaPath: "#/definitions/SyntaxDoc/anyOf/1/properties/namespace/type", keyword: "type", params: { type: "object" }, message: "must be object" };
               if (vErrors === null) {
                 vErrors = [err41];
               } else {
@@ -12414,8 +12436,11 @@ function validate63(data, { instancePath = "", parentData, parentDataProperty, r
               }
               errors++;
             }
-            if ("xml-attributes" !== data24) {
-              const err42 = { instancePath: instancePath + "/syntax/type", schemaPath: "#/definitions/SyntaxDoc/anyOf/1/properties/type/const", keyword: "const", params: { allowedValue: "xml-attributes" }, message: "must be equal to constant" };
+          }
+          if (data19.type !== void 0) {
+            let data25 = data19.type;
+            if (typeof data25 !== "string") {
+              const err42 = { instancePath: instancePath + "/syntax/type", schemaPath: "#/definitions/SyntaxDoc/anyOf/1/properties/type/type", keyword: "type", params: { type: "string" }, message: "must be string" };
               if (vErrors === null) {
                 vErrors = [err42];
               } else {
@@ -12423,32 +12448,41 @@ function validate63(data, { instancePath = "", parentData, parentDataProperty, r
               }
               errors++;
             }
+            if ("xml-attributes" !== data25) {
+              const err43 = { instancePath: instancePath + "/syntax/type", schemaPath: "#/definitions/SyntaxDoc/anyOf/1/properties/type/const", keyword: "const", params: { allowedValue: "xml-attributes" }, message: "must be equal to constant" };
+              if (vErrors === null) {
+                vErrors = [err43];
+              } else {
+                vErrors.push(err43);
+              }
+              errors++;
+            }
           }
         } else {
-          const err43 = { instancePath: instancePath + "/syntax", schemaPath: "#/definitions/SyntaxDoc/anyOf/1/type", keyword: "type", params: { type: "object" }, message: "must be object" };
+          const err44 = { instancePath: instancePath + "/syntax", schemaPath: "#/definitions/SyntaxDoc/anyOf/1/type", keyword: "type", params: { type: "object" }, message: "must be object" };
           if (vErrors === null) {
-            vErrors = [err43];
+            vErrors = [err44];
           } else {
-            vErrors.push(err43);
+            vErrors.push(err44);
           }
           errors++;
         }
-        var _valid1 = _errs49 === errors;
+        var _valid1 = _errs51 === errors;
         valid13 = valid13 || _valid1;
       }
       if (!valid13) {
-        const err44 = { instancePath: instancePath + "/syntax", schemaPath: "#/definitions/SyntaxDoc/anyOf", keyword: "anyOf", params: {}, message: "must match a schema in anyOf" };
+        const err45 = { instancePath: instancePath + "/syntax", schemaPath: "#/definitions/SyntaxDoc/anyOf", keyword: "anyOf", params: {}, message: "must match a schema in anyOf" };
         if (vErrors === null) {
-          vErrors = [err44];
+          vErrors = [err45];
         } else {
-          vErrors.push(err44);
+          vErrors.push(err45);
         }
         errors++;
       } else {
-        errors = _errs41;
+        errors = _errs43;
         if (vErrors !== null) {
-          if (_errs41) {
-            vErrors.length = _errs41;
+          if (_errs43) {
+            vErrors.length = _errs43;
           } else {
             vErrors = null;
           }
@@ -12457,40 +12491,31 @@ function validate63(data, { instancePath = "", parentData, parentDataProperty, r
     }
     if (data.view !== void 0) {
       if (typeof data.view !== "string") {
-        const err45 = { instancePath: instancePath + "/view", schemaPath: "#/anyOf/0/properties/view/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+        const err46 = { instancePath: instancePath + "/view", schemaPath: "#/anyOf/0/properties/view/type", keyword: "type", params: { type: "string" }, message: "must be string" };
         if (vErrors === null) {
-          vErrors = [err45];
+          vErrors = [err46];
         } else {
-          vErrors.push(err45);
+          vErrors.push(err46);
         }
         errors++;
       }
     }
   } else {
-    const err46 = { instancePath, schemaPath: "#/anyOf/0/type", keyword: "type", params: { type: "object" }, message: "must be object" };
+    const err47 = { instancePath, schemaPath: "#/anyOf/0/type", keyword: "type", params: { type: "object" }, message: "must be object" };
     if (vErrors === null) {
-      vErrors = [err46];
+      vErrors = [err47];
     } else {
-      vErrors.push(err46);
+      vErrors.push(err47);
     }
     errors++;
   }
   var _valid0 = _errs1 === errors;
   valid0 = valid0 || _valid0;
   if (!valid0) {
-    const _errs63 = errors;
+    const _errs65 = errors;
     if (data && typeof data == "object" && !Array.isArray(data)) {
       if (data.fields === void 0) {
-        const err47 = { instancePath, schemaPath: "#/anyOf/1/required", keyword: "required", params: { missingProperty: "fields" }, message: "must have required property 'fields'" };
-        if (vErrors === null) {
-          vErrors = [err47];
-        } else {
-          vErrors.push(err47);
-        }
-        errors++;
-      }
-      if (data.id === void 0) {
-        const err48 = { instancePath, schemaPath: "#/anyOf/1/required", keyword: "required", params: { missingProperty: "id" }, message: "must have required property 'id'" };
+        const err48 = { instancePath, schemaPath: "#/anyOf/1/required", keyword: "required", params: { missingProperty: "fields" }, message: "must have required property 'fields'" };
         if (vErrors === null) {
           vErrors = [err48];
         } else {
@@ -12498,8 +12523,8 @@ function validate63(data, { instancePath = "", parentData, parentDataProperty, r
         }
         errors++;
       }
-      if (data.mode === void 0) {
-        const err49 = { instancePath, schemaPath: "#/anyOf/1/required", keyword: "required", params: { missingProperty: "mode" }, message: "must have required property 'mode'" };
+      if (data.id === void 0) {
+        const err49 = { instancePath, schemaPath: "#/anyOf/1/required", keyword: "required", params: { missingProperty: "id" }, message: "must have required property 'id'" };
         if (vErrors === null) {
           vErrors = [err49];
         } else {
@@ -12507,8 +12532,8 @@ function validate63(data, { instancePath = "", parentData, parentDataProperty, r
         }
         errors++;
       }
-      if (data.surfaces === void 0) {
-        const err50 = { instancePath, schemaPath: "#/anyOf/1/required", keyword: "required", params: { missingProperty: "surfaces" }, message: "must have required property 'surfaces'" };
+      if (data.mode === void 0) {
+        const err50 = { instancePath, schemaPath: "#/anyOf/1/required", keyword: "required", params: { missingProperty: "mode" }, message: "must have required property 'mode'" };
         if (vErrors === null) {
           vErrors = [err50];
         } else {
@@ -12516,29 +12541,18 @@ function validate63(data, { instancePath = "", parentData, parentDataProperty, r
         }
         errors++;
       }
-      for (const key5 in data) {
-        if (!func2.call(schema82.anyOf[1].properties, key5)) {
-          const err51 = { instancePath, schemaPath: "#/anyOf/1/additionalProperties", keyword: "additionalProperties", params: { additionalProperty: key5 }, message: "must NOT have additional properties" };
-          if (vErrors === null) {
-            vErrors = [err51];
-          } else {
-            vErrors.push(err51);
-          }
-          errors++;
-        }
-      }
-      if (data.fields !== void 0) {
-        let data26 = data.fields;
-        if (Array.isArray(data26)) {
-          const len4 = data26.length;
-          for (let i4 = 0; i4 < len4; i4++) {
-            if (!validate64(data26[i4], { instancePath: instancePath + "/fields/" + i4, parentData: data26, parentDataProperty: i4, rootData })) {
-              vErrors = vErrors === null ? validate64.errors : vErrors.concat(validate64.errors);
-              errors = vErrors.length;
-            }
-          }
+      if (data.surfaces === void 0) {
+        const err51 = { instancePath, schemaPath: "#/anyOf/1/required", keyword: "required", params: { missingProperty: "surfaces" }, message: "must have required property 'surfaces'" };
+        if (vErrors === null) {
+          vErrors = [err51];
         } else {
-          const err52 = { instancePath: instancePath + "/fields", schemaPath: "#/anyOf/1/properties/fields/type", keyword: "type", params: { type: "array" }, message: "must be array" };
+          vErrors.push(err51);
+        }
+        errors++;
+      }
+      for (const key5 in data) {
+        if (!func2.call(schema83.anyOf[1].properties, key5)) {
+          const err52 = { instancePath, schemaPath: "#/anyOf/1/additionalProperties", keyword: "additionalProperties", params: { additionalProperty: key5 }, message: "must NOT have additional properties" };
           if (vErrors === null) {
             vErrors = [err52];
           } else {
@@ -12547,9 +12561,18 @@ function validate63(data, { instancePath = "", parentData, parentDataProperty, r
           errors++;
         }
       }
-      if (data.id !== void 0) {
-        if (typeof data.id !== "string") {
-          const err53 = { instancePath: instancePath + "/id", schemaPath: "#/anyOf/1/properties/id/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+      if (data.fields !== void 0) {
+        let data27 = data.fields;
+        if (Array.isArray(data27)) {
+          const len4 = data27.length;
+          for (let i4 = 0; i4 < len4; i4++) {
+            if (!validate64(data27[i4], { instancePath: instancePath + "/fields/" + i4, parentData: data27, parentDataProperty: i4, rootData })) {
+              vErrors = vErrors === null ? validate64.errors : vErrors.concat(validate64.errors);
+              errors = vErrors.length;
+            }
+          }
+        } else {
+          const err53 = { instancePath: instancePath + "/fields", schemaPath: "#/anyOf/1/properties/fields/type", keyword: "type", params: { type: "array" }, message: "must be array" };
           if (vErrors === null) {
             vErrors = [err53];
           } else {
@@ -12558,24 +12581,26 @@ function validate63(data, { instancePath = "", parentData, parentDataProperty, r
           errors++;
         }
       }
+      if (data.id !== void 0) {
+        if (typeof data.id !== "string") {
+          const err54 = { instancePath: instancePath + "/id", schemaPath: "#/anyOf/1/properties/id/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+          if (vErrors === null) {
+            vErrors = [err54];
+          } else {
+            vErrors.push(err54);
+          }
+          errors++;
+        }
+      }
       if (data.joins !== void 0) {
-        let data29 = data.joins;
-        if (Array.isArray(data29)) {
-          const len5 = data29.length;
+        let data30 = data.joins;
+        if (Array.isArray(data30)) {
+          const len5 = data30.length;
           for (let i5 = 0; i5 < len5; i5++) {
-            let data30 = data29[i5];
-            if (data30 && typeof data30 == "object" && !Array.isArray(data30)) {
-              if (data30.between === void 0) {
-                const err54 = { instancePath: instancePath + "/joins/" + i5, schemaPath: "#/definitions/JoinDoc/required", keyword: "required", params: { missingProperty: "between" }, message: "must have required property 'between'" };
-                if (vErrors === null) {
-                  vErrors = [err54];
-                } else {
-                  vErrors.push(err54);
-                }
-                errors++;
-              }
-              if (data30.separator === void 0) {
-                const err55 = { instancePath: instancePath + "/joins/" + i5, schemaPath: "#/definitions/JoinDoc/required", keyword: "required", params: { missingProperty: "separator" }, message: "must have required property 'separator'" };
+            let data31 = data30[i5];
+            if (data31 && typeof data31 == "object" && !Array.isArray(data31)) {
+              if (data31.between === void 0) {
+                const err55 = { instancePath: instancePath + "/joins/" + i5, schemaPath: "#/definitions/JoinDoc/required", keyword: "required", params: { missingProperty: "between" }, message: "must have required property 'between'" };
                 if (vErrors === null) {
                   vErrors = [err55];
                 } else {
@@ -12583,31 +12608,31 @@ function validate63(data, { instancePath = "", parentData, parentDataProperty, r
                 }
                 errors++;
               }
-              for (const key6 in data30) {
+              if (data31.separator === void 0) {
+                const err56 = { instancePath: instancePath + "/joins/" + i5, schemaPath: "#/definitions/JoinDoc/required", keyword: "required", params: { missingProperty: "separator" }, message: "must have required property 'separator'" };
+                if (vErrors === null) {
+                  vErrors = [err56];
+                } else {
+                  vErrors.push(err56);
+                }
+                errors++;
+              }
+              for (const key6 in data31) {
                 if (!(key6 === "between" || key6 === "separator")) {
-                  const err56 = { instancePath: instancePath + "/joins/" + i5, schemaPath: "#/definitions/JoinDoc/additionalProperties", keyword: "additionalProperties", params: { additionalProperty: key6 }, message: "must NOT have additional properties" };
+                  const err57 = { instancePath: instancePath + "/joins/" + i5, schemaPath: "#/definitions/JoinDoc/additionalProperties", keyword: "additionalProperties", params: { additionalProperty: key6 }, message: "must NOT have additional properties" };
                   if (vErrors === null) {
-                    vErrors = [err56];
+                    vErrors = [err57];
                   } else {
-                    vErrors.push(err56);
+                    vErrors.push(err57);
                   }
                   errors++;
                 }
               }
-              if (data30.between !== void 0) {
-                let data31 = data30.between;
-                if (Array.isArray(data31)) {
-                  if (data31.length > 2) {
-                    const err57 = { instancePath: instancePath + "/joins/" + i5 + "/between", schemaPath: "#/definitions/JoinDoc/properties/between/maxItems", keyword: "maxItems", params: { limit: 2 }, message: "must NOT have more than 2 items" };
-                    if (vErrors === null) {
-                      vErrors = [err57];
-                    } else {
-                      vErrors.push(err57);
-                    }
-                    errors++;
-                  }
-                  if (data31.length < 2) {
-                    const err58 = { instancePath: instancePath + "/joins/" + i5 + "/between", schemaPath: "#/definitions/JoinDoc/properties/between/minItems", keyword: "minItems", params: { limit: 2 }, message: "must NOT have fewer than 2 items" };
+              if (data31.between !== void 0) {
+                let data32 = data31.between;
+                if (Array.isArray(data32)) {
+                  if (data32.length > 2) {
+                    const err58 = { instancePath: instancePath + "/joins/" + i5 + "/between", schemaPath: "#/definitions/JoinDoc/properties/between/maxItems", keyword: "maxItems", params: { limit: 2 }, message: "must NOT have more than 2 items" };
                     if (vErrors === null) {
                       vErrors = [err58];
                     } else {
@@ -12615,31 +12640,29 @@ function validate63(data, { instancePath = "", parentData, parentDataProperty, r
                     }
                     errors++;
                   }
-                  const len6 = data31.length;
+                  if (data32.length < 2) {
+                    const err59 = { instancePath: instancePath + "/joins/" + i5 + "/between", schemaPath: "#/definitions/JoinDoc/properties/between/minItems", keyword: "minItems", params: { limit: 2 }, message: "must NOT have fewer than 2 items" };
+                    if (vErrors === null) {
+                      vErrors = [err59];
+                    } else {
+                      vErrors.push(err59);
+                    }
+                    errors++;
+                  }
+                  const len6 = data32.length;
                   for (let i6 = 0; i6 < len6; i6++) {
-                    if (typeof data31[i6] !== "string") {
-                      const err59 = { instancePath: instancePath + "/joins/" + i5 + "/between/" + i6, schemaPath: "#/definitions/JoinDoc/properties/between/items/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+                    if (typeof data32[i6] !== "string") {
+                      const err60 = { instancePath: instancePath + "/joins/" + i5 + "/between/" + i6, schemaPath: "#/definitions/JoinDoc/properties/between/items/type", keyword: "type", params: { type: "string" }, message: "must be string" };
                       if (vErrors === null) {
-                        vErrors = [err59];
+                        vErrors = [err60];
                       } else {
-                        vErrors.push(err59);
+                        vErrors.push(err60);
                       }
                       errors++;
                     }
                   }
                 } else {
-                  const err60 = { instancePath: instancePath + "/joins/" + i5 + "/between", schemaPath: "#/definitions/JoinDoc/properties/between/type", keyword: "type", params: { type: "array" }, message: "must be array" };
-                  if (vErrors === null) {
-                    vErrors = [err60];
-                  } else {
-                    vErrors.push(err60);
-                  }
-                  errors++;
-                }
-              }
-              if (data30.separator !== void 0) {
-                if (typeof data30.separator !== "string") {
-                  const err61 = { instancePath: instancePath + "/joins/" + i5 + "/separator", schemaPath: "#/definitions/JoinDoc/properties/separator/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+                  const err61 = { instancePath: instancePath + "/joins/" + i5 + "/between", schemaPath: "#/definitions/JoinDoc/properties/between/type", keyword: "type", params: { type: "array" }, message: "must be array" };
                   if (vErrors === null) {
                     vErrors = [err61];
                   } else {
@@ -12648,30 +12671,29 @@ function validate63(data, { instancePath = "", parentData, parentDataProperty, r
                   errors++;
                 }
               }
+              if (data31.separator !== void 0) {
+                if (typeof data31.separator !== "string") {
+                  const err62 = { instancePath: instancePath + "/joins/" + i5 + "/separator", schemaPath: "#/definitions/JoinDoc/properties/separator/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+                  if (vErrors === null) {
+                    vErrors = [err62];
+                  } else {
+                    vErrors.push(err62);
+                  }
+                  errors++;
+                }
+              }
             } else {
-              const err62 = { instancePath: instancePath + "/joins/" + i5, schemaPath: "#/definitions/JoinDoc/type", keyword: "type", params: { type: "object" }, message: "must be object" };
+              const err63 = { instancePath: instancePath + "/joins/" + i5, schemaPath: "#/definitions/JoinDoc/type", keyword: "type", params: { type: "object" }, message: "must be object" };
               if (vErrors === null) {
-                vErrors = [err62];
+                vErrors = [err63];
               } else {
-                vErrors.push(err62);
+                vErrors.push(err63);
               }
               errors++;
             }
           }
         } else {
-          const err63 = { instancePath: instancePath + "/joins", schemaPath: "#/anyOf/1/properties/joins/type", keyword: "type", params: { type: "array" }, message: "must be array" };
-          if (vErrors === null) {
-            vErrors = [err63];
-          } else {
-            vErrors.push(err63);
-          }
-          errors++;
-        }
-      }
-      if (data.mode !== void 0) {
-        let data34 = data.mode;
-        if (typeof data34 !== "string") {
-          const err64 = { instancePath: instancePath + "/mode", schemaPath: "#/anyOf/1/properties/mode/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+          const err64 = { instancePath: instancePath + "/joins", schemaPath: "#/anyOf/1/properties/joins/type", keyword: "type", params: { type: "array" }, message: "must be array" };
           if (vErrors === null) {
             vErrors = [err64];
           } else {
@@ -12679,8 +12701,10 @@ function validate63(data, { instancePath = "", parentData, parentDataProperty, r
           }
           errors++;
         }
-        if (!(data34 === "inline" || data34 === "block")) {
-          const err65 = { instancePath: instancePath + "/mode", schemaPath: "#/anyOf/1/properties/mode/enum", keyword: "enum", params: { allowedValues: schema82.anyOf[1].properties.mode.enum }, message: "must be equal to one of the allowed values" };
+      }
+      if (data.marking !== void 0) {
+        if (typeof data.marking !== "string") {
+          const err65 = { instancePath: instancePath + "/marking", schemaPath: "#/anyOf/1/properties/marking/type", keyword: "type", params: { type: "string" }, message: "must be string" };
           if (vErrors === null) {
             vErrors = [err65];
           } else {
@@ -12689,9 +12713,10 @@ function validate63(data, { instancePath = "", parentData, parentDataProperty, r
           errors++;
         }
       }
-      if (data.omit_defaults !== void 0) {
-        if (typeof data.omit_defaults !== "boolean") {
-          const err66 = { instancePath: instancePath + "/omit_defaults", schemaPath: "#/anyOf/1/properties/omit_defaults/type", keyword: "type", params: { type: "boolean" }, message: "must be boolean" };
+      if (data.mode !== void 0) {
+        let data36 = data.mode;
+        if (typeof data36 !== "string") {
+          const err66 = { instancePath: instancePath + "/mode", schemaPath: "#/anyOf/1/properties/mode/type", keyword: "type", params: { type: "string" }, message: "must be string" };
           if (vErrors === null) {
             vErrors = [err66];
           } else {
@@ -12699,10 +12724,8 @@ function validate63(data, { instancePath = "", parentData, parentDataProperty, r
           }
           errors++;
         }
-      }
-      if (data.omit_empty !== void 0) {
-        if (typeof data.omit_empty !== "boolean") {
-          const err67 = { instancePath: instancePath + "/omit_empty", schemaPath: "#/anyOf/1/properties/omit_empty/type", keyword: "type", params: { type: "boolean" }, message: "must be boolean" };
+        if (!(data36 === "inline" || data36 === "block")) {
+          const err67 = { instancePath: instancePath + "/mode", schemaPath: "#/anyOf/1/properties/mode/enum", keyword: "enum", params: { allowedValues: schema83.anyOf[1].properties.mode.enum }, message: "must be equal to one of the allowed values" };
           if (vErrors === null) {
             vErrors = [err67];
           } else {
@@ -12711,13 +12734,35 @@ function validate63(data, { instancePath = "", parentData, parentDataProperty, r
           errors++;
         }
       }
-      if (data.omit_whole_values !== void 0) {
-        if (typeof data.omit_whole_values !== "boolean") {
-          const err68 = { instancePath: instancePath + "/omit_whole_values", schemaPath: "#/anyOf/1/properties/omit_whole_values/type", keyword: "type", params: { type: "boolean" }, message: "must be boolean" };
+      if (data.omit_defaults !== void 0) {
+        if (typeof data.omit_defaults !== "boolean") {
+          const err68 = { instancePath: instancePath + "/omit_defaults", schemaPath: "#/anyOf/1/properties/omit_defaults/type", keyword: "type", params: { type: "boolean" }, message: "must be boolean" };
           if (vErrors === null) {
             vErrors = [err68];
           } else {
             vErrors.push(err68);
+          }
+          errors++;
+        }
+      }
+      if (data.omit_empty !== void 0) {
+        if (typeof data.omit_empty !== "boolean") {
+          const err69 = { instancePath: instancePath + "/omit_empty", schemaPath: "#/anyOf/1/properties/omit_empty/type", keyword: "type", params: { type: "boolean" }, message: "must be boolean" };
+          if (vErrors === null) {
+            vErrors = [err69];
+          } else {
+            vErrors.push(err69);
+          }
+          errors++;
+        }
+      }
+      if (data.omit_whole_values !== void 0) {
+        if (typeof data.omit_whole_values !== "boolean") {
+          const err70 = { instancePath: instancePath + "/omit_whole_values", schemaPath: "#/anyOf/1/properties/omit_whole_values/type", keyword: "type", params: { type: "boolean" }, message: "must be boolean" };
+          if (vErrors === null) {
+            vErrors = [err70];
+          } else {
+            vErrors.push(err70);
           }
           errors++;
         }
@@ -12730,36 +12775,36 @@ function validate63(data, { instancePath = "", parentData, parentDataProperty, r
       }
       if (data.separator !== void 0) {
         if (typeof data.separator !== "string") {
-          const err69 = { instancePath: instancePath + "/separator", schemaPath: "#/anyOf/1/properties/separator/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+          const err71 = { instancePath: instancePath + "/separator", schemaPath: "#/anyOf/1/properties/separator/type", keyword: "type", params: { type: "string" }, message: "must be string" };
           if (vErrors === null) {
-            vErrors = [err69];
+            vErrors = [err71];
           } else {
-            vErrors.push(err69);
+            vErrors.push(err71);
           }
           errors++;
         }
       }
       if (data.separator_aliases !== void 0) {
-        let data40 = data.separator_aliases;
-        if (Array.isArray(data40)) {
-          const len7 = data40.length;
+        let data42 = data.separator_aliases;
+        if (Array.isArray(data42)) {
+          const len7 = data42.length;
           for (let i7 = 0; i7 < len7; i7++) {
-            if (typeof data40[i7] !== "string") {
-              const err70 = { instancePath: instancePath + "/separator_aliases/" + i7, schemaPath: "#/anyOf/1/properties/separator_aliases/items/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+            if (typeof data42[i7] !== "string") {
+              const err72 = { instancePath: instancePath + "/separator_aliases/" + i7, schemaPath: "#/anyOf/1/properties/separator_aliases/items/type", keyword: "type", params: { type: "string" }, message: "must be string" };
               if (vErrors === null) {
-                vErrors = [err70];
+                vErrors = [err72];
               } else {
-                vErrors.push(err70);
+                vErrors.push(err72);
               }
               errors++;
             }
           }
         } else {
-          const err71 = { instancePath: instancePath + "/separator_aliases", schemaPath: "#/anyOf/1/properties/separator_aliases/type", keyword: "type", params: { type: "array" }, message: "must be array" };
+          const err73 = { instancePath: instancePath + "/separator_aliases", schemaPath: "#/anyOf/1/properties/separator_aliases/type", keyword: "type", params: { type: "array" }, message: "must be array" };
           if (vErrors === null) {
-            vErrors = [err71];
+            vErrors = [err73];
           } else {
-            vErrors.push(err71);
+            vErrors.push(err73);
           }
           errors++;
         }
@@ -12771,78 +12816,57 @@ function validate63(data, { instancePath = "", parentData, parentDataProperty, r
         }
       }
       if (data.surfaces !== void 0) {
-        let data43 = data.surfaces;
-        if (Array.isArray(data43)) {
-          if (data43.length < 2) {
-            const err72 = { instancePath: instancePath + "/surfaces", schemaPath: "#/anyOf/1/properties/surfaces/minItems", keyword: "minItems", params: { limit: 2 }, message: "must NOT have fewer than 2 items" };
+        let data45 = data.surfaces;
+        if (Array.isArray(data45)) {
+          if (data45.length < 2) {
+            const err74 = { instancePath: instancePath + "/surfaces", schemaPath: "#/anyOf/1/properties/surfaces/minItems", keyword: "minItems", params: { limit: 2 }, message: "must NOT have fewer than 2 items" };
             if (vErrors === null) {
-              vErrors = [err72];
+              vErrors = [err74];
             } else {
-              vErrors.push(err72);
+              vErrors.push(err74);
             }
             errors++;
           }
-          const len8 = data43.length;
+          const len8 = data45.length;
           for (let i8 = 0; i8 < len8; i8++) {
-            if (typeof data43[i8] !== "string") {
-              const err73 = { instancePath: instancePath + "/surfaces/" + i8, schemaPath: "#/anyOf/1/properties/surfaces/items/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+            if (typeof data45[i8] !== "string") {
+              const err75 = { instancePath: instancePath + "/surfaces/" + i8, schemaPath: "#/anyOf/1/properties/surfaces/items/type", keyword: "type", params: { type: "string" }, message: "must be string" };
               if (vErrors === null) {
-                vErrors = [err73];
+                vErrors = [err75];
               } else {
-                vErrors.push(err73);
+                vErrors.push(err75);
               }
               errors++;
             }
           }
         } else {
-          const err74 = { instancePath: instancePath + "/surfaces", schemaPath: "#/anyOf/1/properties/surfaces/type", keyword: "type", params: { type: "array" }, message: "must be array" };
+          const err76 = { instancePath: instancePath + "/surfaces", schemaPath: "#/anyOf/1/properties/surfaces/type", keyword: "type", params: { type: "array" }, message: "must be array" };
           if (vErrors === null) {
-            vErrors = [err74];
+            vErrors = [err76];
           } else {
-            vErrors.push(err74);
+            vErrors.push(err76);
           }
           errors++;
         }
       }
       if (data.syntax !== void 0) {
-        let data45 = data.syntax;
-        const _errs105 = errors;
+        let data47 = data.syntax;
+        const _errs109 = errors;
         let valid31 = false;
-        const _errs106 = errors;
-        if (data45 && typeof data45 == "object" && !Array.isArray(data45)) {
-          if (data45.type === void 0) {
-            const err75 = { instancePath: instancePath + "/syntax", schemaPath: "#/definitions/SyntaxDoc/anyOf/0/required", keyword: "required", params: { missingProperty: "type" }, message: "must have required property 'type'" };
+        const _errs110 = errors;
+        if (data47 && typeof data47 == "object" && !Array.isArray(data47)) {
+          if (data47.type === void 0) {
+            const err77 = { instancePath: instancePath + "/syntax", schemaPath: "#/definitions/SyntaxDoc/anyOf/0/required", keyword: "required", params: { missingProperty: "type" }, message: "must have required property 'type'" };
             if (vErrors === null) {
-              vErrors = [err75];
+              vErrors = [err77];
             } else {
-              vErrors.push(err75);
+              vErrors.push(err77);
             }
             errors++;
           }
-          for (const key7 in data45) {
+          for (const key7 in data47) {
             if (!(key7 === "escape" || key7 === "type")) {
-              const err76 = { instancePath: instancePath + "/syntax", schemaPath: "#/definitions/SyntaxDoc/anyOf/0/additionalProperties", keyword: "additionalProperties", params: { additionalProperty: key7 }, message: "must NOT have additional properties" };
-              if (vErrors === null) {
-                vErrors = [err76];
-              } else {
-                vErrors.push(err76);
-              }
-              errors++;
-            }
-          }
-          if (data45.escape !== void 0) {
-            let data46 = data45.escape;
-            if (typeof data46 !== "string") {
-              const err77 = { instancePath: instancePath + "/syntax/escape", schemaPath: "#/definitions/SyntaxDoc/anyOf/0/properties/escape/type", keyword: "type", params: { type: "string" }, message: "must be string" };
-              if (vErrors === null) {
-                vErrors = [err77];
-              } else {
-                vErrors.push(err77);
-              }
-              errors++;
-            }
-            if (!(data46 === "none" || data46 === "backslash")) {
-              const err78 = { instancePath: instancePath + "/syntax/escape", schemaPath: "#/definitions/SyntaxDoc/anyOf/0/properties/escape/enum", keyword: "enum", params: { allowedValues: schema97.anyOf[0].properties.escape.enum }, message: "must be equal to one of the allowed values" };
+              const err78 = { instancePath: instancePath + "/syntax", schemaPath: "#/definitions/SyntaxDoc/anyOf/0/additionalProperties", keyword: "additionalProperties", params: { additionalProperty: key7 }, message: "must NOT have additional properties" };
               if (vErrors === null) {
                 vErrors = [err78];
               } else {
@@ -12851,10 +12875,10 @@ function validate63(data, { instancePath = "", parentData, parentDataProperty, r
               errors++;
             }
           }
-          if (data45.type !== void 0) {
-            let data47 = data45.type;
-            if (typeof data47 !== "string") {
-              const err79 = { instancePath: instancePath + "/syntax/type", schemaPath: "#/definitions/SyntaxDoc/anyOf/0/properties/type/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+          if (data47.escape !== void 0) {
+            let data48 = data47.escape;
+            if (typeof data48 !== "string") {
+              const err79 = { instancePath: instancePath + "/syntax/escape", schemaPath: "#/definitions/SyntaxDoc/anyOf/0/properties/escape/type", keyword: "type", params: { type: "string" }, message: "must be string" };
               if (vErrors === null) {
                 vErrors = [err79];
               } else {
@@ -12862,8 +12886,8 @@ function validate63(data, { instancePath = "", parentData, parentDataProperty, r
               }
               errors++;
             }
-            if ("text" !== data47) {
-              const err80 = { instancePath: instancePath + "/syntax/type", schemaPath: "#/definitions/SyntaxDoc/anyOf/0/properties/type/const", keyword: "const", params: { allowedValue: "text" }, message: "must be equal to constant" };
+            if (!(data48 === "none" || data48 === "backslash")) {
+              const err80 = { instancePath: instancePath + "/syntax/escape", schemaPath: "#/definitions/SyntaxDoc/anyOf/0/properties/escape/enum", keyword: "enum", params: { allowedValues: schema98.anyOf[0].properties.escape.enum }, message: "must be equal to one of the allowed values" };
               if (vErrors === null) {
                 vErrors = [err80];
               } else {
@@ -12872,22 +12896,19 @@ function validate63(data, { instancePath = "", parentData, parentDataProperty, r
               errors++;
             }
           }
-        } else {
-          const err81 = { instancePath: instancePath + "/syntax", schemaPath: "#/definitions/SyntaxDoc/anyOf/0/type", keyword: "type", params: { type: "object" }, message: "must be object" };
-          if (vErrors === null) {
-            vErrors = [err81];
-          } else {
-            vErrors.push(err81);
-          }
-          errors++;
-        }
-        var _valid2 = _errs106 === errors;
-        valid31 = valid31 || _valid2;
-        if (!valid31) {
-          const _errs113 = errors;
-          if (data45 && typeof data45 == "object" && !Array.isArray(data45)) {
-            if (data45.type === void 0) {
-              const err82 = { instancePath: instancePath + "/syntax", schemaPath: "#/definitions/SyntaxDoc/anyOf/1/required", keyword: "required", params: { missingProperty: "type" }, message: "must have required property 'type'" };
+          if (data47.type !== void 0) {
+            let data49 = data47.type;
+            if (typeof data49 !== "string") {
+              const err81 = { instancePath: instancePath + "/syntax/type", schemaPath: "#/definitions/SyntaxDoc/anyOf/0/properties/type/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+              if (vErrors === null) {
+                vErrors = [err81];
+              } else {
+                vErrors.push(err81);
+              }
+              errors++;
+            }
+            if ("text" !== data49) {
+              const err82 = { instancePath: instancePath + "/syntax/type", schemaPath: "#/definitions/SyntaxDoc/anyOf/0/properties/type/const", keyword: "const", params: { allowedValue: "text" }, message: "must be equal to constant" };
               if (vErrors === null) {
                 vErrors = [err82];
               } else {
@@ -12895,63 +12916,65 @@ function validate63(data, { instancePath = "", parentData, parentDataProperty, r
               }
               errors++;
             }
-            for (const key8 in data45) {
+          }
+        } else {
+          const err83 = { instancePath: instancePath + "/syntax", schemaPath: "#/definitions/SyntaxDoc/anyOf/0/type", keyword: "type", params: { type: "object" }, message: "must be object" };
+          if (vErrors === null) {
+            vErrors = [err83];
+          } else {
+            vErrors.push(err83);
+          }
+          errors++;
+        }
+        var _valid2 = _errs110 === errors;
+        valid31 = valid31 || _valid2;
+        if (!valid31) {
+          const _errs117 = errors;
+          if (data47 && typeof data47 == "object" && !Array.isArray(data47)) {
+            if (data47.type === void 0) {
+              const err84 = { instancePath: instancePath + "/syntax", schemaPath: "#/definitions/SyntaxDoc/anyOf/1/required", keyword: "required", params: { missingProperty: "type" }, message: "must have required property 'type'" };
+              if (vErrors === null) {
+                vErrors = [err84];
+              } else {
+                vErrors.push(err84);
+              }
+              errors++;
+            }
+            for (const key8 in data47) {
               if (!(key8 === "namespace" || key8 === "type")) {
-                const err83 = { instancePath: instancePath + "/syntax", schemaPath: "#/definitions/SyntaxDoc/anyOf/1/additionalProperties", keyword: "additionalProperties", params: { additionalProperty: key8 }, message: "must NOT have additional properties" };
+                const err85 = { instancePath: instancePath + "/syntax", schemaPath: "#/definitions/SyntaxDoc/anyOf/1/additionalProperties", keyword: "additionalProperties", params: { additionalProperty: key8 }, message: "must NOT have additional properties" };
                 if (vErrors === null) {
-                  vErrors = [err83];
+                  vErrors = [err85];
                 } else {
-                  vErrors.push(err83);
+                  vErrors.push(err85);
                 }
                 errors++;
               }
             }
-            if (data45.namespace !== void 0) {
-              let data48 = data45.namespace;
-              if (data48 && typeof data48 == "object" && !Array.isArray(data48)) {
-                if (data48.prefix === void 0) {
-                  const err84 = { instancePath: instancePath + "/syntax/namespace", schemaPath: "#/definitions/SyntaxDoc/anyOf/1/properties/namespace/required", keyword: "required", params: { missingProperty: "prefix" }, message: "must have required property 'prefix'" };
+            if (data47.namespace !== void 0) {
+              let data50 = data47.namespace;
+              if (data50 && typeof data50 == "object" && !Array.isArray(data50)) {
+                if (data50.prefix === void 0) {
+                  const err86 = { instancePath: instancePath + "/syntax/namespace", schemaPath: "#/definitions/SyntaxDoc/anyOf/1/properties/namespace/required", keyword: "required", params: { missingProperty: "prefix" }, message: "must have required property 'prefix'" };
                   if (vErrors === null) {
-                    vErrors = [err84];
+                    vErrors = [err86];
                   } else {
-                    vErrors.push(err84);
+                    vErrors.push(err86);
                   }
                   errors++;
                 }
-                if (data48.uri === void 0) {
-                  const err85 = { instancePath: instancePath + "/syntax/namespace", schemaPath: "#/definitions/SyntaxDoc/anyOf/1/properties/namespace/required", keyword: "required", params: { missingProperty: "uri" }, message: "must have required property 'uri'" };
+                if (data50.uri === void 0) {
+                  const err87 = { instancePath: instancePath + "/syntax/namespace", schemaPath: "#/definitions/SyntaxDoc/anyOf/1/properties/namespace/required", keyword: "required", params: { missingProperty: "uri" }, message: "must have required property 'uri'" };
                   if (vErrors === null) {
-                    vErrors = [err85];
+                    vErrors = [err87];
                   } else {
-                    vErrors.push(err85);
+                    vErrors.push(err87);
                   }
                   errors++;
                 }
-                for (const key9 in data48) {
+                for (const key9 in data50) {
                   if (!(key9 === "prefix" || key9 === "uri")) {
-                    const err86 = { instancePath: instancePath + "/syntax/namespace", schemaPath: "#/definitions/SyntaxDoc/anyOf/1/properties/namespace/additionalProperties", keyword: "additionalProperties", params: { additionalProperty: key9 }, message: "must NOT have additional properties" };
-                    if (vErrors === null) {
-                      vErrors = [err86];
-                    } else {
-                      vErrors.push(err86);
-                    }
-                    errors++;
-                  }
-                }
-                if (data48.prefix !== void 0) {
-                  if (typeof data48.prefix !== "string") {
-                    const err87 = { instancePath: instancePath + "/syntax/namespace/prefix", schemaPath: "#/definitions/SyntaxDoc/anyOf/1/properties/namespace/properties/prefix/type", keyword: "type", params: { type: "string" }, message: "must be string" };
-                    if (vErrors === null) {
-                      vErrors = [err87];
-                    } else {
-                      vErrors.push(err87);
-                    }
-                    errors++;
-                  }
-                }
-                if (data48.uri !== void 0) {
-                  if (typeof data48.uri !== "string") {
-                    const err88 = { instancePath: instancePath + "/syntax/namespace/uri", schemaPath: "#/definitions/SyntaxDoc/anyOf/1/properties/namespace/properties/uri/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+                    const err88 = { instancePath: instancePath + "/syntax/namespace", schemaPath: "#/definitions/SyntaxDoc/anyOf/1/properties/namespace/additionalProperties", keyword: "additionalProperties", params: { additionalProperty: key9 }, message: "must NOT have additional properties" };
                     if (vErrors === null) {
                       vErrors = [err88];
                     } else {
@@ -12960,29 +12983,30 @@ function validate63(data, { instancePath = "", parentData, parentDataProperty, r
                     errors++;
                   }
                 }
+                if (data50.prefix !== void 0) {
+                  if (typeof data50.prefix !== "string") {
+                    const err89 = { instancePath: instancePath + "/syntax/namespace/prefix", schemaPath: "#/definitions/SyntaxDoc/anyOf/1/properties/namespace/properties/prefix/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+                    if (vErrors === null) {
+                      vErrors = [err89];
+                    } else {
+                      vErrors.push(err89);
+                    }
+                    errors++;
+                  }
+                }
+                if (data50.uri !== void 0) {
+                  if (typeof data50.uri !== "string") {
+                    const err90 = { instancePath: instancePath + "/syntax/namespace/uri", schemaPath: "#/definitions/SyntaxDoc/anyOf/1/properties/namespace/properties/uri/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+                    if (vErrors === null) {
+                      vErrors = [err90];
+                    } else {
+                      vErrors.push(err90);
+                    }
+                    errors++;
+                  }
+                }
               } else {
-                const err89 = { instancePath: instancePath + "/syntax/namespace", schemaPath: "#/definitions/SyntaxDoc/anyOf/1/properties/namespace/type", keyword: "type", params: { type: "object" }, message: "must be object" };
-                if (vErrors === null) {
-                  vErrors = [err89];
-                } else {
-                  vErrors.push(err89);
-                }
-                errors++;
-              }
-            }
-            if (data45.type !== void 0) {
-              let data51 = data45.type;
-              if (typeof data51 !== "string") {
-                const err90 = { instancePath: instancePath + "/syntax/type", schemaPath: "#/definitions/SyntaxDoc/anyOf/1/properties/type/type", keyword: "type", params: { type: "string" }, message: "must be string" };
-                if (vErrors === null) {
-                  vErrors = [err90];
-                } else {
-                  vErrors.push(err90);
-                }
-                errors++;
-              }
-              if ("xml-attributes" !== data51) {
-                const err91 = { instancePath: instancePath + "/syntax/type", schemaPath: "#/definitions/SyntaxDoc/anyOf/1/properties/type/const", keyword: "const", params: { allowedValue: "xml-attributes" }, message: "must be equal to constant" };
+                const err91 = { instancePath: instancePath + "/syntax/namespace", schemaPath: "#/definitions/SyntaxDoc/anyOf/1/properties/namespace/type", keyword: "type", params: { type: "object" }, message: "must be object" };
                 if (vErrors === null) {
                   vErrors = [err91];
                 } else {
@@ -12991,31 +13015,52 @@ function validate63(data, { instancePath = "", parentData, parentDataProperty, r
                 errors++;
               }
             }
+            if (data47.type !== void 0) {
+              let data53 = data47.type;
+              if (typeof data53 !== "string") {
+                const err92 = { instancePath: instancePath + "/syntax/type", schemaPath: "#/definitions/SyntaxDoc/anyOf/1/properties/type/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+                if (vErrors === null) {
+                  vErrors = [err92];
+                } else {
+                  vErrors.push(err92);
+                }
+                errors++;
+              }
+              if ("xml-attributes" !== data53) {
+                const err93 = { instancePath: instancePath + "/syntax/type", schemaPath: "#/definitions/SyntaxDoc/anyOf/1/properties/type/const", keyword: "const", params: { allowedValue: "xml-attributes" }, message: "must be equal to constant" };
+                if (vErrors === null) {
+                  vErrors = [err93];
+                } else {
+                  vErrors.push(err93);
+                }
+                errors++;
+              }
+            }
           } else {
-            const err92 = { instancePath: instancePath + "/syntax", schemaPath: "#/definitions/SyntaxDoc/anyOf/1/type", keyword: "type", params: { type: "object" }, message: "must be object" };
+            const err94 = { instancePath: instancePath + "/syntax", schemaPath: "#/definitions/SyntaxDoc/anyOf/1/type", keyword: "type", params: { type: "object" }, message: "must be object" };
             if (vErrors === null) {
-              vErrors = [err92];
+              vErrors = [err94];
             } else {
-              vErrors.push(err92);
+              vErrors.push(err94);
             }
             errors++;
           }
-          var _valid2 = _errs113 === errors;
+          var _valid2 = _errs117 === errors;
           valid31 = valid31 || _valid2;
         }
         if (!valid31) {
-          const err93 = { instancePath: instancePath + "/syntax", schemaPath: "#/definitions/SyntaxDoc/anyOf", keyword: "anyOf", params: {}, message: "must match a schema in anyOf" };
+          const err95 = { instancePath: instancePath + "/syntax", schemaPath: "#/definitions/SyntaxDoc/anyOf", keyword: "anyOf", params: {}, message: "must match a schema in anyOf" };
           if (vErrors === null) {
-            vErrors = [err93];
+            vErrors = [err95];
           } else {
-            vErrors.push(err93);
+            vErrors.push(err95);
           }
           errors++;
         } else {
-          errors = _errs105;
+          errors = _errs109;
           if (vErrors !== null) {
-            if (_errs105) {
-              vErrors.length = _errs105;
+            if (_errs109) {
+              vErrors.length = _errs109;
             } else {
               vErrors = null;
             }
@@ -13024,33 +13069,33 @@ function validate63(data, { instancePath = "", parentData, parentDataProperty, r
       }
       if (data.view !== void 0) {
         if (typeof data.view !== "string") {
-          const err94 = { instancePath: instancePath + "/view", schemaPath: "#/anyOf/1/properties/view/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+          const err96 = { instancePath: instancePath + "/view", schemaPath: "#/anyOf/1/properties/view/type", keyword: "type", params: { type: "string" }, message: "must be string" };
           if (vErrors === null) {
-            vErrors = [err94];
+            vErrors = [err96];
           } else {
-            vErrors.push(err94);
+            vErrors.push(err96);
           }
           errors++;
         }
       }
     } else {
-      const err95 = { instancePath, schemaPath: "#/anyOf/1/type", keyword: "type", params: { type: "object" }, message: "must be object" };
+      const err97 = { instancePath, schemaPath: "#/anyOf/1/type", keyword: "type", params: { type: "object" }, message: "must be object" };
       if (vErrors === null) {
-        vErrors = [err95];
+        vErrors = [err97];
       } else {
-        vErrors.push(err95);
+        vErrors.push(err97);
       }
       errors++;
     }
-    var _valid0 = _errs63 === errors;
+    var _valid0 = _errs65 === errors;
     valid0 = valid0 || _valid0;
   }
   if (!valid0) {
-    const err96 = { instancePath, schemaPath: "#/anyOf", keyword: "anyOf", params: {}, message: "must match a schema in anyOf" };
+    const err98 = { instancePath, schemaPath: "#/anyOf", keyword: "anyOf", params: {}, message: "must match a schema in anyOf" };
     if (vErrors === null) {
-      vErrors = [err96];
+      vErrors = [err98];
     } else {
-      vErrors.push(err96);
+      vErrors.push(err98);
     }
     errors++;
   } else {
@@ -13571,7 +13616,7 @@ function validate59(data, { instancePath = "", parentData, parentDataProperty, r
         errors++;
       }
       if (!(data5 === "preserve_unmatched" || data5 === "drop_unmatched" || data5 === "refuse")) {
-        const err7 = { instancePath: instancePath + "/of_invalid", schemaPath: "#/properties/of_invalid/enum", keyword: "enum", params: { allowedValues: schema79.properties.of_invalid.enum }, message: "must be equal to one of the allowed values" };
+        const err7 = { instancePath: instancePath + "/of_invalid", schemaPath: "#/properties/of_invalid/enum", keyword: "enum", params: { allowedValues: schema80.properties.of_invalid.enum }, message: "must be equal to one of the allowed values" };
         if (vErrors === null) {
           vErrors = [err7];
         } else {
@@ -13643,7 +13688,7 @@ function validate59(data, { instancePath = "", parentData, parentDataProperty, r
   validate59.errors = vErrors;
   return errors === 0;
 }
-var schema105 = { "additionalProperties": false, "description": "A rollup pipeline: resolves one or more pipeline-rolled categories.", "properties": { "categories": { "description": "Category IDs resolved together by this pipeline.", "items": { "type": "string" }, "type": "array" }, "explanation": { "description": "Human-readable explanation.", "type": "string" }, "id": { "description": "Unique pipeline identifier.", "type": "string" }, "mode": { "description": "`ordered` (default) or `all`; see SchemeDefinition.", "enum": ["ordered", "all"], "type": "string" }, "steps": { "description": "Pipeline steps. Evaluation order depends on `mode`.", "items": { "$ref": "#/definitions/RollupPipelineStepDoc" }, "type": "array" } }, "required": ["id", "categories", "steps"], "type": "object" };
+var schema106 = { "additionalProperties": false, "description": "A rollup pipeline: resolves one or more pipeline-rolled categories.", "properties": { "categories": { "description": "Category IDs resolved together by this pipeline.", "items": { "type": "string" }, "type": "array" }, "explanation": { "description": "Human-readable explanation.", "type": "string" }, "id": { "description": "Unique pipeline identifier.", "type": "string" }, "mode": { "description": "`ordered` (default) or `all`; see SchemeDefinition.", "enum": ["ordered", "all"], "type": "string" }, "steps": { "description": "Pipeline steps. Evaluation order depends on `mode`.", "items": { "$ref": "#/definitions/RollupPipelineStepDoc" }, "type": "array" } }, "required": ["id", "categories", "steps"], "type": "object" };
 function validate113(data, { instancePath = "", parentData, parentDataProperty, rootData = data } = {}) {
   let vErrors = null;
   let errors = 0;
@@ -13804,7 +13849,7 @@ function validate112(data, { instancePath = "", parentData, parentDataProperty, 
         errors++;
       }
       if (!(data4 === "ordered" || data4 === "all")) {
-        const err9 = { instancePath: instancePath + "/mode", schemaPath: "#/properties/mode/enum", keyword: "enum", params: { allowedValues: schema105.properties.mode.enum }, message: "must be equal to one of the allowed values" };
+        const err9 = { instancePath: instancePath + "/mode", schemaPath: "#/properties/mode/enum", keyword: "enum", params: { allowedValues: schema106.properties.mode.enum }, message: "must be equal to one of the allowed values" };
         if (vErrors === null) {
           vErrors = [err9];
         } else {
@@ -13845,9 +13890,8 @@ function validate112(data, { instancePath = "", parentData, parentDataProperty, 
   validate112.errors = vErrors;
   return errors === 0;
 }
-var schema109 = { "additionalProperties": false, "description": "A scheme rule: a trigger condition, an action, and action-specific parameters.", "properties": { "action": { "$ref": "#/definitions/RuleActionDoc", "description": "What to do when the rule fires." }, "category": { "description": "Target category: disambiguates multi-category concepts or specifies the operating category.\n\nA `restrict` rule requires it: it is the category the rule restricts to the targets. On a `require_any` rule it says where a target must appear.", "type": "string" }, "citation": { "description": "Where in the governing document this rule was read from. Free text, e.g. `32 CFR 2002.20(b)(1)`.\n\nProvenance only: nothing parses it, matches on it, or renders it. Distinct from `explanation` (what the rule does) and `message` (what a violation tells the author).", "type": "string" }, "exclude": { "description": "For copy: a concept that is never copied.", "type": "string" }, "explanation": { "description": "Human-readable explanation of what this rule does.", "type": "string" }, "formats": { "description": "Render formats the rule applies to, by format id. Absent means all.", "items": { "type": "string" }, "type": "array" }, "from": { "description": "For copy: the category concepts are copied from.", "type": "string" }, "id": { "description": "Unique rule identifier within the scheme. An id that begins with `_` is refused: the engine keeps that prefix for its own ids, the ones it reports its own errors under as `constraintId` and writes as `sourceRule` on assertions its structure added.", "minLength": 1, "pattern": "^[^_]", "type": "string" }, "max": { "description": "For cardinality: maximum concept count.", "type": "integer" }, "message": { "description": "Validation error message for the constraint actions (forbid, require, require_any, restrict, exclusive, cardinality), and the warning a `warn` rule gives, which it requires.", "type": "string" }, "min": { "description": "For cardinality: minimum concept count.", "type": "integer" }, "name": { "description": "Human-readable rule name for UI and audit provenance.", "type": "string" }, "phases": { "description": "Evaluation contexts the rule runs in. Absent means every one of them.\n\nThese are the contexts the engine actually asks about, not a parallel naming of the pipeline:\n\n- `pre-merge`: each input set on its own, before rollup, and a standalone `process()` call\n- `post-merge`: the merged whole, after rollup\n- `validate`: an explicit `validate()` call\n- `render`: the render-time visibility check\n- `suggest`: suggestion generation\n\nInclusion only. A rule that names contexts runs in those and no others; there is no `!` form, because the closed list makes the complement writable and one way to say a thing keeps a scope readable.", "items": { "enum": ["pre-merge", "post-merge", "validate", "render", "suggest"], "type": "string" }, "type": "array" }, "rank": { "description": "For exclusive: priority among derived concepts during repair or rollup (first = highest priority). Repair preserves author-stated concepts.", "items": { "type": "string" }, "type": "array" }, "surfaces": { "description": "Surfaces the rule applies to, as scheme scope ids. A leading `!` excludes one. Absent means every surface.", "items": { "type": "string" }, "type": "array" }, "target": { "anyOf": [{ "type": "string" }, { "items": { "type": "string" }, "type": "array" }, { "$ref": "#/definitions/RuleTargetSelectorDoc" }], "description": "What the action acts on: a concept or category id, a list of them, or a selector such as `{ children_of: PROGRAM }` that names concepts by their place in the hierarchy. See `RuleTargetSelectorDoc`." }, "to": { "description": "For copy: the category concepts are copied into. For inherit_parents: the category an inherited parent goes in by preference.", "type": "string" }, "when": { "$ref": "#/definitions/WhenDoc", "description": "Trigger condition. See `WhenDoc`." }, "with": { "anyOf": [{ "type": "string" }, { "$ref": "#/definitions/Record%3Cstring%2Cunknown%3E" }], "description": "For supersede: what replaces the target." } }, "required": ["id", "action"], "type": "object" };
-var schema110 = { "description": "Rule actions recognized by the engine.\n\nThree of them say which of the targets a marking must or may hold:\n\n- `require`: every target must be present. When the rule names `category`, the targets are added there.\n- `require_any`: at least one target must be present, in `category` when the rule names one and anywhere in the marking otherwise. It only checks; it never adds a value.\n- `restrict`: `category` may hold only the targets. The rule must name `category`, and an empty category satisfies it. Permissive processing removes the values the targets do not allow.\n\nOne of them only advises:\n\n- `warn`: when the rule's `when` holds, the result carries its `message` as a warning. The marking stays exactly as it was: nothing is added or removed, the rendering does not change, and `valid` is decided by the other rules alone. A `warn` rule needs a `message` and names no `target`, `category` or other operand, because it acts on nothing.", "enum": ["forbid", "exclusive", "require", "require_any", "restrict", "copy", "inherit_parents", "expand_group", "cardinality", "supersede", "warn"], "type": "string" };
-var func14 = require_ucs2length().default;
+var schema110 = { "additionalProperties": false, "description": "A scheme rule: a trigger condition, an action, and action-specific parameters.", "properties": { "action": { "$ref": "#/definitions/RuleActionDoc", "description": "What to do when the rule fires." }, "category": { "description": "Target category: disambiguates multi-category concepts or specifies the operating category.\n\nA `restrict` rule requires it: it is the category the rule restricts to the targets. On a `require_any` rule it says where a target must appear.", "type": "string" }, "citation": { "description": "Where in the governing document this rule was read from. Free text, e.g. `32 CFR 2002.20(b)(1)`.\n\nProvenance only: nothing parses it, matches on it, or renders it. Distinct from `explanation` (what the rule does) and `message` (what a violation tells the author).", "type": "string" }, "exclude": { "description": "For copy: a concept that is never copied.", "type": "string" }, "explanation": { "description": "Human-readable explanation of what this rule does.", "type": "string" }, "formats": { "description": "Render formats the rule applies to, by format id. Absent means all.", "items": { "type": "string" }, "type": "array" }, "from": { "description": "For copy: the category concepts are copied from.", "type": "string" }, "id": { "description": "Unique rule identifier within the scheme. An id that begins with `_` is refused: the engine keeps that prefix for its own ids, the ones it reports its own errors under as `constraintId` and writes as `sourceRule` on assertions its structure added.", "minLength": 1, "pattern": "^[^_]", "type": "string" }, "marking": { "description": "This rule's part marking, written in the scheme the document's `marking_scheme` names. Text, never interpreted: no engine parses it, checks it, acts on it, or reports it.", "type": "string" }, "max": { "description": "For cardinality: maximum concept count.", "type": "integer" }, "message": { "description": "Validation error message for the constraint actions (forbid, require, require_any, restrict, exclusive, cardinality), and the warning a `warn` rule gives, which it requires.", "type": "string" }, "min": { "description": "For cardinality: minimum concept count.", "type": "integer" }, "name": { "description": "Human-readable rule name for UI and audit provenance.", "type": "string" }, "phases": { "description": "Evaluation contexts the rule runs in. Absent means every one of them.\n\nThese are the contexts the engine actually asks about, not a parallel naming of the pipeline:\n\n- `pre-merge`: each input set on its own, before rollup, and a standalone `process()` call\n- `post-merge`: the merged whole, after rollup\n- `validate`: an explicit `validate()` call\n- `render`: the render-time visibility check\n- `suggest`: suggestion generation\n\nInclusion only. A rule that names contexts runs in those and no others; there is no `!` form, because the closed list makes the complement writable and one way to say a thing keeps a scope readable.", "items": { "enum": ["pre-merge", "post-merge", "validate", "render", "suggest"], "type": "string" }, "type": "array" }, "rank": { "description": "For exclusive: priority among derived concepts during repair or rollup (first = highest priority). Repair preserves author-stated concepts.", "items": { "type": "string" }, "type": "array" }, "surfaces": { "description": "Surfaces the rule applies to, as scheme scope ids. A leading `!` excludes one. Absent means every surface.", "items": { "type": "string" }, "type": "array" }, "target": { "anyOf": [{ "type": "string" }, { "items": { "type": "string" }, "type": "array" }, { "$ref": "#/definitions/RuleTargetSelectorDoc" }], "description": "What the action acts on: a concept or category id, a list of them, or a selector such as `{ children_of: PROGRAM }` that names concepts by their place in the hierarchy. See `RuleTargetSelectorDoc`." }, "to": { "description": "For copy: the category concepts are copied into. For inherit_parents: the category an inherited parent goes in by preference.", "type": "string" }, "when": { "$ref": "#/definitions/WhenDoc", "description": "Trigger condition. See `WhenDoc`." }, "with": { "anyOf": [{ "type": "string" }, { "$ref": "#/definitions/Record%3Cstring%2Cunknown%3E" }], "description": "For supersede: what replaces the target." } }, "required": ["id", "action"], "type": "object" };
+var schema111 = { "description": "Rule actions recognized by the engine.\n\nThree of them say which of the targets a marking must or may hold:\n\n- `require`: every target must be present. When the rule names `category`, the targets are added there.\n- `require_any`: at least one target must be present, in `category` when the rule names one and anywhere in the marking otherwise. It only checks; it never adds a value.\n- `restrict`: `category` may hold only the targets. The rule must name `category`, and an empty category satisfies it. Permissive processing removes the values the targets do not allow.\n\nOne of them only advises:\n\n- `warn`: when the rule's `when` holds, the result carries its `message` as a warning. The marking stays exactly as it was: nothing is added or removed, the rendering does not change, and `valid` is decided by the other rules alone. A `warn` rule needs a `message` and names no `target`, `category` or other operand, because it acts on nothing.", "enum": ["forbid", "exclusive", "require", "require_any", "restrict", "copy", "inherit_parents", "expand_group", "cardinality", "supersede", "warn"], "type": "string" };
 var pattern5 = new RegExp("^[^_]", "u");
 function validate117(data, { instancePath = "", parentData, parentDataProperty, rootData = data } = {}) {
   let vErrors = null;
@@ -13872,7 +13916,7 @@ function validate117(data, { instancePath = "", parentData, parentDataProperty, 
       errors++;
     }
     for (const key0 in data) {
-      if (!func2.call(schema109.properties, key0)) {
+      if (!func2.call(schema110.properties, key0)) {
         const err2 = { instancePath, schemaPath: "#/additionalProperties", keyword: "additionalProperties", params: { additionalProperty: key0 }, message: "must NOT have additional properties" };
         if (vErrors === null) {
           vErrors = [err2];
@@ -13894,7 +13938,7 @@ function validate117(data, { instancePath = "", parentData, parentDataProperty, 
         errors++;
       }
       if (!(data0 === "forbid" || data0 === "exclusive" || data0 === "require" || data0 === "require_any" || data0 === "restrict" || data0 === "copy" || data0 === "inherit_parents" || data0 === "expand_group" || data0 === "cardinality" || data0 === "supersede" || data0 === "warn")) {
-        const err4 = { instancePath: instancePath + "/action", schemaPath: "#/definitions/RuleActionDoc/enum", keyword: "enum", params: { allowedValues: schema110.enum }, message: "must be equal to one of the allowed values" };
+        const err4 = { instancePath: instancePath + "/action", schemaPath: "#/definitions/RuleActionDoc/enum", keyword: "enum", params: { allowedValues: schema111.enum }, message: "must be equal to one of the allowed values" };
         if (vErrors === null) {
           vErrors = [err4];
         } else {
@@ -13986,7 +14030,7 @@ function validate117(data, { instancePath = "", parentData, parentDataProperty, 
     if (data.id !== void 0) {
       let data8 = data.id;
       if (typeof data8 === "string") {
-        if (func14(data8) < 1) {
+        if (func7(data8) < 1) {
           const err12 = { instancePath: instancePath + "/id", schemaPath: "#/properties/id/minLength", keyword: "minLength", params: { limit: 1 }, message: "must NOT have fewer than 1 characters" };
           if (vErrors === null) {
             vErrors = [err12];
@@ -14014,10 +14058,9 @@ function validate117(data, { instancePath = "", parentData, parentDataProperty, 
         errors++;
       }
     }
-    if (data.max !== void 0) {
-      let data9 = data.max;
-      if (!(typeof data9 == "number" && (!(data9 % 1) && !isNaN(data9)))) {
-        const err15 = { instancePath: instancePath + "/max", schemaPath: "#/properties/max/type", keyword: "type", params: { type: "integer" }, message: "must be integer" };
+    if (data.marking !== void 0) {
+      if (typeof data.marking !== "string") {
+        const err15 = { instancePath: instancePath + "/marking", schemaPath: "#/properties/marking/type", keyword: "type", params: { type: "string" }, message: "must be string" };
         if (vErrors === null) {
           vErrors = [err15];
         } else {
@@ -14026,9 +14069,10 @@ function validate117(data, { instancePath = "", parentData, parentDataProperty, 
         errors++;
       }
     }
-    if (data.message !== void 0) {
-      if (typeof data.message !== "string") {
-        const err16 = { instancePath: instancePath + "/message", schemaPath: "#/properties/message/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+    if (data.max !== void 0) {
+      let data10 = data.max;
+      if (!(typeof data10 == "number" && (!(data10 % 1) && !isNaN(data10)))) {
+        const err16 = { instancePath: instancePath + "/max", schemaPath: "#/properties/max/type", keyword: "type", params: { type: "integer" }, message: "must be integer" };
         if (vErrors === null) {
           vErrors = [err16];
         } else {
@@ -14037,10 +14081,9 @@ function validate117(data, { instancePath = "", parentData, parentDataProperty, 
         errors++;
       }
     }
-    if (data.min !== void 0) {
-      let data11 = data.min;
-      if (!(typeof data11 == "number" && (!(data11 % 1) && !isNaN(data11)))) {
-        const err17 = { instancePath: instancePath + "/min", schemaPath: "#/properties/min/type", keyword: "type", params: { type: "integer" }, message: "must be integer" };
+    if (data.message !== void 0) {
+      if (typeof data.message !== "string") {
+        const err17 = { instancePath: instancePath + "/message", schemaPath: "#/properties/message/type", keyword: "type", params: { type: "string" }, message: "must be string" };
         if (vErrors === null) {
           vErrors = [err17];
         } else {
@@ -14049,9 +14092,10 @@ function validate117(data, { instancePath = "", parentData, parentDataProperty, 
         errors++;
       }
     }
-    if (data.name !== void 0) {
-      if (typeof data.name !== "string") {
-        const err18 = { instancePath: instancePath + "/name", schemaPath: "#/properties/name/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+    if (data.min !== void 0) {
+      let data12 = data.min;
+      if (!(typeof data12 == "number" && (!(data12 % 1) && !isNaN(data12)))) {
+        const err18 = { instancePath: instancePath + "/min", schemaPath: "#/properties/min/type", keyword: "type", params: { type: "integer" }, message: "must be integer" };
         if (vErrors === null) {
           vErrors = [err18];
         } else {
@@ -14060,23 +14104,25 @@ function validate117(data, { instancePath = "", parentData, parentDataProperty, 
         errors++;
       }
     }
+    if (data.name !== void 0) {
+      if (typeof data.name !== "string") {
+        const err19 = { instancePath: instancePath + "/name", schemaPath: "#/properties/name/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+        if (vErrors === null) {
+          vErrors = [err19];
+        } else {
+          vErrors.push(err19);
+        }
+        errors++;
+      }
+    }
     if (data.phases !== void 0) {
-      let data13 = data.phases;
-      if (Array.isArray(data13)) {
-        const len1 = data13.length;
+      let data14 = data.phases;
+      if (Array.isArray(data14)) {
+        const len1 = data14.length;
         for (let i1 = 0; i1 < len1; i1++) {
-          let data14 = data13[i1];
-          if (typeof data14 !== "string") {
-            const err19 = { instancePath: instancePath + "/phases/" + i1, schemaPath: "#/properties/phases/items/type", keyword: "type", params: { type: "string" }, message: "must be string" };
-            if (vErrors === null) {
-              vErrors = [err19];
-            } else {
-              vErrors.push(err19);
-            }
-            errors++;
-          }
-          if (!(data14 === "pre-merge" || data14 === "post-merge" || data14 === "validate" || data14 === "render" || data14 === "suggest")) {
-            const err20 = { instancePath: instancePath + "/phases/" + i1, schemaPath: "#/properties/phases/items/enum", keyword: "enum", params: { allowedValues: schema109.properties.phases.items.enum }, message: "must be equal to one of the allowed values" };
+          let data15 = data14[i1];
+          if (typeof data15 !== "string") {
+            const err20 = { instancePath: instancePath + "/phases/" + i1, schemaPath: "#/properties/phases/items/type", keyword: "type", params: { type: "string" }, message: "must be string" };
             if (vErrors === null) {
               vErrors = [err20];
             } else {
@@ -14084,74 +14130,68 @@ function validate117(data, { instancePath = "", parentData, parentDataProperty, 
             }
             errors++;
           }
+          if (!(data15 === "pre-merge" || data15 === "post-merge" || data15 === "validate" || data15 === "render" || data15 === "suggest")) {
+            const err21 = { instancePath: instancePath + "/phases/" + i1, schemaPath: "#/properties/phases/items/enum", keyword: "enum", params: { allowedValues: schema110.properties.phases.items.enum }, message: "must be equal to one of the allowed values" };
+            if (vErrors === null) {
+              vErrors = [err21];
+            } else {
+              vErrors.push(err21);
+            }
+            errors++;
+          }
         }
       } else {
-        const err21 = { instancePath: instancePath + "/phases", schemaPath: "#/properties/phases/type", keyword: "type", params: { type: "array" }, message: "must be array" };
+        const err22 = { instancePath: instancePath + "/phases", schemaPath: "#/properties/phases/type", keyword: "type", params: { type: "array" }, message: "must be array" };
         if (vErrors === null) {
-          vErrors = [err21];
+          vErrors = [err22];
         } else {
-          vErrors.push(err21);
+          vErrors.push(err22);
         }
         errors++;
       }
     }
     if (data.rank !== void 0) {
-      let data15 = data.rank;
-      if (Array.isArray(data15)) {
-        const len2 = data15.length;
+      let data16 = data.rank;
+      if (Array.isArray(data16)) {
+        const len2 = data16.length;
         for (let i2 = 0; i2 < len2; i2++) {
-          if (typeof data15[i2] !== "string") {
-            const err22 = { instancePath: instancePath + "/rank/" + i2, schemaPath: "#/properties/rank/items/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+          if (typeof data16[i2] !== "string") {
+            const err23 = { instancePath: instancePath + "/rank/" + i2, schemaPath: "#/properties/rank/items/type", keyword: "type", params: { type: "string" }, message: "must be string" };
             if (vErrors === null) {
-              vErrors = [err22];
+              vErrors = [err23];
             } else {
-              vErrors.push(err22);
+              vErrors.push(err23);
             }
             errors++;
           }
         }
       } else {
-        const err23 = { instancePath: instancePath + "/rank", schemaPath: "#/properties/rank/type", keyword: "type", params: { type: "array" }, message: "must be array" };
+        const err24 = { instancePath: instancePath + "/rank", schemaPath: "#/properties/rank/type", keyword: "type", params: { type: "array" }, message: "must be array" };
         if (vErrors === null) {
-          vErrors = [err23];
+          vErrors = [err24];
         } else {
-          vErrors.push(err23);
+          vErrors.push(err24);
         }
         errors++;
       }
     }
     if (data.surfaces !== void 0) {
-      let data17 = data.surfaces;
-      if (Array.isArray(data17)) {
-        const len3 = data17.length;
+      let data18 = data.surfaces;
+      if (Array.isArray(data18)) {
+        const len3 = data18.length;
         for (let i3 = 0; i3 < len3; i3++) {
-          if (typeof data17[i3] !== "string") {
-            const err24 = { instancePath: instancePath + "/surfaces/" + i3, schemaPath: "#/properties/surfaces/items/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+          if (typeof data18[i3] !== "string") {
+            const err25 = { instancePath: instancePath + "/surfaces/" + i3, schemaPath: "#/properties/surfaces/items/type", keyword: "type", params: { type: "string" }, message: "must be string" };
             if (vErrors === null) {
-              vErrors = [err24];
+              vErrors = [err25];
             } else {
-              vErrors.push(err24);
+              vErrors.push(err25);
             }
             errors++;
           }
         }
       } else {
-        const err25 = { instancePath: instancePath + "/surfaces", schemaPath: "#/properties/surfaces/type", keyword: "type", params: { type: "array" }, message: "must be array" };
-        if (vErrors === null) {
-          vErrors = [err25];
-        } else {
-          vErrors.push(err25);
-        }
-        errors++;
-      }
-    }
-    if (data.target !== void 0) {
-      let data19 = data.target;
-      const _errs42 = errors;
-      let valid10 = false;
-      const _errs43 = errors;
-      if (typeof data19 !== "string") {
-        const err26 = { instancePath: instancePath + "/target", schemaPath: "#/properties/target/anyOf/0/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+        const err26 = { instancePath: instancePath + "/surfaces", schemaPath: "#/properties/surfaces/type", keyword: "type", params: { type: "array" }, message: "must be array" };
         if (vErrors === null) {
           vErrors = [err26];
         } else {
@@ -14159,105 +14199,120 @@ function validate117(data, { instancePath = "", parentData, parentDataProperty, 
         }
         errors++;
       }
-      var _valid0 = _errs43 === errors;
+    }
+    if (data.target !== void 0) {
+      let data20 = data.target;
+      const _errs44 = errors;
+      let valid10 = false;
+      const _errs45 = errors;
+      if (typeof data20 !== "string") {
+        const err27 = { instancePath: instancePath + "/target", schemaPath: "#/properties/target/anyOf/0/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+        if (vErrors === null) {
+          vErrors = [err27];
+        } else {
+          vErrors.push(err27);
+        }
+        errors++;
+      }
+      var _valid0 = _errs45 === errors;
       valid10 = valid10 || _valid0;
       if (!valid10) {
-        const _errs45 = errors;
-        if (Array.isArray(data19)) {
-          const len4 = data19.length;
+        const _errs47 = errors;
+        if (Array.isArray(data20)) {
+          const len4 = data20.length;
           for (let i4 = 0; i4 < len4; i4++) {
-            if (typeof data19[i4] !== "string") {
-              const err27 = { instancePath: instancePath + "/target/" + i4, schemaPath: "#/properties/target/anyOf/1/items/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+            if (typeof data20[i4] !== "string") {
+              const err28 = { instancePath: instancePath + "/target/" + i4, schemaPath: "#/properties/target/anyOf/1/items/type", keyword: "type", params: { type: "string" }, message: "must be string" };
               if (vErrors === null) {
-                vErrors = [err27];
+                vErrors = [err28];
               } else {
-                vErrors.push(err27);
+                vErrors.push(err28);
               }
               errors++;
             }
           }
         } else {
-          const err28 = { instancePath: instancePath + "/target", schemaPath: "#/properties/target/anyOf/1/type", keyword: "type", params: { type: "array" }, message: "must be array" };
+          const err29 = { instancePath: instancePath + "/target", schemaPath: "#/properties/target/anyOf/1/type", keyword: "type", params: { type: "array" }, message: "must be array" };
           if (vErrors === null) {
-            vErrors = [err28];
+            vErrors = [err29];
           } else {
-            vErrors.push(err28);
+            vErrors.push(err29);
           }
           errors++;
         }
-        var _valid0 = _errs45 === errors;
+        var _valid0 = _errs47 === errors;
         valid10 = valid10 || _valid0;
         if (!valid10) {
-          const _errs49 = errors;
-          if (data19 && typeof data19 == "object" && !Array.isArray(data19)) {
-            if (data19.children_of === void 0) {
-              const err29 = { instancePath: instancePath + "/target", schemaPath: "#/definitions/RuleTargetSelectorDoc/required", keyword: "required", params: { missingProperty: "children_of" }, message: "must have required property 'children_of'" };
+          const _errs51 = errors;
+          if (data20 && typeof data20 == "object" && !Array.isArray(data20)) {
+            if (data20.children_of === void 0) {
+              const err30 = { instancePath: instancePath + "/target", schemaPath: "#/definitions/RuleTargetSelectorDoc/required", keyword: "required", params: { missingProperty: "children_of" }, message: "must have required property 'children_of'" };
               if (vErrors === null) {
-                vErrors = [err29];
+                vErrors = [err30];
               } else {
-                vErrors.push(err29);
+                vErrors.push(err30);
               }
               errors++;
             }
-            for (const key1 in data19) {
+            for (const key1 in data20) {
               if (!(key1 === "children_of")) {
-                const err30 = { instancePath: instancePath + "/target", schemaPath: "#/definitions/RuleTargetSelectorDoc/additionalProperties", keyword: "additionalProperties", params: { additionalProperty: key1 }, message: "must NOT have additional properties" };
+                const err31 = { instancePath: instancePath + "/target", schemaPath: "#/definitions/RuleTargetSelectorDoc/additionalProperties", keyword: "additionalProperties", params: { additionalProperty: key1 }, message: "must NOT have additional properties" };
                 if (vErrors === null) {
-                  vErrors = [err30];
+                  vErrors = [err31];
                 } else {
-                  vErrors.push(err30);
+                  vErrors.push(err31);
                 }
                 errors++;
               }
             }
-            if (data19.children_of !== void 0) {
-              let data21 = data19.children_of;
-              if (typeof data21 === "string") {
-                if (func14(data21) < 1) {
-                  const err31 = { instancePath: instancePath + "/target/children_of", schemaPath: "#/definitions/RuleTargetSelectorDoc/properties/children_of/minLength", keyword: "minLength", params: { limit: 1 }, message: "must NOT have fewer than 1 characters" };
+            if (data20.children_of !== void 0) {
+              let data22 = data20.children_of;
+              if (typeof data22 === "string") {
+                if (func7(data22) < 1) {
+                  const err32 = { instancePath: instancePath + "/target/children_of", schemaPath: "#/definitions/RuleTargetSelectorDoc/properties/children_of/minLength", keyword: "minLength", params: { limit: 1 }, message: "must NOT have fewer than 1 characters" };
                   if (vErrors === null) {
-                    vErrors = [err31];
+                    vErrors = [err32];
                   } else {
-                    vErrors.push(err31);
+                    vErrors.push(err32);
                   }
                   errors++;
                 }
               } else {
-                const err32 = { instancePath: instancePath + "/target/children_of", schemaPath: "#/definitions/RuleTargetSelectorDoc/properties/children_of/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+                const err33 = { instancePath: instancePath + "/target/children_of", schemaPath: "#/definitions/RuleTargetSelectorDoc/properties/children_of/type", keyword: "type", params: { type: "string" }, message: "must be string" };
                 if (vErrors === null) {
-                  vErrors = [err32];
+                  vErrors = [err33];
                 } else {
-                  vErrors.push(err32);
+                  vErrors.push(err33);
                 }
                 errors++;
               }
             }
           } else {
-            const err33 = { instancePath: instancePath + "/target", schemaPath: "#/definitions/RuleTargetSelectorDoc/type", keyword: "type", params: { type: "object" }, message: "must be object" };
+            const err34 = { instancePath: instancePath + "/target", schemaPath: "#/definitions/RuleTargetSelectorDoc/type", keyword: "type", params: { type: "object" }, message: "must be object" };
             if (vErrors === null) {
-              vErrors = [err33];
+              vErrors = [err34];
             } else {
-              vErrors.push(err33);
+              vErrors.push(err34);
             }
             errors++;
           }
-          var _valid0 = _errs49 === errors;
+          var _valid0 = _errs51 === errors;
           valid10 = valid10 || _valid0;
         }
       }
       if (!valid10) {
-        const err34 = { instancePath: instancePath + "/target", schemaPath: "#/properties/target/anyOf", keyword: "anyOf", params: {}, message: "must match a schema in anyOf" };
+        const err35 = { instancePath: instancePath + "/target", schemaPath: "#/properties/target/anyOf", keyword: "anyOf", params: {}, message: "must match a schema in anyOf" };
         if (vErrors === null) {
-          vErrors = [err34];
+          vErrors = [err35];
         } else {
-          vErrors.push(err34);
+          vErrors.push(err35);
         }
         errors++;
       } else {
-        errors = _errs42;
+        errors = _errs44;
         if (vErrors !== null) {
-          if (_errs42) {
-            vErrors.length = _errs42;
+          if (_errs44) {
+            vErrors.length = _errs44;
           } else {
             vErrors = null;
           }
@@ -14266,11 +14321,11 @@ function validate117(data, { instancePath = "", parentData, parentDataProperty, 
     }
     if (data.to !== void 0) {
       if (typeof data.to !== "string") {
-        const err35 = { instancePath: instancePath + "/to", schemaPath: "#/properties/to/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+        const err36 = { instancePath: instancePath + "/to", schemaPath: "#/properties/to/type", keyword: "type", params: { type: "string" }, message: "must be string" };
         if (vErrors === null) {
-          vErrors = [err35];
+          vErrors = [err36];
         } else {
-          vErrors.push(err35);
+          vErrors.push(err36);
         }
         errors++;
       }
@@ -14282,49 +14337,49 @@ function validate117(data, { instancePath = "", parentData, parentDataProperty, 
       }
     }
     if (data.with !== void 0) {
-      let data24 = data.with;
-      const _errs59 = errors;
+      let data25 = data.with;
+      const _errs61 = errors;
       let valid15 = false;
-      const _errs60 = errors;
-      if (typeof data24 !== "string") {
-        const err36 = { instancePath: instancePath + "/with", schemaPath: "#/properties/with/anyOf/0/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+      const _errs62 = errors;
+      if (typeof data25 !== "string") {
+        const err37 = { instancePath: instancePath + "/with", schemaPath: "#/properties/with/anyOf/0/type", keyword: "type", params: { type: "string" }, message: "must be string" };
         if (vErrors === null) {
-          vErrors = [err36];
+          vErrors = [err37];
         } else {
-          vErrors.push(err36);
+          vErrors.push(err37);
         }
         errors++;
       }
-      var _valid1 = _errs60 === errors;
+      var _valid1 = _errs62 === errors;
       valid15 = valid15 || _valid1;
       if (!valid15) {
-        const _errs62 = errors;
-        if (data24 && typeof data24 == "object" && !Array.isArray(data24)) {
+        const _errs64 = errors;
+        if (data25 && typeof data25 == "object" && !Array.isArray(data25)) {
         } else {
-          const err37 = { instancePath: instancePath + "/with", schemaPath: "#/definitions/Record%3Cstring%2Cunknown%3E/type", keyword: "type", params: { type: "object" }, message: "must be object" };
+          const err38 = { instancePath: instancePath + "/with", schemaPath: "#/definitions/Record%3Cstring%2Cunknown%3E/type", keyword: "type", params: { type: "object" }, message: "must be object" };
           if (vErrors === null) {
-            vErrors = [err37];
+            vErrors = [err38];
           } else {
-            vErrors.push(err37);
+            vErrors.push(err38);
           }
           errors++;
         }
-        var _valid1 = _errs62 === errors;
+        var _valid1 = _errs64 === errors;
         valid15 = valid15 || _valid1;
       }
       if (!valid15) {
-        const err38 = { instancePath: instancePath + "/with", schemaPath: "#/properties/with/anyOf", keyword: "anyOf", params: {}, message: "must match a schema in anyOf" };
+        const err39 = { instancePath: instancePath + "/with", schemaPath: "#/properties/with/anyOf", keyword: "anyOf", params: {}, message: "must match a schema in anyOf" };
         if (vErrors === null) {
-          vErrors = [err38];
+          vErrors = [err39];
         } else {
-          vErrors.push(err38);
+          vErrors.push(err39);
         }
         errors++;
       } else {
-        errors = _errs59;
+        errors = _errs61;
         if (vErrors !== null) {
-          if (_errs59) {
-            vErrors.length = _errs59;
+          if (_errs61) {
+            vErrors.length = _errs61;
           } else {
             vErrors = null;
           }
@@ -14332,11 +14387,11 @@ function validate117(data, { instancePath = "", parentData, parentDataProperty, 
       }
     }
   } else {
-    const err39 = { instancePath, schemaPath: "#/type", keyword: "type", params: { type: "object" }, message: "must be object" };
+    const err40 = { instancePath, schemaPath: "#/type", keyword: "type", params: { type: "object" }, message: "must be object" };
     if (vErrors === null) {
-      vErrors = [err39];
+      vErrors = [err40];
     } else {
-      vErrors.push(err39);
+      vErrors.push(err40);
     }
     errors++;
   }
@@ -14675,13 +14730,136 @@ function validate11(data, { instancePath = "", parentData, parentDataProperty, r
         errors++;
       }
     }
-    if (data.name !== void 0) {
-      if (typeof data.name !== "string") {
-        const err23 = { instancePath: instancePath + "/name", schemaPath: "#/properties/name/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+    if (data.marking !== void 0) {
+      if (typeof data.marking !== "string") {
+        const err23 = { instancePath: instancePath + "/marking", schemaPath: "#/properties/marking/type", keyword: "type", params: { type: "string" }, message: "must be string" };
         if (vErrors === null) {
           vErrors = [err23];
         } else {
           vErrors.push(err23);
+        }
+        errors++;
+      }
+    }
+    if (data.marking_scheme !== void 0) {
+      let data18 = data.marking_scheme;
+      const _errs38 = errors;
+      let valid7 = false;
+      const _errs39 = errors;
+      if (data18 && typeof data18 == "object" && !Array.isArray(data18)) {
+        if (data18.id === void 0) {
+          const err24 = { instancePath: instancePath + "/marking_scheme", schemaPath: "#/definitions/MarkingSchemeRefDoc/required", keyword: "required", params: { missingProperty: "id" }, message: "must have required property 'id'" };
+          if (vErrors === null) {
+            vErrors = [err24];
+          } else {
+            vErrors.push(err24);
+          }
+          errors++;
+        }
+        for (const key2 in data18) {
+          if (!(key2 === "id" || key2 === "version")) {
+            const err25 = { instancePath: instancePath + "/marking_scheme", schemaPath: "#/definitions/MarkingSchemeRefDoc/additionalProperties", keyword: "additionalProperties", params: { additionalProperty: key2 }, message: "must NOT have additional properties" };
+            if (vErrors === null) {
+              vErrors = [err25];
+            } else {
+              vErrors.push(err25);
+            }
+            errors++;
+          }
+        }
+        if (data18.id !== void 0) {
+          let data19 = data18.id;
+          if (typeof data19 === "string") {
+            if (func7(data19) < 1) {
+              const err26 = { instancePath: instancePath + "/marking_scheme/id", schemaPath: "#/definitions/MarkingSchemeRefDoc/properties/id/minLength", keyword: "minLength", params: { limit: 1 }, message: "must NOT have fewer than 1 characters" };
+              if (vErrors === null) {
+                vErrors = [err26];
+              } else {
+                vErrors.push(err26);
+              }
+              errors++;
+            }
+          } else {
+            const err27 = { instancePath: instancePath + "/marking_scheme/id", schemaPath: "#/definitions/MarkingSchemeRefDoc/properties/id/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+            if (vErrors === null) {
+              vErrors = [err27];
+            } else {
+              vErrors.push(err27);
+            }
+            errors++;
+          }
+        }
+        if (data18.version !== void 0) {
+          if (typeof data18.version !== "string") {
+            const err28 = { instancePath: instancePath + "/marking_scheme/version", schemaPath: "#/definitions/MarkingSchemeRefDoc/properties/version/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+            if (vErrors === null) {
+              vErrors = [err28];
+            } else {
+              vErrors.push(err28);
+            }
+            errors++;
+          }
+        }
+      } else {
+        const err29 = { instancePath: instancePath + "/marking_scheme", schemaPath: "#/definitions/MarkingSchemeRefDoc/type", keyword: "type", params: { type: "object" }, message: "must be object" };
+        if (vErrors === null) {
+          vErrors = [err29];
+        } else {
+          vErrors.push(err29);
+        }
+        errors++;
+      }
+      var _valid0 = _errs39 === errors;
+      valid7 = valid7 || _valid0;
+      if (!valid7) {
+        const _errs47 = errors;
+        if (typeof data18 !== "string") {
+          const err30 = { instancePath: instancePath + "/marking_scheme", schemaPath: "#/properties/marking_scheme/anyOf/1/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+          if (vErrors === null) {
+            vErrors = [err30];
+          } else {
+            vErrors.push(err30);
+          }
+          errors++;
+        }
+        if ("self" !== data18) {
+          const err31 = { instancePath: instancePath + "/marking_scheme", schemaPath: "#/properties/marking_scheme/anyOf/1/const", keyword: "const", params: { allowedValue: "self" }, message: "must be equal to constant" };
+          if (vErrors === null) {
+            vErrors = [err31];
+          } else {
+            vErrors.push(err31);
+          }
+          errors++;
+        }
+        var _valid0 = _errs47 === errors;
+        valid7 = valid7 || _valid0;
+      }
+      if (!valid7) {
+        const err32 = { instancePath: instancePath + "/marking_scheme", schemaPath: "#/properties/marking_scheme/anyOf", keyword: "anyOf", params: {}, message: "must match a schema in anyOf" };
+        if (vErrors === null) {
+          vErrors = [err32];
+        } else {
+          vErrors.push(err32);
+        }
+        errors++;
+      } else {
+        errors = _errs38;
+        if (vErrors !== null) {
+          if (_errs38) {
+            vErrors.length = _errs38;
+          } else {
+            vErrors = null;
+          }
+        }
+      }
+    }
+    if (data.name !== void 0) {
+      if (typeof data.name !== "string") {
+        const err33 = { instancePath: instancePath + "/name", schemaPath: "#/properties/name/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+        if (vErrors === null) {
+          vErrors = [err33];
+        } else {
+          vErrors.push(err33);
         }
         errors++;
       }
@@ -14699,22 +14877,22 @@ function validate11(data, { instancePath = "", parentData, parentDataProperty, r
       }
     }
     if (data.part_scope !== void 0) {
-      let data20 = data.part_scope;
-      if (typeof data20 !== "string") {
-        const err24 = { instancePath: instancePath + "/part_scope", schemaPath: "#/properties/part_scope/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+      let data24 = data.part_scope;
+      if (typeof data24 !== "string") {
+        const err34 = { instancePath: instancePath + "/part_scope", schemaPath: "#/properties/part_scope/type", keyword: "type", params: { type: "string" }, message: "must be string" };
         if (vErrors === null) {
-          vErrors = [err24];
+          vErrors = [err34];
         } else {
-          vErrors.push(err24);
+          vErrors.push(err34);
         }
         errors++;
       }
-      if (!(data20 === "paragraph" || data20 === "until-next" || data20 === "document")) {
-        const err25 = { instancePath: instancePath + "/part_scope", schemaPath: "#/properties/part_scope/enum", keyword: "enum", params: { allowedValues: schema12.properties.part_scope.enum }, message: "must be equal to one of the allowed values" };
+      if (!(data24 === "paragraph" || data24 === "until-next" || data24 === "document")) {
+        const err35 = { instancePath: instancePath + "/part_scope", schemaPath: "#/properties/part_scope/enum", keyword: "enum", params: { allowedValues: schema12.properties.part_scope.enum }, message: "must be equal to one of the allowed values" };
         if (vErrors === null) {
-          vErrors = [err25];
+          vErrors = [err35];
         } else {
-          vErrors.push(err25);
+          vErrors.push(err35);
         }
         errors++;
       }
@@ -14727,237 +14905,132 @@ function validate11(data, { instancePath = "", parentData, parentDataProperty, r
     }
     if (data.replaced_by !== void 0) {
       if (typeof data.replaced_by !== "string") {
-        const err26 = { instancePath: instancePath + "/replaced_by", schemaPath: "#/properties/replaced_by/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+        const err36 = { instancePath: instancePath + "/replaced_by", schemaPath: "#/properties/replaced_by/type", keyword: "type", params: { type: "string" }, message: "must be string" };
         if (vErrors === null) {
-          vErrors = [err26];
+          vErrors = [err36];
         } else {
-          vErrors.push(err26);
+          vErrors.push(err36);
         }
         errors++;
       }
     }
     if (data.role_aware !== void 0) {
       if (typeof data.role_aware !== "boolean") {
-        const err27 = { instancePath: instancePath + "/role_aware", schemaPath: "#/properties/role_aware/type", keyword: "type", params: { type: "boolean" }, message: "must be boolean" };
+        const err37 = { instancePath: instancePath + "/role_aware", schemaPath: "#/properties/role_aware/type", keyword: "type", params: { type: "boolean" }, message: "must be boolean" };
         if (vErrors === null) {
-          vErrors = [err27];
+          vErrors = [err37];
         } else {
-          vErrors.push(err27);
+          vErrors.push(err37);
         }
         errors++;
       }
     }
     if (data.role_detection !== void 0) {
-      let data24 = data.role_detection;
-      if (data24 && typeof data24 == "object" && !Array.isArray(data24)) {
-        for (const key2 in data24) {
-          if (!(key2 === "part" || key2 === "whole")) {
-            const err28 = { instancePath: instancePath + "/role_detection", schemaPath: "#/properties/role_detection/additionalProperties", keyword: "additionalProperties", params: { additionalProperty: key2 }, message: "must NOT have additional properties" };
+      let data28 = data.role_detection;
+      if (data28 && typeof data28 == "object" && !Array.isArray(data28)) {
+        for (const key3 in data28) {
+          if (!(key3 === "part" || key3 === "whole")) {
+            const err38 = { instancePath: instancePath + "/role_detection", schemaPath: "#/properties/role_detection/additionalProperties", keyword: "additionalProperties", params: { additionalProperty: key3 }, message: "must NOT have additional properties" };
             if (vErrors === null) {
-              vErrors = [err28];
+              vErrors = [err38];
             } else {
-              vErrors.push(err28);
+              vErrors.push(err38);
             }
             errors++;
           }
         }
-        if (data24.part !== void 0) {
-          let data25 = data24.part;
-          const _errs50 = errors;
-          let valid8 = false;
-          const _errs51 = errors;
-          if (Array.isArray(data25)) {
-            const len2 = data25.length;
-            for (let i2 = 0; i2 < len2; i2++) {
-              if (typeof data25[i2] !== "string") {
-                const err29 = { instancePath: instancePath + "/role_detection/part/" + i2, schemaPath: "#/properties/role_detection/properties/part/anyOf/0/items/type", keyword: "type", params: { type: "string" }, message: "must be string" };
-                if (vErrors === null) {
-                  vErrors = [err29];
-                } else {
-                  vErrors.push(err29);
-                }
-                errors++;
-              }
-            }
-          } else {
-            const err30 = { instancePath: instancePath + "/role_detection/part", schemaPath: "#/properties/role_detection/properties/part/anyOf/0/type", keyword: "type", params: { type: "array" }, message: "must be array" };
-            if (vErrors === null) {
-              vErrors = [err30];
-            } else {
-              vErrors.push(err30);
-            }
-            errors++;
-          }
-          var _valid0 = _errs51 === errors;
-          valid8 = valid8 || _valid0;
-          if (!valid8) {
-            const _errs55 = errors;
-            if (data25 && typeof data25 == "object" && !Array.isArray(data25)) {
-              for (const key3 in data25) {
-                if (!(key3 === "required_when" || key3 === "views")) {
-                  const err31 = { instancePath: instancePath + "/role_detection/part", schemaPath: "#/properties/role_detection/properties/part/anyOf/1/additionalProperties", keyword: "additionalProperties", params: { additionalProperty: key3 }, message: "must NOT have additional properties" };
-                  if (vErrors === null) {
-                    vErrors = [err31];
-                  } else {
-                    vErrors.push(err31);
-                  }
-                  errors++;
-                }
-              }
-              if (data25.required_when !== void 0) {
-                if (!validate15(data25.required_when, { instancePath: instancePath + "/role_detection/part/required_when", parentData: data25, parentDataProperty: "required_when", rootData })) {
-                  vErrors = vErrors === null ? validate15.errors : vErrors.concat(validate15.errors);
-                  errors = vErrors.length;
-                }
-              }
-              if (data25.views !== void 0) {
-                let data28 = data25.views;
-                if (Array.isArray(data28)) {
-                  const len3 = data28.length;
-                  for (let i3 = 0; i3 < len3; i3++) {
-                    if (typeof data28[i3] !== "string") {
-                      const err32 = { instancePath: instancePath + "/role_detection/part/views/" + i3, schemaPath: "#/properties/role_detection/properties/part/anyOf/1/properties/views/items/type", keyword: "type", params: { type: "string" }, message: "must be string" };
-                      if (vErrors === null) {
-                        vErrors = [err32];
-                      } else {
-                        vErrors.push(err32);
-                      }
-                      errors++;
-                    }
-                  }
-                } else {
-                  const err33 = { instancePath: instancePath + "/role_detection/part/views", schemaPath: "#/properties/role_detection/properties/part/anyOf/1/properties/views/type", keyword: "type", params: { type: "array" }, message: "must be array" };
-                  if (vErrors === null) {
-                    vErrors = [err33];
-                  } else {
-                    vErrors.push(err33);
-                  }
-                  errors++;
-                }
-              }
-            } else {
-              const err34 = { instancePath: instancePath + "/role_detection/part", schemaPath: "#/properties/role_detection/properties/part/anyOf/1/type", keyword: "type", params: { type: "object" }, message: "must be object" };
-              if (vErrors === null) {
-                vErrors = [err34];
-              } else {
-                vErrors.push(err34);
-              }
-              errors++;
-            }
-            var _valid0 = _errs55 === errors;
-            valid8 = valid8 || _valid0;
-          }
-          if (!valid8) {
-            const err35 = { instancePath: instancePath + "/role_detection/part", schemaPath: "#/properties/role_detection/properties/part/anyOf", keyword: "anyOf", params: {}, message: "must match a schema in anyOf" };
-            if (vErrors === null) {
-              vErrors = [err35];
-            } else {
-              vErrors.push(err35);
-            }
-            errors++;
-          } else {
-            errors = _errs50;
-            if (vErrors !== null) {
-              if (_errs50) {
-                vErrors.length = _errs50;
-              } else {
-                vErrors = null;
-              }
-            }
-          }
-        }
-        if (data24.whole !== void 0) {
-          let data30 = data24.whole;
+        if (data28.part !== void 0) {
+          let data29 = data28.part;
           const _errs64 = errors;
-          let valid14 = false;
+          let valid11 = false;
           const _errs65 = errors;
-          if (Array.isArray(data30)) {
-            const len4 = data30.length;
-            for (let i4 = 0; i4 < len4; i4++) {
-              if (typeof data30[i4] !== "string") {
-                const err36 = { instancePath: instancePath + "/role_detection/whole/" + i4, schemaPath: "#/properties/role_detection/properties/whole/anyOf/0/items/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+          if (Array.isArray(data29)) {
+            const len2 = data29.length;
+            for (let i2 = 0; i2 < len2; i2++) {
+              if (typeof data29[i2] !== "string") {
+                const err39 = { instancePath: instancePath + "/role_detection/part/" + i2, schemaPath: "#/properties/role_detection/properties/part/anyOf/0/items/type", keyword: "type", params: { type: "string" }, message: "must be string" };
                 if (vErrors === null) {
-                  vErrors = [err36];
+                  vErrors = [err39];
                 } else {
-                  vErrors.push(err36);
+                  vErrors.push(err39);
                 }
                 errors++;
               }
             }
           } else {
-            const err37 = { instancePath: instancePath + "/role_detection/whole", schemaPath: "#/properties/role_detection/properties/whole/anyOf/0/type", keyword: "type", params: { type: "array" }, message: "must be array" };
+            const err40 = { instancePath: instancePath + "/role_detection/part", schemaPath: "#/properties/role_detection/properties/part/anyOf/0/type", keyword: "type", params: { type: "array" }, message: "must be array" };
             if (vErrors === null) {
-              vErrors = [err37];
+              vErrors = [err40];
             } else {
-              vErrors.push(err37);
+              vErrors.push(err40);
             }
             errors++;
           }
           var _valid1 = _errs65 === errors;
-          valid14 = valid14 || _valid1;
-          if (!valid14) {
+          valid11 = valid11 || _valid1;
+          if (!valid11) {
             const _errs69 = errors;
-            if (data30 && typeof data30 == "object" && !Array.isArray(data30)) {
-              for (const key4 in data30) {
+            if (data29 && typeof data29 == "object" && !Array.isArray(data29)) {
+              for (const key4 in data29) {
                 if (!(key4 === "required_when" || key4 === "views")) {
-                  const err38 = { instancePath: instancePath + "/role_detection/whole", schemaPath: "#/properties/role_detection/properties/whole/anyOf/1/additionalProperties", keyword: "additionalProperties", params: { additionalProperty: key4 }, message: "must NOT have additional properties" };
+                  const err41 = { instancePath: instancePath + "/role_detection/part", schemaPath: "#/properties/role_detection/properties/part/anyOf/1/additionalProperties", keyword: "additionalProperties", params: { additionalProperty: key4 }, message: "must NOT have additional properties" };
                   if (vErrors === null) {
-                    vErrors = [err38];
+                    vErrors = [err41];
                   } else {
-                    vErrors.push(err38);
+                    vErrors.push(err41);
                   }
                   errors++;
                 }
               }
-              if (data30.required_when !== void 0) {
-                if (!validate15(data30.required_when, { instancePath: instancePath + "/role_detection/whole/required_when", parentData: data30, parentDataProperty: "required_when", rootData })) {
+              if (data29.required_when !== void 0) {
+                if (!validate15(data29.required_when, { instancePath: instancePath + "/role_detection/part/required_when", parentData: data29, parentDataProperty: "required_when", rootData })) {
                   vErrors = vErrors === null ? validate15.errors : vErrors.concat(validate15.errors);
                   errors = vErrors.length;
                 }
               }
-              if (data30.views !== void 0) {
-                let data33 = data30.views;
-                if (Array.isArray(data33)) {
-                  const len5 = data33.length;
-                  for (let i5 = 0; i5 < len5; i5++) {
-                    if (typeof data33[i5] !== "string") {
-                      const err39 = { instancePath: instancePath + "/role_detection/whole/views/" + i5, schemaPath: "#/properties/role_detection/properties/whole/anyOf/1/properties/views/items/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+              if (data29.views !== void 0) {
+                let data32 = data29.views;
+                if (Array.isArray(data32)) {
+                  const len3 = data32.length;
+                  for (let i3 = 0; i3 < len3; i3++) {
+                    if (typeof data32[i3] !== "string") {
+                      const err42 = { instancePath: instancePath + "/role_detection/part/views/" + i3, schemaPath: "#/properties/role_detection/properties/part/anyOf/1/properties/views/items/type", keyword: "type", params: { type: "string" }, message: "must be string" };
                       if (vErrors === null) {
-                        vErrors = [err39];
+                        vErrors = [err42];
                       } else {
-                        vErrors.push(err39);
+                        vErrors.push(err42);
                       }
                       errors++;
                     }
                   }
                 } else {
-                  const err40 = { instancePath: instancePath + "/role_detection/whole/views", schemaPath: "#/properties/role_detection/properties/whole/anyOf/1/properties/views/type", keyword: "type", params: { type: "array" }, message: "must be array" };
+                  const err43 = { instancePath: instancePath + "/role_detection/part/views", schemaPath: "#/properties/role_detection/properties/part/anyOf/1/properties/views/type", keyword: "type", params: { type: "array" }, message: "must be array" };
                   if (vErrors === null) {
-                    vErrors = [err40];
+                    vErrors = [err43];
                   } else {
-                    vErrors.push(err40);
+                    vErrors.push(err43);
                   }
                   errors++;
                 }
               }
             } else {
-              const err41 = { instancePath: instancePath + "/role_detection/whole", schemaPath: "#/properties/role_detection/properties/whole/anyOf/1/type", keyword: "type", params: { type: "object" }, message: "must be object" };
+              const err44 = { instancePath: instancePath + "/role_detection/part", schemaPath: "#/properties/role_detection/properties/part/anyOf/1/type", keyword: "type", params: { type: "object" }, message: "must be object" };
               if (vErrors === null) {
-                vErrors = [err41];
+                vErrors = [err44];
               } else {
-                vErrors.push(err41);
+                vErrors.push(err44);
               }
               errors++;
             }
             var _valid1 = _errs69 === errors;
-            valid14 = valid14 || _valid1;
+            valid11 = valid11 || _valid1;
           }
-          if (!valid14) {
-            const err42 = { instancePath: instancePath + "/role_detection/whole", schemaPath: "#/properties/role_detection/properties/whole/anyOf", keyword: "anyOf", params: {}, message: "must match a schema in anyOf" };
+          if (!valid11) {
+            const err45 = { instancePath: instancePath + "/role_detection/part", schemaPath: "#/properties/role_detection/properties/part/anyOf", keyword: "anyOf", params: {}, message: "must match a schema in anyOf" };
             if (vErrors === null) {
-              vErrors = [err42];
+              vErrors = [err45];
             } else {
-              vErrors.push(err42);
+              vErrors.push(err45);
             }
             errors++;
           } else {
@@ -14971,137 +15044,113 @@ function validate11(data, { instancePath = "", parentData, parentDataProperty, r
             }
           }
         }
-      } else {
-        const err43 = { instancePath: instancePath + "/role_detection", schemaPath: "#/properties/role_detection/type", keyword: "type", params: { type: "object" }, message: "must be object" };
-        if (vErrors === null) {
-          vErrors = [err43];
-        } else {
-          vErrors.push(err43);
-        }
-        errors++;
-      }
-    }
-    if (data.rollup_pipelines !== void 0) {
-      let data35 = data.rollup_pipelines;
-      if (Array.isArray(data35)) {
-        const len6 = data35.length;
-        for (let i6 = 0; i6 < len6; i6++) {
-          if (!validate112(data35[i6], { instancePath: instancePath + "/rollup_pipelines/" + i6, parentData: data35, parentDataProperty: i6, rootData })) {
-            vErrors = vErrors === null ? validate112.errors : vErrors.concat(validate112.errors);
-            errors = vErrors.length;
-          }
-        }
-      } else {
-        const err44 = { instancePath: instancePath + "/rollup_pipelines", schemaPath: "#/properties/rollup_pipelines/type", keyword: "type", params: { type: "array" }, message: "must be array" };
-        if (vErrors === null) {
-          vErrors = [err44];
-        } else {
-          vErrors.push(err44);
-        }
-        errors++;
-      }
-    }
-    if (data.rules !== void 0) {
-      let data37 = data.rules;
-      if (Array.isArray(data37)) {
-        const len7 = data37.length;
-        for (let i7 = 0; i7 < len7; i7++) {
-          if (!validate117(data37[i7], { instancePath: instancePath + "/rules/" + i7, parentData: data37, parentDataProperty: i7, rootData })) {
-            vErrors = vErrors === null ? validate117.errors : vErrors.concat(validate117.errors);
-            errors = vErrors.length;
-          }
-        }
-      } else {
-        const err45 = { instancePath: instancePath + "/rules", schemaPath: "#/properties/rules/type", keyword: "type", params: { type: "array" }, message: "must be array" };
-        if (vErrors === null) {
-          vErrors = [err45];
-        } else {
-          vErrors.push(err45);
-        }
-        errors++;
-      }
-    }
-    if (data.scope_label !== void 0) {
-      if (typeof data.scope_label !== "string") {
-        const err46 = { instancePath: instancePath + "/scope_label", schemaPath: "#/properties/scope_label/type", keyword: "type", params: { type: "string" }, message: "must be string" };
-        if (vErrors === null) {
-          vErrors = [err46];
-        } else {
-          vErrors.push(err46);
-        }
-        errors++;
-      }
-    }
-    if (data.scopes !== void 0) {
-      let data40 = data.scopes;
-      if (Array.isArray(data40)) {
-        const len8 = data40.length;
-        for (let i8 = 0; i8 < len8; i8++) {
-          let data41 = data40[i8];
-          if (data41 && typeof data41 == "object" && !Array.isArray(data41)) {
-            if (data41.id === void 0) {
-              const err47 = { instancePath: instancePath + "/scopes/" + i8, schemaPath: "#/properties/scopes/items/required", keyword: "required", params: { missingProperty: "id" }, message: "must have required property 'id'" };
-              if (vErrors === null) {
-                vErrors = [err47];
-              } else {
-                vErrors.push(err47);
-              }
-              errors++;
-            }
-            if (data41.label === void 0) {
-              const err48 = { instancePath: instancePath + "/scopes/" + i8, schemaPath: "#/properties/scopes/items/required", keyword: "required", params: { missingProperty: "label" }, message: "must have required property 'label'" };
-              if (vErrors === null) {
-                vErrors = [err48];
-              } else {
-                vErrors.push(err48);
-              }
-              errors++;
-            }
-            for (const key5 in data41) {
-              if (!(key5 === "id" || key5 === "label")) {
-                const err49 = { instancePath: instancePath + "/scopes/" + i8, schemaPath: "#/properties/scopes/items/additionalProperties", keyword: "additionalProperties", params: { additionalProperty: key5 }, message: "must NOT have additional properties" };
+        if (data28.whole !== void 0) {
+          let data34 = data28.whole;
+          const _errs78 = errors;
+          let valid17 = false;
+          const _errs79 = errors;
+          if (Array.isArray(data34)) {
+            const len4 = data34.length;
+            for (let i4 = 0; i4 < len4; i4++) {
+              if (typeof data34[i4] !== "string") {
+                const err46 = { instancePath: instancePath + "/role_detection/whole/" + i4, schemaPath: "#/properties/role_detection/properties/whole/anyOf/0/items/type", keyword: "type", params: { type: "string" }, message: "must be string" };
                 if (vErrors === null) {
-                  vErrors = [err49];
+                  vErrors = [err46];
                 } else {
-                  vErrors.push(err49);
-                }
-                errors++;
-              }
-            }
-            if (data41.id !== void 0) {
-              if (typeof data41.id !== "string") {
-                const err50 = { instancePath: instancePath + "/scopes/" + i8 + "/id", schemaPath: "#/properties/scopes/items/properties/id/type", keyword: "type", params: { type: "string" }, message: "must be string" };
-                if (vErrors === null) {
-                  vErrors = [err50];
-                } else {
-                  vErrors.push(err50);
-                }
-                errors++;
-              }
-            }
-            if (data41.label !== void 0) {
-              if (typeof data41.label !== "string") {
-                const err51 = { instancePath: instancePath + "/scopes/" + i8 + "/label", schemaPath: "#/properties/scopes/items/properties/label/type", keyword: "type", params: { type: "string" }, message: "must be string" };
-                if (vErrors === null) {
-                  vErrors = [err51];
-                } else {
-                  vErrors.push(err51);
+                  vErrors.push(err46);
                 }
                 errors++;
               }
             }
           } else {
-            const err52 = { instancePath: instancePath + "/scopes/" + i8, schemaPath: "#/properties/scopes/items/type", keyword: "type", params: { type: "object" }, message: "must be object" };
+            const err47 = { instancePath: instancePath + "/role_detection/whole", schemaPath: "#/properties/role_detection/properties/whole/anyOf/0/type", keyword: "type", params: { type: "array" }, message: "must be array" };
+            if (vErrors === null) {
+              vErrors = [err47];
+            } else {
+              vErrors.push(err47);
+            }
+            errors++;
+          }
+          var _valid2 = _errs79 === errors;
+          valid17 = valid17 || _valid2;
+          if (!valid17) {
+            const _errs83 = errors;
+            if (data34 && typeof data34 == "object" && !Array.isArray(data34)) {
+              for (const key5 in data34) {
+                if (!(key5 === "required_when" || key5 === "views")) {
+                  const err48 = { instancePath: instancePath + "/role_detection/whole", schemaPath: "#/properties/role_detection/properties/whole/anyOf/1/additionalProperties", keyword: "additionalProperties", params: { additionalProperty: key5 }, message: "must NOT have additional properties" };
+                  if (vErrors === null) {
+                    vErrors = [err48];
+                  } else {
+                    vErrors.push(err48);
+                  }
+                  errors++;
+                }
+              }
+              if (data34.required_when !== void 0) {
+                if (!validate15(data34.required_when, { instancePath: instancePath + "/role_detection/whole/required_when", parentData: data34, parentDataProperty: "required_when", rootData })) {
+                  vErrors = vErrors === null ? validate15.errors : vErrors.concat(validate15.errors);
+                  errors = vErrors.length;
+                }
+              }
+              if (data34.views !== void 0) {
+                let data37 = data34.views;
+                if (Array.isArray(data37)) {
+                  const len5 = data37.length;
+                  for (let i5 = 0; i5 < len5; i5++) {
+                    if (typeof data37[i5] !== "string") {
+                      const err49 = { instancePath: instancePath + "/role_detection/whole/views/" + i5, schemaPath: "#/properties/role_detection/properties/whole/anyOf/1/properties/views/items/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+                      if (vErrors === null) {
+                        vErrors = [err49];
+                      } else {
+                        vErrors.push(err49);
+                      }
+                      errors++;
+                    }
+                  }
+                } else {
+                  const err50 = { instancePath: instancePath + "/role_detection/whole/views", schemaPath: "#/properties/role_detection/properties/whole/anyOf/1/properties/views/type", keyword: "type", params: { type: "array" }, message: "must be array" };
+                  if (vErrors === null) {
+                    vErrors = [err50];
+                  } else {
+                    vErrors.push(err50);
+                  }
+                  errors++;
+                }
+              }
+            } else {
+              const err51 = { instancePath: instancePath + "/role_detection/whole", schemaPath: "#/properties/role_detection/properties/whole/anyOf/1/type", keyword: "type", params: { type: "object" }, message: "must be object" };
+              if (vErrors === null) {
+                vErrors = [err51];
+              } else {
+                vErrors.push(err51);
+              }
+              errors++;
+            }
+            var _valid2 = _errs83 === errors;
+            valid17 = valid17 || _valid2;
+          }
+          if (!valid17) {
+            const err52 = { instancePath: instancePath + "/role_detection/whole", schemaPath: "#/properties/role_detection/properties/whole/anyOf", keyword: "anyOf", params: {}, message: "must match a schema in anyOf" };
             if (vErrors === null) {
               vErrors = [err52];
             } else {
               vErrors.push(err52);
             }
             errors++;
+          } else {
+            errors = _errs78;
+            if (vErrors !== null) {
+              if (_errs78) {
+                vErrors.length = _errs78;
+              } else {
+                vErrors = null;
+              }
+            }
           }
         }
       } else {
-        const err53 = { instancePath: instancePath + "/scopes", schemaPath: "#/properties/scopes/type", keyword: "type", params: { type: "array" }, message: "must be array" };
+        const err53 = { instancePath: instancePath + "/role_detection", schemaPath: "#/properties/role_detection/type", keyword: "type", params: { type: "object" }, message: "must be object" };
         if (vErrors === null) {
           vErrors = [err53];
         } else {
@@ -15110,9 +15159,18 @@ function validate11(data, { instancePath = "", parentData, parentDataProperty, r
         errors++;
       }
     }
-    if (data.tier !== void 0) {
-      if (typeof data.tier !== "string") {
-        const err54 = { instancePath: instancePath + "/tier", schemaPath: "#/properties/tier/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+    if (data.rollup_pipelines !== void 0) {
+      let data39 = data.rollup_pipelines;
+      if (Array.isArray(data39)) {
+        const len6 = data39.length;
+        for (let i6 = 0; i6 < len6; i6++) {
+          if (!validate112(data39[i6], { instancePath: instancePath + "/rollup_pipelines/" + i6, parentData: data39, parentDataProperty: i6, rootData })) {
+            vErrors = vErrors === null ? validate112.errors : vErrors.concat(validate112.errors);
+            errors = vErrors.length;
+          }
+        }
+      } else {
+        const err54 = { instancePath: instancePath + "/rollup_pipelines", schemaPath: "#/properties/rollup_pipelines/type", keyword: "type", params: { type: "array" }, message: "must be array" };
         if (vErrors === null) {
           vErrors = [err54];
         } else {
@@ -15121,10 +15179,18 @@ function validate11(data, { instancePath = "", parentData, parentDataProperty, r
         errors++;
       }
     }
-    if (data.type !== void 0) {
-      let data45 = data.type;
-      if (typeof data45 !== "string") {
-        const err55 = { instancePath: instancePath + "/type", schemaPath: "#/properties/type/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+    if (data.rules !== void 0) {
+      let data41 = data.rules;
+      if (Array.isArray(data41)) {
+        const len7 = data41.length;
+        for (let i7 = 0; i7 < len7; i7++) {
+          if (!validate117(data41[i7], { instancePath: instancePath + "/rules/" + i7, parentData: data41, parentDataProperty: i7, rootData })) {
+            vErrors = vErrors === null ? validate117.errors : vErrors.concat(validate117.errors);
+            errors = vErrors.length;
+          }
+        }
+      } else {
+        const err55 = { instancePath: instancePath + "/rules", schemaPath: "#/properties/rules/type", keyword: "type", params: { type: "array" }, message: "must be array" };
         if (vErrors === null) {
           vErrors = [err55];
         } else {
@@ -15132,8 +15198,10 @@ function validate11(data, { instancePath = "", parentData, parentDataProperty, r
         }
         errors++;
       }
-      if (!(data45 === "scheme" || data45 === "layer")) {
-        const err56 = { instancePath: instancePath + "/type", schemaPath: "#/properties/type/enum", keyword: "enum", params: { allowedValues: schema12.properties.type.enum }, message: "must be equal to one of the allowed values" };
+    }
+    if (data.scope_label !== void 0) {
+      if (typeof data.scope_label !== "string") {
+        const err56 = { instancePath: instancePath + "/scope_label", schemaPath: "#/properties/scope_label/type", keyword: "type", params: { type: "string" }, message: "must be string" };
         if (vErrors === null) {
           vErrors = [err56];
         } else {
@@ -15142,26 +15210,136 @@ function validate11(data, { instancePath = "", parentData, parentDataProperty, r
         errors++;
       }
     }
-    if (data.ui !== void 0) {
-      let data46 = data.ui;
-      if (data46 && typeof data46 == "object" && !Array.isArray(data46)) {
+    if (data.scopes !== void 0) {
+      let data44 = data.scopes;
+      if (Array.isArray(data44)) {
+        const len8 = data44.length;
+        for (let i8 = 0; i8 < len8; i8++) {
+          let data45 = data44[i8];
+          if (data45 && typeof data45 == "object" && !Array.isArray(data45)) {
+            if (data45.id === void 0) {
+              const err57 = { instancePath: instancePath + "/scopes/" + i8, schemaPath: "#/properties/scopes/items/required", keyword: "required", params: { missingProperty: "id" }, message: "must have required property 'id'" };
+              if (vErrors === null) {
+                vErrors = [err57];
+              } else {
+                vErrors.push(err57);
+              }
+              errors++;
+            }
+            if (data45.label === void 0) {
+              const err58 = { instancePath: instancePath + "/scopes/" + i8, schemaPath: "#/properties/scopes/items/required", keyword: "required", params: { missingProperty: "label" }, message: "must have required property 'label'" };
+              if (vErrors === null) {
+                vErrors = [err58];
+              } else {
+                vErrors.push(err58);
+              }
+              errors++;
+            }
+            for (const key6 in data45) {
+              if (!(key6 === "id" || key6 === "label")) {
+                const err59 = { instancePath: instancePath + "/scopes/" + i8, schemaPath: "#/properties/scopes/items/additionalProperties", keyword: "additionalProperties", params: { additionalProperty: key6 }, message: "must NOT have additional properties" };
+                if (vErrors === null) {
+                  vErrors = [err59];
+                } else {
+                  vErrors.push(err59);
+                }
+                errors++;
+              }
+            }
+            if (data45.id !== void 0) {
+              if (typeof data45.id !== "string") {
+                const err60 = { instancePath: instancePath + "/scopes/" + i8 + "/id", schemaPath: "#/properties/scopes/items/properties/id/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+                if (vErrors === null) {
+                  vErrors = [err60];
+                } else {
+                  vErrors.push(err60);
+                }
+                errors++;
+              }
+            }
+            if (data45.label !== void 0) {
+              if (typeof data45.label !== "string") {
+                const err61 = { instancePath: instancePath + "/scopes/" + i8 + "/label", schemaPath: "#/properties/scopes/items/properties/label/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+                if (vErrors === null) {
+                  vErrors = [err61];
+                } else {
+                  vErrors.push(err61);
+                }
+                errors++;
+              }
+            }
+          } else {
+            const err62 = { instancePath: instancePath + "/scopes/" + i8, schemaPath: "#/properties/scopes/items/type", keyword: "type", params: { type: "object" }, message: "must be object" };
+            if (vErrors === null) {
+              vErrors = [err62];
+            } else {
+              vErrors.push(err62);
+            }
+            errors++;
+          }
+        }
       } else {
-        const err57 = { instancePath: instancePath + "/ui", schemaPath: "#/definitions/Record%3Cstring%2Cunknown%3E/type", keyword: "type", params: { type: "object" }, message: "must be object" };
+        const err63 = { instancePath: instancePath + "/scopes", schemaPath: "#/properties/scopes/type", keyword: "type", params: { type: "array" }, message: "must be array" };
         if (vErrors === null) {
-          vErrors = [err57];
+          vErrors = [err63];
         } else {
-          vErrors.push(err57);
+          vErrors.push(err63);
+        }
+        errors++;
+      }
+    }
+    if (data.tier !== void 0) {
+      if (typeof data.tier !== "string") {
+        const err64 = { instancePath: instancePath + "/tier", schemaPath: "#/properties/tier/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+        if (vErrors === null) {
+          vErrors = [err64];
+        } else {
+          vErrors.push(err64);
+        }
+        errors++;
+      }
+    }
+    if (data.type !== void 0) {
+      let data49 = data.type;
+      if (typeof data49 !== "string") {
+        const err65 = { instancePath: instancePath + "/type", schemaPath: "#/properties/type/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+        if (vErrors === null) {
+          vErrors = [err65];
+        } else {
+          vErrors.push(err65);
+        }
+        errors++;
+      }
+      if (!(data49 === "scheme" || data49 === "layer")) {
+        const err66 = { instancePath: instancePath + "/type", schemaPath: "#/properties/type/enum", keyword: "enum", params: { allowedValues: schema12.properties.type.enum }, message: "must be equal to one of the allowed values" };
+        if (vErrors === null) {
+          vErrors = [err66];
+        } else {
+          vErrors.push(err66);
+        }
+        errors++;
+      }
+    }
+    if (data.ui !== void 0) {
+      let data50 = data.ui;
+      if (data50 && typeof data50 == "object" && !Array.isArray(data50)) {
+      } else {
+        const err67 = { instancePath: instancePath + "/ui", schemaPath: "#/definitions/Record%3Cstring%2Cunknown%3E/type", keyword: "type", params: { type: "object" }, message: "must be object" };
+        if (vErrors === null) {
+          vErrors = [err67];
+        } else {
+          vErrors.push(err67);
         }
         errors++;
       }
     }
     if (data.version !== void 0) {
       if (typeof data.version !== "string") {
-        const err58 = { instancePath: instancePath + "/version", schemaPath: "#/properties/version/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+        const err68 = { instancePath: instancePath + "/version", schemaPath: "#/properties/version/type", keyword: "type", params: { type: "string" }, message: "must be string" };
         if (vErrors === null) {
-          vErrors = [err58];
+          vErrors = [err68];
         } else {
-          vErrors.push(err58);
+          vErrors.push(err68);
         }
         errors++;
       }
@@ -15173,11 +15351,11 @@ function validate11(data, { instancePath = "", parentData, parentDataProperty, r
       }
     }
   } else {
-    const err59 = { instancePath, schemaPath: "#/type", keyword: "type", params: { type: "object" }, message: "must be object" };
+    const err69 = { instancePath, schemaPath: "#/type", keyword: "type", params: { type: "object" }, message: "must be object" };
     if (vErrors === null) {
-      vErrors = [err59];
+      vErrors = [err69];
     } else {
-      vErrors.push(err59);
+      vErrors.push(err69);
     }
     errors++;
   }

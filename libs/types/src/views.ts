@@ -309,6 +309,12 @@ export interface SchemeMetaView {
     /** Usage guidance for the scheme (detailed, shown in reference views). */
     guidance?: string;
     /**
+     * The scheme document's own overall marking, exactly as its
+     * `scheme.marking` writes it. Display only: never interpreted. Absent when
+     * the document declares none.
+     */
+    marking?: string;
+    /**
      * ID of the category that drives the marking's display color (from
      * `render.color_from`). Undefined when the scheme does not use category
      * color mode. A host pairs this with the resolved marking's assertion in
@@ -510,6 +516,8 @@ export interface SchemePublicView {
     definition?: string;
     /** Detailed usage guidance shown in scheme reference surfaces. */
     guidance?: string;
+    /** See {@link SchemeMetaView.marking}. */
+    marking?: string;
     /** Category whose selected concept supplies the marking color. */
     colorFrom?: string;
     /** Ordered compound color rules; first matching rule wins. */

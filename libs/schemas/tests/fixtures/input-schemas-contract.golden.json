@@ -2473,6 +2473,9 @@
                     "label": {
                         "$ref": "#/definitions/CategoryLabelDoc"
                     },
+                    "marking": {
+                        "type": "string"
+                    },
                     "position": {
                         "type": "number"
                     },
@@ -2881,6 +2884,9 @@
                             "$ref": "#/definitions/InputAliasDoc"
                         },
                         "type": "array"
+                    },
+                    "marking": {
+                        "type": "string"
                     },
                     "members": {
                         "items": {
@@ -3639,6 +3645,9 @@
                                 },
                                 "type": "array"
                             },
+                            "marking": {
+                                "type": "string"
+                            },
                             "mode": {
                                 "enum": [
                                     "inline",
@@ -3705,6 +3714,9 @@
                                     "$ref": "#/definitions/JoinDoc"
                                 },
                                 "type": "array"
+                            },
+                            "marking": {
+                                "type": "string"
                             },
                             "mode": {
                                 "enum": [
@@ -4039,6 +4051,22 @@
                 },
                 "required": [
                     "color"
+                ],
+                "type": "object"
+            },
+            "MarkingSchemeRefDoc": {
+                "additionalProperties": false,
+                "properties": {
+                    "id": {
+                        "minLength": 1,
+                        "type": "string"
+                    },
+                    "version": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "id"
                 ],
                 "type": "object"
             },
@@ -4583,6 +4611,20 @@
                     "license": {
                         "type": "string"
                     },
+                    "marking": {
+                        "type": "string"
+                    },
+                    "marking_scheme": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/definitions/MarkingSchemeRefDoc"
+                            },
+                            {
+                                "const": "self",
+                                "type": "string"
+                            }
+                        ]
+                    },
                     "name": {
                         "type": "string"
                     },
@@ -4796,6 +4838,9 @@
                     "id": {
                         "minLength": 1,
                         "pattern": "^[^_]",
+                        "type": "string"
+                    },
+                    "marking": {
                         "type": "string"
                     },
                     "max": {

@@ -119,6 +119,12 @@ export interface SchemeSummaryResponseBody {
     definition?: string;
     /** Usage guidance for the scheme, shown in reference views. */
     guidance?: string;
+    /**
+     * The scheme document's own overall marking, exactly as its
+     * `scheme.marking` writes it. Display only: never interpreted. Omitted
+     * when the document declares none.
+     */
+    marking?: string;
     /** Single-category scheme-default color source, when category mode is used. */
     colorFrom?: string;
     /** Ordered rule-driven color outcomes, when rule mode is used. */

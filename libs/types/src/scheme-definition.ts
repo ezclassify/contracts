@@ -442,6 +442,12 @@ export interface SchemeRuleDoc {
     id: string;
     /** Human-readable rule name for UI and audit provenance. */
     name?: string;
+    /**
+     * This rule's part marking, written in the scheme the document's
+     * `marking_scheme` names. Text, never interpreted: no engine parses it,
+     * checks it, acts on it, or reports it.
+     */
+    marking?: string;
     /** Trigger condition. See `WhenDoc`. */
     when?: WhenDoc;
     /** What to do when the rule fires. */
@@ -703,6 +709,12 @@ export interface ConceptDoc {
     /** Human-readable display name. */
     name: string;
     /**
+     * This concept's part marking, written in the scheme the document's
+     * `marking_scheme` names. Text, never interpreted: no engine parses it,
+     * checks it, acts on it, or reports it.
+     */
+    marking?: string;
+    /**
      * Display representations keyed by view name; must include 'default'. A
      * plain string expands to all view keys.
      *
@@ -839,6 +851,12 @@ export interface CategoryDoc {
     id: string;
     /** Human-readable label for UI display. */
     label: CategoryLabelDoc;
+    /**
+     * This category's part marking, written in the scheme the document's
+     * `marking_scheme` names. Text, never interpreted: no engine parses it,
+     * checks it, acts on it, or reports it.
+     */
+    marking?: string;
     /** Additional display views keyed by view name. */
     views?: Record<string, string>;
     /**
@@ -1527,6 +1545,12 @@ export interface FormatCommonDoc {
      * `RenderConfigDoc.surfaces`.
      */
     id: string;
+    /**
+     * This format's part marking, written in the scheme the document's
+     * `marking_scheme` names. Text, never interpreted: no engine parses it,
+     * checks it, acts on it, or reports it.
+     */
+    marking?: string;
     /** Layout: `inline` runs the fields together, `block` puts each on its own line. */
     mode: 'inline' | 'block';
     /** Encoding. Absent means plain text. */
@@ -2027,6 +2051,21 @@ export interface ConceptGroupDoc {
     concept_ids: string[];
 }
 
+/**
+ * The scheme a scheme document's markings are written in, named by id and,
+ * optionally, version. See `SchemeBlock.marking_scheme`.
+ */
+export interface MarkingSchemeRefDoc {
+    /**
+     * The marking scheme's id.
+     *
+     * @minLength 1
+     */
+    id: string;
+    /** The marking scheme's version. Omitted, any version. */
+    version?: string;
+}
+
 /** The body inside the top-level `scheme:` envelope. */
 export interface SchemeBlock {
     /** Unique scheme identifier (e.g. 'tlp-v2', 'cedar-valley-protection'). */
@@ -2035,6 +2074,27 @@ export interface SchemeBlock {
     version: string;
     /** Human-readable scheme name. */
     name: string;
+    /**
+     * The scheme this document's markings are written in: a reference to
+     * another scheme, or `self` when this scheme marks itself.
+     *
+     * With `self`, the markings are read against this scheme at this
+     * document's own version, so the id and version are not repeated and a
+     * version bump needs no edit here.
+     *
+     * Authoring data only. Loading and compiling the scheme never read it, and
+     * no engine resolves the scheme it names.
+     */
+    marking_scheme?: MarkingSchemeRefDoc | 'self';
+    /**
+     * The whole marking of this scheme document, written in the scheme
+     * `marking_scheme` names. Every `marking` on an element of this document
+     * is a part of it.
+     *
+     * Text, never interpreted: no engine parses it, checks it, or acts on it.
+     * A scheme summary reports it unchanged for display.
+     */
+    marking?: string;
     /** Longer description of what this scheme covers. */
     description?: string;
     /** Official description or definition of this scheme. */
@@ -2084,9 +2144,12 @@ export interface SchemeBlock {
      * chokepoint as guide's and access's own top-level `vocabulary` block: an
      * open map from a term key to a `{ singular, plural }` pair (or a bare
      * `singular`, auto-pluralized). Reserved scheme keys are `handbook`, which
-     * renames the scheme's reference surface, and `whole` / `part`, which name
-     * the structural context roles. For example: `{ handbook: { singular:
-     * "Register" }, whole: { singular: "banner" } }`.
+     * renames the scheme's reference surface, `whole` / `part`, which name
+     * the structural context roles, and `marking`, the word a document
+     * written in this scheme labels its `marking` fields with (a host shows
+     * "Marking" when the marking scheme declares none). For example: `{
+     * handbook: { singular: "Register" }, whole: { singular: "banner" },
+     * marking: { singular: "label" } }`.
      */
     vocabulary?: Vocabulary;
     /**
