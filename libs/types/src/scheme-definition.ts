@@ -802,11 +802,18 @@ export interface ConceptDoc {
      * part holding it is read against a whole, the part takes the whole's
      * values in the named category, so its rules judge the list the word
      * stands for. The concept stays in the part, and a format that sets
-     * `omit_whole_values` writes the part back the way it was read. A part
-     * read without a whole, or one that writes values of its own in the
-     * category, takes nothing; whether a word with nothing behind it is an
-     * error is the scheme's call, made in its own rules. In a rollup the word
-     * goes through its own category's rollup like any other concept.
+     * `omit_whole_values` writes the part back the way it was read.
+     *
+     * A part that writes values of its own in the category takes nothing and
+     * is judged by its own facts. A part that leaves the category to the word
+     * needs a verified whole, one that reads and is valid. Without one (no
+     * whole given, a whole that does not read, or a whole that reads but is
+     * invalid) the part carries a `_stand_in_requires_whole` error naming the
+     * word, whatever format it was read in. A verified whole that holds nothing
+     * in the category leaves the part to the scheme's own rules. Only a part is
+     * judged so: a whole may hold the same concept as a value of its own. In a
+     * rollup the word goes through its own category's rollup like any other
+     * concept.
      *
      * Names a category declared in the same scheme.
      */

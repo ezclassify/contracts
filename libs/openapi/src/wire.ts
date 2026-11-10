@@ -33,6 +33,7 @@ import type {
     EvaluationResult,
     ExplanationTrace,
     GuideDeterminationInput,
+    GuideRuleSelection,
     GuideScanResult,
     GuideStructuralView,
     MarkingColorRule,
@@ -518,14 +519,19 @@ export interface CtxSchemeAggregateRequestBody {
      * `render.surfaces` defines it.
      */
     outputFormat?: string;
-    /** Optional ProcessingContext forwarded verbatim to the engine. */
+    /**
+     * The role the inputs are read in, never the rollup's. Omitted, the inputs
+     * are wholes, as in an aggregate such as the documents in a folder.
+     * `{ role: 'part', partOf }` reads each input as a part of that whole, as
+     * in a whole's parts rollup. The rollup is always a whole marking.
+     */
     context?: ProcessingContext;
     /**
      * Validation surface of the rollup, using the scheme's scope ids. Names
      * what the combined marking is, not what any one contributor was. Omitted,
      * the rollup is a whole marking and every required category belonging to
-     * the marking as a whole must be covered by the combined result, which is
-     * the whole-document case: a portion that omits one is not faulted for it.
+     * the marking as a whole must be covered by the combined result: a
+     * contributor that omits one is not faulted for it.
      * Given a scope id, the inputs are fragments of that one surface and only
      * the required categories that surface owns are demanded of the rollup.
      */
@@ -1027,14 +1033,34 @@ export interface CtxGuideScanRequestBody {
     guideId?: string;
 }
 
-/** POST /v1/ctx/{ctxId}/{version?}/guide/evaluate */
+/**
+ * POST /v1/ctx/{ctxId}/{version?}/guide/evaluate
+ *
+ * Two forms, exactly one per request: `guideId` with `selectedRuleIds`
+ * evaluates one guide, and `selections` rolls up a selection that spans
+ * guides. Any other combination is a 400. The rule is stated here rather than
+ * as a root `oneOf`, which would make every generated SDK model this request
+ * as a union of two request types.
+ */
 export interface CtxGuideEvaluateRequestBody {
-    /** ID of one guide within the context. Supply this or `allGuides: true`. */
+    /**
+     * ID of the one guide to evaluate, with `selectedRuleIds`. Refused with
+     * `selections`.
+     */
     guideId?: string;
-    /** Evaluate and combine every loaded guide through the context's scheme. */
-    allGuides?: boolean;
-    /** Rule IDs the user selected (checked) in the guide wizard. */
-    selectedRuleIds: string[];
+    /**
+     * IDs of the rules selected in the guide `guideId` names. Required with
+     * `guideId`, refused with `selections`.
+     */
+    selectedRuleIds?: string[];
+    /**
+     * The selected rules, each named by its guide, rolled up across guides:
+     * each guide evaluates the rules selected from it, and the outcomes are
+     * rolled up per target scheme. No guide overrides or depends on another,
+     * so every selected rule's outcome counts. Refused with `guideId` or
+     * `selectedRuleIds`.
+     */
+    selections?: GuideRuleSelection[];
 }
 
 /** Response body for GET /v1/ctx: the context ids this caller may use. */

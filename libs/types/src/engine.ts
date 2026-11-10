@@ -24,6 +24,7 @@ import type {
 } from './scheme';
 import type {
     EvaluationResult,
+    GuideRuleSelection,
     GuideScanResult,
     GuideScanOptions,
     RuleDescription,
@@ -448,13 +449,21 @@ export interface GuideEngineAdapter {
         selectedRuleIds: string[],
     ): MaybePromise<EvaluationResult>;
     /**
-     * Evaluate one selection across every loaded guide, then combine the
-     * outcomes through the context's marking processor in guide load order.
-     * A later guide owns a rule id that occurs in more than one guide.
+     * Evaluate a selection that spans guides and roll the outcomes up.
      *
-     * @param selectedRuleIds - Ids of the rules the user selected.
+     * Each selection names its guide, so a rule id two guides share is two
+     * rules. Each guide evaluates the rules selected from it, with its own
+     * dependencies and overrides, as {@link evaluate} would. The outcomes are
+     * then rolled up per target scheme, category by category in each
+     * category's rollup direction. One guide never overrides or depends on
+     * another: every selected rule's outcome counts, and every breakdown entry
+     * names the guide its rule came from.
+     *
+     * @param selections - The rules the user selected, each with its guide.
      */
-    evaluateMany(selectedRuleIds: string[]): MaybePromise<EvaluationResult>;
+    evaluateMany(
+        selections: GuideRuleSelection[],
+    ): MaybePromise<EvaluationResult>;
     /**
      * Evaluate every loaded guide (fan-out). Returned in load order. A remote
      * adapter fans out over the guides it already holds metadata for; the
@@ -540,17 +549,17 @@ export interface LocalGuideEngineAdapter extends GuideEngineAdapter {
         processor: MarkingProcessorAdapter,
     ): EvaluationResult;
     evaluateAll(selectedRuleIds: string[]): EvaluationResult[];
-    evaluateMany(selectedRuleIds: string[]): EvaluationResult;
+    evaluateMany(selections: GuideRuleSelection[]): EvaluationResult;
     /**
-     * In-process aggregate with an explicitly supplied marking processor.
+     * In-process roll-up with an explicitly supplied marking processor.
      *
      * @internal
-     * @param selection - Ids of the selected rules, or the selected rules
-     *   themselves.
-     * @param processor - Marking processor that combines the outcomes.
+     * @param selection - The selected rules, each with its guide, or the
+     *   selected rules themselves.
+     * @param processor - Marking processor that rolls up the outcomes.
      */
     evaluateMany(
-        selection: string[] | Selectable[],
+        selection: GuideRuleSelection[] | Selectable[],
         processor: MarkingProcessorAdapter,
     ): EvaluationResult;
     /**
@@ -605,7 +614,7 @@ export interface RemoteGuideEngineAdapter extends GuideEngineAdapter {
         selectedRuleIds: string[],
     ): Promise<EvaluationResult>;
     evaluateAll(selectedRuleIds: string[]): Promise<EvaluationResult[]>;
-    evaluateMany(selectedRuleIds: string[]): Promise<EvaluationResult>;
+    evaluateMany(selections: GuideRuleSelection[]): Promise<EvaluationResult>;
     describeRule(ruleId: string, guideId?: string): Promise<RuleDescription>;
     filterRules(query: string, guideId?: string): Promise<FilterResult>;
     buildGuideViews(): Promise<GuideStructuralView[]>;
@@ -1405,26 +1414,37 @@ export interface SchemeEngineAdapter {
     ): MaybePromise<SuggestResultsByCategory>;
 
     /**
-     * Aggregate multiple markings.
+     * Roll several markings up into the one marking that covers them.
      *
-     * `valid` on the result describes the rollup, so `options.surface` names
-     * the rollup's validation surface rather than any one contributor's:
+     * `options.context` names the role the inputs are read in, never the
+     * rollup's:
      *
-     * - Omitted, the rollup is a whole marking. This is the whole-document
-     *   case: parts combine into a whole marking, and the whole-marking
-     *   required set is asked of the combined result. A part that omits a
-     *   whole-document category is not faulted for it; the rollup is faulted
-     *   only when no contributor supplied it.
+     * - Omitted, the inputs are wholes. This is the call for an aggregate,
+     *   such as the documents in a folder. Each member counts as what it
+     *   states rolled up with the rollup of its own parts, so a member whose
+     *   parts carry more than its stated marking still raises the aggregate.
+     * - `{ role: 'part', partOf }` reads each input as a part of that whole,
+     *   the whole settled as `ProcessingContext.partOf` describes, so an input
+     *   that takes a value from the whole, such as a list it stands for,
+     *   contributes that value to the rollup. This is the call for a whole's
+     *   parts rollup. `{ role: 'part' }` without `partOf` reads parts that
+     *   have no whole.
+     *
+     * An input judged in the wrong role is judged by the wrong rules: parts
+     * read as wholes face the whole's rules and skip their own.
+     * `aggregateAssertions` takes its inputs as facts and reads no text, and
+     * judges them in the role its context names in the same way.
+     *
+     * The rollup itself is a whole marking, whatever role its inputs were read
+     * in. `valid` on the result describes the rollup, so `options.surface`
+     * names the rollup's validation surface rather than any one contributor's:
+     *
+     * - Omitted, the whole-marking required set is asked of the combined
+     *   result. A contributor that omits a required category is not faulted
+     *   for it; the rollup is faulted only when no contributor supplied it.
      * - Given a scheme scope id, the inputs are fragments of that one surface
      *   and the rollup is judged as that surface's fragment: exactly the
      *   required categories the surface owns are demanded.
-     *
-     * Given a whole in `options.context.partOf`, each input is read as a part
-     * of that whole, the whole settled as `ProcessingContext.partOf`
-     * describes, so an input that takes a value from the whole, such as a
-     * list it stands for, contributes that value to the rollup. This is about
-     * reading text: `aggregateAssertions` takes its inputs as facts and reads
-     * none.
      *
      * @param inputs - Marking texts to roll up.
      * @param schemeId - Scheme to aggregate in.
@@ -1475,8 +1495,10 @@ export interface SchemeEngineAdapter {
      * values that no rendered string can carry survive. There is no lossy
      * string round-trip fallback.
      *
-     * `options.surface` names the rollup's validation surface exactly as it
-     * does on {@link SchemeEngineAdapter.aggregate}.
+     * `options.context` names the role the inputs played and
+     * `options.surface` the rollup's validation surface, exactly as they do on
+     * {@link SchemeEngineAdapter.aggregate}: no context means the inputs are
+     * wholes.
      *
      * @param assertionSets - One assertion set per marking to roll up.
      * @param schemeId - Scheme to aggregate in.

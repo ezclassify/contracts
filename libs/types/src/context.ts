@@ -261,8 +261,8 @@ export interface ContextFromComponentsArgs {
      */
     primaryScheme?: string;
     /**
-     * Ordered guide documents. Loaded into a single `GuideEngine` cascade,
-     * later guides take precedence on rule-id conflicts.
+     * Ordered guide documents. Each stays independent: no guide overrides or
+     * depends on another's rules.
      */
     guides?: unknown[];
     /** Resolved guide stacks. Mutually exclusive with `guides`. */

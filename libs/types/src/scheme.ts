@@ -47,7 +47,9 @@ export type RepairConfidence = 'safe' | 'uncertain';
  * value, reports no error and offers no fix; a check rule (`require`,
  * `require_any`, `restrict`, `forbid`, `exclusive`, `cardinality`) that the
  * marking already meets still passes, and any other unresolved rule gives
- * the part the `_whole_unverified` notice.
+ * the part the `_whole_unverified` notice. A part's stand-in for its whole's
+ * values is not left open this way: without a verified whole it is a
+ * `_stand_in_requires_whole` error. See `ProcessingContext.partOf`.
  * - `'contributors'`: each contributing assertion set that went into an
  * aggregate, evaluated separately. The condition holds only when EVERY
  * contributor satisfies it, and it is never satisfied outside aggregation,
@@ -534,6 +536,11 @@ export interface Assertion extends Selectable {
  * change if rolled up with the part. It is given only for a part that is valid
  * on its own, read in a whole that reads and is valid. `affectedConcepts`
  * names every finding, and no fix answers it. See `ProcessingContext.partOf`.
+ *
+ * And `_stand_in_requires_whole` is a part that leaves a category to a
+ * stand-in, a concept that declares `stands_for_whole`, with no verified whole
+ * to take the values from. `affectedConcepts` names the stand-in and
+ * `categoryId` its category.
  */
 export interface ValidationError {
     /**
@@ -1332,7 +1339,9 @@ export interface Concept {
      * The category whose values this concept stands for: the values a whole
      * holds in it. A part holding the concept takes them when it is read
      * against a whole, and keeps the concept so a format can write it back
-     * the way it was read. Authored as `stands_for_whole`.
+     * the way it was read. A part that leaves the category to the concept and
+     * has no verified whole carries a `_stand_in_requires_whole` error.
+     * Authored as `stands_for_whole`.
      */
     standsForWhole?: string;
 }
@@ -2362,12 +2371,21 @@ export interface ConceptDescription {
 }
 
 /**
- * Caller-supplied context describing the role of a marking being processed. No
- * context (or role='whole') means an overall/document-level marking.
- * role='part' means a portion/paragraph that belongs to another marking.
+ * Caller-supplied context naming the role the marking being read plays. No
+ * context, or `role: 'whole'`, means a whole: a marking that stands for
+ * everything it covers. `role: 'part'` means a part that belongs to a whole,
+ * named in `partOf` when it is known.
+ *
+ * On a rollup the context names the contributors' role, never the rollup's: the
+ * rollup is always a whole. So no context rolls wholes up into an aggregate,
+ * and `{ role: 'part', partOf }` rolls a whole's parts up. See
+ * `SchemeEngineAdapter.aggregate`.
  */
 export interface ProcessingContext {
-    /** Role of this marking: 'whole' for overall markings, 'part' for portions */
+    /**
+     * Role of the marking being read: `'whole'` (the default) or `'part'`. On
+     * a rollup, the role of each contributor.
+     */
     role?: ProcessingRole;
     /**
      * The whole marking this is part of (when role='part').
@@ -2422,7 +2440,11 @@ export interface ProcessingContext {
      *
      * Without a verified whole, what needs the whole is left open instead of
      * guessed: a rule condition with `target: 'context'` is unresolved, so its
-     * rule never fires, as `RuleConditionTarget` describes.
+     * rule never fires, as `RuleConditionTarget` describes. A stand-in is the
+     * exception, because it is shorthand for the whole's values and means
+     * nothing without them: a part that leaves a category to a concept that
+     * declares `stands_for_whole` carries a `_stand_in_requires_whole` error
+     * naming it.
      */
     partOf?: {
         /** Rendered string of the whole marking */
@@ -3361,12 +3383,12 @@ export type RenderResultsByFormat = Record<string, RenderResult>;
 
 /**
  * Output of SchemeEngine.aggregate(): the combined marking produced from
- * multiple portion inputs. By design aggregate always produces the proper
- * aggregate: fixes are applied, never proposed. Every field it shares with
- * `ValidateResult` means what it means there, `valid` included. It differs in
- * that:
+ * several input markings, always a whole. By design aggregate always produces
+ * the proper rollup: fixes are applied, never proposed. Every field it shares
+ * with `ValidateResult` means what it means there, `valid` included. It
+ * differs in that:
  *
- * - There is no `inputWasValid` (input is N portions, not a single string)
+ * - There is no `inputWasValid` (input is N markings, not a single string)
  * - `proposedFixes` is always empty (aggregate applies what it can)
  */
 export interface AggregateResult {

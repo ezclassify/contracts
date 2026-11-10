@@ -45,10 +45,11 @@ export interface ContextBlock {
      */
     scheme: ContextSchemeRef;
     /**
-     * Optional guide references; later guides take precedence on rule-id
-     * conflicts. Layers stack on a base guide and are nested under it because a
-     * layer is a derivative of _that_ guide; it cannot be paired with a
-     * different base.
+     * Optional guide references. Each guide is independent: its rules, their
+     * dependencies and its overrides stay within that guide and its layers,
+     * and two guides may use the same rule id. Layers stack on a base guide
+     * and are nested under it because a layer is a derivative of _that_ guide;
+     * it cannot be paired with a different base.
      */
     guides?: readonly ContextGuideRef[];
     /**

@@ -427,6 +427,20 @@ export interface GuideBreakdownEntry {
     overriddenBy?: RuleReference;
 }
 
+/**
+ * One selected rule, named by the guide that holds it.
+ *
+ * Guides in a Context are independent, so two of them may use the same rule
+ * id. A selection names the guide as well as the rule, and the two pairs are
+ * two rules.
+ */
+export interface GuideRuleSelection {
+    /** Id of the guide that holds the rule. */
+    guideId: string;
+    /** Id of the rule within that guide. */
+    ruleId: string;
+}
+
 /** Aggregated guide output: one rolled-up marking per target scheme id. */
 export interface AggregatedMarkings {
     [identifier: string]: string;

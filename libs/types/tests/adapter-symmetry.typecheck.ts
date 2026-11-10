@@ -214,9 +214,9 @@ expectTypeOf(guide.evaluate('guide', ['rule'])).toEqualTypeOf<
 expectTypeOf(guide.evaluateAll(['rule'])).toEqualTypeOf<
     MaybePromise<EvaluationResult[]>
 >();
-expectTypeOf(guide.evaluateMany(['rule'])).toEqualTypeOf<
-    MaybePromise<EvaluationResult>
->();
+expectTypeOf(
+    guide.evaluateMany([{ guideId: 'guide', ruleId: 'rule' }]),
+).toEqualTypeOf<MaybePromise<EvaluationResult>>();
 expectTypeOf(guide.describeRule('rule')).toEqualTypeOf<
     MaybePromise<RuleDescription>
 >();
@@ -230,11 +230,15 @@ expectTypeOf(remoteGuide.evaluate('guide', ['rule'])).toEqualTypeOf<
     Promise<EvaluationResult>
 >();
 expectTypeOf(
-    localGuide.evaluateMany(['rule']),
+    localGuide.evaluateMany([{ guideId: 'guide', ruleId: 'rule' }]),
 ).toEqualTypeOf<EvaluationResult>();
-expectTypeOf(remoteGuide.evaluateMany(['rule'])).toEqualTypeOf<
-    Promise<EvaluationResult>
->();
+expectTypeOf(
+    remoteGuide.evaluateMany([{ guideId: 'guide', ruleId: 'rule' }]),
+).toEqualTypeOf<Promise<EvaluationResult>>();
+// A selection that spans guides names each rule's guide: two guides may use the
+// same rule id.
+// @ts-expect-error A bare rule id does not say which guide it means.
+void remoteGuide.evaluateMany(['rule']);
 
 // The processor-taking members are in-process wiring, not operations, so they
 // sit on the local narrowing only.
@@ -369,7 +373,7 @@ expectTypeOf(
     contextGuide.evaluate('guide', ['rule']),
 ).toEqualTypeOf<EvaluationResult>();
 expectTypeOf(
-    contextGuide.evaluateMany(['rule']),
+    contextGuide.evaluateMany([{ guideId: 'guide', ruleId: 'rule' }]),
 ).toEqualTypeOf<EvaluationResult>();
 // @ts-expect-error A Context view cannot select an unrelated scheme.
 localContext.scheme.process('X', 'another-scheme');
