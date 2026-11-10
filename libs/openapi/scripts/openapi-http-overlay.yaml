@@ -125,7 +125,8 @@ components:
     NotFound:
       description: >
         Context or resource not found. A request that reached routing and
-        matched no route carries `code: route_not_found`; a request refused
+        matched no route carries `code: route_not_found`, and a `?scheme=` key
+        the Context does not hold carries `code: scheme_not_found`; a request refused
         before routing carries the constant refusal body, which has no `code`
         by design. Branch on the code, never on the message. See the API
         description for why the two bodies differ.
@@ -138,6 +139,11 @@ components:
               summary: The route exists and the resource does not
               value:
                 error: 'Context not found: nonexistent-context'
+            schemeAbsent:
+              summary: The Context holds no scheme under the `?scheme=` key
+              value:
+                error: 'Scheme not found in context: no-such-scheme'
+                code: scheme_not_found
             routeAbsent:
               summary: The request reached routing and matched no route
               value:

@@ -490,6 +490,17 @@ describe('a 404 says which kind of 404 it is', () => {
         });
     });
 
+    it('carries a code for a scheme the Context does not hold', () => {
+        expect(notFound.description).toMatch(/scheme_not_found/);
+        expect(examples()).toContainEqual({
+            error: 'Scheme not found in context: no-such-scheme',
+            code: 'scheme_not_found',
+        });
+        expect(
+            schema('ErrorResponse').properties?.['code']?.description,
+        ).toMatch(/scheme_not_found/);
+    });
+
     it('names the code on the error body every 404 shares', () => {
         expect(
             schema('ErrorResponse').properties?.['code']?.description,

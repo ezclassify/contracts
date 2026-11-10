@@ -13,7 +13,7 @@ import type { QueryParam } from './types.js';
 export const schemeSelector = {
     name: 'scheme',
     description:
-        "Context-local key, or unambiguous artifact id, of the scheme the request is answered in. Without it the context's primary scheme answers. Any scheme the context holds may be named, a crosswalk's source or target among them. A selector that names no scheme the context holds answers 404; it never falls back to the primary.",
+        "Context-local key of the scheme the request is answered in, as `GET /v1/ctx/{ctxId}/{version}` lists it. Without it the context's primary scheme answers. Any scheme the context holds may be named, a crosswalk's source or target among them. A key the context does not hold answers 404 with code `scheme_not_found`; it never falls back to the primary. Name it once: a repeated selector answers 400.",
     required: false,
     schema: 'string',
 } as const satisfies QueryParam;

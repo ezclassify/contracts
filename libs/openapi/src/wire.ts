@@ -309,8 +309,9 @@ export interface ErrorResponseBody {
      * Stable machine-readable classification of the failure, present whenever
      * the server can name one. Set to `INVALID_INPUT` when the failure
      * originated in engine input or the request carried something the
-     * operation does not declare, and to `route_not_found` on a 404 that reached routing and
-     * matched no route. A request refused before routing carries the constant
+     * operation does not declare, to `route_not_found` on a 404 that reached routing and
+     * matched no route, and to `scheme_not_found` on a 404 for a `?scheme=` key the
+     * Context does not hold. A request refused before routing carries the constant
      * refusal body instead, which has no `code` at all by design, so the
      * absence of a code on a 404 is itself uninformative.
      */
@@ -321,8 +322,8 @@ export interface ErrorResponseBody {
      * concept or a category the scheme does not declare, it is the request
      * field and the id it named, written `field: id`, such as
      * `outputFormat: nope` or `conceptId: NOPE`. For a request that carries a
-     * query parameter the operation does not declare, it is `query: ` and the
-     * parameter's name; for an undeclared body field, `body`, the JSON pointer
+     * query parameter the operation does not declare, or names a declared one twice,
+     * it is `query: ` and the parameter's name; for an undeclared body field, `body`, the JSON pointer
      * of the object that holds it, `: ` and the field, such as `body: extra`
      * or `body/context: extra`. Never a scheme's internals.
      */
