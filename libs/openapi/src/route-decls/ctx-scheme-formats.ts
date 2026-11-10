@@ -1,4 +1,5 @@
 import type { RouteDecl } from './types.js';
+import { schemeSelector } from './scheme-selector.js';
 import type { FormatView } from '@ezclassify/types';
 
 /** GET /v1/ctx/:ctxId/:version/scheme/formats: the context's render formats. */
@@ -12,13 +13,7 @@ export const decl: RouteDecl<undefined, FormatView[]> = {
     tags: ['context', 'scheme'],
     pathParams: ['ctxId', 'version'],
     queryParams: [
-        {
-            name: 'scheme',
-            description:
-                "Context-local key, or unambiguous artifact id, of the scheme to read. Defaults to the context's primary scheme; a crosswalk's source or target scheme is named here. A key the context does not hold answers 404.",
-            required: false,
-            schema: 'string',
-        },
+        schemeSelector,
     ],
     errorResponses: [
         { status: 404, ref: 'NotFound' },

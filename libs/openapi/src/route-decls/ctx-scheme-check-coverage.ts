@@ -1,4 +1,5 @@
 import type { RouteDecl } from './types.js';
+import { schemeSelector } from './scheme-selector.js';
 import type {
     ContextSchemeCoverageResult,
     CtxSchemeCheckCoverageRequestBody,
@@ -20,6 +21,7 @@ export const decl: RouteDecl<
         'Aggregates the child markings using the context\'s composed scheme and checks whether the result is covered by the parent marking. The :version segment may be omitted to default to "latest".',
     tags: ['context', 'scheme'],
     pathParams: ['ctxId', 'version'],
+    queryParams: [schemeSelector],
     errorResponses: [
         {
             status: 400,

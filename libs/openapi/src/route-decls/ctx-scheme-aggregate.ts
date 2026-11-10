@@ -1,4 +1,5 @@
 import type { RouteDecl } from './types.js';
+import { schemeSelector } from './scheme-selector.js';
 import type {
     ContextSchemeAggregateResult,
     CtxSchemeAggregateRequestBody,
@@ -20,6 +21,7 @@ export const decl: RouteDecl<
         'Rolls markings up into the one whole marking that covers them, using the context\'s composed scheme rollup rules. With no `context` the inputs are read as wholes, as in an aggregate such as the documents in a folder; `context` names the role the inputs are read in, and `{ role: \'part\', partOf }` reads each as a part of that whole, as in a whole\'s parts rollup. Supply either `inputs` (marking strings) or `assertionSets` (already-parsed assertion arrays for lossless transport of scope-only assertions and capture values): exactly one, not both. The :version segment may be omitted to default to "latest".',
     tags: ['context', 'scheme'],
     pathParams: ['ctxId', 'version'],
+    queryParams: [schemeSelector],
     errorResponses: [
         {
             status: 400,

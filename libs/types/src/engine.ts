@@ -2883,10 +2883,10 @@ export type ContextSchemeRole =
  * Read it as a sentence: this Context holds a scheme you select with
  * `selector`, it is `id` at `version`, and it plays these `roles`.
  *
- * `selector` is the whole point. A Context keys its schemes locally, and an
- * operation that addresses one takes that key, so a caller that cannot
- * enumerate the keys cannot reach anything but the primary. On the REST
- * surface the same value is what `?scheme=` takes.
+ * `selector` is the whole point. A Context keys its schemes locally, and a
+ * caller reaches a scheme by its key: an adapter's `schemeView` takes it, and
+ * so does `?scheme=` on the REST surface. A caller that cannot enumerate the
+ * keys cannot reach anything but the primary.
  */
 export interface ContextSchemeDescriptor {
     /** Context-local key that selects this scheme. */
@@ -2977,11 +2977,14 @@ export interface ContextCompositionPresence {
 }
 
 /**
- * The marking surface exposed by a resolved Context.
+ * The marking surface exposed by a resolved Context, bound to one of its
+ * schemes.
  *
  * A Context owns its composition. Both local and remote views expose only
- * operations bound to that composition, without lifecycle mutation or a
- * scheme selector in an operation's argument position.
+ * operations bound to that composition, without lifecycle mutation. No
+ * operation takes a scheme selector as an argument: the selector picks the
+ * view, through {@link ContextAdapter.schemeView}, and every operation on that
+ * view answers in its scheme.
  */
 export type ContextSchemeEngineAdapter =
     | LocalContextSchemeEngineAdapter
@@ -3084,11 +3087,11 @@ export interface ContextAdapter {
      * Every scheme this composition holds, primary first.
      *
      * A Context can hold more than one scheme: the primary one it marks with,
-     * plus the source and target of any crosswalk it declares. Operations that
-     * address a scheme take a selector naming one of them, and `?scheme=` on
-     * the REST surface is that selector spelled for a query string. Without
-     * this a caller has no way to learn which selectors the composition
-     * answers to, so it can only ever reach the primary.
+     * plus the source and target of any crosswalk it declares. Each one's
+     * selector is what {@link schemeView} takes, and `?scheme=` on the REST
+     * surface is that selector spelled for a query string. Without this a
+     * caller has no way to learn which selectors the composition answers to,
+     * so it can only ever reach the primary.
      */
     describeSchemes(): MaybePromise<ContextSchemeDescriptor[]>;
     /**
@@ -3102,10 +3105,32 @@ export interface ContextAdapter {
      */
     describeCrosswalks(): MaybePromise<ContextCrosswalkDescriptor[]>;
     /**
-     * Scheme-shaped view of this composition. Implementations may return
-     * themselves.
+     * The view that marks in the Context's primary scheme. Implementations may
+     * return themselves.
      */
     readonly scheme: ContextSchemeEngineAdapter;
+    /**
+     * Return the view that marks in the scheme a selector names.
+     *
+     * The selector is a scheme's context-local key or its unambiguous artifact
+     * id, as {@link describeSchemes} reports it. Every operation on the view
+     * answers in that scheme, so a host marking in a crosswalk's target asks
+     * for the target's view once and then works with it as it would with
+     * {@link scheme}. The primary's selector gives back {@link scheme}
+     * itself, and every selector that names the same scheme gives the same
+     * view each time.
+     *
+     * A selector that names no scheme the Context holds, or an id that names
+     * more than one, throws. It never falls back to the primary, because a
+     * marking checked in a scheme its author did not choose can look valid
+     * and be wrong. A remote Context checks the selector against the schemes
+     * it read when it connected, and throws until it has read them.
+     *
+     * @param selector - Key or unambiguous id of one of the Context's schemes.
+     * @returns The view bound to that scheme.
+     * @throws When no single scheme the Context holds answers to `selector`.
+     */
+    schemeView(selector: string): ContextSchemeEngineAdapter;
     /** Guide surface, absent when the composition declares no guide. */
     readonly guide?: GuideEngineAdapter;
     /** Access surface, absent when the composition declares no access policy. */
@@ -3165,6 +3190,7 @@ export interface ContextAdapter {
 /** A {@link ContextAdapter} whose operations complete synchronously. */
 export interface LocalContextAdapter extends ContextAdapter {
     readonly scheme: LocalContextSchemeEngineAdapter;
+    schemeView(selector: string): LocalContextSchemeEngineAdapter;
     readonly guide?: LocalContextGuideEngineAdapter;
     readonly access?: LocalAccessEngineAdapter;
     describeSchemes(): ContextSchemeDescriptor[];
@@ -3188,11 +3214,12 @@ export interface LocalContextAdapter extends ContextAdapter {
 /**
  * Context-bound remote marking operations.
  *
- * Unlike {@link RemoteSchemeEngineAdapter}, this surface never accepts a
- * scheme selector or composition lifecycle call. The Context selected when
- * the remote client was constructed owns that composition; allowing an
- * operation to address a different scheme would describe a request the
- * Context REST contract cannot serve.
+ * Unlike {@link RemoteSchemeEngineAdapter}, this surface takes no scheme
+ * selector in an operation's arguments and no composition lifecycle call. The
+ * Context selected when the remote client was constructed owns that
+ * composition, and the view is bound to one of its schemes: the primary, or
+ * the one {@link ContextAdapter.schemeView} was given. A view from
+ * `schemeView` sends its selector as `?scheme=` on each request.
  */
 export interface RemoteContextSchemeEngineAdapter
     extends Omit<
@@ -3660,6 +3687,7 @@ export interface RemoteContextSchemeEngineAdapter
 /** A {@link ContextAdapter} whose operations complete asynchronously. */
 export interface RemoteContextAdapter extends ContextAdapter {
     readonly scheme: RemoteContextSchemeEngineAdapter;
+    schemeView(selector: string): RemoteContextSchemeEngineAdapter;
     readonly guide?: RemoteGuideEngineAdapter;
     readonly access?: RemoteAccessEngineAdapter;
     describeSchemes(): Promise<ContextSchemeDescriptor[]>;

@@ -1,4 +1,5 @@
 import type { RouteDecl } from './types.js';
+import { schemeSelector } from './scheme-selector.js';
 import type {
     CtxSchemeFilterConceptsRequestBody,
     ContextSchemeFilterConceptsResult,
@@ -20,6 +21,7 @@ export const decl: RouteDecl<
         'Filters the context\'s composed scheme concept list by a text query. The :version segment may be omitted to default to "latest"; the resolved version is returned in the X-EzClassify-Resolved-Version response header.',
     tags: ['context', 'scheme'],
     pathParams: ['ctxId', 'version'],
+    queryParams: [schemeSelector],
     errorResponses: [
         { status: 400, ref: 'BadRequest' },
         { status: 404, ref: 'NotFound' },

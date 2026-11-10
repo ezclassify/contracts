@@ -1828,9 +1828,9 @@ components:
         plays these `roles`.
 
 
-        `selector` is the whole point. A Context keys its schemes locally, and an operation that addresses one takes
-        that key, so a caller that cannot enumerate the keys cannot reach anything but the primary. On the REST surface
-        the same value is what `?scheme=` takes.
+        `selector` is the whole point. A Context keys its schemes locally, and a caller reaches a scheme by its key: an
+        adapter's `schemeView` takes it, and so does `?scheme=` on the REST surface. A caller that cannot enumerate the
+        keys cannot reach anything but the primary.
     ContextSchemeDiffResult:
       type: object
       properties:

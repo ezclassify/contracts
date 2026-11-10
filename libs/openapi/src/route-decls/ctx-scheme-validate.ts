@@ -1,4 +1,5 @@
 import type { RouteDecl } from './types.js';
+import { schemeSelector } from './scheme-selector.js';
 import type {
     CtxSchemeValidateRequestBody,
     ContextSchemeValidateResult,
@@ -20,6 +21,7 @@ export const decl: RouteDecl<
         'The reader\'s call. Judges a marking, given as text or as the facts it states, against the context\'s composed scheme (base + layers). The marking is settled exactly as process settles it, so `valid` and `inputWasValid` mean what they mean on every route. `surface`, `context` and `parts` say what the marking is judged as, as they do on process. Returns the settled facts, the verdicts, errors and warnings, the changes settling made, the marking written back with what that writing left out, how recognition read it, the notices it requires, and its display color. Fix paths and corrections to the text belong to process. The :version segment may be omitted to default to "latest"; the resolved version is returned in the X-EzClassify-Resolved-Version response header.',
     tags: ['context', 'scheme'],
     pathParams: ['ctxId', 'version'],
+    queryParams: [schemeSelector],
     errorResponses: [
         {
             status: 400,

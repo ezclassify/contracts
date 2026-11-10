@@ -1,4 +1,5 @@
 import type { RouteDecl } from './types.js';
+import { schemeSelector } from './scheme-selector.js';
 import type {
     ContextSchemeExplainResult,
     CtxSchemeExplainRequestBody,
@@ -20,6 +21,7 @@ export const decl: RouteDecl<
         'Processes the input exactly as the process operation does and returns the trace of that processing instead of its result: what was read, what was repaired, what the scheme\'s rules inferred, what was found wrong, and what was written. Use it to answer why a marking came out the way it did. The :version segment may be omitted to default to "latest"; the resolved version is returned in the X-EzClassify-Resolved-Version response header.',
     tags: ['context', 'scheme'],
     pathParams: ['ctxId', 'version'],
+    queryParams: [schemeSelector],
     errorResponses: [
         {
             status: 400,

@@ -1,4 +1,5 @@
 import type { RouteDecl } from './types.js';
+import { schemeSelector } from './scheme-selector.js';
 import type {
     ApplyPresetRequestBody,
     ContextSchemeValidateResult,
@@ -18,6 +19,7 @@ export const decl: RouteDecl<ApplyPresetRequestBody, ContextSchemeValidateResult
             "Expands the named label preset against the context's composed scheme and returns what validate answers for the marking it stands for, in the standard context operation envelope every other context operation answers with. A preset is a stored marking, so the answer carries no fix paths or corrections. The label-presets resource keeps each preset's marking string server-side, so this is the only way to order one of its items. Returns 404 when the scheme declares no preset by that id. The :version segment may be omitted to default to \"latest\"; the resolved version is returned in the X-EzClassify-Resolved-Version response header.",
         tags: ['context', 'scheme'],
         pathParams: ['ctxId', 'version'],
+        queryParams: [schemeSelector],
         errorResponses: [
             {
                 status: 400,

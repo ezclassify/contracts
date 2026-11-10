@@ -1,4 +1,5 @@
 import type { RouteDecl } from './types.js';
+import { schemeSelector } from './scheme-selector.js';
 import type {
     ContextSchemeSuggestResult,
     CtxSchemeSuggestRequestBody,
@@ -20,6 +21,7 @@ export const decl: RouteDecl<
         'Returns concept suggestions for a partial marking input within the context\'s composed scheme: the options only. Whether the marking stands is what validate and process answer. The :version segment may be omitted to default to "latest".',
     tags: ['context', 'scheme'],
     pathParams: ['ctxId', 'version'],
+    queryParams: [schemeSelector],
     errorResponses: [
         {
             status: 400,

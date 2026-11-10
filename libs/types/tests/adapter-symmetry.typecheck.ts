@@ -10,6 +10,7 @@ import type {
     ContextCrosswalkDescriptor,
     ConceptView,
     ContextOperationResult,
+    ContextSchemeEngineAdapter,
     CrosswalkTranslationResult,
     DiffResult,
     DocumentAuditReport,
@@ -287,6 +288,24 @@ expectTypeOf(
 expectTypeOf(
     remoteContext.scheme,
 ).toMatchTypeOf<RemoteContextSchemeEngineAdapter>();
+// A Context that holds more than one scheme hands out a view per scheme. The
+// selector picks the view; the view's operations stay selector-free and keep
+// the mode of the Context they came from.
+expectTypeOf(
+    context.schemeView('target'),
+).toEqualTypeOf<ContextSchemeEngineAdapter>();
+expectTypeOf(
+    localContext.schemeView('target'),
+).toEqualTypeOf<LocalContextSchemeEngineAdapter>();
+expectTypeOf(
+    remoteContext.schemeView('target'),
+).toEqualTypeOf<RemoteContextSchemeEngineAdapter>();
+expectTypeOf(localContext.schemeView('target').validate('X')).toEqualTypeOf<
+    ReturnType<LocalContextSchemeEngineAdapter['validate']>
+>();
+expectTypeOf<ContextAdapter['schemeView']>().parameters.toEqualTypeOf<
+    [selector: string]
+>();
 expectTypeOf(context.audit({ text: 'body' })).toEqualTypeOf<
     MaybePromise<ContextOperationResult<DocumentAuditReport>>
 >();
