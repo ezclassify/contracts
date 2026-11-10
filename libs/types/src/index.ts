@@ -27,9 +27,8 @@
  *   `Local` narrowing that returns values and a `Remote` narrowing that returns
  *   Promises. Every method on a base contract works in both modes, so a UI
  *   cannot tell an in-process engine from an HTTP client.
- * - External sources (`external-source.ts`, `auth.ts`, `secret-doc.ts`): the
- *   declarative source documents an artifact references, the resolved secret
- *   shapes, and the codec that carries a secret between processes. The
+ * - External sources (`external-source.ts`, `auth.ts`): the declarative source
+ *   documents an artifact references and the resolved secret shapes. The
  *   in-process seams behind them (`source.ts`, `broker-source.ts`,
  *   `local-engine.ts`: source readers, brokers, timing telemetry and marking
  *   processors) carry functions across the boundary and are tagged internal.
@@ -48,9 +47,8 @@
  *
  * Almost every export is a type. The exceptions are functions, because a few
  * questions only runtime code can answer: `isContextAdapter` tells a composed
- * Context from a bare scheme engine, the display helpers turn a published
- * shape into the form a surface shows, and `toSecretDoc` and `readSecretDoc`
- * carry a resolved secret between processes.
+ * Context from a bare scheme engine, and the display helpers turn a published
+ * shape into the form a surface shows.
  *
  * @packageDocumentation
  */
@@ -82,5 +80,4 @@ export type * from './provenance.js';
 export type * from './readiness.js';
 export type * from './document.js';
 export type * from './auth.js';
-export * from './secret-doc.js';
 export type * from './test-suite.js';

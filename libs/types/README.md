@@ -8,7 +8,7 @@ Canonical document, wire, and adapter interfaces shared by the EzClassify runtim
 - Input contracts (`SchemeDefinition`, `GuideDefinition`, `AccessDefinition`): the shapes expected for scheme/guide/access YAML/JSON documents
 - View types (`SchemePublicView`, `SchemeMetaView`, `CategoryView`, `ConceptView`): typed read-only projections returned by engine operations
 - Process/scan result types, assertion types, and diagnostic types
-- A small set of runtime helpers, the only exports that are not types: `isContextAdapter` narrows an injected engine to the composed `ContextAdapter`; `resolveVocabulary`, `roleNoun`, and `referenceSurfaceLabel` (with the `GENERIC_ROLE_NOUNS` and `GENERIC_REFERENCE_SURFACE_NOUNS` fallbacks) decide the display word an artifact wears; `describeOutcome` renders a guide rule's outcome and `buildCategoryMap` indexes a flat marking by category. `toSecretDoc` and `readSecretDoc` encode and decode the canonical secret wire representation. These helpers ship here so producers and consumers use the same representation
+- A small set of runtime helpers, the only exports that are not types: `isContextAdapter` narrows an injected engine to the composed `ContextAdapter`; `resolveVocabulary`, `roleNoun`, and `referenceSurfaceLabel` (with the `GENERIC_ROLE_NOUNS` and `GENERIC_REFERENCE_SURFACE_NOUNS` fallbacks) decide the display word an artifact wears; `describeOutcome` renders a guide rule's outcome and `buildCategoryMap` indexes a flat marking by category. These helpers ship here so producers and consumers use the same representation
 
 The shapes are hand-written to match the wire format; no code generation required. The helpers are pure, dependency-free, and hold no state.
 

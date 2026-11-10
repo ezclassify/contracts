@@ -321,10 +321,6 @@
     "SchemeStructuralView",
     "SchemeView",
     "Secret",
-    "SecretDecryptRequest",
-    "SecretDecryptResponse",
-    "SecretDoc",
-    "SecretDocReading",
     "SecretRefDoc",
     "Selectable",
     "SortType",
@@ -392,9 +388,7 @@
     "buildCategoryMap",
     "describeOutcome",
     "isContextAdapter",
-    "readSecretDoc",
     "referenceSurfaceLabel",
     "resolveVocabulary",
-    "roleNoun",
-    "toSecretDoc"
+    "roleNoun"
 ]

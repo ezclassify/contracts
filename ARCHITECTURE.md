@@ -71,14 +71,8 @@ checks the launcher, refusal paths, full qualification proof and bundle inputs.
 ## Handwritten seams
 
 - `@ezclassify/types` ships a small set of pure runtime helpers next to its
-  types (the Context adapter guard, the vocabulary and display helpers, and the
-  secret codec), frozen in the public export golden. The codec is
-  `toSecretDoc`, which writes a resolved `Secret` as its JSON form
-  (`SecretDoc`, byte material as canonical base64), and `readSecretDoc`, which
-  reads one back from another process, keeps only the fields its kind declares,
-  and returns an unsupported-kind or malformed result instead of a secret when
-  it cannot decode one. A secret broker and a secret resolver import the same
-  pair, so the two ends cannot disagree on the encoding.
+  types (the Context adapter guard and the vocabulary and display helpers),
+  frozen in the public export golden.
 - `@ezclassify/schemas` re-exports the static schemas and the sub-schemas read
   out of them, all browser-safe.
 - `@ezclassify/validator` checks document shape against the published schemas

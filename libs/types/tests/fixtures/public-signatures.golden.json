@@ -321,10 +321,6 @@
     "SchemeStructuralView": "export interface SchemeStructuralView { id: string; name: string; description: string; categories: Array<{ id: string; label: string; items: ConceptView[]; }>; uncategorized: ConceptView[]; vocabulary?: Vocabulary; }",
     "SchemeView": "export interface SchemeView { id: string; name: string; version: string; description?: string; isDefault: boolean; }",
     "Secret": "export type Secret = { kind: 'string-secret'; value: string; } | { kind: 'byte-secret'; value: Uint8Array; } | { kind: 'cert-and-key-pair'; certPem: string; keyPem: string; keyPassphrase?: string; } | { kind: 'opaque-handle'; handleId: string; metadata?: Record<string, unknown>; };",
-    "SecretDecryptRequest": "export interface SecretDecryptRequest { context?: { sourceId?: string; schemeId?: string; }; }",
-    "SecretDecryptResponse": "export interface SecretDecryptResponse { secret: SecretDoc; }",
-    "SecretDoc": "export type SecretDoc = { kind: 'string-secret'; value: string; } | { kind: 'byte-secret'; valueBase64: string; } | { kind: 'cert-and-key-pair'; certPem: string; keyPem: string; keyPassphrase?: string; } | { kind: 'opaque-handle'; handleId: string; metadata?: Record<string, unknown>; };",
-    "SecretDocReading": "export type SecretDocReading = { ok: true; secret: Secret; } | { ok: false; problem: 'unsupported-kind'; kind: string; } | { ok: false; problem: 'malformed'; field: string; };",
     "SecretRefDoc": "export type SecretRefDoc = { provider: 'env'; envVar: string; } | { provider: 'env'; certVar: string; keyVar: string; } | { provider: 'file'; path: string; } | { provider: 'file'; certPath: string; keyPath: string; } | { provider: 'secret-store'; secretId: string; };",
     "Selectable": "export interface Selectable { conceptId: string; categoryId: string; }",
     "SortType": "export type SortType = 'position' | 'alphabetical' | 'numeric';",
@@ -392,9 +388,7 @@
     "buildCategoryMap": "export declare function buildCategoryMap<T extends Selectable>(items: T[]): Map<string, T[]>;",
     "describeOutcome": "export declare function describeOutcome(outcome: GuideRuleOutcome): string;",
     "isContextAdapter": "export declare function isContextAdapter(adapter: SchemeEngineAdapter | ContextAdapter): adapter is ContextAdapter;",
-    "readSecretDoc": "export declare function readSecretDoc(value: unknown): SecretDocReading;",
     "referenceSurfaceLabel": "export declare function referenceSurfaceLabel(vocabulary: Vocabulary | null | undefined, surface: ReferenceSurfaceKey): ReferenceSurfaceLabel;",
     "resolveVocabulary": "export declare function resolveVocabulary(source: { vocabulary?: Vocabulary; } | Vocabulary | undefined | null, defaults: Record<string, { singular: string; plural: string; }>): ResolvedVocabulary;",
-    "roleNoun": "export declare function roleNoun(vocabulary: Vocabulary | null | undefined, role: 'whole' | 'part', count?: number): string;",
-    "toSecretDoc": "export declare function toSecretDoc(secret: Secret): SecretDoc;"
+    "roleNoun": "export declare function roleNoun(vocabulary: Vocabulary | null | undefined, role: 'whole' | 'part', count?: number): string;"
 }
