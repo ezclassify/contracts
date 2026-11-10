@@ -11,7 +11,7 @@
     "generation": {
         "contentDigest": "sha256:c9f55a2152a363fcf5b9678eb2eaea4fee9f8fbad1bdde978d1fc324dba98c6c",
         "generator": "ezclassify-integration-scenario-recorder",
-        "generatorDigest": "sha256:657ed86ab14b2b9490dfb48f0d764baedfbe4f95c2449e4258e17e2e21204ea5"
+        "generatorDigest": "sha256:17ab9141a5ab645be25bfa9ade8c219fe7aab528ff1b0cddb54d7ab802ad71de"
     },
     "recordedResponseHeaders": [
         "allow",
@@ -34,7 +34,7 @@
             "@ezclassify/schemas@1.0.0-dev.30",
             "@ezclassify/validator@1.0.0-dev.30"
         ],
-        "producerSourceDigest": "sha256:0523e64432d76ed2465dc25d785879ff0d8d505f1b83160ebe83ae5e7ca0018f",
+        "producerSourceDigest": "sha256:9b22a771cd96e67102d3b1d2c94bb67ec2a3d68e70d3612f735c940abd9601dd",
         "restApiVersion": "1.0.0-dev.30"
     },
     "spec": {
