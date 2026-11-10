@@ -195,7 +195,7 @@
                     "embeddedMarking": [
                         {
                             "autoInsert": "every-paragraph",
-                            "pattern": "\\((.+)\\)",
+                            "pattern": "\\(([^)]+)\\)",
                             "template": "({marking}) "
                         }
                     ],
@@ -36476,7 +36476,7 @@
             "request": {
                 "headers": {},
                 "method": "GET",
-                "path": "/v1/ctx/cedar-valley/1.0.0/scheme/describe-concept?conceptId=STUDENT_INFORMATION&categoryId=sensitive_content",
+                "path": "/v1/ctx/cedar-valley/1.0.0/scheme/describe-concept?conceptId=EMPLOYEE_INFORMATION&categoryId=sensitive_content",
                 "pathTemplate": "/v1/ctx/{ctxId}/{version}/scheme/describe-concept"
             },
             "response": {
@@ -36512,20 +36512,20 @@
                     },
                     "result": {
                         "categoryId": "sensitive_content",
-                        "conceptId": "STUDENT_INFORMATION",
-                        "definition": "Protected information about identifiable students, including learning, support, attendance, or individual results.",
-                        "guidance": "Access to one student’s information does not grant access to every student. The host application supplies the record relationship.",
+                        "conceptId": "EMPLOYEE_INFORMATION",
+                        "definition": "Private information about individual employees or personnel matters.",
+                        "guidance": "Use for an employee evaluation or personnel investigation. The host application supplies the record or case authorization.",
                         "lines": [
-                            "Sensitive content: Student information",
+                            "Sensitive content: Employee information",
                             "",
-                            "Description: Protected information about identifiable students, including learning, support, attendance, or individual results.",
+                            "Description: Private information about individual employees or personnel matters.",
                             "",
-                            "Usage: Access to one student’s information does not grant access to every student. The host application supplies the record relationship.",
+                            "Usage: Use for an employee evaluation or personnel investigation. The host application supplies the record or case authorization.",
                             "",
                             "Scheme rules:",
                             "  Public Has No Sensitive Content: Limits concept count from no minimum to 0 in Sensitive content"
                         ],
-                        "name": "Student information",
+                        "name": "Employee information",
                         "rules": [
                             "Public Has No Sensitive Content: Limits concept count from no minimum to 0 in Sensitive content"
                         ]
