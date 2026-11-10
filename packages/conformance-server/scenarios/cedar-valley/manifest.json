@@ -5,13 +5,13 @@
     },
     "corpusVersion": "v1",
     "coverage": {
-        "cases": 244,
+        "cases": 247,
         "operationsCovered": 30
     },
     "generation": {
         "contentDigest": "sha256:c9f55a2152a363fcf5b9678eb2eaea4fee9f8fbad1bdde978d1fc324dba98c6c",
         "generator": "ezclassify-integration-scenario-recorder",
-        "generatorDigest": "sha256:17ab9141a5ab645be25bfa9ade8c219fe7aab528ff1b0cddb54d7ab802ad71de"
+        "generatorDigest": "sha256:bcf3f76cfbf75f94bb013827e20b33e93ed18fe3cccdbe9db41ea9a6aa6eab87"
     },
     "recordedResponseHeaders": [
         "allow",
@@ -34,13 +34,13 @@
             "@ezclassify/schemas@1.0.0-dev.30",
             "@ezclassify/validator@1.0.0-dev.30"
         ],
-        "producerSourceDigest": "sha256:6e367235c05477ded8525b0c3acad59094023abad34931fb76bc183b0f44bddd",
+        "producerSourceDigest": "sha256:b40dc7c63f303a7621b9849e79c9c0611461c0adf734a2f18ab1d1186f9d2dfd",
         "restApiVersion": "1.0.0-dev.30"
     },
     "spec": {
-        "digest": "sha256:57bd298b71064b4752d7661b92399cad7797705a4ff840283306c4ce10c39de8",
+        "digest": "sha256:b83ffe08c6e45854b1d07e0052c5c7d09895df6abcec963be11df12039b73f37",
         "infoVersion": "1.0.0-dev.30",
         "package": "@ezclassify/openapi",
-        "validationJsonDigest": "sha256:ce053471c0bd1616448c5c03efe9616cb03ec367f6253594a3fc468eebfd6510"
+        "validationJsonDigest": "sha256:18a1afed4dff044937dc6d60afd33e04900e1fc6641bb8f97341b5b244c97112"
     }
 }
