@@ -131,7 +131,7 @@
             "name": "Level",
             "rule": {
               "artifact": {
-                "id": "ref-access-rules-1",
+                "id": "ref-marked-access-1",
                 "kind": "access",
                 "version": "1.0.0"
               },
