@@ -101,6 +101,7 @@
     "ContextSchemeEngineAdapter",
     "ContextSchemeRef",
     "ContextSchemeRole",
+    "ContextSchemes",
     "CoverageReport",
     "CredentialProviderId",
     "CrosswalkCompletedTranslationResult",

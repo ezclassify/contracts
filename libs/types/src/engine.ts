@@ -2884,7 +2884,7 @@ export type ContextSchemeRole =
  * `selector`, it is `id` at `version`, and it plays these `roles`.
  *
  * `selector` is the whole point. A Context keys its schemes locally, and a
- * caller reaches a scheme by its key: an adapter's `schemeView` takes it, and
+ * caller reaches a scheme by its key: an adapter's `schemes.get` takes it, and
  * so does `?scheme=` on the REST surface. A caller that cannot enumerate the
  * keys cannot reach anything but the primary.
  */
@@ -2983,7 +2983,7 @@ export interface ContextCompositionPresence {
  * A Context owns its composition. Both local and remote views expose only
  * operations bound to that composition, without lifecycle mutation. No
  * operation takes a scheme selector as an argument: the selector picks the
- * view, through {@link ContextAdapter.schemeView}, and every operation on that
+ * view, through {@link ContextAdapter.schemes}, and every operation on that
  * view answers in its scheme.
  */
 export type ContextSchemeEngineAdapter =
@@ -3064,6 +3064,39 @@ export type LocalContextGuideEngineAdapter =
     Pick<LocalGuideEngineAdapter, 'validate'>;
 
 /**
+ * The schemes a Context holds, reached by key.
+ *
+ * A Context has schemes, one of them is its primary, and you get one by its
+ * key. The key is the `selector` {@link ContextAdapter.describeSchemes} lists.
+ * A scheme's id is not a key.
+ */
+export interface ContextSchemes<
+    View extends ContextSchemeEngineAdapter = ContextSchemeEngineAdapter,
+> {
+    /**
+     * Return the view that marks in the scheme a key names.
+     *
+     * Every operation on the view answers in that scheme, so a host marking in
+     * a crosswalk's target gets the target's view once and then works with it
+     * as it would with {@link ContextAdapter.scheme}. The same key gives the
+     * same view each time.
+     *
+     * Whatever holds the composition decides which keys are real. A local
+     * Context holds it, so it throws for a key it does not have. A remote
+     * Context does not check: the view sends its key with each request, and
+     * the server answers a key it does not have with a 404
+     * `scheme_not_found`. Neither falls back to the primary, because a marking
+     * checked in a scheme its author did not choose can look valid and be
+     * wrong.
+     *
+     * @param key - Key of one of the Context's schemes.
+     * @returns The view bound to that scheme.
+     * @throws On a local Context, when it holds no scheme under `key`.
+     */
+    get(key: string): View;
+}
+
+/**
  * The composed surface: one resolved bundle of a scheme, its guides, and its
  * access policy, plus the operations that need more than one of them at once.
  *
@@ -3088,10 +3121,10 @@ export interface ContextAdapter {
      *
      * A Context can hold more than one scheme: the primary one it marks with,
      * plus the source and target of any crosswalk it declares. Each one's
-     * selector is what {@link schemeView} takes, and `?scheme=` on the REST
-     * surface is that selector spelled for a query string. Without this a
-     * caller has no way to learn which selectors the composition answers to,
-     * so it can only ever reach the primary.
+     * selector is the key {@link schemes} takes, and `?scheme=` on the REST
+     * surface is that key spelled for a query string. Without this a caller
+     * has no way to learn which keys the composition answers to, so it can
+     * only ever reach the primary.
      */
     describeSchemes(): MaybePromise<ContextSchemeDescriptor[]>;
     /**
@@ -3110,27 +3143,10 @@ export interface ContextAdapter {
      */
     readonly scheme: ContextSchemeEngineAdapter;
     /**
-     * Return the view that marks in the scheme a selector names.
-     *
-     * The selector is a scheme's context-local key or its unambiguous artifact
-     * id, as {@link describeSchemes} reports it. Every operation on the view
-     * answers in that scheme, so a host marking in a crosswalk's target asks
-     * for the target's view once and then works with it as it would with
-     * {@link scheme}. The primary's selector gives back {@link scheme}
-     * itself, and every selector that names the same scheme gives the same
-     * view each time.
-     *
-     * A selector that names no scheme the Context holds, or an id that names
-     * more than one, throws. It never falls back to the primary, because a
-     * marking checked in a scheme its author did not choose can look valid
-     * and be wrong. A remote Context checks the selector against the schemes
-     * it read when it connected, and throws until it has read them.
-     *
-     * @param selector - Key or unambiguous id of one of the Context's schemes.
-     * @returns The view bound to that scheme.
-     * @throws When no single scheme the Context holds answers to `selector`.
+     * The schemes this Context holds, each reached by its key. {@link scheme}
+     * stays the primary.
      */
-    schemeView(selector: string): ContextSchemeEngineAdapter;
+    readonly schemes: ContextSchemes;
     /** Guide surface, absent when the composition declares no guide. */
     readonly guide?: GuideEngineAdapter;
     /** Access surface, absent when the composition declares no access policy. */
@@ -3190,7 +3206,7 @@ export interface ContextAdapter {
 /** A {@link ContextAdapter} whose operations complete synchronously. */
 export interface LocalContextAdapter extends ContextAdapter {
     readonly scheme: LocalContextSchemeEngineAdapter;
-    schemeView(selector: string): LocalContextSchemeEngineAdapter;
+    readonly schemes: ContextSchemes<LocalContextSchemeEngineAdapter>;
     readonly guide?: LocalContextGuideEngineAdapter;
     readonly access?: LocalAccessEngineAdapter;
     describeSchemes(): ContextSchemeDescriptor[];
@@ -3218,8 +3234,8 @@ export interface LocalContextAdapter extends ContextAdapter {
  * selector in an operation's arguments and no composition lifecycle call. The
  * Context selected when the remote client was constructed owns that
  * composition, and the view is bound to one of its schemes: the primary, or
- * the one {@link ContextAdapter.schemeView} was given. A view from
- * `schemeView` sends its selector as `?scheme=` on each request.
+ * the one {@link ContextAdapter.schemes} returned for a key. A view from
+ * `schemes.get` sends its key as `?scheme=` on each request.
  */
 export interface RemoteContextSchemeEngineAdapter
     extends Omit<
@@ -3687,7 +3703,7 @@ export interface RemoteContextSchemeEngineAdapter
 /** A {@link ContextAdapter} whose operations complete asynchronously. */
 export interface RemoteContextAdapter extends ContextAdapter {
     readonly scheme: RemoteContextSchemeEngineAdapter;
-    schemeView(selector: string): RemoteContextSchemeEngineAdapter;
+    readonly schemes: ContextSchemes<RemoteContextSchemeEngineAdapter>;
     readonly guide?: RemoteGuideEngineAdapter;
     readonly access?: RemoteAccessEngineAdapter;
     describeSchemes(): Promise<ContextSchemeDescriptor[]>;

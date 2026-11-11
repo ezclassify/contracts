@@ -550,10 +550,10 @@ export interface GuideScanResult {
     /** The guide rule that matched. */
     rule: GuideRule;
     /**
-     * The id of the guide the rule belongs to, when the scan covered more than
-     * one.
+     * The id of the guide the rule belongs to. Rule ids are unique only within
+     * a guide, so a selection built from this hit names this guide.
      */
-    guideId?: string;
+    guideId: string;
     /** Each keyword or matcher label that fired, once each. */
     matchedKeywords: string[];
     /** Every place in the text where the rule fired, in the order found. */

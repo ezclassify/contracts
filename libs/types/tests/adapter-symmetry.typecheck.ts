@@ -11,12 +11,14 @@ import type {
     ConceptView,
     ContextOperationResult,
     ContextSchemeEngineAdapter,
+    ContextSchemes,
     CrosswalkTranslationResult,
     DiffResult,
     DocumentAuditReport,
     EvaluationResult,
     FilterResult,
     GuideEngineAdapter,
+    GuideScanResult,
     LocalAccessEngineAdapter,
     LocalContextAdapter,
     LocalContextSchemeEngineAdapter,
@@ -288,24 +290,33 @@ expectTypeOf(
 expectTypeOf(
     remoteContext.scheme,
 ).toMatchTypeOf<RemoteContextSchemeEngineAdapter>();
-// A Context that holds more than one scheme hands out a view per scheme. The
-// selector picks the view; the view's operations stay selector-free and keep
-// the mode of the Context they came from.
+// A Context that holds more than one scheme hands out a view per key. The key
+// picks the view; the view's operations stay key-free and keep the mode of the
+// Context they came from.
+expectTypeOf(context.schemes).toEqualTypeOf<ContextSchemes>();
+expectTypeOf(localContext.schemes).toEqualTypeOf<
+    ContextSchemes<LocalContextSchemeEngineAdapter>
+>();
+expectTypeOf(remoteContext.schemes).toEqualTypeOf<
+    ContextSchemes<RemoteContextSchemeEngineAdapter>
+>();
 expectTypeOf(
-    context.schemeView('target'),
+    context.schemes.get('target'),
 ).toEqualTypeOf<ContextSchemeEngineAdapter>();
 expectTypeOf(
-    localContext.schemeView('target'),
+    localContext.schemes.get('target'),
 ).toEqualTypeOf<LocalContextSchemeEngineAdapter>();
 expectTypeOf(
-    remoteContext.schemeView('target'),
+    remoteContext.schemes.get('target'),
 ).toEqualTypeOf<RemoteContextSchemeEngineAdapter>();
-expectTypeOf(localContext.schemeView('target').validate('X')).toEqualTypeOf<
+expectTypeOf(localContext.schemes.get('target').validate('X')).toEqualTypeOf<
     ReturnType<LocalContextSchemeEngineAdapter['validate']>
 >();
-expectTypeOf<ContextAdapter['schemeView']>().parameters.toEqualTypeOf<
-    [selector: string]
->();
+expectTypeOf<ContextSchemes['get']>().parameters.toEqualTypeOf<[key: string]>();
+// `get` is the whole collection: nothing else about the schemes is promised.
+expectTypeOf<keyof ContextSchemes>().toEqualTypeOf<'get'>();
+// A scan hit names its guide, because a selection built from it has to.
+expectTypeOf<GuideScanResult['guideId']>().toEqualTypeOf<string>();
 expectTypeOf(context.audit({ text: 'body' })).toEqualTypeOf<
     MaybePromise<ContextOperationResult<DocumentAuditReport>>
 >();
