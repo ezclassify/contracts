@@ -191,13 +191,13 @@
                 [
                     {
                         "categoryId": "level",
-                        "conceptId": "HIGH",
+                        "conceptId": "LOW",
                         "confidence": "certain",
                         "source": "data"
                     }
                 ],
                 {
-                    "level": "HIGH"
+                    "level": "LOW"
                 }
             ],
             "expect": {
