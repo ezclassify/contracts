@@ -60,6 +60,12 @@ export interface AccessRuleEntry {
     id: string;
     /** Human-readable name for this rule (shown in access decision output) */
     name: string;
+    /**
+     * This rule's part marking, written in the scheme the document's
+     * `marking_scheme` names. Text, never interpreted: no engine parses it,
+     * checks it, acts on it, or reports it.
+     */
+    marking?: string;
     /** Simple mapping: user attribute name (supports dot-path) */
     attribute?: string;
     /** Category this rule evaluates */
@@ -369,6 +375,11 @@ export interface AccessPolicyEnvelope {
     name?: string;
     /** Optional longer description shown where the policy is listed. */
     description?: string;
+    /**
+     * The access document's own overall marking, from `access.marking`. Carried
+     * for display and never interpreted.
+     */
+    marking?: string;
     /**
      * Optional display-term overrides consulted by runtime UI components. Keys
      * are consumer-defined; each consumer merges with its own defaults via

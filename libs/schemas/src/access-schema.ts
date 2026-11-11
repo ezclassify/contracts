@@ -31,13 +31,15 @@ const metadataKeys = new Set([
     'id',
     'version',
     'name',
+    'marking_scheme',
+    'marking',
     'description',
     'targetScheme',
 ]);
 
 /**
- * Sub-schema for access policy root metadata (id, version, name, description,
- * targetScheme). Sourced from AccessPolicyEnvelope inside the
+ * Sub-schema for access policy root metadata (id, version, name,
+ * marking_scheme, marking, description, targetScheme). Sourced from AccessPolicyEnvelope inside the
  * access.schema.json definitions.
  */
 export const accessMetaSchema: Record<string, unknown> = {
@@ -53,8 +55,9 @@ export const accessMetaSchema: Record<string, unknown> = {
 /**
  * Sub-schema for a single access rule entry within `access.rules.inline[]`.
  *
- * Required fields: `id`, `name`. Optional simple-mapping fields include
- * `attribute`, `categoryId`, and `strategy`; cross-source rules use `check`.
+ * Required fields: `id`, `name`. Optional fields include the part `marking`;
+ * simple-mapping fields are `attribute`, `categoryId`, and `strategy`;
+ * cross-source rules use `check`.
  * Semantic rule requirements remain runtime-owned. Used when validating
  * individual access rules in isolation (e.g., Studio's AccessBuilder editor).
  */

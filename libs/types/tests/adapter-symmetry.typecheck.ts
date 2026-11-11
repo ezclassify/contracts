@@ -266,6 +266,15 @@ expectTypeOf(access.check(assertions, {})).toEqualTypeOf<
 expectTypeOf(access.describeAllAccessRules()).toEqualTypeOf<
     MaybePromise<AccessRuleDescription[]>
 >();
+expectTypeOf(access.describeAccessMarking()).toEqualTypeOf<
+    MaybePromise<string | undefined>
+>();
+expectTypeOf(localAccess.describeAccessMarking()).toEqualTypeOf<
+    string | undefined
+>();
+expectTypeOf(remoteAccess.describeAccessMarking()).toEqualTypeOf<
+    Promise<string | undefined>
+>();
 expectTypeOf(localAccess.check(assertions, {})).toEqualTypeOf<AccessDecision>();
 expectTypeOf(remoteAccess.check(assertions, {})).toEqualTypeOf<
     Promise<AccessDecision>

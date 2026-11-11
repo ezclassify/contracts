@@ -2,6 +2,7 @@ import type { AccessPolicyTargetScheme, AccessRuleEntry } from './access';
 import type { AccessMappingDoc, ExternalSourceSpec } from './external-source';
 import type { LayerBinding } from './layer';
 import type { Vocabulary } from './scheme';
+import type { MarkingSchemeRefDoc } from './scheme-definition';
 
 /**
  * The access family's layer payload. Required when `type: 'layer'`, forbidden
@@ -66,6 +67,22 @@ export interface AccessDefinition {
         version?: string;
         /** Human-readable access policy name. */
         name?: string;
+        /**
+         * The scheme this document's markings are written in. An access policy
+         * is not a scheme, so it always names one by reference.
+         *
+         * Authoring data only: no engine resolves the scheme it names.
+         */
+        marking_scheme?: MarkingSchemeRefDoc;
+        /**
+         * The whole marking of this access policy document, written in the
+         * scheme `marking_scheme` names. Every `marking` on one of its rules is
+         * a part of it.
+         *
+         * Text, never interpreted: no engine parses it, checks it, or acts on
+         * it. The policy's summary reports it unchanged for display.
+         */
+        marking?: string;
         /** Longer description of what this access policy governs. */
         description?: string;
         /**

@@ -30,7 +30,7 @@ const defs = reader.defs;
  * example in a crosswalk editor that validates as the author types.
  */
 export const crosswalkMappingSchema = {
-    ...reader.definition('CrosswalkMapping'),
+    ...reader.definition('CrosswalkMappingDoc'),
     /** Shared definitions that this fragment's `$ref`s point to. */
     $defs: defs,
 };

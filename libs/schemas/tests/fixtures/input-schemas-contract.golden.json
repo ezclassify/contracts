@@ -122,6 +122,9 @@
                     "id": {
                         "type": "string"
                     },
+                    "marking": {
+                        "type": "string"
+                    },
                     "name": {
                         "type": "string"
                     },
@@ -507,6 +510,22 @@
                 ],
                 "type": "string"
             },
+            "MarkingSchemeRefDoc": {
+                "additionalProperties": false,
+                "properties": {
+                    "id": {
+                        "minLength": 1,
+                        "type": "string"
+                    },
+                    "version": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "id"
+                ],
+                "type": "object"
+            },
             "Record<string,Term>": {
                 "additionalProperties": {
                     "$ref": "#/definitions/Term"
@@ -641,6 +660,12 @@
                     },
                     "layer": {
                         "$ref": "#/definitions/AccessLayer"
+                    },
+                    "marking": {
+                        "type": "string"
+                    },
+                    "marking_scheme": {
+                        "$ref": "#/definitions/MarkingSchemeRefDoc"
                     },
                     "name": {
                         "type": "string"
@@ -934,7 +959,7 @@
                     }
                 ]
             },
-            "CrosswalkMapping": {
+            "CrosswalkMappingDoc": {
                 "additionalProperties": false,
                 "properties": {
                     "authority": {
@@ -952,6 +977,9 @@
                     "id": {
                         "type": "string"
                     },
+                    "marking": {
+                        "type": "string"
+                    },
                     "reason": {
                         "type": "string"
                     },
@@ -966,10 +994,10 @@
                     }
                 },
                 "required": [
-                    "id",
-                    "source",
                     "disposition",
-                    "reason"
+                    "id",
+                    "reason",
+                    "source"
                 ],
                 "type": "object"
             },
@@ -988,30 +1016,7 @@
                 ],
                 "type": "object"
             },
-            "CrosswalkSelection": {
-                "additionalProperties": false,
-                "properties": {
-                    "candidates": {
-                        "items": {
-                            "$ref": "#/definitions/CrosswalkSelectionCandidate"
-                        },
-                        "type": "array"
-                    },
-                    "id": {
-                        "type": "string"
-                    },
-                    "strategy": {
-                        "$ref": "#/definitions/CrosswalkSelectionStrategy"
-                    }
-                },
-                "required": [
-                    "id",
-                    "strategy",
-                    "candidates"
-                ],
-                "type": "object"
-            },
-            "CrosswalkSelectionCandidate": {
+            "CrosswalkSelectionCandidateDoc": {
                 "additionalProperties": false,
                 "properties": {
                     "authority": {
@@ -1031,7 +1036,7 @@
                     },
                     "mappings": {
                         "items": {
-                            "$ref": "#/definitions/CrosswalkMapping"
+                            "$ref": "#/definitions/CrosswalkMappingDoc"
                         },
                         "type": "array"
                     },
@@ -1090,6 +1095,29 @@
                 },
                 "type": "object"
             },
+            "CrosswalkSelectionDoc": {
+                "additionalProperties": false,
+                "properties": {
+                    "candidates": {
+                        "items": {
+                            "$ref": "#/definitions/CrosswalkSelectionCandidateDoc"
+                        },
+                        "type": "array"
+                    },
+                    "id": {
+                        "type": "string"
+                    },
+                    "strategy": {
+                        "$ref": "#/definitions/CrosswalkSelectionStrategy"
+                    }
+                },
+                "required": [
+                    "candidates",
+                    "id",
+                    "strategy"
+                ],
+                "type": "object"
+            },
             "CrosswalkSelectionStrategy": {
                 "enum": [
                     "first-match",
@@ -1118,6 +1146,22 @@
                     "conceptId"
                 ],
                 "type": "object"
+            },
+            "MarkingSchemeRefDoc": {
+                "additionalProperties": false,
+                "properties": {
+                    "id": {
+                        "minLength": 1,
+                        "type": "string"
+                    },
+                    "version": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "id"
+                ],
+                "type": "object"
             }
         },
         "properties": {
@@ -1138,16 +1182,22 @@
                     },
                     "mappings": {
                         "items": {
-                            "$ref": "#/definitions/CrosswalkMapping"
+                            "$ref": "#/definitions/CrosswalkMappingDoc"
                         },
                         "type": "array"
+                    },
+                    "marking": {
+                        "type": "string"
+                    },
+                    "marking_scheme": {
+                        "$ref": "#/definitions/MarkingSchemeRefDoc"
                     },
                     "name": {
                         "type": "string"
                     },
                     "selections": {
                         "items": {
-                            "$ref": "#/definitions/CrosswalkSelection"
+                            "$ref": "#/definitions/CrosswalkSelectionDoc"
                         },
                         "type": "array"
                     },
@@ -1551,6 +1601,12 @@
                     "layer": {
                         "$ref": "#/definitions/GuideLayer"
                     },
+                    "marking": {
+                        "type": "string"
+                    },
+                    "marking_scheme": {
+                        "$ref": "#/definitions/MarkingSchemeRefDoc"
+                    },
                     "name": {
                         "type": "string"
                     },
@@ -1700,7 +1756,7 @@
                 ],
                 "type": "object"
             },
-            "GuideRule": {
+            "GuideRuleDoc": {
                 "additionalProperties": false,
                 "properties": {
                     "category": {
@@ -1714,6 +1770,9 @@
                             "type": "string"
                         },
                         "type": "array"
+                    },
+                    "marking": {
+                        "type": "string"
                     },
                     "match": {
                         "items": {
@@ -1773,11 +1832,27 @@
                     },
                     "inline": {
                         "items": {
-                            "$ref": "#/definitions/GuideRule"
+                            "$ref": "#/definitions/GuideRuleDoc"
                         },
                         "type": "array"
                     }
                 },
+                "type": "object"
+            },
+            "MarkingSchemeRefDoc": {
+                "additionalProperties": false,
+                "properties": {
+                    "id": {
+                        "minLength": 1,
+                        "type": "string"
+                    },
+                    "version": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "id"
+                ],
                 "type": "object"
             },
             "MatchAllNode": {

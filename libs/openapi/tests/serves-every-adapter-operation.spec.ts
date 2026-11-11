@@ -326,6 +326,40 @@ describe('the wire serves what the adapter contract promises', () => {
         });
     });
 
+    it('reports each document whole on its summary and keeps the parts off the wire', () => {
+        for (const summary of [
+            'GuideViewResponse',
+            'SchemeViewResponse',
+            'ContextCrosswalkDescriptor',
+            'CtxAccessRulesResponseBody',
+        ]) {
+            expect(schema(summary).properties?.['marking']).toMatchObject({
+                type: 'string',
+            });
+            expect(schema(summary).required ?? []).not.toContain('marking');
+        }
+        for (const part of ['GuideRule', 'GuideRuleView', 'CrosswalkMapping']) {
+            expect(schema(part).properties).not.toHaveProperty('marking');
+        }
+    });
+
+    it('tells a candidate that lost a selection apart from an omission', () => {
+        const disposition = JSON.stringify(
+            schema('CrosswalkOutcome').properties?.['disposition'],
+        );
+        expect(disposition).toContain('not-selected');
+        expect(disposition).toContain('unmapped');
+        // A document cannot author it, and a selection reports what it chose.
+        expect(schema('CrosswalkDisposition').enum).not.toContain(
+            'not-selected',
+        );
+        expect(
+            JSON.stringify(
+                schema('CrosswalkSelectionOutcome').properties?.['disposition'],
+            ),
+        ).not.toContain('not-selected');
+    });
+
     it('requires the access-check subject the REST handler refuses to omit', () => {
         const route = '/v1/ctx/{ctxId}/{version}/access/check';
         expect(requestRef(route, 'post')).toBe(

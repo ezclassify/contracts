@@ -1894,7 +1894,7 @@
         },
         "MarkingSchemeRefDoc": {
             "additionalProperties": false,
-            "description": "The scheme a scheme document's markings are written in, named by id and, optionally, version. See `SchemeBlock.marking_scheme`.",
+            "description": "The scheme a document's markings are written in, named by id and, optionally, version. Every document that can be marked names one this way; a scheme document may also write `self`. See `SchemeBlock.marking_scheme`.",
             "properties": {
                 "id": {
                     "description": "The marking scheme's id.",

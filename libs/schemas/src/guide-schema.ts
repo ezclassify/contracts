@@ -20,6 +20,8 @@ const guideMetadataKeys = new Set([
     'id',
     'version',
     'name',
+    'marking_scheme',
+    'marking',
     'description',
     'targetSchemes',
     'vocabulary',
@@ -36,7 +38,7 @@ const guideProperties = reader.properties(guideBlock, 'guide');
  * category bodies belong to the complete guide schema.
  *
  * Required identity and target-scheme fields retain their canonical validators,
- * as do optional description, vocabulary, and layer fields.
+ * as do optional marking, description, vocabulary, and layer fields.
  */
 export const guideMetaSchema = {
     ...guideBlock,
@@ -58,7 +60,7 @@ export const guideMetaSchema = {
  * Sub-schema for a single guide rule, resolved from `$defs.guide_rule`.
  *
  * Required fields: `id`, `name`, `outcome` (at least one of `rendered` or
- * `concepts`). Optional: `keywords`, `match[]`, `category`, `when`,
+ * `concepts`). Optional: `marking`, `keywords`, `match[]`, `category`, `when`,
  * `overrides[]`. Used by guide-rule validators and Studio when editing or
  * type-checking individual guide rules.
  */

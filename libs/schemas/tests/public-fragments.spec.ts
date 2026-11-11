@@ -10,6 +10,10 @@ import {
     schemeMetaSchema,
     schemeRuleSchema,
     guideMetaSchema,
+    guideRuleSchema,
+    accessMetaSchema,
+    accessRuleSchema,
+    crosswalkMappingSchema,
 } from '../src/index';
 import { repairRuleSchema, rollupPipelineSchema } from '../src/scheme-schema';
 
@@ -157,5 +161,79 @@ describe('public guide metadata fragment', () => {
             false,
         );
         expect(validate({ ...metadata, rules: {} })).toBe(false);
+    });
+
+    it('carries the whole marking and refuses self as its marking scheme', () => {
+        const validate = new Ajv2020({ strict: false }).compile(
+            guideMetaSchema,
+        );
+        const metadata = {
+            id: 'guide',
+            version: '1.0.0',
+            name: 'Guide',
+            targetSchemes: [{ id: 'demo' }],
+        };
+        expect(
+            validate({
+                ...metadata,
+                marking: 'HIGH',
+                marking_scheme: { id: 'other', version: '2.0.0' },
+            }),
+            JSON.stringify(validate.errors),
+        ).toBe(true);
+        expect(validate({ ...metadata, marking: 7 })).toBe(false);
+        expect(validate({ ...metadata, marking_scheme: 'self' })).toBe(false);
+    });
+});
+
+describe('public access metadata fragment', () => {
+    it('carries the whole marking and refuses self as its marking scheme', () => {
+        const validate = new Ajv({ strict: false }).compile(accessMetaSchema);
+        const metadata = { id: 'policy', targetScheme: { id: 'demo' } };
+        expect(
+            validate({
+                ...metadata,
+                marking: 'HIGH',
+                marking_scheme: { id: 'other' },
+            }),
+            JSON.stringify(validate.errors),
+        ).toBe(true);
+        expect(validate({ ...metadata, marking: 7 })).toBe(false);
+        expect(validate({ ...metadata, marking_scheme: 'self' })).toBe(false);
+    });
+});
+
+describe('public part-marking fragments', () => {
+    const parts = [
+        {
+            name: 'guide rule',
+            compile: () =>
+                new Ajv2020({ strict: false }).compile(guideRuleSchema),
+            valid: { id: 'r', name: 'R', outcome: { rendered: 'HIGH' } },
+        },
+        {
+            name: 'access rule',
+            compile: () =>
+                new Ajv({ strict: false }).compile(accessRuleSchema),
+            valid: { id: 'r', name: 'R' },
+        },
+        {
+            name: 'crosswalk mapping',
+            compile: () =>
+                new Ajv2020({ strict: false }).compile(crosswalkMappingSchema),
+            valid: {
+                id: 'm',
+                source: { categoryId: 'level', conceptId: 'LOW' },
+                disposition: 'omit',
+                reason: 'Dropped.',
+            },
+        },
+    ];
+
+    it.each(parts)('$name takes a text marking', ({ compile, valid }) => {
+        const validate = compile();
+        expect(validate(valid), JSON.stringify(validate.errors)).toBe(true);
+        expect(validate({ ...valid, marking: 'LOW' })).toBe(true);
+        expect(validate({ ...valid, marking: 7 })).toBe(false);
     });
 });

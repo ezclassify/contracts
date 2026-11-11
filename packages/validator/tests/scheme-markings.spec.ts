@@ -10,8 +10,9 @@ import { validateDocument } from '../src/index.mjs';
  * A scheme document may carry its own markings: the scheme block holds the
  * whole, and categories, inline concepts, render formats and scheme rules each
  * hold a part. `marking_scheme` names the scheme those markings are written in,
- * by reference or as `self`. No other document family and no other position in
- * a scheme takes a `marking`.
+ * by reference or as `self`. No other position in a scheme takes a `marking`,
+ * and a Context takes none. The other marked families are in
+ * `document-markings.spec.ts`.
  */
 
 const repoRoot = path.resolve(
@@ -153,66 +154,22 @@ describe('marking_scheme', () => {
     });
 });
 
-describe('documents that are not schemes take no marking', () => {
+describe('a Context composes other documents and takes no marking', () => {
     it.each([
         {
-            name: 'guide block',
-            load: () => json('ref-guide-1.json'),
-            place: (doc: Doc) => {
-                doc.guide.marking = 'L';
-            },
-        },
-        {
-            name: 'guide rule',
-            load: () => json('ref-guide-1.json'),
-            place: (doc: Doc) => {
-                doc.guide.rules.inline[0].marking = 'L';
-            },
-        },
-        {
-            name: 'guide marking_scheme',
-            load: () => json('ref-guide-1.json'),
-            place: (doc: Doc) => {
-                doc.guide.marking_scheme = 'self';
-            },
-        },
-        {
-            name: 'access block',
-            load: () => json('ref-access-rules-1.json'),
-            place: (doc: Doc) => {
-                doc.access.marking = 'L';
-            },
-        },
-        {
-            name: 'access rule',
-            load: () => json('ref-access-rules-1.json'),
-            place: (doc: Doc) => {
-                doc.access.rules.inline[0].marking = 'L';
-            },
-        },
-        {
-            name: 'crosswalk block',
-            load: () => example('crosswalk-layer.yaml'),
-            place: (doc: Doc) => {
-                doc.crosswalk.marking = 'L';
-            },
-        },
-        {
-            name: 'crosswalk mapping',
-            load: () => example('crosswalk-layer.yaml'),
-            place: (doc: Doc) => {
-                doc.crosswalk.mappings[0].marking = 'L';
-            },
-        },
-        {
             name: 'context block',
-            load: () => example('context-with-sources.yaml'),
             place: (doc: Doc) => {
                 doc.context.marking = 'L';
             },
         },
-    ])('refuses a marking on the $name', ({ load, place }) => {
-        const doc = load();
+        {
+            name: 'context marking_scheme',
+            place: (doc: Doc) => {
+                doc.context.marking_scheme = { id: 'other-scheme' };
+            },
+        },
+    ])('refuses a marking on the $name', ({ place }) => {
+        const doc = example('context-with-sources.yaml');
         expect(errors(doc)).toEqual([]);
         place(doc);
         expect(errors(doc).length).toBeGreaterThan(0);

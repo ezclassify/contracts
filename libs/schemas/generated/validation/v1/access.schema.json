@@ -76,6 +76,14 @@
                     "$ref": "#/definitions/AccessLayer",
                     "description": "The access family's layer payload. Required when `type: 'layer'`, forbidden otherwise."
                 },
+                "marking": {
+                    "description": "The whole marking of this access policy document, written in the scheme `marking_scheme` names. Every `marking` on one of its rules is a part of it.\n\nText, never interpreted: no engine parses it, checks it, or acts on it. The policy's summary reports it unchanged for display.",
+                    "type": "string"
+                },
+                "marking_scheme": {
+                    "$ref": "#/definitions/MarkingSchemeRefDoc",
+                    "description": "The scheme this document's markings are written in. An access policy is not a scheme, so it always names one by reference.\n\nAuthoring data only: no engine resolves the scheme it names."
+                },
                 "name": {
                     "description": "Human-readable access policy name.",
                     "type": "string"
@@ -188,6 +196,10 @@
                 },
                 "id": {
                     "description": "Unique identifier for this rule",
+                    "type": "string"
+                },
+                "marking": {
+                    "description": "This rule's part marking, written in the scheme the document's `marking_scheme` names. Text, never interpreted: no engine parses it, checks it, acts on it, or reports it.",
                     "type": "string"
                 },
                 "name": {
@@ -580,6 +592,23 @@
             "description": "Discriminated transport union for an external source. `transport` is inferred from the URI scheme when omitted (`https://` → `http`, `file://` → `file`, no scheme → `inline-data`); explicit values win.",
             "enum": ["http", "file", "inline-data"],
             "type": "string"
+        },
+        "MarkingSchemeRefDoc": {
+            "additionalProperties": false,
+            "description": "The scheme a document's markings are written in, named by id and, optionally, version. Every document that can be marked names one this way; a scheme document may also write `self`. See `SchemeBlock.marking_scheme`.",
+            "properties": {
+                "id": {
+                    "description": "The marking scheme's id.",
+                    "minLength": 1,
+                    "type": "string"
+                },
+                "version": {
+                    "description": "The marking scheme's version. Omitted, any version.",
+                    "type": "string"
+                }
+            },
+            "required": ["id"],
+            "type": "object"
         },
         "Record<string,string>": {
             "additionalProperties": { "type": "string" },

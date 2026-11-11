@@ -402,6 +402,14 @@
                     "$ref": "#/definitions/GuideLayer",
                     "description": "The guide family's layer payload. Required when `type: 'layer'`, forbidden otherwise."
                 },
+                "marking": {
+                    "description": "The whole marking of this guide document, written in the scheme `marking_scheme` names. Every `marking` on one of its rules is a part of it.\n\nText, never interpreted: no engine parses it, checks it, or acts on it. A guide's summary views report it unchanged for display.",
+                    "type": "string"
+                },
+                "marking_scheme": {
+                    "$ref": "#/definitions/MarkingSchemeRefDoc",
+                    "description": "The scheme this document's markings are written in. A guide is not a scheme, so it always names one by reference.\n\nAuthoring data only: no engine resolves the scheme it names."
+                },
                 "name": {
                     "description": "Human-readable guide name.",
                     "type": "string"
@@ -559,9 +567,9 @@
             "required": ["type"],
             "type": "object"
         },
-        "GuideRule": {
+        "GuideRuleDoc": {
             "additionalProperties": false,
-            "description": "A rule in a marking guide: a data-element description with an outcome that contributes to the aggregate marking when activated.\n\nRules are presented as checkboxes in the UI. `keywords` enables keyword-search filtering; `match` enables text-scan detection (e.g., finding IPv4 addresses in a document body). `outcome.rendered` or `outcome.concepts` provides the marking contribution. Rules with `when` are computed; they auto-activate based on sibling rule selection state and do not appear as user-visible checkboxes.\n\nThis is the named runtime/read-result shape. Authoring input is carried by the guide definition's `rules.inline` entries.",
+            "description": "A guide rule as a guide document authors it: the rule, plus the part marking the document gives it. A rule an engine answers with is a `GuideRule` and has no marking.",
             "properties": {
                 "category": {
                     "description": "Guide category ID for grouping in the UI.",
@@ -581,6 +589,10 @@
                         "type": "string"
                     },
                     "type": "array"
+                },
+                "marking": {
+                    "description": "This rule's part marking, written in the scheme the document's `marking_scheme` names. Text, never interpreted: no engine parses it, checks it, acts on it, or reports it.",
+                    "type": "string"
                 },
                 "match": {
                     "description": "Named pattern matchers for content evaluation. Each entry is a `MatchNode`: a leaf spec referencing a built-in matcher (e.g. `{ type: 'ipv4' }`) or a custom regex (`{ type: 'regex', pattern: '...' }`), or a combinator node (`any` / `all` / `not` / `near` / `context` / `validate`) composed over child nodes. When content is evaluated, both `keywords` and `match` are checked.",
@@ -646,13 +658,30 @@
                     "type": "array"
                 },
                 "inline": {
-                    "description": "Inline rules, authored as an array of `GuideRule` entries with `id` carried as a field on each entry, matches the scheme inline shape (`data.concepts.inline: [...]`) so authoring stays uniform across scheme and guide YAML. Uniqueness of `id` within the array is enforced by the loader's validator; the engine builds a `Map<string, GuideRule>` index at load time to keep id lookups O(1).",
+                    "description": "Inline rules, authored as an array of `GuideRuleDoc` entries with `id` carried as a field on each entry, matches the scheme inline shape (`data.concepts.inline: [...]`) so authoring stays uniform across scheme and guide YAML. Uniqueness of `id` within the array is enforced by the loader's validator; the engine builds a `Map<string, GuideRule>` index at load time to keep id lookups O(1).",
                     "items": {
-                        "$ref": "#/definitions/GuideRule"
+                        "$ref": "#/definitions/GuideRuleDoc"
                     },
                     "type": "array"
                 }
             },
+            "type": "object"
+        },
+        "MarkingSchemeRefDoc": {
+            "additionalProperties": false,
+            "description": "The scheme a document's markings are written in, named by id and, optionally, version. Every document that can be marked names one this way; a scheme document may also write `self`. See `SchemeBlock.marking_scheme`.",
+            "properties": {
+                "id": {
+                    "description": "The marking scheme's id.",
+                    "minLength": 1,
+                    "type": "string"
+                },
+                "version": {
+                    "description": "The marking scheme's version. Omitted, any version.",
+                    "type": "string"
+                }
+            },
+            "required": ["id"],
             "type": "object"
         },
         "MatchAllNode": {

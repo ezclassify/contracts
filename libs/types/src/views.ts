@@ -86,6 +86,11 @@ export interface StructuralView<Item> {
     name: string;
     /** The scheme's or guide's description. Empty when it declares none. */
     description: string;
+    /**
+     * The document's own overall marking, exactly as it writes it. Display
+     * only: never interpreted. Absent when the document declares none.
+     */
+    marking?: string;
     /** Categories in their declared scheme / guide order. */
     categories: Array<{
         /** The category id. */
@@ -831,6 +836,12 @@ export interface GuideMetaView {
     name: string;
     /** Long description of what the guide covers. */
     description?: string;
+    /**
+     * The guide document's own overall marking, exactly as its `guide.marking`
+     * writes it. Display only: never interpreted. Absent when the document
+     * declares none.
+     */
+    marking?: string;
     /** Total number of rules in the guide (including computed rules). */
     ruleCount: number;
     /**
@@ -854,6 +865,12 @@ export interface SchemeStructuralView {
     name: string;
     /** The scheme's description. Empty when the scheme declares none. */
     description: string;
+    /**
+     * The scheme document's own overall marking, exactly as its `scheme.marking`
+     * writes it. Display only: never interpreted. Absent when the document
+     * declares none.
+     */
+    marking?: string;
     /**
      * The scheme's categories in declared order, each with the concepts that
      * belong to it. A category with no concepts is left out.
@@ -886,6 +903,12 @@ export interface GuideStructuralView {
     name: string;
     /** The guide's description. Empty when the guide declares none. */
     description: string;
+    /**
+     * The guide document's own overall marking, exactly as its `guide.marking`
+     * writes it. Display only: never interpreted. Absent when the document
+     * declares none.
+     */
+    marking?: string;
     /**
      * The guide's categories in declared order, each with its checkable rules,
      * followed by the `_compound` category that holds every rule with a `when`

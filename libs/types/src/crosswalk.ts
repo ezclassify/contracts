@@ -1,6 +1,7 @@
 import type { Assertion, ValidateResult } from './scheme';
 import type { LayerBinding } from './layer';
 import type { ArtifactReference, AssertionReference } from './provenance';
+import type { MarkingSchemeRefDoc } from './scheme-definition';
 
 /** Decision a reviewed crosswalk makes for one source assertion. */
 export type CrosswalkDisposition = 'carry' | 'review' | 'omit' | 'forbid';
@@ -41,6 +42,20 @@ export interface CrosswalkMapping {
     guidance?: string;
     /** Citation supporting this mapping decision. */
     citation?: string;
+}
+
+/**
+ * A mapping as a crosswalk document authors it: the reviewed treatment, plus
+ * the part marking the document gives it. A mapping a Context describes is a
+ * `CrosswalkMapping` and has no marking.
+ */
+export interface CrosswalkMappingDoc extends CrosswalkMapping {
+    /**
+     * This mapping's part marking, written in the scheme the document's
+     * `marking_scheme` names. Text, never interpreted: no engine parses it,
+     * checks it, acts on it, or reports it.
+     */
+    marking?: string;
 }
 
 /** Boolean test over source assertions used to choose a crosswalk candidate. */
@@ -96,6 +111,24 @@ export interface CrosswalkSelection {
     strategy: CrosswalkSelectionStrategy;
     /** Ordered candidates; order breaks ties and places a fallback last. */
     candidates: CrosswalkSelectionCandidate[];
+}
+
+/** A selection candidate as a crosswalk document authors it. */
+export interface CrosswalkSelectionCandidateDoc extends Omit<
+    CrosswalkSelectionCandidate,
+    'mappings'
+> {
+    /** Per-assertion mappings activated when this candidate is selected. */
+    mappings?: CrosswalkMappingDoc[];
+}
+
+/** A cross-field decision as a crosswalk document authors it. */
+export interface CrosswalkSelectionDoc extends Omit<
+    CrosswalkSelection,
+    'candidates'
+> {
+    /** Ordered candidates; order breaks ties and places a fallback last. */
+    candidates: CrosswalkSelectionCandidateDoc[];
 }
 
 /**
@@ -161,6 +194,23 @@ export interface CrosswalkDefinition {
         version: string;
         /** Human-readable crosswalk name. */
         name: string;
+        /**
+         * The scheme this document's markings are written in. A crosswalk is
+         * not a scheme, so it always names one by reference.
+         *
+         * Authoring data only: no engine resolves the scheme it names.
+         */
+        marking_scheme?: MarkingSchemeRefDoc;
+        /**
+         * The whole marking of this crosswalk document, written in the scheme
+         * `marking_scheme` names. Every `marking` on one of its mappings is a
+         * part of it.
+         *
+         * Text, never interpreted: no engine parses it, checks it, or acts on
+         * it. The Context's description of the crosswalk reports it unchanged
+         * for display.
+         */
+        marking?: string;
         /** Longer description of what this crosswalk translates. */
         description?: string;
         /** General usage and review guidance for this crosswalk. */
@@ -184,12 +234,12 @@ export interface CrosswalkDefinition {
         /** The scheme this crosswalk translates to. */
         targetScheme: CrosswalkSchemeDependency;
         /** How each source concept translates into the target scheme. */
-        mappings: CrosswalkMapping[];
+        mappings: CrosswalkMappingDoc[];
         /**
          * Optional cross-field decisions whose selected mappings supplement
          * `mappings`.
          */
-        selections?: CrosswalkSelection[];
+        selections?: CrosswalkSelectionDoc[];
     };
 }
 
@@ -205,10 +255,23 @@ export interface CrosswalkTranslationInput {
 export interface CrosswalkOutcome {
     /** Source assertion considered by the crosswalk. */
     source: AssertionReference;
-    /** Matched mapping id, absent when no mapping covers the assertion. */
+    /**
+     * Matched mapping id, absent when no mapping covers the assertion. On a
+     * `not-selected` outcome, `<selection>:<candidate>` names the candidate
+     * that lost.
+     */
     mappingId?: string;
-    /** Mapping decision, or `unmapped` when the artifact has no rule. */
-    disposition: CrosswalkDisposition | 'unmapped';
+    /**
+     * Mapping decision, `unmapped` when the artifact has no rule, or
+     * `not-selected` when the assertion is covered only by a selection
+     * candidate that lost.
+     *
+     * `not-selected` is not an `omit`. An `omit` is a reviewed decision to
+     * drop the assertion. `not-selected` says a selection chose a different
+     * candidate, so nothing decided this assertion on its own. Like an `omit`
+     * it emits no targets and leaves the translation settled.
+     */
+    disposition: CrosswalkDisposition | 'unmapped' | 'not-selected';
     /** Emitted targets for `carry`, proposed targets for `review`. */
     targets: CrosswalkTarget[];
     /** Reviewable explanation of the decision. */

@@ -38,13 +38,13 @@ var require_ucs2length = __commonJS({
 // access.validator.mjs
 var validate = validate10;
 var access_validator_default = validate10;
-var schema12 = { "additionalProperties": false, "description": "Root `access:` envelope.", "properties": { "description": { "description": "Longer description of what this access policy governs.", "type": "string" }, "id": { "description": "Unique access policy identifier.", "type": "string" }, "layer": { "$ref": "#/definitions/AccessLayer", "description": "The access family's layer payload. Required when `type: 'layer'`, forbidden otherwise." }, "name": { "description": "Human-readable access policy name.", "type": "string" }, "rules": { "additionalProperties": false, "description": "Access rules: inline array and/or external sources.", "properties": { "external": { "description": "Live external rule sources. An array allows an access doc to draw rules from multiple upstream endpoints, composed via `ChainedAccessRuleSource` at load time.", "items": { "$ref": "#/definitions/ExternalSourceSpec%3CAccessMappingDoc%3E" }, "type": "array" }, "inline": { "description": "Inline access rules, authored as an array of `AccessRuleEntry` entries with `id` carried as a field on each entry, matches the scheme inline shape (`data.concepts.inline: [...]`) so authoring stays uniform across scheme, guide, and access YAML. Uniqueness of `id` within the array is enforced by the loader's validator; the engine builds a `Map<string, AccessRuleEntry>` index at load time to keep id lookups O(1).", "items": { "$ref": "#/definitions/AccessRuleEntry" }, "type": "array" } }, "type": "object" }, "targetScheme": { "additionalProperties": false, "description": "The scheme whose markings this policy decides access to.", "properties": { "id": { "description": "Scheme ID this access policy applies to.", "type": "string" }, "version": { "description": "Optional specific version or constraint string (caret/tilde). Absent = any version.", "type": "string" } }, "required": ["id"], "type": "object" }, "type": { "description": "What kind of document this is. Absent means `'access'`. `type: 'layer'` requires the `layer` block and `type: 'access'` forbids it, both enforced at load. Every layerable family wears this same envelope; see `LayerBinding`.", "enum": ["access", "layer"], "type": "string" }, "version": { "description": "Semantic version of this access policy.", "type": "string" }, "vocabulary": { "$ref": "#/definitions/vocabulary", "description": "Display words this policy advertises for UI consumers. A presentation hint only." } }, "required": ["id", "targetScheme", "rules"], "type": "object" };
+var schema12 = { "additionalProperties": false, "description": "Root `access:` envelope.", "properties": { "description": { "description": "Longer description of what this access policy governs.", "type": "string" }, "id": { "description": "Unique access policy identifier.", "type": "string" }, "layer": { "$ref": "#/definitions/AccessLayer", "description": "The access family's layer payload. Required when `type: 'layer'`, forbidden otherwise." }, "marking": { "description": "The whole marking of this access policy document, written in the scheme `marking_scheme` names. Every `marking` on one of its rules is a part of it.\n\nText, never interpreted: no engine parses it, checks it, or acts on it. The policy's summary reports it unchanged for display.", "type": "string" }, "marking_scheme": { "$ref": "#/definitions/MarkingSchemeRefDoc", "description": "The scheme this document's markings are written in. An access policy is not a scheme, so it always names one by reference.\n\nAuthoring data only: no engine resolves the scheme it names." }, "name": { "description": "Human-readable access policy name.", "type": "string" }, "rules": { "additionalProperties": false, "description": "Access rules: inline array and/or external sources.", "properties": { "external": { "description": "Live external rule sources. An array allows an access doc to draw rules from multiple upstream endpoints, composed via `ChainedAccessRuleSource` at load time.", "items": { "$ref": "#/definitions/ExternalSourceSpec%3CAccessMappingDoc%3E" }, "type": "array" }, "inline": { "description": "Inline access rules, authored as an array of `AccessRuleEntry` entries with `id` carried as a field on each entry, matches the scheme inline shape (`data.concepts.inline: [...]`) so authoring stays uniform across scheme, guide, and access YAML. Uniqueness of `id` within the array is enforced by the loader's validator; the engine builds a `Map<string, AccessRuleEntry>` index at load time to keep id lookups O(1).", "items": { "$ref": "#/definitions/AccessRuleEntry" }, "type": "array" } }, "type": "object" }, "targetScheme": { "additionalProperties": false, "description": "The scheme whose markings this policy decides access to.", "properties": { "id": { "description": "Scheme ID this access policy applies to.", "type": "string" }, "version": { "description": "Optional specific version or constraint string (caret/tilde). Absent = any version.", "type": "string" } }, "required": ["id"], "type": "object" }, "type": { "description": "What kind of document this is. Absent means `'access'`. `type: 'layer'` requires the `layer` block and `type: 'access'` forbids it, both enforced at load. Every layerable family wears this same envelope; see `LayerBinding`.", "enum": ["access", "layer"], "type": "string" }, "version": { "description": "Semantic version of this access policy.", "type": "string" }, "vocabulary": { "$ref": "#/definitions/vocabulary", "description": "Display words this policy advertises for UI consumers. A presentation hint only." } }, "required": ["id", "targetScheme", "rules"], "type": "object" };
 var func2 = Object.prototype.hasOwnProperty;
 var func3 = require_ucs2length().default;
-var schema14 = { "additionalProperties": false, "description": "The body of an `external:` block on a concept / guide-rule / access source. The mapping field is one of `ConceptMappingDoc`, `RuleMappingDoc`, or `AccessMappingDoc` depending on which artifact this block belongs to.", "properties": { "attribution": { "$ref": "#/definitions/AttributionDoc", "description": "Provenance for downstream attribution UIs." }, "auth": { "$ref": "#/definitions/ExternalSourceAuth", "description": "Request-level authentication, applied to each request." }, "capabilities": { "$ref": "#/definitions/ExternalSourceCapabilities", "description": "Capability overrides. When omitted, inferred from `mapping`." }, "grantId": { "description": "The publisher's opaque reference (`grantId:<uuid>`) to the sharing grant under which it read the source `srcref` names. Provenance only; the engine accepts it and does not act on it.", "type": "string" }, "headers": { "$ref": "#/definitions/Record%3Cstring%2Cstring%3E", "description": "Static request headers (HTTP only)." }, "id": { "description": "Stable identifier for this source within the containing artifact. Required when multiple external sources appear on the same scheme; the loader synthesizes `external-${i}` when the field is absent.", "type": "string" }, "liveFetch": { "description": "How the publisher obtained the records it published for this source: `true` when it read the upstream as it composed the artifact, `false` (the default) when it used a stored snapshot, named by `snapshotRef`. Provenance only; the engine accepts it and does not act on it.", "type": "boolean" }, "mapping": { "$ref": "#/definitions/AccessMappingDoc", "description": "Declarative projection from foreign records into canonical shape." }, "mappingHash": { "description": "The publisher's anchor over this spec block: SHA-256 hex of its canonical sorted-key JSON serialization, excluding this field. Whoever publishes the artifact writes it. The engine recomputes it when it loads the Context and refuses to load on a mismatch, so a block edited after publication is caught. Absent means the block carries no anchor and nothing is checked.", "type": "string" }, "pagination": { "$ref": "#/definitions/ExternalSourcePagination", "description": "HTTP-only knobs. Ignored for non-http transports." }, "query": { "$ref": "#/definitions/Record%3Cstring%2Cstring%3E", "description": "Static query params (HTTP only)." }, "queryParams": { "$ref": "#/definitions/ExternalSourceQueryParams", "description": "HTTP-only: override the transport's default query-parameter names." }, "rateLimit": { "additionalProperties": false, "description": "Per-instance rate-limit bucket.", "properties": { "burst": { "description": "Most requests allowed in one window.", "type": "integer" }, "windowMs": { "description": "Length of the window, in milliseconds.", "type": "number" } }, "required": ["burst", "windowMs"], "type": "object" }, "recordsPath": { "description": "Dot-path into the JSON response body that locates the records array (HTTP only). Omit when the response body is itself the array. Use this for upstreams that wrap their payload, e.g. GeoJSON `FeatureCollection.features`, ArcGIS REST `features`, Elasticsearch `hits.hits`.", "type": "string" }, "snapshotId": { "description": "Optional pin on the records this source serves: the sha256 records digest the source reports for them, written `sha256:` followed by 64 lowercase hex digits (the pattern `^sha256:[0-9a-f]{64}$`). When it is set, the engine loads the artifact only if the source reports the same digest, so an artifact version is immutable around it. To absorb new data from upstream, mint a new artifact version with the new digest.\n\nA label such as a release name never matches and is refused; it belongs in `attribution.citation`. Omit the pin for a best-effort live source that cannot report a stable digest.", "pattern": "^sha256:[0-9a-f]{64}$", "type": "string" }, "snapshotRef": { "description": "The publisher's content-addressed reference to the stored snapshot the records came from, when `liveFetch` is `false`. Provenance only; the engine accepts it and does not act on it.", "type": "string" }, "source": { "description": "URI for the upstream: http(s), file://, or inline:// (rare).", "type": "string" }, "srcref": { "description": "The publisher's opaque reference (`srcref:<uuid>`) to a source another organization shared with it, when the records came through such a share. Provenance only; the engine accepts it and does not act on it.", "type": "string" }, "timeoutMs": { "description": "Per-request timeout in ms.", "type": "number" }, "tls": { "$ref": "#/definitions/ExternalSourceTls", "description": "HTTP only: the connection's TLS settings (a private CA, a client certificate for mutual TLS). Independent of `auth`, so a source can present a client certificate and a bearer token together. A source whose only credential is its client certificate has `tls` and no `auth`." }, "transport": { "$ref": "#/definitions/ExternalSourceTransport", "description": "Inferred from `source` when omitted." } }, "required": ["source", "mapping"], "type": "object" };
-var schema22 = { "additionalProperties": false, "description": "Capability hints declared on an external source. The compiler infers defaults from the mapping shape; an explicit block overrides inference.", "properties": { "ancestorsOf": { "description": "Whether the upstream can list a concept's ancestors.", "type": "boolean" }, "childrenOf": { "description": "Whether the upstream can list a concept's children.", "type": "boolean" }, "count": { "description": "Whether the upstream reports how many records it holds. Used by authoring tools.", "type": "boolean" }, "enumerate": { "description": "Whether the upstream can be browsed page by page. Used by authoring tools, not by the runtime.", "type": "boolean" }, "prefixMatch": { "description": "Whether the upstream answers a prefix lookup.", "type": "boolean" }, "resolveAliases": { "description": "How the upstream resolves an alias to a concept: `exact` for literal matches, `fuzzy` for tolerant ones, or `none` when it cannot.", "enum": ["exact", "fuzzy", "none"], "type": "string" }, "search": { "description": "Whether the upstream answers a free-text search.", "type": "boolean" } }, "type": "object" };
-var schema32 = { "description": "Discriminated transport union for an external source. `transport` is inferred from the URI scheme when omitted (`https://` \u2192 `http`, `file://` \u2192 `file`, no scheme \u2192 `inline-data`); explicit values win.", "enum": ["http", "file", "inline-data"], "type": "string" };
-var schema16 = { "additionalProperties": false, "description": "Request-level authentication on an external source. `flow` selects the registered handler (Basic, Bearer, a named header, AWS-SigV4, OAuth2 client credentials) that decorates each request; the credential refs are provider-specific opaque ids that are resolved server-side.\n\nCertificates are not request-level. A client certificate for mutual TLS, and a CA bundle for a private upstream, belong to the connection and are declared in the source's `tls` block.", "properties": { "accessKeyRef": { "$ref": "#/definitions/SecretRefDoc", "description": "AWS access key ref, used by `aws-sigv4`." }, "clientCredentialRef": { "$ref": "#/definitions/SecretRefDoc", "description": "OAuth2 client credential, used by `oauth2-cc`." }, "credentialRef": { "$ref": "#/definitions/SecretRefDoc", "description": "Single primary credential, used by `basic`, `bearer`, `header`." }, "flow": { "description": "Registered AuthFlowHandler id.", "enum": ["none", "basic", "bearer", "header", "aws-sigv4", "oauth2-cc"], "type": "string" }, "params": { "$ref": "#/definitions/Record%3Cstring%2Cstring%3E", "description": "Optional scopes / region / token endpoint params, provider-specific." }, "secretKeyRef": { "$ref": "#/definitions/SecretRefDoc", "description": "AWS secret access key ref, used by `aws-sigv4`." } }, "required": ["flow"], "type": "object" };
+var schema15 = { "additionalProperties": false, "description": "The body of an `external:` block on a concept / guide-rule / access source. The mapping field is one of `ConceptMappingDoc`, `RuleMappingDoc`, or `AccessMappingDoc` depending on which artifact this block belongs to.", "properties": { "attribution": { "$ref": "#/definitions/AttributionDoc", "description": "Provenance for downstream attribution UIs." }, "auth": { "$ref": "#/definitions/ExternalSourceAuth", "description": "Request-level authentication, applied to each request." }, "capabilities": { "$ref": "#/definitions/ExternalSourceCapabilities", "description": "Capability overrides. When omitted, inferred from `mapping`." }, "grantId": { "description": "The publisher's opaque reference (`grantId:<uuid>`) to the sharing grant under which it read the source `srcref` names. Provenance only; the engine accepts it and does not act on it.", "type": "string" }, "headers": { "$ref": "#/definitions/Record%3Cstring%2Cstring%3E", "description": "Static request headers (HTTP only)." }, "id": { "description": "Stable identifier for this source within the containing artifact. Required when multiple external sources appear on the same scheme; the loader synthesizes `external-${i}` when the field is absent.", "type": "string" }, "liveFetch": { "description": "How the publisher obtained the records it published for this source: `true` when it read the upstream as it composed the artifact, `false` (the default) when it used a stored snapshot, named by `snapshotRef`. Provenance only; the engine accepts it and does not act on it.", "type": "boolean" }, "mapping": { "$ref": "#/definitions/AccessMappingDoc", "description": "Declarative projection from foreign records into canonical shape." }, "mappingHash": { "description": "The publisher's anchor over this spec block: SHA-256 hex of its canonical sorted-key JSON serialization, excluding this field. Whoever publishes the artifact writes it. The engine recomputes it when it loads the Context and refuses to load on a mismatch, so a block edited after publication is caught. Absent means the block carries no anchor and nothing is checked.", "type": "string" }, "pagination": { "$ref": "#/definitions/ExternalSourcePagination", "description": "HTTP-only knobs. Ignored for non-http transports." }, "query": { "$ref": "#/definitions/Record%3Cstring%2Cstring%3E", "description": "Static query params (HTTP only)." }, "queryParams": { "$ref": "#/definitions/ExternalSourceQueryParams", "description": "HTTP-only: override the transport's default query-parameter names." }, "rateLimit": { "additionalProperties": false, "description": "Per-instance rate-limit bucket.", "properties": { "burst": { "description": "Most requests allowed in one window.", "type": "integer" }, "windowMs": { "description": "Length of the window, in milliseconds.", "type": "number" } }, "required": ["burst", "windowMs"], "type": "object" }, "recordsPath": { "description": "Dot-path into the JSON response body that locates the records array (HTTP only). Omit when the response body is itself the array. Use this for upstreams that wrap their payload, e.g. GeoJSON `FeatureCollection.features`, ArcGIS REST `features`, Elasticsearch `hits.hits`.", "type": "string" }, "snapshotId": { "description": "Optional pin on the records this source serves: the sha256 records digest the source reports for them, written `sha256:` followed by 64 lowercase hex digits (the pattern `^sha256:[0-9a-f]{64}$`). When it is set, the engine loads the artifact only if the source reports the same digest, so an artifact version is immutable around it. To absorb new data from upstream, mint a new artifact version with the new digest.\n\nA label such as a release name never matches and is refused; it belongs in `attribution.citation`. Omit the pin for a best-effort live source that cannot report a stable digest.", "pattern": "^sha256:[0-9a-f]{64}$", "type": "string" }, "snapshotRef": { "description": "The publisher's content-addressed reference to the stored snapshot the records came from, when `liveFetch` is `false`. Provenance only; the engine accepts it and does not act on it.", "type": "string" }, "source": { "description": "URI for the upstream: http(s), file://, or inline:// (rare).", "type": "string" }, "srcref": { "description": "The publisher's opaque reference (`srcref:<uuid>`) to a source another organization shared with it, when the records came through such a share. Provenance only; the engine accepts it and does not act on it.", "type": "string" }, "timeoutMs": { "description": "Per-request timeout in ms.", "type": "number" }, "tls": { "$ref": "#/definitions/ExternalSourceTls", "description": "HTTP only: the connection's TLS settings (a private CA, a client certificate for mutual TLS). Independent of `auth`, so a source can present a client certificate and a bearer token together. A source whose only credential is its client certificate has `tls` and no `auth`." }, "transport": { "$ref": "#/definitions/ExternalSourceTransport", "description": "Inferred from `source` when omitted." } }, "required": ["source", "mapping"], "type": "object" };
+var schema23 = { "additionalProperties": false, "description": "Capability hints declared on an external source. The compiler infers defaults from the mapping shape; an explicit block overrides inference.", "properties": { "ancestorsOf": { "description": "Whether the upstream can list a concept's ancestors.", "type": "boolean" }, "childrenOf": { "description": "Whether the upstream can list a concept's children.", "type": "boolean" }, "count": { "description": "Whether the upstream reports how many records it holds. Used by authoring tools.", "type": "boolean" }, "enumerate": { "description": "Whether the upstream can be browsed page by page. Used by authoring tools, not by the runtime.", "type": "boolean" }, "prefixMatch": { "description": "Whether the upstream answers a prefix lookup.", "type": "boolean" }, "resolveAliases": { "description": "How the upstream resolves an alias to a concept: `exact` for literal matches, `fuzzy` for tolerant ones, or `none` when it cannot.", "enum": ["exact", "fuzzy", "none"], "type": "string" }, "search": { "description": "Whether the upstream answers a free-text search.", "type": "boolean" } }, "type": "object" };
+var schema33 = { "description": "Discriminated transport union for an external source. `transport` is inferred from the URI scheme when omitted (`https://` \u2192 `http`, `file://` \u2192 `file`, no scheme \u2192 `inline-data`); explicit values win.", "enum": ["http", "file", "inline-data"], "type": "string" };
+var schema17 = { "additionalProperties": false, "description": "Request-level authentication on an external source. `flow` selects the registered handler (Basic, Bearer, a named header, AWS-SigV4, OAuth2 client credentials) that decorates each request; the credential refs are provider-specific opaque ids that are resolved server-side.\n\nCertificates are not request-level. A client certificate for mutual TLS, and a CA bundle for a private upstream, belong to the connection and are declared in the source's `tls` block.", "properties": { "accessKeyRef": { "$ref": "#/definitions/SecretRefDoc", "description": "AWS access key ref, used by `aws-sigv4`." }, "clientCredentialRef": { "$ref": "#/definitions/SecretRefDoc", "description": "OAuth2 client credential, used by `oauth2-cc`." }, "credentialRef": { "$ref": "#/definitions/SecretRefDoc", "description": "Single primary credential, used by `basic`, `bearer`, `header`." }, "flow": { "description": "Registered AuthFlowHandler id.", "enum": ["none", "basic", "bearer", "header", "aws-sigv4", "oauth2-cc"], "type": "string" }, "params": { "$ref": "#/definitions/Record%3Cstring%2Cstring%3E", "description": "Optional scopes / region / token endpoint params, provider-specific." }, "secretKeyRef": { "$ref": "#/definitions/SecretRefDoc", "description": "AWS secret access key ref, used by `aws-sigv4`." } }, "required": ["flow"], "type": "object" };
 function validate13(data, { instancePath = "", parentData, parentDataProperty, rootData = data } = {}) {
   let vErrors = null;
   let errors = 0;
@@ -1404,7 +1404,7 @@ function validate13(data, { instancePath = "", parentData, parentDataProperty, r
         errors++;
       }
       if (!(data39 === "none" || data39 === "basic" || data39 === "bearer" || data39 === "header" || data39 === "aws-sigv4" || data39 === "oauth2-cc")) {
-        const err123 = { instancePath: instancePath + "/flow", schemaPath: "#/properties/flow/enum", keyword: "enum", params: { allowedValues: schema16.properties.flow.enum }, message: "must be equal to one of the allowed values" };
+        const err123 = { instancePath: instancePath + "/flow", schemaPath: "#/properties/flow/enum", keyword: "enum", params: { allowedValues: schema17.properties.flow.enum }, message: "must be equal to one of the allowed values" };
         if (vErrors === null) {
           vErrors = [err123];
         } else {
@@ -3322,7 +3322,7 @@ function validate12(data, { instancePath = "", parentData, parentDataProperty, r
       errors++;
     }
     for (const key0 in data) {
-      if (!func2.call(schema14.properties, key0)) {
+      if (!func2.call(schema15.properties, key0)) {
         const err2 = { instancePath, schemaPath: "#/additionalProperties", keyword: "additionalProperties", params: { additionalProperty: key0 }, message: "must NOT have additional properties" };
         if (vErrors === null) {
           vErrors = [err2];
@@ -3505,7 +3505,7 @@ function validate12(data, { instancePath = "", parentData, parentDataProperty, r
             errors++;
           }
           if (!(data12 === "exact" || data12 === "fuzzy" || data12 === "none")) {
-            const err18 = { instancePath: instancePath + "/capabilities/resolveAliases", schemaPath: "#/definitions/ExternalSourceCapabilities/properties/resolveAliases/enum", keyword: "enum", params: { allowedValues: schema22.properties.resolveAliases.enum }, message: "must be equal to one of the allowed values" };
+            const err18 = { instancePath: instancePath + "/capabilities/resolveAliases", schemaPath: "#/definitions/ExternalSourceCapabilities/properties/resolveAliases/enum", keyword: "enum", params: { allowedValues: schema23.properties.resolveAliases.enum }, message: "must be equal to one of the allowed values" };
             if (vErrors === null) {
               vErrors = [err18];
             } else {
@@ -4389,7 +4389,7 @@ function validate12(data, { instancePath = "", parentData, parentDataProperty, r
         errors++;
       }
       if (!(data56 === "http" || data56 === "file" || data56 === "inline-data")) {
-        const err97 = { instancePath: instancePath + "/transport", schemaPath: "#/definitions/ExternalSourceTransport/enum", keyword: "enum", params: { allowedValues: schema32.enum }, message: "must be equal to one of the allowed values" };
+        const err97 = { instancePath: instancePath + "/transport", schemaPath: "#/definitions/ExternalSourceTransport/enum", keyword: "enum", params: { allowedValues: schema33.enum }, message: "must be equal to one of the allowed values" };
         if (vErrors === null) {
           vErrors = [err97];
         } else {
@@ -4410,9 +4410,9 @@ function validate12(data, { instancePath = "", parentData, parentDataProperty, r
   validate12.errors = vErrors;
   return errors === 0;
 }
-var schema33 = { "additionalProperties": false, "description": "Conditional access rule with optional when/check blocks.", "properties": { "attribute": { "description": "Simple mapping: user attribute name (supports dot-path)", "type": "string" }, "categoryId": { "description": "Category this rule evaluates", "type": "string" }, "check": { "$ref": "#/definitions/AccessRuleCheck", "description": "Cross-source check comparing user, context, and data values" }, "denyReason": { "description": "Custom denial message with {variable} substitution", "type": "string" }, "id": { "description": "Unique identifier for this rule", "type": "string" }, "name": { "description": "Human-readable name for this rule (shown in access decision output)", "type": "string" }, "strategy": { "$ref": "#/definitions/AccessRule", "description": "Comparison strategy for simple-mapping rules (required when the rule has `attribute` + `categoryId`). Absent on `check:`-based rules, which carry their own operator inside the check block." }, "values": { "$ref": "#/definitions/Record%3Cstring%2Cstring%3E", "description": "Explicit value mapping from user attribute values to concept IDs" }, "view": { "description": "View to match user values against (default: try all)", "type": "string" }, "when": { "additionalProperties": false, "description": "Condition: only evaluate this rule when data matches", "properties": { "data": { "$ref": "#/definitions/AccessRuleWhenData", "description": "The data condition that must hold for the rule to be evaluated." } }, "type": "object" } }, "required": ["id", "name"], "type": "object" };
-var schema35 = { "description": "Strategy for comparing subject attributes against data assertions in a category during an access check.\n\n- `gte`: user's ranked concept must be \u2265 the data concept's rank\n- `superset`: user's concept set must include all data concepts\n- `includes`: user's concept set must include at least one data concept\n- `exact`: user's concepts must exactly match the data concepts\n- `any`: a supplied, non-null user attribute grants access, including an empty array; it does not require a recognized concept or a non-empty concept set\n\nDeclared on `AccessRuleEntry.strategy` for simple attribute-mapping rules.", "enum": ["gte", "superset", "includes", "exact", "any"], "type": "string" };
-var schema37 = { "additionalProperties": false, "description": "Condition that tests data assertions before a rule is evaluated.", "properties": { "categoryId": { "description": "Category to test", "type": "string" }, "operator": { "description": "Condition operator (has_concept, has_content, min_order)", "type": "string" }, "value": { "description": "Operand for the operator (concept ID or numeric threshold)", "type": ["string", "number"] } }, "required": ["categoryId", "operator"], "type": "object" };
+var schema34 = { "additionalProperties": false, "description": "Conditional access rule with optional when/check blocks.", "properties": { "attribute": { "description": "Simple mapping: user attribute name (supports dot-path)", "type": "string" }, "categoryId": { "description": "Category this rule evaluates", "type": "string" }, "check": { "$ref": "#/definitions/AccessRuleCheck", "description": "Cross-source check comparing user, context, and data values" }, "denyReason": { "description": "Custom denial message with {variable} substitution", "type": "string" }, "id": { "description": "Unique identifier for this rule", "type": "string" }, "marking": { "description": "This rule's part marking, written in the scheme the document's `marking_scheme` names. Text, never interpreted: no engine parses it, checks it, acts on it, or reports it.", "type": "string" }, "name": { "description": "Human-readable name for this rule (shown in access decision output)", "type": "string" }, "strategy": { "$ref": "#/definitions/AccessRule", "description": "Comparison strategy for simple-mapping rules (required when the rule has `attribute` + `categoryId`). Absent on `check:`-based rules, which carry their own operator inside the check block." }, "values": { "$ref": "#/definitions/Record%3Cstring%2Cstring%3E", "description": "Explicit value mapping from user attribute values to concept IDs" }, "view": { "description": "View to match user values against (default: try all)", "type": "string" }, "when": { "additionalProperties": false, "description": "Condition: only evaluate this rule when data matches", "properties": { "data": { "$ref": "#/definitions/AccessRuleWhenData", "description": "The data condition that must hold for the rule to be evaluated." } }, "type": "object" } }, "required": ["id", "name"], "type": "object" };
+var schema36 = { "description": "Strategy for comparing subject attributes against data assertions in a category during an access check.\n\n- `gte`: user's ranked concept must be \u2265 the data concept's rank\n- `superset`: user's concept set must include all data concepts\n- `includes`: user's concept set must include at least one data concept\n- `exact`: user's concepts must exactly match the data concepts\n- `any`: a supplied, non-null user attribute grants access, including an empty array; it does not require a recognized concept or a non-empty concept set\n\nDeclared on `AccessRuleEntry.strategy` for simple attribute-mapping rules.", "enum": ["gte", "superset", "includes", "exact", "any"], "type": "string" };
+var schema38 = { "additionalProperties": false, "description": "Condition that tests data assertions before a rule is evaluated.", "properties": { "categoryId": { "description": "Category to test", "type": "string" }, "operator": { "description": "Condition operator (has_concept, has_content, min_order)", "type": "string" }, "value": { "description": "Operand for the operator (concept ID or numeric threshold)", "type": ["string", "number"] } }, "required": ["categoryId", "operator"], "type": "object" };
 function validate18(data, { instancePath = "", parentData, parentDataProperty, rootData = data } = {}) {
   let vErrors = null;
   let errors = 0;
@@ -4436,7 +4436,7 @@ function validate18(data, { instancePath = "", parentData, parentDataProperty, r
       errors++;
     }
     for (const key0 in data) {
-      if (!func2.call(schema33.properties, key0)) {
+      if (!func2.call(schema34.properties, key0)) {
         const err2 = { instancePath, schemaPath: "#/additionalProperties", keyword: "additionalProperties", params: { additionalProperty: key0 }, message: "must NOT have additional properties" };
         if (vErrors === null) {
           vErrors = [err2];
@@ -4567,9 +4567,9 @@ function validate18(data, { instancePath = "", parentData, parentDataProperty, r
         errors++;
       }
     }
-    if (data.name !== void 0) {
-      if (typeof data.name !== "string") {
-        const err14 = { instancePath: instancePath + "/name", schemaPath: "#/properties/name/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+    if (data.marking !== void 0) {
+      if (typeof data.marking !== "string") {
+        const err14 = { instancePath: instancePath + "/marking", schemaPath: "#/properties/marking/type", keyword: "type", params: { type: "string" }, message: "must be string" };
         if (vErrors === null) {
           vErrors = [err14];
         } else {
@@ -4578,10 +4578,9 @@ function validate18(data, { instancePath = "", parentData, parentDataProperty, r
         errors++;
       }
     }
-    if (data.strategy !== void 0) {
-      let data10 = data.strategy;
-      if (typeof data10 !== "string") {
-        const err15 = { instancePath: instancePath + "/strategy", schemaPath: "#/definitions/AccessRule/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+    if (data.name !== void 0) {
+      if (typeof data.name !== "string") {
+        const err15 = { instancePath: instancePath + "/name", schemaPath: "#/properties/name/type", keyword: "type", params: { type: "string" }, message: "must be string" };
         if (vErrors === null) {
           vErrors = [err15];
         } else {
@@ -4589,8 +4588,11 @@ function validate18(data, { instancePath = "", parentData, parentDataProperty, r
         }
         errors++;
       }
-      if (!(data10 === "gte" || data10 === "superset" || data10 === "includes" || data10 === "exact" || data10 === "any")) {
-        const err16 = { instancePath: instancePath + "/strategy", schemaPath: "#/definitions/AccessRule/enum", keyword: "enum", params: { allowedValues: schema35.enum }, message: "must be equal to one of the allowed values" };
+    }
+    if (data.strategy !== void 0) {
+      let data11 = data.strategy;
+      if (typeof data11 !== "string") {
+        const err16 = { instancePath: instancePath + "/strategy", schemaPath: "#/definitions/AccessRule/type", keyword: "type", params: { type: "string" }, message: "must be string" };
         if (vErrors === null) {
           vErrors = [err16];
         } else {
@@ -4598,34 +4600,32 @@ function validate18(data, { instancePath = "", parentData, parentDataProperty, r
         }
         errors++;
       }
+      if (!(data11 === "gte" || data11 === "superset" || data11 === "includes" || data11 === "exact" || data11 === "any")) {
+        const err17 = { instancePath: instancePath + "/strategy", schemaPath: "#/definitions/AccessRule/enum", keyword: "enum", params: { allowedValues: schema36.enum }, message: "must be equal to one of the allowed values" };
+        if (vErrors === null) {
+          vErrors = [err17];
+        } else {
+          vErrors.push(err17);
+        }
+        errors++;
+      }
     }
     if (data.values !== void 0) {
-      let data11 = data.values;
-      if (data11 && typeof data11 == "object" && !Array.isArray(data11)) {
-        for (const key2 in data11) {
-          if (typeof data11[key2] !== "string") {
-            const err17 = { instancePath: instancePath + "/values/" + key2.replace(/~/g, "~0").replace(/\//g, "~1"), schemaPath: "#/definitions/Record%3Cstring%2Cstring%3E/additionalProperties/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+      let data12 = data.values;
+      if (data12 && typeof data12 == "object" && !Array.isArray(data12)) {
+        for (const key2 in data12) {
+          if (typeof data12[key2] !== "string") {
+            const err18 = { instancePath: instancePath + "/values/" + key2.replace(/~/g, "~0").replace(/\//g, "~1"), schemaPath: "#/definitions/Record%3Cstring%2Cstring%3E/additionalProperties/type", keyword: "type", params: { type: "string" }, message: "must be string" };
             if (vErrors === null) {
-              vErrors = [err17];
+              vErrors = [err18];
             } else {
-              vErrors.push(err17);
+              vErrors.push(err18);
             }
             errors++;
           }
         }
       } else {
-        const err18 = { instancePath: instancePath + "/values", schemaPath: "#/definitions/Record%3Cstring%2Cstring%3E/type", keyword: "type", params: { type: "object" }, message: "must be object" };
-        if (vErrors === null) {
-          vErrors = [err18];
-        } else {
-          vErrors.push(err18);
-        }
-        errors++;
-      }
-    }
-    if (data.view !== void 0) {
-      if (typeof data.view !== "string") {
-        const err19 = { instancePath: instancePath + "/view", schemaPath: "#/properties/view/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+        const err19 = { instancePath: instancePath + "/values", schemaPath: "#/definitions/Record%3Cstring%2Cstring%3E/type", keyword: "type", params: { type: "object" }, message: "must be object" };
         if (vErrors === null) {
           vErrors = [err19];
         } else {
@@ -4634,34 +4634,36 @@ function validate18(data, { instancePath = "", parentData, parentDataProperty, r
         errors++;
       }
     }
+    if (data.view !== void 0) {
+      if (typeof data.view !== "string") {
+        const err20 = { instancePath: instancePath + "/view", schemaPath: "#/properties/view/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+        if (vErrors === null) {
+          vErrors = [err20];
+        } else {
+          vErrors.push(err20);
+        }
+        errors++;
+      }
+    }
     if (data.when !== void 0) {
-      let data14 = data.when;
-      if (data14 && typeof data14 == "object" && !Array.isArray(data14)) {
-        for (const key3 in data14) {
+      let data15 = data.when;
+      if (data15 && typeof data15 == "object" && !Array.isArray(data15)) {
+        for (const key3 in data15) {
           if (!(key3 === "data")) {
-            const err20 = { instancePath: instancePath + "/when", schemaPath: "#/properties/when/additionalProperties", keyword: "additionalProperties", params: { additionalProperty: key3 }, message: "must NOT have additional properties" };
+            const err21 = { instancePath: instancePath + "/when", schemaPath: "#/properties/when/additionalProperties", keyword: "additionalProperties", params: { additionalProperty: key3 }, message: "must NOT have additional properties" };
             if (vErrors === null) {
-              vErrors = [err20];
+              vErrors = [err21];
             } else {
-              vErrors.push(err20);
+              vErrors.push(err21);
             }
             errors++;
           }
         }
-        if (data14.data !== void 0) {
-          let data15 = data14.data;
-          if (data15 && typeof data15 == "object" && !Array.isArray(data15)) {
-            if (data15.categoryId === void 0) {
-              const err21 = { instancePath: instancePath + "/when/data", schemaPath: "#/definitions/AccessRuleWhenData/required", keyword: "required", params: { missingProperty: "categoryId" }, message: "must have required property 'categoryId'" };
-              if (vErrors === null) {
-                vErrors = [err21];
-              } else {
-                vErrors.push(err21);
-              }
-              errors++;
-            }
-            if (data15.operator === void 0) {
-              const err22 = { instancePath: instancePath + "/when/data", schemaPath: "#/definitions/AccessRuleWhenData/required", keyword: "required", params: { missingProperty: "operator" }, message: "must have required property 'operator'" };
+        if (data15.data !== void 0) {
+          let data16 = data15.data;
+          if (data16 && typeof data16 == "object" && !Array.isArray(data16)) {
+            if (data16.categoryId === void 0) {
+              const err22 = { instancePath: instancePath + "/when/data", schemaPath: "#/definitions/AccessRuleWhenData/required", keyword: "required", params: { missingProperty: "categoryId" }, message: "must have required property 'categoryId'" };
               if (vErrors === null) {
                 vErrors = [err22];
               } else {
@@ -4669,20 +4671,18 @@ function validate18(data, { instancePath = "", parentData, parentDataProperty, r
               }
               errors++;
             }
-            for (const key4 in data15) {
-              if (!(key4 === "categoryId" || key4 === "operator" || key4 === "value")) {
-                const err23 = { instancePath: instancePath + "/when/data", schemaPath: "#/definitions/AccessRuleWhenData/additionalProperties", keyword: "additionalProperties", params: { additionalProperty: key4 }, message: "must NOT have additional properties" };
-                if (vErrors === null) {
-                  vErrors = [err23];
-                } else {
-                  vErrors.push(err23);
-                }
-                errors++;
+            if (data16.operator === void 0) {
+              const err23 = { instancePath: instancePath + "/when/data", schemaPath: "#/definitions/AccessRuleWhenData/required", keyword: "required", params: { missingProperty: "operator" }, message: "must have required property 'operator'" };
+              if (vErrors === null) {
+                vErrors = [err23];
+              } else {
+                vErrors.push(err23);
               }
+              errors++;
             }
-            if (data15.categoryId !== void 0) {
-              if (typeof data15.categoryId !== "string") {
-                const err24 = { instancePath: instancePath + "/when/data/categoryId", schemaPath: "#/definitions/AccessRuleWhenData/properties/categoryId/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+            for (const key4 in data16) {
+              if (!(key4 === "categoryId" || key4 === "operator" || key4 === "value")) {
+                const err24 = { instancePath: instancePath + "/when/data", schemaPath: "#/definitions/AccessRuleWhenData/additionalProperties", keyword: "additionalProperties", params: { additionalProperty: key4 }, message: "must NOT have additional properties" };
                 if (vErrors === null) {
                   vErrors = [err24];
                 } else {
@@ -4691,9 +4691,9 @@ function validate18(data, { instancePath = "", parentData, parentDataProperty, r
                 errors++;
               }
             }
-            if (data15.operator !== void 0) {
-              if (typeof data15.operator !== "string") {
-                const err25 = { instancePath: instancePath + "/when/data/operator", schemaPath: "#/definitions/AccessRuleWhenData/properties/operator/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+            if (data16.categoryId !== void 0) {
+              if (typeof data16.categoryId !== "string") {
+                const err25 = { instancePath: instancePath + "/when/data/categoryId", schemaPath: "#/definitions/AccessRuleWhenData/properties/categoryId/type", keyword: "type", params: { type: "string" }, message: "must be string" };
                 if (vErrors === null) {
                   vErrors = [err25];
                 } else {
@@ -4702,10 +4702,9 @@ function validate18(data, { instancePath = "", parentData, parentDataProperty, r
                 errors++;
               }
             }
-            if (data15.value !== void 0) {
-              let data18 = data15.value;
-              if (typeof data18 !== "string" && !(typeof data18 == "number")) {
-                const err26 = { instancePath: instancePath + "/when/data/value", schemaPath: "#/definitions/AccessRuleWhenData/properties/value/type", keyword: "type", params: { type: schema37.properties.value.type }, message: "must be string,number" };
+            if (data16.operator !== void 0) {
+              if (typeof data16.operator !== "string") {
+                const err26 = { instancePath: instancePath + "/when/data/operator", schemaPath: "#/definitions/AccessRuleWhenData/properties/operator/type", keyword: "type", params: { type: "string" }, message: "must be string" };
                 if (vErrors === null) {
                   vErrors = [err26];
                 } else {
@@ -4714,32 +4713,44 @@ function validate18(data, { instancePath = "", parentData, parentDataProperty, r
                 errors++;
               }
             }
+            if (data16.value !== void 0) {
+              let data19 = data16.value;
+              if (typeof data19 !== "string" && !(typeof data19 == "number")) {
+                const err27 = { instancePath: instancePath + "/when/data/value", schemaPath: "#/definitions/AccessRuleWhenData/properties/value/type", keyword: "type", params: { type: schema38.properties.value.type }, message: "must be string,number" };
+                if (vErrors === null) {
+                  vErrors = [err27];
+                } else {
+                  vErrors.push(err27);
+                }
+                errors++;
+              }
+            }
           } else {
-            const err27 = { instancePath: instancePath + "/when/data", schemaPath: "#/definitions/AccessRuleWhenData/type", keyword: "type", params: { type: "object" }, message: "must be object" };
+            const err28 = { instancePath: instancePath + "/when/data", schemaPath: "#/definitions/AccessRuleWhenData/type", keyword: "type", params: { type: "object" }, message: "must be object" };
             if (vErrors === null) {
-              vErrors = [err27];
+              vErrors = [err28];
             } else {
-              vErrors.push(err27);
+              vErrors.push(err28);
             }
             errors++;
           }
         }
       } else {
-        const err28 = { instancePath: instancePath + "/when", schemaPath: "#/properties/when/type", keyword: "type", params: { type: "object" }, message: "must be object" };
+        const err29 = { instancePath: instancePath + "/when", schemaPath: "#/properties/when/type", keyword: "type", params: { type: "object" }, message: "must be object" };
         if (vErrors === null) {
-          vErrors = [err28];
+          vErrors = [err29];
         } else {
-          vErrors.push(err28);
+          vErrors.push(err29);
         }
         errors++;
       }
     }
   } else {
-    const err29 = { instancePath, schemaPath: "#/type", keyword: "type", params: { type: "object" }, message: "must be object" };
+    const err30 = { instancePath, schemaPath: "#/type", keyword: "type", params: { type: "object" }, message: "must be object" };
     if (vErrors === null) {
-      vErrors = [err29];
+      vErrors = [err30];
     } else {
-      vErrors.push(err29);
+      vErrors.push(err30);
     }
     errors++;
   }
@@ -4963,9 +4974,9 @@ function validate11(data, { instancePath = "", parentData, parentDataProperty, r
         errors++;
       }
     }
-    if (data.name !== void 0) {
-      if (typeof data.name !== "string") {
-        const err14 = { instancePath: instancePath + "/name", schemaPath: "#/properties/name/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+    if (data.marking !== void 0) {
+      if (typeof data.marking !== "string") {
+        const err14 = { instancePath: instancePath + "/marking", schemaPath: "#/properties/marking/type", keyword: "type", params: { type: "string" }, message: "must be string" };
         if (vErrors === null) {
           vErrors = [err14];
         } else {
@@ -4974,32 +4985,21 @@ function validate11(data, { instancePath = "", parentData, parentDataProperty, r
         errors++;
       }
     }
-    if (data.rules !== void 0) {
-      let data7 = data.rules;
+    if (data.marking_scheme !== void 0) {
+      let data7 = data.marking_scheme;
       if (data7 && typeof data7 == "object" && !Array.isArray(data7)) {
-        for (const key2 in data7) {
-          if (!(key2 === "external" || key2 === "inline")) {
-            const err15 = { instancePath: instancePath + "/rules", schemaPath: "#/properties/rules/additionalProperties", keyword: "additionalProperties", params: { additionalProperty: key2 }, message: "must NOT have additional properties" };
-            if (vErrors === null) {
-              vErrors = [err15];
-            } else {
-              vErrors.push(err15);
-            }
-            errors++;
-          }
-        }
-        if (data7.external !== void 0) {
-          let data8 = data7.external;
-          if (Array.isArray(data8)) {
-            const len1 = data8.length;
-            for (let i1 = 0; i1 < len1; i1++) {
-              if (!validate12(data8[i1], { instancePath: instancePath + "/rules/external/" + i1, parentData: data8, parentDataProperty: i1, rootData })) {
-                vErrors = vErrors === null ? validate12.errors : vErrors.concat(validate12.errors);
-                errors = vErrors.length;
-              }
-            }
+        if (data7.id === void 0) {
+          const err15 = { instancePath: instancePath + "/marking_scheme", schemaPath: "#/definitions/MarkingSchemeRefDoc/required", keyword: "required", params: { missingProperty: "id" }, message: "must have required property 'id'" };
+          if (vErrors === null) {
+            vErrors = [err15];
           } else {
-            const err16 = { instancePath: instancePath + "/rules/external", schemaPath: "#/properties/rules/properties/external/type", keyword: "type", params: { type: "array" }, message: "must be array" };
+            vErrors.push(err15);
+          }
+          errors++;
+        }
+        for (const key2 in data7) {
+          if (!(key2 === "id" || key2 === "version")) {
+            const err16 = { instancePath: instancePath + "/marking_scheme", schemaPath: "#/definitions/MarkingSchemeRefDoc/additionalProperties", keyword: "additionalProperties", params: { additionalProperty: key2 }, message: "must NOT have additional properties" };
             if (vErrors === null) {
               vErrors = [err16];
             } else {
@@ -5008,73 +5008,66 @@ function validate11(data, { instancePath = "", parentData, parentDataProperty, r
             errors++;
           }
         }
-        if (data7.inline !== void 0) {
-          let data10 = data7.inline;
-          if (Array.isArray(data10)) {
-            const len2 = data10.length;
-            for (let i2 = 0; i2 < len2; i2++) {
-              if (!validate18(data10[i2], { instancePath: instancePath + "/rules/inline/" + i2, parentData: data10, parentDataProperty: i2, rootData })) {
-                vErrors = vErrors === null ? validate18.errors : vErrors.concat(validate18.errors);
-                errors = vErrors.length;
+        if (data7.id !== void 0) {
+          let data8 = data7.id;
+          if (typeof data8 === "string") {
+            if (func3(data8) < 1) {
+              const err17 = { instancePath: instancePath + "/marking_scheme/id", schemaPath: "#/definitions/MarkingSchemeRefDoc/properties/id/minLength", keyword: "minLength", params: { limit: 1 }, message: "must NOT have fewer than 1 characters" };
+              if (vErrors === null) {
+                vErrors = [err17];
+              } else {
+                vErrors.push(err17);
               }
+              errors++;
             }
           } else {
-            const err17 = { instancePath: instancePath + "/rules/inline", schemaPath: "#/properties/rules/properties/inline/type", keyword: "type", params: { type: "array" }, message: "must be array" };
+            const err18 = { instancePath: instancePath + "/marking_scheme/id", schemaPath: "#/definitions/MarkingSchemeRefDoc/properties/id/type", keyword: "type", params: { type: "string" }, message: "must be string" };
             if (vErrors === null) {
-              vErrors = [err17];
+              vErrors = [err18];
             } else {
-              vErrors.push(err17);
+              vErrors.push(err18);
+            }
+            errors++;
+          }
+        }
+        if (data7.version !== void 0) {
+          if (typeof data7.version !== "string") {
+            const err19 = { instancePath: instancePath + "/marking_scheme/version", schemaPath: "#/definitions/MarkingSchemeRefDoc/properties/version/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+            if (vErrors === null) {
+              vErrors = [err19];
+            } else {
+              vErrors.push(err19);
             }
             errors++;
           }
         }
       } else {
-        const err18 = { instancePath: instancePath + "/rules", schemaPath: "#/properties/rules/type", keyword: "type", params: { type: "object" }, message: "must be object" };
+        const err20 = { instancePath: instancePath + "/marking_scheme", schemaPath: "#/definitions/MarkingSchemeRefDoc/type", keyword: "type", params: { type: "object" }, message: "must be object" };
         if (vErrors === null) {
-          vErrors = [err18];
+          vErrors = [err20];
         } else {
-          vErrors.push(err18);
+          vErrors.push(err20);
         }
         errors++;
       }
     }
-    if (data.targetScheme !== void 0) {
-      let data12 = data.targetScheme;
-      if (data12 && typeof data12 == "object" && !Array.isArray(data12)) {
-        if (data12.id === void 0) {
-          const err19 = { instancePath: instancePath + "/targetScheme", schemaPath: "#/properties/targetScheme/required", keyword: "required", params: { missingProperty: "id" }, message: "must have required property 'id'" };
-          if (vErrors === null) {
-            vErrors = [err19];
-          } else {
-            vErrors.push(err19);
-          }
-          errors++;
+    if (data.name !== void 0) {
+      if (typeof data.name !== "string") {
+        const err21 = { instancePath: instancePath + "/name", schemaPath: "#/properties/name/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+        if (vErrors === null) {
+          vErrors = [err21];
+        } else {
+          vErrors.push(err21);
         }
-        for (const key3 in data12) {
-          if (!(key3 === "id" || key3 === "version")) {
-            const err20 = { instancePath: instancePath + "/targetScheme", schemaPath: "#/properties/targetScheme/additionalProperties", keyword: "additionalProperties", params: { additionalProperty: key3 }, message: "must NOT have additional properties" };
-            if (vErrors === null) {
-              vErrors = [err20];
-            } else {
-              vErrors.push(err20);
-            }
-            errors++;
-          }
-        }
-        if (data12.id !== void 0) {
-          if (typeof data12.id !== "string") {
-            const err21 = { instancePath: instancePath + "/targetScheme/id", schemaPath: "#/properties/targetScheme/properties/id/type", keyword: "type", params: { type: "string" }, message: "must be string" };
-            if (vErrors === null) {
-              vErrors = [err21];
-            } else {
-              vErrors.push(err21);
-            }
-            errors++;
-          }
-        }
-        if (data12.version !== void 0) {
-          if (typeof data12.version !== "string") {
-            const err22 = { instancePath: instancePath + "/targetScheme/version", schemaPath: "#/properties/targetScheme/properties/version/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+        errors++;
+      }
+    }
+    if (data.rules !== void 0) {
+      let data11 = data.rules;
+      if (data11 && typeof data11 == "object" && !Array.isArray(data11)) {
+        for (const key3 in data11) {
+          if (!(key3 === "external" || key3 === "inline")) {
+            const err22 = { instancePath: instancePath + "/rules", schemaPath: "#/properties/rules/additionalProperties", keyword: "additionalProperties", params: { additionalProperty: key3 }, message: "must NOT have additional properties" };
             if (vErrors === null) {
               vErrors = [err22];
             } else {
@@ -5083,29 +5076,48 @@ function validate11(data, { instancePath = "", parentData, parentDataProperty, r
             errors++;
           }
         }
+        if (data11.external !== void 0) {
+          let data12 = data11.external;
+          if (Array.isArray(data12)) {
+            const len1 = data12.length;
+            for (let i1 = 0; i1 < len1; i1++) {
+              if (!validate12(data12[i1], { instancePath: instancePath + "/rules/external/" + i1, parentData: data12, parentDataProperty: i1, rootData })) {
+                vErrors = vErrors === null ? validate12.errors : vErrors.concat(validate12.errors);
+                errors = vErrors.length;
+              }
+            }
+          } else {
+            const err23 = { instancePath: instancePath + "/rules/external", schemaPath: "#/properties/rules/properties/external/type", keyword: "type", params: { type: "array" }, message: "must be array" };
+            if (vErrors === null) {
+              vErrors = [err23];
+            } else {
+              vErrors.push(err23);
+            }
+            errors++;
+          }
+        }
+        if (data11.inline !== void 0) {
+          let data14 = data11.inline;
+          if (Array.isArray(data14)) {
+            const len2 = data14.length;
+            for (let i2 = 0; i2 < len2; i2++) {
+              if (!validate18(data14[i2], { instancePath: instancePath + "/rules/inline/" + i2, parentData: data14, parentDataProperty: i2, rootData })) {
+                vErrors = vErrors === null ? validate18.errors : vErrors.concat(validate18.errors);
+                errors = vErrors.length;
+              }
+            }
+          } else {
+            const err24 = { instancePath: instancePath + "/rules/inline", schemaPath: "#/properties/rules/properties/inline/type", keyword: "type", params: { type: "array" }, message: "must be array" };
+            if (vErrors === null) {
+              vErrors = [err24];
+            } else {
+              vErrors.push(err24);
+            }
+            errors++;
+          }
+        }
       } else {
-        const err23 = { instancePath: instancePath + "/targetScheme", schemaPath: "#/properties/targetScheme/type", keyword: "type", params: { type: "object" }, message: "must be object" };
-        if (vErrors === null) {
-          vErrors = [err23];
-        } else {
-          vErrors.push(err23);
-        }
-        errors++;
-      }
-    }
-    if (data.type !== void 0) {
-      let data15 = data.type;
-      if (typeof data15 !== "string") {
-        const err24 = { instancePath: instancePath + "/type", schemaPath: "#/properties/type/type", keyword: "type", params: { type: "string" }, message: "must be string" };
-        if (vErrors === null) {
-          vErrors = [err24];
-        } else {
-          vErrors.push(err24);
-        }
-        errors++;
-      }
-      if (!(data15 === "access" || data15 === "layer")) {
-        const err25 = { instancePath: instancePath + "/type", schemaPath: "#/properties/type/enum", keyword: "enum", params: { allowedValues: schema12.properties.type.enum }, message: "must be equal to one of the allowed values" };
+        const err25 = { instancePath: instancePath + "/rules", schemaPath: "#/properties/rules/type", keyword: "type", params: { type: "object" }, message: "must be object" };
         if (vErrors === null) {
           vErrors = [err25];
         } else {
@@ -5114,13 +5126,89 @@ function validate11(data, { instancePath = "", parentData, parentDataProperty, r
         errors++;
       }
     }
+    if (data.targetScheme !== void 0) {
+      let data16 = data.targetScheme;
+      if (data16 && typeof data16 == "object" && !Array.isArray(data16)) {
+        if (data16.id === void 0) {
+          const err26 = { instancePath: instancePath + "/targetScheme", schemaPath: "#/properties/targetScheme/required", keyword: "required", params: { missingProperty: "id" }, message: "must have required property 'id'" };
+          if (vErrors === null) {
+            vErrors = [err26];
+          } else {
+            vErrors.push(err26);
+          }
+          errors++;
+        }
+        for (const key4 in data16) {
+          if (!(key4 === "id" || key4 === "version")) {
+            const err27 = { instancePath: instancePath + "/targetScheme", schemaPath: "#/properties/targetScheme/additionalProperties", keyword: "additionalProperties", params: { additionalProperty: key4 }, message: "must NOT have additional properties" };
+            if (vErrors === null) {
+              vErrors = [err27];
+            } else {
+              vErrors.push(err27);
+            }
+            errors++;
+          }
+        }
+        if (data16.id !== void 0) {
+          if (typeof data16.id !== "string") {
+            const err28 = { instancePath: instancePath + "/targetScheme/id", schemaPath: "#/properties/targetScheme/properties/id/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+            if (vErrors === null) {
+              vErrors = [err28];
+            } else {
+              vErrors.push(err28);
+            }
+            errors++;
+          }
+        }
+        if (data16.version !== void 0) {
+          if (typeof data16.version !== "string") {
+            const err29 = { instancePath: instancePath + "/targetScheme/version", schemaPath: "#/properties/targetScheme/properties/version/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+            if (vErrors === null) {
+              vErrors = [err29];
+            } else {
+              vErrors.push(err29);
+            }
+            errors++;
+          }
+        }
+      } else {
+        const err30 = { instancePath: instancePath + "/targetScheme", schemaPath: "#/properties/targetScheme/type", keyword: "type", params: { type: "object" }, message: "must be object" };
+        if (vErrors === null) {
+          vErrors = [err30];
+        } else {
+          vErrors.push(err30);
+        }
+        errors++;
+      }
+    }
+    if (data.type !== void 0) {
+      let data19 = data.type;
+      if (typeof data19 !== "string") {
+        const err31 = { instancePath: instancePath + "/type", schemaPath: "#/properties/type/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+        if (vErrors === null) {
+          vErrors = [err31];
+        } else {
+          vErrors.push(err31);
+        }
+        errors++;
+      }
+      if (!(data19 === "access" || data19 === "layer")) {
+        const err32 = { instancePath: instancePath + "/type", schemaPath: "#/properties/type/enum", keyword: "enum", params: { allowedValues: schema12.properties.type.enum }, message: "must be equal to one of the allowed values" };
+        if (vErrors === null) {
+          vErrors = [err32];
+        } else {
+          vErrors.push(err32);
+        }
+        errors++;
+      }
+    }
     if (data.version !== void 0) {
       if (typeof data.version !== "string") {
-        const err26 = { instancePath: instancePath + "/version", schemaPath: "#/properties/version/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+        const err33 = { instancePath: instancePath + "/version", schemaPath: "#/properties/version/type", keyword: "type", params: { type: "string" }, message: "must be string" };
         if (vErrors === null) {
-          vErrors = [err26];
+          vErrors = [err33];
         } else {
-          vErrors.push(err26);
+          vErrors.push(err33);
         }
         errors++;
       }
@@ -5132,11 +5220,11 @@ function validate11(data, { instancePath = "", parentData, parentDataProperty, r
       }
     }
   } else {
-    const err27 = { instancePath, schemaPath: "#/type", keyword: "type", params: { type: "object" }, message: "must be object" };
+    const err34 = { instancePath, schemaPath: "#/type", keyword: "type", params: { type: "object" }, message: "must be object" };
     if (vErrors === null) {
-      vErrors = [err27];
+      vErrors = [err34];
     } else {
-      vErrors.push(err27);
+      vErrors.push(err34);
     }
     errors++;
   }

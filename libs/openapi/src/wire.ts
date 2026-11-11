@@ -904,6 +904,12 @@ export interface CtxAccessDescribeRequirementsRequestBody {
  * what it already holds.
  */
 export interface CtxAccessRulesResponseBody {
+    /**
+     * The access policy document's own overall marking, exactly as its
+     * `access.marking` writes it. Display only: never interpreted. Omitted when
+     * the document declares none.
+     */
+    marking?: string;
     /** Descriptions for every rule in the access policy, in declared order. */
     rules: AccessRuleDescription[];
 }

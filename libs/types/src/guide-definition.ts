@@ -1,4 +1,5 @@
 import type { Vocabulary } from './scheme';
+import type { MarkingSchemeRefDoc } from './scheme-definition';
 import type { GuideCategory, GuideDependency, GuideRule } from './guide';
 import type { ExternalSourceSpec, RuleMappingDoc } from './external-source';
 import type { LayerBinding } from './layer';
@@ -49,6 +50,22 @@ export interface GuideLayer extends LayerBinding {
 }
 
 /**
+ * A guide rule as a guide document authors it: the rule, plus the part marking
+ * the document gives it. A rule an engine answers with is a `GuideRule` and has
+ * no marking.
+ *
+ * @public
+ */
+export interface GuideRuleDoc extends GuideRule {
+    /**
+     * This rule's part marking, written in the scheme the document's
+     * `marking_scheme` names. Text, never interpreted: no engine parses it,
+     * checks it, acts on it, or reports it.
+     */
+    marking?: string;
+}
+
+/**
  * Inline-or-external guide-rule block. The canonical 1.0 wire format for
  * `GuideBlock.rules`.
  *
@@ -56,14 +73,14 @@ export interface GuideLayer extends LayerBinding {
  */
 export interface GuideRulesBlock {
     /**
-     * Inline rules, authored as an array of `GuideRule` entries with `id`
+     * Inline rules, authored as an array of `GuideRuleDoc` entries with `id`
      * carried as a field on each entry, matches the scheme inline shape
      * (`data.concepts.inline: [...]`) so authoring stays uniform across scheme
      * and guide YAML. Uniqueness of `id` within the array is enforced by the
      * loader's validator; the engine builds a `Map<string, GuideRule>` index at
      * load time to keep id lookups O(1).
      */
-    inline?: GuideRule[];
+    inline?: GuideRuleDoc[];
     /**
      * Live external rule sources. An array allows a guide to draw rules from
      * multiple upstream endpoints, composed via `ChainedGuideRuleSource`
@@ -86,6 +103,22 @@ export interface GuideBlock {
     version: string;
     /** Human-readable guide name. */
     name: string;
+    /**
+     * The scheme this document's markings are written in. A guide is not a
+     * scheme, so it always names one by reference.
+     *
+     * Authoring data only: no engine resolves the scheme it names.
+     */
+    marking_scheme?: MarkingSchemeRefDoc;
+    /**
+     * The whole marking of this guide document, written in the scheme
+     * `marking_scheme` names. Every `marking` on one of its rules is a part of
+     * it.
+     *
+     * Text, never interpreted: no engine parses it, checks it, or acts on it.
+     * A guide's summary views report it unchanged for display.
+     */
+    marking?: string;
     /** Longer description of what this guide covers. */
     description?: string;
     /**

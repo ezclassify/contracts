@@ -391,6 +391,11 @@ export interface Guide {
     /** Long description. */
     description: string;
     /**
+     * The guide document's own overall marking, from `guide.marking`. Carried
+     * for display and never interpreted.
+     */
+    marking?: string;
+    /**
      * Optional display-term overrides consulted by runtime UI components. Keys
      * are consumer-defined (e.g. "rule", "category"); each consumer merges with
      * its own defaults via `resolveVocabulary`. The `"guidebook"` key renames

@@ -668,6 +668,14 @@ export interface AccessEngineAdapter {
      * @returns One description per rule.
      */
     describeAllAccessRules(): MaybePromise<AccessRuleDescription[]>;
+    /**
+     * The access policy document's own overall marking, exactly as its
+     * `access.marking` writes it. Display only: never interpreted. A remote
+     * adapter reads it from the route {@link describeAllAccessRules} uses.
+     *
+     * @returns The marking, or `undefined` when the document declares none.
+     */
+    describeAccessMarking(): MaybePromise<string | undefined>;
 }
 
 /** An {@link AccessEngineAdapter} whose operations complete synchronously. */
@@ -683,6 +691,7 @@ export interface LocalAccessEngineAdapter extends AccessEngineAdapter {
     ): AccessRequirementsDescription;
     listAccessRuleIds(): string[];
     describeAllAccessRules(): AccessRuleDescription[];
+    describeAccessMarking(): string | undefined;
 }
 
 /** An {@link AccessEngineAdapter} whose operations complete asynchronously. */
@@ -698,6 +707,7 @@ export interface RemoteAccessEngineAdapter extends AccessEngineAdapter {
     ): Promise<AccessRequirementsDescription>;
     listAccessRuleIds(): Promise<string[]>;
     describeAllAccessRules(): Promise<AccessRuleDescription[]>;
+    describeAccessMarking(): Promise<string | undefined>;
 }
 
 /**
@@ -2927,6 +2937,12 @@ export interface ContextCrosswalkDescriptor {
     guidance?: string;
     /** Primary citation for the crosswalk, when it declares one. */
     citation?: string;
+    /**
+     * The crosswalk document's own overall marking, exactly as its
+     * `crosswalk.marking` writes it. Display only: never interpreted. Absent
+     * when the document declares none.
+     */
+    marking?: string;
     /** How each source assertion translates, in declared order. */
     mappings: CrosswalkMapping[];
     /** Cross-field decisions, in declared order. Empty when there are none. */

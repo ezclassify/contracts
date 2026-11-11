@@ -2059,8 +2059,9 @@ export interface ConceptGroupDoc {
 }
 
 /**
- * The scheme a scheme document's markings are written in, named by id and,
- * optionally, version. See `SchemeBlock.marking_scheme`.
+ * The scheme a document's markings are written in, named by id and,
+ * optionally, version. Every document that can be marked names one this way;
+ * a scheme document may also write `self`. See `SchemeBlock.marking_scheme`.
  */
 export interface MarkingSchemeRefDoc {
     /**
