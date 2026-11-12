@@ -5,8 +5,8 @@
     },
     "corpusVersion": "v1",
     "coverage": {
-        "cases": 248,
-        "operationsCovered": 30
+        "cases": 243,
+        "operationsCovered": 26
     },
     "generation": {
         "contentDigest": "sha256:c9f55a2152a363fcf5b9678eb2eaea4fee9f8fbad1bdde978d1fc324dba98c6c",

@@ -1,14 +1,9 @@
 import { expectTypeOf } from 'vitest';
-import type {
-    SchemeGrammar,
-    SchemeMetaView,
-    SchemePublicView,
-} from '@ezclassify/types';
+import type { SchemeMetaView, SchemePublicView } from '@ezclassify/types';
 // The loaded scheme shapes are internal to the engine, and the projection this
 // file pins is exactly the point where they meet the wire.
-import type { ParseConfig, Scheme } from '@ezclassify/types/internal';
+import type { Scheme } from '@ezclassify/types/internal';
 import type {
-    PublicGrammarResponseBody,
     SchemeScopesResponseBody,
     SchemeSummaryResponseBody,
 } from '../src/wire.js';
@@ -111,16 +106,6 @@ type LocalFormatLayout = NonNullable<SchemeMetaView['formats']>[number];
 expectTypeOf<
     Omit<SchemePublicView['formats'][number], 'syntax'>
 >().toEqualTypeOf<LocalFormatLayout>();
-
-expectTypeOf<PublicGrammarResponseBody>().toEqualTypeOf<
-    Pick<ParseConfig, 'caseSensitive' | 'stripWhitespace'>
->();
-
-/**
- * The grammar resource answers what the adapter's `getGrammar()` returns, so a
- * remote client hands the response body on as it is.
- */
-expectTypeOf<PublicGrammarResponseBody>().toEqualTypeOf<SchemeGrammar>();
 
 /**
  * The scopes resource returns the scheme's own `scopes` array, empty when it

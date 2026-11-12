@@ -38,7 +38,6 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
  * each the leaner spec name at emit time.
  */
 const RENAME_MAP = {
-    NormalizeResponseBody: 'NormalizeResponse',
     RenderResponseBody: 'RenderResponse',
     SchemeScopeResponseBody: 'SchemeScope',
     SchemeScopesResponseBody: 'SchemeScopesResponse',
@@ -46,8 +45,6 @@ const RENAME_MAP = {
     HealthResponseBody: 'HealthResponse',
     ReadyResponseBody: 'ReadyResponse',
     SchemeSummaryResponseBody: 'SchemeSummary',
-    PublicGrammarResponseBody: 'SchemeGrammar',
-    WireFilterResult: 'FilterResult',
     CoverageReport: 'CheckCoverageResult',
     CollectedNotice: 'Notice',
     SchemeStructuralView: 'SchemeViewResponse',
@@ -62,11 +59,8 @@ const ROOT_TYPES = [
     'SchemeScopesResponseBody',
     'ApplyPresetRequestBody',
     // Wire-types: response bodies
-    'NormalizeResponseBody',
     'RenderResponseBody',
     'SchemeSummaryResponseBody',
-    'PublicGrammarResponseBody',
-    'WireFilterResult',
     'HealthResponseBody',
     'ReadyResponseBody',
     'ReadyStatus',
@@ -90,11 +84,8 @@ const ROOT_TYPES = [
     'CollectedNotice',
     'DocumentAuditReport',
     'DocumentInputErrorDetail',
-    'Reproducibility',
     'ArtifactKind',
     'AssertionConfidence',
-    'BestEffortRuleSourceReference',
-    'BestEffortSourceReference',
     'CharacterWindow',
     'CalendarDateSpelling',
     'CalendarDateValueEncoding',
@@ -123,8 +114,6 @@ const ROOT_TYPES = [
     'MatchValidationKeep',
     'ProcessingRole',
     'RepairConfidence',
-    'ReproducibleRuleSourceReference',
-    'ReproducibleSourceReference',
     'RuleConditionTarget',
     'RuleContributorQuantifier',
     'RuleWhenQuantifier',
@@ -141,7 +130,6 @@ const ROOT_TYPES = [
     'FormatView',
     'LabelPresetView',
     'GuideRuleView',
-    'RuleDescription',
     'ErrorResponseBody',
     'RateLimitErrorBody',
     // Context-scoped (path-based) bodies and responses
@@ -149,27 +137,22 @@ const ROOT_TYPES = [
     'CtxSchemeProcessRequestBody',
     'CtxSchemeValidateRequestBody',
     'CtxSchemeExplainRequestBody',
-    'CtxSchemeNormalizeRequestBody',
     'CtxSchemeRenderRequestBody',
     'CtxSchemeDiffRequestBody',
     'CtxSchemeViewRequestBody',
     'CtxSchemeNoticesRequestBody',
-    'CtxSchemeFilterConceptsRequestBody',
     'CtxSchemeScanRequestBody',
     'CtxSchemeAggregateRequestBody',
     'CtxSchemeSuggestRequestBody',
     'CtxSchemeSuggestForCategoriesRequestBody',
     'CtxSchemeCheckCoverageRequestBody',
     'CtxAccessCheckRequestBody',
-    'CtxAccessDescribeRuleRequestBody',
     'CtxAccessDescribeRequirementsRequestBody',
     'CtxAccessRulesResponseBody',
     'CtxCrosswalkTranslateRequestBody',
     'CtxCrosswalkDescribeResponseBody',
     'CtxGuideScanRequestBody',
     'CtxGuideEvaluateRequestBody',
-    'CtxGuideDescribeRuleRequestBody',
-    'CtxGuideFilterRulesRequestBody',
     'CtxGuideViewRequestBody',
     'CtxListResponseBody',
     'CtxVersionsResponseBody',
@@ -182,12 +165,10 @@ const ROOT_TYPES = [
     'ContextSchemeProcessResult',
     'ContextSchemeValidateResult',
     'ContextSchemeExplainResult',
-    'ContextSchemeNormalizeResult',
     'ContextSchemeRenderResult',
     'ContextSchemeDiffResult',
     'ContextSchemeViewResult',
     'ContextSchemeNoticesResult',
-    'ContextSchemeFilterConceptsResult',
     'ContextSchemeScanResult',
     'ContextSchemeAggregateResult',
     'ContextSchemeSuggestResult',
@@ -195,12 +176,9 @@ const ROOT_TYPES = [
     'ContextSchemeCoverageResult',
     'ContextSchemeConceptDescriptionResult',
     'ContextAccessDecisionResult',
-    'ContextAccessRuleDescriptionResult',
     'ContextAccessRequirementsResult',
     'ContextGuideScanResult',
     'ContextGuideEvaluationResult',
-    'ContextGuideRuleDescriptionResult',
-    'ContextGuideFilterRulesResult',
     'ContextGuideViewResult',
     'ContextCrosswalkTranslationResult',
 ];
@@ -255,7 +233,6 @@ export function generateSchemas() {
     rewriteRefs(merged);
     collapseGenericAliases(merged);
     promoteNamedContractRefs(merged);
-    constrainBestEffortSourceIdentity(merged);
 
     const renamed = {};
     for (const [k, v] of Object.entries(merged)) {
@@ -267,38 +244,6 @@ export function generateSchemas() {
     const sorted = {};
     for (const k of sortedKeys) sorted[k] = renamed[k];
     return sorted;
-}
-
-/**
- * Restates, as a schema rule, that a best-effort source observation carries no
- * snapshot identity.
- *
- * The TypeScript union says it with `snapshotId?: never` on the best-effort
- * branch. Every schema a response can reach is open (no `additionalProperties:
- * false`), so an open best-effort branch would accept a `snapshotId` it must
- * never be given. A snapshot id promises byte-for-byte replay; a best-effort
- * observation cannot make that promise, and a reference that carried one would
- * claim reproducibility the source never had.
- *
- * A conditional says it in a form openness cannot remove. `if` selects on the
- * discriminating property and `then` forbids the field, both of which survive a
- * pass that only strips `additionalProperties: false`. It lives on the union
- * rather than on the best-effort branch because the union is the only place
- * both modes are in view, and the branches are reachable from a response only
- * through it.
- */
-function constrainBestEffortSourceIdentity(schemas) {
-    for (const name of ['SourceReference', 'RuleSourceReference']) {
-        const schema = schemas[name];
-        if (!Array.isArray(schema?.anyOf)) {
-            throw new Error(`Missing reviewed union ${name}`);
-        }
-        schema.if = {
-            properties: { reproducibility: { const: 'best-effort' } },
-            required: ['reproducibility'],
-        };
-        schema.then = { not: { required: ['snapshotId'] } };
-    }
 }
 
 function namedRef(node, name) {
@@ -406,17 +351,6 @@ function promoteNamedContractRefs(schemas) {
     }
 
     const unionBranchRefs = [
-        [
-            'SourceReference',
-            ['ReproducibleSourceReference', 'BestEffortSourceReference'],
-        ],
-        [
-            'RuleSourceReference',
-            [
-                'ReproducibleRuleSourceReference',
-                'BestEffortRuleSourceReference',
-            ],
-        ],
         ['Win', ['TokenWindow', 'CharacterWindow']],
         [
             'ValueEncoding',

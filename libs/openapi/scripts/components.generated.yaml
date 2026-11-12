@@ -46,19 +46,6 @@ components:
           description: >-
             Warnings from preparing and evaluating the target, including automatic changes. Present on granted and
             denied decisions; empty when none apply.
-        provenance:
-          $ref: "#/components/schemas/SourceReference"
-          description: >-
-            Source provenance for the access-rule source that evaluated this decision.
-
-
-            Populated only when the `AccessEngine` was wired with an external `AccessRuleSource` override at load time
-            (typically a `MappedAccessRuleSource` the server's Context loader built from an access YAML's
-            `rules.external` block). Inline-backed decisions leave this field undefined to keep payloads compact for the
-            common single-source case.
-
-
-            Identity fields mirror the source's `sourceIdentity()` observation at engine-construction time.
       required:
         - granted
         - rules
@@ -482,25 +469,6 @@ components:
 
             It travels on the assertion rather than alongside it because assertion arrays are the engine's state
             transport: an access check made from transported assertions can still explain the substitution.
-        provenance:
-          $ref: "#/components/schemas/SourceReference"
-          description: >-
-            Source provenance for the concept that backed this assertion.
-
-
-            Populated only when the concept came from an external source whose records were loaded with the scheme
-            (typically one a scheme's `concepts.external` block declares). Inline-backed assertions leave this field
-            undefined to keep payloads compact for the common single-source case. A concept a scheme document declares
-            in its `inline` list has none, even when one of that document's `external` sources also serves a record with
-            its id. A concept read through a queryable-only source (`SourceCapabilities.queryableOnly`) has none either:
-            that source is asked per lookup and never loaded whole, and a lookup does not say which source answered.
-            Such a source still appears in a composed operation's `resolution.sources`. Across a layered stack the later
-            layer decides: a concept a later layer's source supplies carries that source's provenance even when an
-            earlier document declares it inline, and a concept a later layer declares inline carries none.
-
-
-            Identity fields mirror the source's `sourceIdentity()` observation at engine-load time (or the immutable
-            value the Context pinned).
       required:
         - categoryId
         - conceptId
@@ -603,65 +571,6 @@ components:
         - code
         - reason
       description: Explains why an assessment dimension or conclusion is constrained.
-    Attribution:
-      type: object
-      properties:
-        name:
-          type: string
-          description: Display name of the upstream source (e.g. "NIST CSWP-29").
-        license:
-          type: string
-          description: SPDX identifier or short license token (e.g. "CC-BY-4.0", "public-domain").
-        licenseUrl:
-          type: string
-          description: Canonical URL where the license terms can be inspected.
-        citation:
-          type: string
-          description: Suggested citation string for academic / regulatory use.
-      required:
-        - name
-        - license
-      description: >-
-        Provenance attached to every source so downstream consumers can render proper attribution and license notices.
-
-
-        Mandatory because most source data we'll integrate (NIST, ICS, IANA, external taxonomies) requires citation.
-        Sources that don't have a formal license should set `license: 'unspecified'` rather than omit it.
-    BestEffortRuleSourceReference:
-      type: object
-      properties:
-        providerId:
-          type: string
-          description: Stable identifier for the source provider.
-        reproducibility:
-          type: string
-          const: best-effort
-          description: Whether the source observation can be reproduced byte-for-byte.
-      required:
-        - providerId
-        - reproducibility
-      description: Best-effort external source join carried by a qualified rule reference.
-    BestEffortSourceReference:
-      type: object
-      properties:
-        reproducibility:
-          type: string
-          const: best-effort
-          description: Whether the source observation can be reproduced byte-for-byte.
-        locator:
-          type: string
-          description: Location from which the mutable content was observed.
-        providerId:
-          type: string
-          description: Stable identifier for the source provider.
-        attribution:
-          $ref: "#/components/schemas/Attribution"
-          description: Attribution and license information for the observed source.
-      required:
-        - attribution
-        - providerId
-        - reproducibility
-      description: Best-effort source identity and mandatory attribution for an operation.
     CalendarDateSpelling:
       type: string
       enum:
@@ -944,13 +853,9 @@ components:
         is excess. A shorter list, or none, is allowed and is not missing.
 
 
-        In a `max`, `min` or `least_upper_bound` category the children roll up to one value, ordered by rank (`max`,
-        `min`) or by the concept hierarchy (`least_upper_bound`). The parent must sit at or above that value for `max`
-        and `least_upper_bound`, and at or below it for `min`. A parent anywhere else, including one the hierarchy does
-        not order against that value, is reported once, under `missing`, and never under `excess`. The value reported is
-        what the parent and children roll up to together. For `max` and `min` that is the children's own value. For
-        `least_upper_bound` it is the bound the parent and children share, which can sit beyond the children's value,
-        and it is the children's own value when the hierarchy gives them no common bound.
+        In a `max` or `min` category the children roll up to one value, ordered by rank. The parent must sit at or above
+        that value for `max`, and at or below it for `min`. A parent anywhere else is reported once, under `missing`,
+        and never under `excess`. The value reported is the children's own value.
 
 
         In a `pipeline` category the parent covers when rolling it up with the children leaves it unchanged. This relies
@@ -1168,10 +1073,7 @@ components:
       type: string
       enum:
         - warning
-        - handling
         - admonition
-        - distribution
-        - info
       description: What kind of notice a concept carries.
     ConceptRef:
       type: object
@@ -1393,28 +1295,6 @@ components:
         - result
         - operationLimitations
       description: Context envelope returned by immutable-policy requirement description.
-    ContextAccessRuleDescriptionResult:
-      type: object
-      properties:
-        resolution:
-          $ref: "#/components/schemas/ContextResolution"
-          description: Single resolved composition used throughout the operation.
-        result:
-          $ref: "#/components/schemas/AccessRuleDescription"
-          description: Typed operation result.
-        operationLimitations:
-          type: array
-          items:
-            $ref: "#/components/schemas/AssessmentLimitation"
-          description: Limitations applying to the operation as a whole.
-        responseProjection:
-          $ref: "#/components/schemas/DocumentResponseProjection"
-          description: Projection metadata, present only for document operations.
-      required:
-        - resolution
-        - result
-        - operationLimitations
-      description: Context envelope returned by access-rule description.
     ContextCrosswalkCandidate:
       type: object
       properties:
@@ -1616,50 +1496,6 @@ components:
         - result
         - operationLimitations
       description: Context envelope returned by guide evaluation.
-    ContextGuideFilterRulesResult:
-      type: object
-      properties:
-        resolution:
-          $ref: "#/components/schemas/ContextResolution"
-          description: Single resolved composition used throughout the operation.
-        result:
-          $ref: "#/components/schemas/FilterResult"
-          description: Typed operation result.
-        operationLimitations:
-          type: array
-          items:
-            $ref: "#/components/schemas/AssessmentLimitation"
-          description: Limitations applying to the operation as a whole.
-        responseProjection:
-          $ref: "#/components/schemas/DocumentResponseProjection"
-          description: Projection metadata, present only for document operations.
-      required:
-        - resolution
-        - result
-        - operationLimitations
-      description: Context envelope returned by guide rule filtering.
-    ContextGuideRuleDescriptionResult:
-      type: object
-      properties:
-        resolution:
-          $ref: "#/components/schemas/ContextResolution"
-          description: Single resolved composition used throughout the operation.
-        result:
-          $ref: "#/components/schemas/RuleDescription"
-          description: Typed operation result.
-        operationLimitations:
-          type: array
-          items:
-            $ref: "#/components/schemas/AssessmentLimitation"
-          description: Limitations applying to the operation as a whole.
-        responseProjection:
-          $ref: "#/components/schemas/DocumentResponseProjection"
-          description: Projection metadata, present only for document operations.
-      required:
-        - resolution
-        - result
-        - operationLimitations
-      description: Context envelope returned by guide-rule description.
     ContextGuideScanResult:
       type: object
       properties:
@@ -1726,16 +1562,10 @@ components:
           items:
             $ref: "#/components/schemas/ArtifactReference"
           description: Ordered artifacts participating in the composition.
-        sources:
-          type: array
-          items:
-            $ref: "#/components/schemas/SourceReference"
-          description: De-duplicated source observations used by the operation.
       required:
         - contextId
         - resolvedVersion
         - artifacts
-        - sources
       description: Resolution identity shared by every branch of one Context operation.
     ContextSchemeAggregateResult:
       type: object
@@ -1880,50 +1710,6 @@ components:
         - result
         - operationLimitations
       description: Context envelope returned by a scheme explanation.
-    ContextSchemeFilterConceptsResult:
-      type: object
-      properties:
-        resolution:
-          $ref: "#/components/schemas/ContextResolution"
-          description: Single resolved composition used throughout the operation.
-        result:
-          $ref: "#/components/schemas/FilterResult"
-          description: Typed operation result.
-        operationLimitations:
-          type: array
-          items:
-            $ref: "#/components/schemas/AssessmentLimitation"
-          description: Limitations applying to the operation as a whole.
-        responseProjection:
-          $ref: "#/components/schemas/DocumentResponseProjection"
-          description: Projection metadata, present only for document operations.
-      required:
-        - resolution
-        - result
-        - operationLimitations
-      description: Context envelope returned by scheme concept filtering.
-    ContextSchemeNormalizeResult:
-      type: object
-      properties:
-        resolution:
-          $ref: "#/components/schemas/ContextResolution"
-          description: Single resolved composition used throughout the operation.
-        result:
-          $ref: "#/components/schemas/NormalizeResponse"
-          description: Typed operation result.
-        operationLimitations:
-          type: array
-          items:
-            $ref: "#/components/schemas/AssessmentLimitation"
-          description: Limitations applying to the operation as a whole.
-        responseProjection:
-          $ref: "#/components/schemas/DocumentResponseProjection"
-          description: Projection metadata, present only for document operations.
-      required:
-        - resolution
-        - result
-        - operationLimitations
-      description: Context envelope returned by scheme normalization.
     ContextSchemeNoticesResult:
       type: object
       properties:
@@ -2524,16 +2310,6 @@ components:
           description: Structured target assertions merged with any parsed marking.
       additionalProperties: false
       description: POST /v1/ctx/{ctxId}/{version?}/access/describe-requirements
-    CtxAccessDescribeRuleRequestBody:
-      type: object
-      properties:
-        ruleId:
-          type: string
-          description: Access rule id from the loaded access policy.
-      required:
-        - ruleId
-      additionalProperties: false
-      description: POST /v1/ctx/{ctxId}/{version?}/access/describe-rule
     CtxAccessRulesResponseBody:
       type: object
       properties:
@@ -2550,12 +2326,8 @@ components:
       required:
         - rules
       description: >-
-        Response body for GET /v1/ctx/{ctxId}/{version?}/access/rules: every rule in the context's access policy.
-
-
-        One route serves both halves of the adapter contract. A caller that wants the descriptions has them; a caller
-        that only wants the rule ids reads them off the same response instead of spending a second round trip on a
-        projection of what it already holds.
+        Response body for GET /v1/ctx/{ctxId}/{version?}/access/rules: every rule in the context's access policy, with
+        the policy's own marking.
     CtxComponentDescriptor:
       type: object
       properties:
@@ -2686,19 +2458,6 @@ components:
         - text
       additionalProperties: false
       description: POST /v1/ctx/{ctxId}/{version?}/document/audit
-    CtxGuideDescribeRuleRequestBody:
-      type: object
-      properties:
-        ruleId:
-          type: string
-          description: Rule id to describe.
-        guideId:
-          type: string
-          description: Guide id when the context has multiple guides. Defaults to the first guide.
-      required:
-        - ruleId
-      additionalProperties: false
-      description: POST /v1/ctx/{ctxId}/{version?}/guide/describe-rule
     CtxGuideEvaluateRequestBody:
       type: object
       properties:
@@ -2726,19 +2485,6 @@ components:
         Two forms, exactly one per request: `guideId` with `selectedRuleIds` evaluates one guide, and `selections` rolls
         up a selection that spans guides. Any other combination is a 400. The rule is stated here rather than as a root
         `oneOf`, which would make every generated SDK model this request as a union of two request types.
-    CtxGuideFilterRulesRequestBody:
-      type: object
-      properties:
-        query:
-          type: string
-          description: Text query to filter rules.
-        guideId:
-          type: string
-          description: Guide id when the context has multiple guides. Defaults to the first guide.
-      required:
-        - query
-      additionalProperties: false
-      description: POST /v1/ctx/{ctxId}/{version?}/guide/filter-rules
     CtxGuideScanRequestBody:
       type: object
       properties:
@@ -2913,41 +2659,6 @@ components:
         POST /v1/ctx/{ctxId}/{version?}/scheme/explain: the trace of a process call.
 
         Takes what process takes, apart from `outputs` and `suggestFor`, which only add to a process result.
-    CtxSchemeFilterConceptsRequestBody:
-      type: object
-      properties:
-        query:
-          type: string
-          description: Text query to filter the concept list.
-      required:
-        - query
-      additionalProperties: false
-      description: POST /v1/ctx/{ctxId}/{version?}/scheme/filter-concepts
-    CtxSchemeNormalizeRequestBody:
-      type: object
-      properties:
-        input:
-          type: string
-          description: Marking string to normalize.
-        inputFormat:
-          type: string
-          description: >-
-            The format `input` is written in. For a scheme that declares `render.surfaces`, the view it is read as, or
-            one of its forms, as the scheme document's `render.surfaces` defines them. Omitted or empty, recognition
-            works it out and reports what the text was read as on `recognition.inputFormat`.
-        outputFormat:
-          type: string
-          description: >-
-            The format the result is rendered in. Omitted or empty, the scheme's default format. It selects output only:
-            it never narrows what may be read.
-
-
-            For a scheme that declares `render.surfaces`, an output as the scheme document's `render.surfaces` defines
-            it.
-      required:
-        - input
-      additionalProperties: false
-      description: POST /v1/ctx/{ctxId}/{version?}/scheme/normalize
     CtxSchemeNoticesRequestBody:
       type: object
       properties:
@@ -3604,9 +3315,8 @@ components:
         autoInsert:
           $ref: "#/components/schemas/EmbeddedMarkingStyleAutoInsert"
           description: >-
-            When the host UI should proactively prompt the user to add a marking. "every-paragraph" pops the picker on
-            each new paragraph; "first-line" only on the first line of the document; "manual" never auto-prompts.
-            Default "manual".
+            Whether the host UI should prompt the user to add a marking. "every-paragraph" pops the picker on each new
+            paragraph. Absent, the host never prompts on its own.
       required:
         - pattern
         - template
@@ -3615,10 +3325,7 @@ components:
         of a paragraph. A scheme may declare multiple styles; all are matched during scanning.
     EmbeddedMarkingStyleAutoInsert:
       type: string
-      enum:
-        - every-paragraph
-        - first-line
-        - manual
+      const: every-paragraph
       description: When a host UI should proactively prompt for an embedded marking.
     ErrorResponse:
       type: object
@@ -3694,9 +3401,6 @@ components:
           description: >-
             Subset of `breakdown` that actually contributed to `aggregatedMarking` (i.e. `breakdown.filter(b =>
             !b.wasOverridden)`). Precomputed so UI layers stop re-filtering the full breakdown.
-        provenance:
-          $ref: "#/components/schemas/SourceReference"
-          description: External guide-rule source observation used by this evaluation.
       required:
         - selectedRules
         - activeComputedRules
@@ -3763,52 +3467,6 @@ components:
         than the working. Debug tools use this to explain why a marking was accepted or rejected. `repairs` lists each
         repair rule that fired and the before/after strings. `inferences` lists each inference rule that added a concept
         and the reason text.
-    FilterResult:
-      type: object
-      properties:
-        visibleIds:
-          type: array
-          items:
-            type: string
-          description: IDs of concepts or rules that matched the query.
-        categoryCounts:
-          type: object
-          additionalProperties:
-            type: object
-            properties:
-              visible:
-                type: integer
-                description: Items in the category that matched the query.
-              total:
-                type: integer
-                description: Items in the category.
-            required:
-              - visible
-              - total
-          description: Per-category counts.
-        total:
-          type: object
-          properties:
-            visible:
-              type: integer
-              description: Items that matched the query.
-            total:
-              type: integer
-              description: Items in every category.
-          required:
-            - visible
-            - total
-          description: Aggregate counts across all categories.
-      required:
-        - visibleIds
-        - categoryCounts
-        - total
-      description: >-
-        JSON-safe serialization of the engine's Set/Map-based FilterResult.
-
-
-        The engine returns FilterResult with Set<string> and Map<string, ...> fields; this interface is what the server
-        writes to the wire.
     Fix:
       type: object
       properties:
@@ -4447,8 +4105,8 @@ components:
         selection state and do not appear as user-visible checkboxes.
 
 
-        This is the named runtime/read-result shape. Authoring input is carried by the guide definition's `rules.inline`
-        entries.
+        This is the named runtime/read-result shape. A guide document authors its rules as `GuideRuleDoc` entries in
+        `guide.rules`.
     GuideRuleOutcome:
       type: object
       properties:
@@ -4574,19 +4232,6 @@ components:
           items:
             $ref: "#/components/schemas/GuideScanSpan"
           description: Every place in the text where the rule fired, in the order found.
-        provenance:
-          $ref: "#/components/schemas/SourceReference"
-          description: >-
-            Source provenance for the guide-rule source that supplied the matched rule.
-
-
-            Populated only when the rule came from an external `GuideRuleSource` override wired into the `GuideEngine`
-            at load time (typically a `MappedGuideRuleSource` the server's Context loader built from a guide YAML's
-            `rules.external` block). Inline-backed results leave this field undefined to keep payloads compact for the
-            common single-source case.
-
-
-            Identity fields mirror the source's `sourceIdentity()` observation at engine-construction time.
       required:
         - rule
         - guideId
@@ -5140,15 +4785,6 @@ components:
         - pass
         - fail
       description: Validator outcome retained by a validation expression.
-    NormalizeResponse:
-      type: object
-      properties:
-        result:
-          type: string
-          description: Canonical normalized form of the marking string.
-      required:
-        - result
-      description: Response body for Context normalization.
     Notice:
       type: object
       properties:
@@ -5533,7 +5169,7 @@ components:
       type: string
       enum:
         - audit-degraded
-        - clock-rollback
+        - application-allowance-exceeded
         - generation-refused
         - desired-state-stale
       description: >-
@@ -5549,9 +5185,9 @@ components:
         them until audit writes succeed again.
 
 
-        `clock-rollback`: the system clock reads further behind a time this runtime already accepted than the tolerated
-        skew allows, so license evaluation holds at that accepted time and update entitlement is suspended until the
-        clock is corrected.
+        `application-allowance-exceeded`: more distinct application ids have called the runtime than its license's
+        application allowance. Every application is still served, registered or not: the warning informs and never
+        refuses a request.
 
 
         `generation-refused`: a managed runtime refused what its control plane last offered, either the newest
@@ -5941,55 +5577,6 @@ components:
         - safe
         - uncertain
       description: Confidence assigned to a deterministic repair.
-    Reproducibility:
-      type: string
-      enum:
-        - reproducible
-        - best-effort
-      description: Describes whether an observed source can be loaded again byte-for-byte.
-    ReproducibleRuleSourceReference:
-      type: object
-      properties:
-        providerId:
-          type: string
-          description: Stable identifier for the source provider.
-        reproducibility:
-          type: string
-          const: reproducible
-          description: Whether the source observation can be reproduced byte-for-byte.
-        snapshotId:
-          type: string
-          description: Immutable snapshot containing the rule.
-      required:
-        - providerId
-        - reproducibility
-        - snapshotId
-      description: Compact source join carried by a qualified rule reference.
-    ReproducibleSourceReference:
-      type: object
-      properties:
-        reproducibility:
-          type: string
-          const: reproducible
-          description: Whether the source observation can be reproduced byte-for-byte.
-        snapshotId:
-          type: string
-          description: Immutable content identity.
-        locator:
-          type: string
-          description: Location from which the content was observed.
-        providerId:
-          type: string
-          description: Stable identifier for the source provider.
-        attribution:
-          $ref: "#/components/schemas/Attribution"
-          description: Attribution and license information for the observed source.
-      required:
-        - attribution
-        - providerId
-        - reproducibility
-        - snapshotId
-      description: Reproducible source identity and mandatory attribution for an operation.
     Rollup:
       type: string
       enum:
@@ -5998,13 +5585,11 @@ components:
         - union
         - intersection
         - first
-        - last
-        - least_upper_bound
         - pipeline
       description: >-
         Canonical rollup operator. `pipeline` requires a matching entry in the scheme's `rollup_pipelines`. Most merge
-        operators are set-algebraic over each input's assertions; rank-based operators (max/min/least_upper_bound)
-        require categories whose concepts declare `rank`.
+        operators are set-algebraic over each input's assertions; rank-based operators (max/min) require categories
+        whose concepts declare `rank`.
     RuleCondition:
       type: object
       properties:
@@ -6070,55 +5655,6 @@ components:
         - all
         - none
       description: Quantifies a condition block over contributing assertion sets.
-    RuleDescription:
-      type: object
-      properties:
-        rule:
-          $ref: "#/components/schemas/RuleReference"
-          description: Qualified rule being described.
-        guide:
-          $ref: "#/components/schemas/ArtifactReference"
-          description: Guide artifact that owns the rule.
-        name:
-          type: string
-          description: Human-readable rule name.
-        description:
-          type: string
-          description: Optional policy-authored description.
-        outcomeText:
-          type: string
-          description: Human-readable outcome expression.
-        whenText:
-          type: string
-          description: Human-readable activation expression.
-        isComputed:
-          type: boolean
-          description: Whether the rule is computed from other guide facts.
-        dependsOn:
-          type: array
-          items:
-            $ref: "#/components/schemas/RuleReference"
-          description: Qualified rules referenced by this rule's activation block.
-        overrides:
-          type: array
-          items:
-            $ref: "#/components/schemas/RuleReference"
-          description: Qualified rules this rule overrides when it fires.
-        lines:
-          type: array
-          items:
-            type: string
-          description: Flattened multi-line description matching `ConceptDescription.lines`.
-      required:
-        - rule
-        - guide
-        - name
-        - outcomeText
-        - isComputed
-        - dependsOn
-        - overrides
-        - lines
-      description: Human-readable description of a guide rule. Parallels `ConceptDescription` on the scheme side.
     RuleReference:
       type: object
       properties:
@@ -6131,29 +5667,11 @@ components:
         ruleDigest:
           type: string
           description: RFC 8785/SHA-256 digest of the canonical resolved rule content.
-        source:
-          $ref: "#/components/schemas/RuleSourceReference"
-          description: External source identity when the rule was not supplied inline.
       required:
         - artifact
         - ruleId
         - ruleDigest
       description: Identifies the exact resolved semantics of one policy rule.
-    RuleSourceReference:
-      anyOf:
-        - $ref: "#/components/schemas/ReproducibleRuleSourceReference"
-        - $ref: "#/components/schemas/BestEffortRuleSourceReference"
-      description: Compact source join carried by a qualified rule reference.
-      if:
-        properties:
-          reproducibility:
-            const: best-effort
-        required:
-          - reproducibility
-      then:
-        not:
-          required:
-            - snapshotId
     RuleWhen:
       anyOf:
         - type: string
@@ -6355,24 +5873,6 @@ components:
 
         `complete` means the whole document was offered to recognition. `truncated` means the region cap was reached
         with budget to spare. `resource-limit` means the budget was spent or the caller aborted.
-    SchemeGrammar:
-      type: object
-      properties:
-        caseSensitive:
-          type: boolean
-          description: Whether the vocabulary is matched case-sensitively.
-        stripWhitespace:
-          type: boolean
-          description: Whether surrounding whitespace is ignored when a spelling is compared.
-      required:
-        - caseSensitive
-        - stripWhitespace
-      description: >-
-        Context scheme grammar response: the scheme's recognition policy.
-
-
-        No separator. Every boundary belongs to the field that writes it, so there is no global one to publish; what is
-        left is how a spelling found at a boundary is compared against the vocabulary.
     SchemeScope:
       type: object
       properties:
@@ -6578,23 +6078,7 @@ components:
       enum:
         - position
         - alphabetical
-        - numeric
       description: How concepts within a category are sorted during rendering.
-    SourceReference:
-      anyOf:
-        - $ref: "#/components/schemas/ReproducibleSourceReference"
-        - $ref: "#/components/schemas/BestEffortSourceReference"
-      description: Records source identity and mandatory attribution for an operation.
-      if:
-        properties:
-          reproducibility:
-            const: best-effort
-        required:
-          - reproducibility
-      then:
-        not:
-          required:
-            - snapshotId
     SuggestResult:
       type: object
       properties:

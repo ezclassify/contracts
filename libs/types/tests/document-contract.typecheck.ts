@@ -14,7 +14,6 @@ import type {
     AssertionReference,
     AssertionSupport,
     AssessmentLimitation,
-    Attribution,
     Change,
     ConceptModernization,
     ContentEvidenceSpan,
@@ -49,80 +48,25 @@ import type {
     ManualGuideSelection,
     ManualGuideSelectionInput,
     MarkingValidation,
-    MaybePromise,
     RecognitionResult,
-    Reproducibility,
     RuleDescription,
     RuleReference,
-    RuleSourceReference,
-    SourceCapabilities,
-    SourceIdentity,
-    SourceMetadata,
-    SourceReference,
     ValidateResult,
     ValidationError,
     Vocabulary,
     Warning,
 } from '../src/index';
 
-expectTypeOf<Reproducibility>().toEqualTypeOf<'reproducible' | 'best-effort'>();
-expectTypeOf<SourceIdentity>().toEqualTypeOf<
-    | {
-          reproducibility: 'reproducible';
-          snapshotId: string;
-          locator?: string;
-      }
-    | {
-          reproducibility: 'best-effort';
-          snapshotId?: never;
-          locator?: string;
-      }
->();
 expectTypeOf<ArtifactReference>().toEqualTypeOf<{
     kind: 'scheme' | 'layer' | 'guide' | 'access' | 'crosswalk' | 'context';
     id: string;
     version: string;
     digest?: string;
 }>();
-expectTypeOf<SourceReference>().toEqualTypeOf<
-    | {
-          reproducibility: 'reproducible';
-          snapshotId: string;
-          locator?: string;
-          providerId: string;
-          attribution: Attribution;
-      }
-    | {
-          reproducibility: 'best-effort';
-          snapshotId?: never;
-          locator?: string;
-          providerId: string;
-          attribution: Attribution;
-      }
->();
-expectTypeOf<SourceMetadata>().toEqualTypeOf<{
-    readonly providerId: string;
-    readonly attribution: Attribution;
-    readonly capabilities: SourceCapabilities;
-    sourceIdentity(): MaybePromise<SourceIdentity>;
-}>();
-expectTypeOf<RuleSourceReference>().toEqualTypeOf<
-    | {
-          providerId: string;
-          reproducibility: 'reproducible';
-          snapshotId: string;
-      }
-    | {
-          providerId: string;
-          reproducibility: 'best-effort';
-          snapshotId?: never;
-      }
->();
 expectTypeOf<RuleReference>().toEqualTypeOf<{
     artifact: ArtifactReference;
     ruleId: string;
     ruleDigest: string;
-    source?: RuleSourceReference;
 }>();
 expectTypeOf<AssertionReference>().toEqualTypeOf<{
     categoryId: string;
@@ -184,7 +128,6 @@ expectTypeOf<ContextResolution>().toEqualTypeOf<{
     requestedVersion?: string;
     resolvedVersion: string;
     artifacts: ArtifactReference[];
-    sources: SourceReference[];
 }>();
 expectTypeOf<ContextOperationResult<string>>().toEqualTypeOf<{
     resolution: ContextResolution;
@@ -362,7 +305,6 @@ expectTypeOf<AccessDecision>().toEqualTypeOf<{
     granted: boolean;
     rules: AccessRuleResult[];
     warnings: Warning[];
-    provenance?: SourceReference;
 }>();
 expectTypeOf<AccessRequirementsInput>().toEqualTypeOf<{
     marking?: string;
@@ -457,11 +399,6 @@ const rule: RuleReference = {
     artifact,
     ruleId: 'rule',
     ruleDigest: 'sha256:rule',
-    source: {
-        providerId: 'source',
-        reproducibility: 'reproducible',
-        snapshotId: 'sha256:snapshot',
-    },
 };
 const span: ContentEvidenceSpan = {
     start: 0,
@@ -488,24 +425,9 @@ const projection: DocumentResponseProjection = {
         contextRequirements: 0,
     },
 };
-const reproducibleWithLocator: SourceIdentity = {
-    reproducibility: 'reproducible',
-    snapshotId: 'sha256:source',
-    locator: 'https://example.test/source',
-};
 void manual;
 void projection;
-void reproducibleWithLocator;
 
-// @ts-expect-error Reproducible observations require an immutable snapshot.
-const reproducibleWithoutSnapshot: SourceIdentity = {
-    reproducibility: 'reproducible',
-};
-// @ts-expect-error Best-effort observations cannot claim a snapshot identity.
-const bestEffortWithSnapshot: SourceIdentity = {
-    reproducibility: 'best-effort',
-    snapshotId: 'mutable',
-};
 // @ts-expect-error Qualified rules require a semantic digest.
 const ruleWithoutDigest: RuleReference = { artifact, ruleId: 'rule' };
 const invalidOffset: ContentEvidenceSpan = {
@@ -531,8 +453,6 @@ const incompleteProjection: DocumentResponseProjection = {
     counts: { nominations: 0 },
 };
 
-void reproducibleWithoutSnapshot;
-void bestEffortWithSnapshot;
 void ruleWithoutDigest;
 void invalidOffset;
 void manualWithoutReason;

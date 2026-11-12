@@ -84,7 +84,7 @@ describe('route error descriptions', () => {
         }
         // Negative control: a route without `parts` says nothing about a cap.
         expect(
-            spec.paths['/v1/ctx/{ctxId}/{version}/scheme/normalize'].post
+            spec.paths['/v1/ctx/{ctxId}/{version}/scheme/render'].post
                 .responses['400'].description ?? '',
         ).not.toMatch(/`parts`/);
     });

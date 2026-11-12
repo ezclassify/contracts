@@ -63,14 +63,11 @@ const RESULT_SCHEMA: Record<string, string | null> = {
     // answer (a count, a first entry, a bare string), not the answer itself,
     // so there is no result schema to hold them to.
     render: null,
-    normalize: null,
     scan: null,
     checkAccess: null,
     evaluateGuide: null,
     evaluateMany: null,
     guideScan: null,
-    registryProcessAll: null,
-    registrySuggestAcross: null,
 };
 
 /** Semantic operations and the published envelope each one answers. */
@@ -86,7 +83,11 @@ const ENVELOPE: Record<string, string | null> = {
  * name (`semantic` is the document-assessment recordings). Each entry comes off
  * this list when the runtime records that file again.
  */
-const AWAITING_RERECORD: Record<string, string> = {};
+const AWAITING_RERECORD: Record<string, string> = {
+    semantic:
+        'Recorded with envelope members the contract no longer declares, ' +
+        'such as resolution.sources.',
+};
 
 const engineSchemas = new Map<string, ReturnType<Ajv['compile']>>();
 function engineValidator(file: string) {

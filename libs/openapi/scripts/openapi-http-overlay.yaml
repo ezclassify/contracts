@@ -2,11 +2,11 @@
 #
 # Holds the two `components` sections that have no TypeScript counterpart:
 #
-#   - `parameters`: shared path/query parameters reused across routes. These
-#     describe URL-shape concerns, not body shapes; route declarations
-#     reference them by name via `$ref` and keep per-route entries tiny.
+#   - `parameters`: shared path, query and header parameters reused across
+#     routes. These describe request concerns that are not body shapes;
+#     operations reference them by name via `$ref`.
 #
-#     Only add a parameter here once a route actually references it. An
+#     Only add a parameter here once an operation actually references it. An
 #     entry nothing points at still lands in the emitted document, where
 #     the contracts unreachable-component check refuses it.
 #
@@ -55,21 +55,19 @@ components:
         version. Refusals use the same constant not-found response as every
         other authorization failure.
 
-    applicationCredential:
-      type: apiKey
+  parameters:
+    ApplicationId:
+      name: x-ezclassify-application-id
       in: header
-      name: x-ezclassify-application-grant
+      required: false
       description: >
-        Opaque credential that the deployment's management plane issues to a
-        registered application as either a browser or a backend credential.
-        This is an alternative to bearer and Context token credentials for
-        Context data-path requests. A request that carries it together with an
-        Authorization header, x-ezclassify-context-token, or credentials accepted
-        by a deployment-configured broker is refused. Browser credentials are
-        admitted only from registered origins. Backend credentials are refused
-        on requests from a browser. The credential identifies the calling
-        application, not an end user. Refusals use the same constant not-found
-        response as other authorization failures.
+        Identifies the calling application for per-application usage
+        reporting: the id the application is registered under. It is not a
+        credential and authorizes nothing. A request without it, or with an id
+        the deployment has not registered, is served the same way.
+      schema:
+        type: string
+      example: 'case-intake-portal'
 
   headers:
     ResolvedVersion:

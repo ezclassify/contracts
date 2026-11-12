@@ -419,38 +419,20 @@ describe('the document says how a caller authenticates', () => {
         );
     });
 
-    it('declares the opaque application credential carrier', () => {
-        expect(
-            spec.components.securitySchemes?.['applicationCredential'],
-        ).toMatchObject({
-            type: 'apiKey',
-            in: 'header',
-            name: 'x-ezclassify-application-grant',
-        });
-    });
-
-    it('keeps the default caller credentials and admits the separate application credential only on Context operations', () => {
+    it('applies the default caller credentials to every authenticated operation', () => {
         expect(spec.security).toEqual([{ bearerAuth: [], contextToken: [] }]);
-
-        let contextOperations = 0;
+        expect(
+            Object.keys(spec.components.securitySchemes ?? {}).sort(),
+        ).toEqual(['bearerAuth', 'contextToken']);
         for (const [route, item] of Object.entries(spec.paths)) {
             if (ANONYMOUS_ROUTES.includes(route)) continue;
             for (const [method, op] of Object.entries(item)) {
-                const security = (op as { security?: unknown }).security;
-                const isContext =
-                    route === '/v1/ctx' || route.startsWith('/v1/ctx/');
-                if (isContext) contextOperations += 1;
-                expect(security, `${method.toUpperCase()} ${route}`).toEqual(
-                    isContext
-                        ? [
-                              { bearerAuth: [], contextToken: [] },
-                              { applicationCredential: [] },
-                          ]
-                        : undefined,
-                );
+                expect(
+                    (op as { security?: unknown }).security,
+                    `${method.toUpperCase()} ${route}`,
+                ).toBeUndefined();
             }
         }
-        expect(contextOperations).toBeGreaterThan(0);
     });
 
     it.each(ANONYMOUS_ROUTES)(
@@ -551,5 +533,50 @@ describe('a 404 says which kind of 404 it is', () => {
     it('states the contrast where the unauthenticated warning lives', () => {
         expect(spec.info.description).toMatch(/route_not_found/);
         expect(spec.info.description).toMatch(/security property/);
+    });
+});
+
+/**
+ * A client states which application it is, so the deployment can report usage
+ * per application. The id is a plain request header on every Context operation,
+ * not a credential: the server serves a request whatever it names.
+ */
+describe('the document lets a client name its application', () => {
+    const applicationId = (
+        spec.components as {
+            parameters?: Record<string, Record<string, unknown>>;
+        }
+    ).parameters?.['ApplicationId'];
+
+    it('declares the application id as an optional header', () => {
+        expect(applicationId).toMatchObject({
+            name: 'x-ezclassify-application-id',
+            in: 'header',
+            required: false,
+            schema: { type: 'string' },
+        });
+    });
+
+    it('accepts it on every Context operation and nowhere else', () => {
+        let contextOperations = 0;
+        for (const [route, item] of Object.entries(spec.paths)) {
+            const isContext =
+                route === '/v1/ctx' || route.startsWith('/v1/ctx/');
+            for (const [method, op] of Object.entries(item)) {
+                const parameters =
+                    (op as { parameters?: Array<{ $ref?: string }> })
+                        .parameters ?? [];
+                const carries = parameters.some(
+                    (parameter) =>
+                        parameter.$ref ===
+                        '#/components/parameters/ApplicationId',
+                );
+                expect(carries, `${method.toUpperCase()} ${route}`).toBe(
+                    isContext,
+                );
+                if (isContext) contextOperations += 1;
+            }
+        }
+        expect(contextOperations).toBeGreaterThan(0);
     });
 });

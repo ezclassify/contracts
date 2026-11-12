@@ -26,37 +26,6 @@ import type {
 import type { SyntaxDoc } from './scheme-definition';
 
 /**
- * Filter result shared by filterConcepts (Handbook) and filterGuideRules
- * (Guidebook). Components toggle a hidden CSS class on rows whose id is not in
- * visibleIds, update category headings from categoryCounts, and show a "no
- * results" notice when total.visible === 0.
- */
-export interface FilterResult {
-    /** Ids of the items that matched the query. */
-    visibleIds: Set<string>;
-    /**
-     * Per-category counts keyed by category id. Guide's compound bucket is
-     * keyed `_compound`.
-     */
-    categoryCounts: Map<
-        string,
-        {
-            /** Items in the category that matched the query. */
-            visible: number;
-            /** Items in the category. */
-            total: number;
-        }
-    >;
-    /** Global visible / total. Drives the "no results" indicator. */
-    total: {
-        /** Items that matched the query. */
-        visible: number;
-        /** Items in every category. */
-        total: number;
-    };
-}
-
-/**
  * One section of a structural view: a labeled bucket of Handbook concepts or
  * Guidebook rules.
  */
@@ -332,13 +301,6 @@ export interface SchemeMetaView {
      */
     colorRules?: MarkingColorRule[];
     /**
-     * License label shown with the scheme, such as `enterprise`.
-     * Informational only: it does not grant or restrict use.
-     */
-    license?: string;
-    /** Document kind. Absent means `'scheme'`. */
-    type?: 'scheme' | 'layer';
-    /**
      * Default scope ID applied when none is selected. Present exactly when the
      * scheme declares at least one scope.
      */
@@ -417,35 +379,6 @@ export interface SchemeMetaView {
         /** Longer explanation of when to use the preset. */
         description?: string;
     }>;
-}
-
-/**
- * How a scheme's reader compares a spelling it finds against the vocabulary,
- * with the defaults applied where the scheme states neither `parse` key.
- *
- * Returned by `SchemeEngineAdapter.getGrammar()`, and by the Context REST
- * grammar resource.
- *
- * Neither flag splits text. Every boundary in a marking belongs to the format
- * field that writes it, so there is no separator here, and whitespace around a
- * spelling always separates it from its neighbors.
- */
-export interface SchemeGrammar {
-    /**
-     * Whether a spelling matches only in its authored letter case. When false,
-     * text and spellings are compared after full, locale-independent Unicode
-     * lowercasing. It is also the case mode of the scheme's authored patterns,
-     * except a recognizer that states its own `case_sensitive`. False when the
-     * scheme states no `parse.case_sensitive`.
-     */
-    caseSensitive: boolean;
-    /**
-     * Whether each run of whitespace inside a spelling reads as one space, and
-     * a free-text value is read without its surrounding whitespace. When false,
-     * whitespace inside a spelling must match as authored. True when the
-     * scheme states no `parse.strip_whitespace`.
-     */
-    stripWhitespace: boolean;
 }
 
 /** How a format's text is framed: plain text or XML attributes on one element. */
@@ -527,10 +460,6 @@ export interface SchemePublicView {
     colorFrom?: string;
     /** Ordered compound color rules; first matching rule wins. */
     colorRules?: MarkingColorRule[];
-    /** See {@link SchemeMetaView.license}. */
-    license?: string;
-    /** Document kind. Absent means `'scheme'`. */
-    type?: 'scheme' | 'layer';
     /** See {@link SchemeMetaView.defaultScope}. */
     defaultScope?: string;
     /** Display label for the scope selector. */

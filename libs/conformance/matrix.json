@@ -67,18 +67,6 @@
             }
         },
         {
-            "name": "normalize",
-            "path": "plans/v1/normalize.json",
-            "slice": "engine",
-            "support": {
-                "dotnet": "required",
-                "go": "required",
-                "java": "required",
-                "node": "required",
-                "python": "required"
-            }
-        },
-        {
             "name": "render",
             "path": "plans/v1/render.json",
             "slice": "engine",
@@ -152,19 +140,6 @@
                 "java": "required",
                 "node": "required",
                 "python": "required"
-            }
-        },
-        {
-            "name": "registry",
-            "notes": "SchemeRegistry multi-scheme operations. Optional for non-reference SDKs.",
-            "path": "plans/v1/registry.json",
-            "slice": "engine",
-            "support": {
-                "dotnet": "optional",
-                "go": "optional",
-                "java": "optional",
-                "node": "required",
-                "python": "optional"
             }
         },
         {

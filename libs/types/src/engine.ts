@@ -20,14 +20,11 @@ import type {
     ProcessingRole,
     RecognitionLimit,
     ReferenceSurfaceLabel,
-    Suggestion,
 } from './scheme';
 import type {
     EvaluationResult,
     GuideRuleSelection,
     GuideScanResult,
-    GuideScanOptions,
-    RuleDescription,
 } from './guide';
 import type {
     ContextOperationResult,
@@ -40,9 +37,7 @@ import type {
 } from './document';
 import type {
     SchemeStructuralView,
-    FilterResult,
     FormatView,
-    SchemeGrammar,
     SchemeMetaView,
     CategoryView,
     ConceptView,
@@ -117,18 +112,6 @@ export interface GuideView {
     schemeId: string;
 }
 
-/**
- * Optional progress callback. Invoked as the scanner advances through the input
- * string with `(current, total)` offsets in UTF-16 code units. Implementations
- * may use this to render a determinate progress indicator. The scanner emits a final tick where
- * `current === total` and coalesces intermediate ticks so that no input
- * produces more than ~50 calls.
- *
- * @param current - How far the scan has advanced, in UTF-16 code units.
- * @param total - Length of the scanned text, in UTF-16 code units.
- */
-export type ScanProgressCallback = (current: number, total: number) => void;
-
 /** Options accepted by scan operations. */
 export interface ScanOptions {
     /**
@@ -146,8 +129,6 @@ export interface ScanOptions {
      * `ScanResult.type` describes.
      */
     outputFormat?: string;
-    /** Optional progress callback invoked as the scanner advances. */
-    onProgress?: ScanProgressCallback;
     /**
      * Abort signal for the operation. A remote adapter cancels the in-flight
      * request; an in-process engine may ignore it.
@@ -375,45 +356,6 @@ export interface ScanOutcome {
 export type MaybePromise<T> = T | Promise<T>;
 
 /**
- * One scheme's answer within a registry fan-out call (`processAll` /
- * `processMatching`).
- *
- * Each registered scheme produces one entry. Callers use `schemeId` and
- * `schemeName` to correlate entries when displaying results for multiple
- * schemes simultaneously. The fan-out asks each scheme how it reads the
- * marking, so `result` is what validate answers; a caller that goes on to
- * correct the marking in one scheme processes it there.
- *
- * @internal
- */
-export interface RegistryProcessResult {
-    /** Id of the scheme that answered. */
-    schemeId: string;
-    /** Display name of the scheme that answered. */
-    schemeName: string;
-    /** What validate answers for the marking in this scheme. */
-    result: ValidateResult;
-}
-
-/**
- * Autocomplete suggestions returned by the registry for a specific scheme.
- *
- * Produced by `SchemeRegistry.suggestAcross()`. The `schemeId`/`schemeName`
- * pair identifies which registered scheme the suggestions came from, allowing
- * UIs that show multi-scheme completions to group or label entries.
- *
- * @internal
- */
-export interface RegistrySuggestion {
-    /** Id of the scheme the suggestions came from. */
-    schemeId: string;
-    /** Display name of the scheme the suggestions came from. */
-    schemeName: string;
-    /** The scheme's suggestions for the input. */
-    suggestions: Suggestion[];
-}
-
-/**
  * Public surface of a guide engine: what consumers use to scan documents for
  * rule hits, evaluate user selections against loaded guides, and inspect guide
  * metadata.
@@ -432,13 +374,12 @@ export interface GuideEngineAdapter {
      * @param text - Document text to scan.
      * @param guideId - Guide to scan with. Omit it to scan with every loaded
      *   guide.
-     * @param options - A progress callback, opt-in confidence, and a
-     *   cancellation signal.
+     * @param options - A cancellation signal.
      */
     scan(
         text: string,
         guideId?: string,
-        options?: GuideScanOptions & { signal?: AbortSignal },
+        options?: { signal?: AbortSignal },
     ): MaybePromise<GuideScanResult[]>;
     /**
      * Evaluate a single guide against the rules a user selected. The guide
@@ -468,26 +409,6 @@ export interface GuideEngineAdapter {
     evaluateMany(
         selections: GuideRuleSelection[],
     ): MaybePromise<EvaluationResult>;
-    /**
-     * Describe one rule: its outcome and activation text, the rules it depends
-     * on, and the rules it overrides. Omit `guideId` for the primary guide.
-     *
-     * @param ruleId - Id of the rule.
-     * @param guideId - Guide that holds the rule. Omit it for the primary
-     *   guide.
-     */
-    describeRule(
-        ruleId: string,
-        guideId?: string,
-    ): MaybePromise<RuleDescription>;
-    /**
-     * Text-search the loaded guide's rules. Omit `guideId` for the primary
-     * guide.
-     *
-     * @param query - Search text.
-     * @param guideId - Guide to search. Omit it for the primary guide.
-     */
-    filterRules(query: string, guideId?: string): MaybePromise<FilterResult>;
     /** Return metadata for every loaded guide, in load order. */
     listGuideMeta(): GuideMetaView[];
     /**
@@ -513,20 +434,12 @@ export interface GuideEngineAdapter {
  * local Context supplies the processor itself, and the remote server holds both
  * halves already, so nothing a caller does is lost by their absence from the
  * published contract.
- *
- * {@link validate} is here for a different reason: it inspects the guide
- * document, and only an engine that holds the document can answer it. A remote
- * adapter holds guide metadata and rule projections, never the authored source,
- * so there is nothing on its side to derive a consistency verdict from.
- * Checking that an authored guide hangs together is an authoring-time question
- * about a document, not a runtime operation against a loaded composition, which
- * is why it stays off the base contract instead of acquiring a route.
  */
 export interface LocalGuideEngineAdapter extends GuideEngineAdapter {
     scan(
         text: string,
         guideId?: string,
-        options?: GuideScanOptions & { signal?: AbortSignal },
+        options?: { signal?: AbortSignal },
     ): GuideScanResult[];
     evaluate(guideId: string, selectedRuleIds: string[]): EvaluationResult;
     /**
@@ -576,23 +489,6 @@ export interface LocalGuideEngineAdapter extends GuideEngineAdapter {
             guideId?: string;
         },
     ): GuideContentEvaluation;
-    describeRule(ruleId: string, guideId?: string): RuleDescription;
-    filterRules(query: string, guideId?: string): FilterResult;
-    /**
-     * Report whether the loaded guide document is internally consistent: every
-     * dependency and override resolves, and no rule contradicts another.
-     */
-    validate(): {
-        /** Whether every loaded guide is internally consistent. */
-        valid: boolean;
-        /** One message per problem found; empty when `valid` is true. */
-        issues: string[];
-        /**
-         * Id of the first guide found inconsistent; absent when every loaded
-         * guide is valid.
-         */
-        guideId?: string;
-    };
     buildGuideViews(): GuideStructuralView[];
 }
 
@@ -601,22 +497,21 @@ export interface RemoteGuideEngineAdapter extends GuideEngineAdapter {
     scan(
         text: string,
         guideId?: string,
-        options?: GuideScanOptions & { signal?: AbortSignal },
+        options?: { signal?: AbortSignal },
     ): Promise<GuideScanResult[]>;
     evaluate(
         guideId: string,
         selectedRuleIds: string[],
     ): Promise<EvaluationResult>;
     evaluateMany(selections: GuideRuleSelection[]): Promise<EvaluationResult>;
-    describeRule(ruleId: string, guideId?: string): Promise<RuleDescription>;
-    filterRules(query: string, guideId?: string): Promise<FilterResult>;
     buildGuideViews(): Promise<GuideStructuralView[]>;
 }
 
 /**
  * Public surface of an access engine: what consumers use to evaluate access
- * decisions and describe access requirements. The scheme is bound at
- * construction time; callers do not pass it at check time.
+ * decisions and describe the policy's rules. The scheme is bound at
+ * construction time; callers do not pass it at check time. What a subject needs
+ * for one marking is {@link ContextAdapter.accessRequirements}.
  *
  * Every member works in both modes: the local access engine evaluates the
  * policy in process, and the remote one reaches the context access routes. The
@@ -640,29 +535,6 @@ export interface AccessEngineAdapter {
         context?: Record<string, unknown>,
     ): MaybePromise<AccessDecision>;
     /**
-     * Describes one access rule: what it requires and when it applies.
-     *
-     * @param ruleId - Id of a rule in the loaded policy.
-     * @returns The rule's description.
-     */
-    describeAccessRule(ruleId: string): MaybePromise<AccessRuleDescription>;
-    /**
-     * Describes what a subject needs in order to access data with a given
-     * marking.
-     *
-     * @param input - The marking to describe requirements for.
-     * @returns The requirements, rule by rule.
-     */
-    describeAccessRequirements(
-        input: AccessRequirementsInput,
-    ): MaybePromise<AccessRequirementsDescription>;
-    /**
-     * Ids of every rule in the loaded access policy. A remote adapter derives
-     * these from {@link describeAllAccessRules}: one route serves both, so
-     * listing ids costs no extra round trip.
-     */
-    listAccessRuleIds(): MaybePromise<string[]>;
-    /**
      * Describes every rule in the loaded access policy, in policy order.
      *
      * @returns One description per rule.
@@ -685,11 +557,6 @@ export interface LocalAccessEngineAdapter extends AccessEngineAdapter {
         userAttributes: Record<string, unknown>,
         context?: Record<string, unknown>,
     ): AccessDecision;
-    describeAccessRule(ruleId: string): AccessRuleDescription;
-    describeAccessRequirements(
-        input: AccessRequirementsInput,
-    ): AccessRequirementsDescription;
-    listAccessRuleIds(): string[];
     describeAllAccessRules(): AccessRuleDescription[];
     describeAccessMarking(): string | undefined;
 }
@@ -701,11 +568,6 @@ export interface RemoteAccessEngineAdapter extends AccessEngineAdapter {
         userAttributes: Record<string, unknown>,
         context?: Record<string, unknown>,
     ): Promise<AccessDecision>;
-    describeAccessRule(ruleId: string): Promise<AccessRuleDescription>;
-    describeAccessRequirements(
-        input: AccessRequirementsInput,
-    ): Promise<AccessRequirementsDescription>;
-    listAccessRuleIds(): Promise<string[]>;
     describeAllAccessRules(): Promise<AccessRuleDescription[]>;
     describeAccessMarking(): Promise<string | undefined>;
 }
@@ -1225,37 +1087,6 @@ export interface SchemeEngineAdapter {
     ): MaybePromise<RenderResult>;
 
     /**
-     * Return the canonical form of a marking string.
-     *
-     * @param input - Marking text.
-     * @param schemeId - Scheme to normalize against.
-     * @param options - Input and output formats and a cancellation signal.
-     */
-    normalize(
-        input: string,
-        schemeId: string,
-        options?: {
-            inputFormat?: string;
-            outputFormat?: string;
-            signal?: AbortSignal;
-        },
-    ): MaybePromise<string>;
-    /**
-     * Same as the overload above, against the default scheme.
-     *
-     * @param input - Marking text.
-     * @param options - Input and output formats and a cancellation signal.
-     */
-    normalize(
-        input: string,
-        options?: {
-            inputFormat?: string;
-            outputFormat?: string;
-            signal?: AbortSignal;
-        },
-    ): MaybePromise<string>;
-
-    /**
      * Compare two markings and report what changed between them.
      *
      * No `outputFormat`: the result is three assertion arrays and no string, so
@@ -1606,8 +1437,7 @@ export interface SchemeEngineAdapter {
      *
      * @param text - Document text to scan.
      * @param schemeId - Scheme whose markings to look for.
-     * @param options - Input and output formats, a progress callback and a
-     *   cancellation signal. Only a local adapter reports progress.
+     * @param options - Input and output formats and a cancellation signal.
      */
     scan(
         text: string,
@@ -1618,8 +1448,7 @@ export interface SchemeEngineAdapter {
      * Same as the overload above, against the default scheme.
      *
      * @param text - Document text to scan.
-     * @param options - Input and output formats, a progress callback and a
-     *   cancellation signal. Only a local adapter reports progress.
+     * @param options - Input and output formats and a cancellation signal.
      */
     scan(text: string, options?: ScanOptions): MaybePromise<ScanOutcome>;
 
@@ -1655,17 +1484,6 @@ export interface SchemeEngineAdapter {
     ): MaybePromise<ConceptDescription>;
 
     /**
-     * Text-search the loaded scheme's concepts.
-     *
-     * @param query - Search text.
-     * @param schemeId - Scheme to use. Omit it for the default scheme.
-     */
-    filterConcepts(
-        query: string,
-        schemeId?: string,
-    ): MaybePromise<FilterResult>;
-
-    /**
      * Build the render-ready Handbook tree for a scheme: categories of resolved
      * concept views in declared order.
      *
@@ -1674,60 +1492,12 @@ export interface SchemeEngineAdapter {
     buildSchemeView(schemeId?: string): MaybePromise<SchemeStructuralView>;
 
     /**
-     * Compact id/label pairs for every category, for tool-use contexts.
-     *
-     * The flat wire surface serves this directly
-     * (`GET /v1/scheme/{id}/list-categories-flat`); the context surface does
-     * not, so an adapter bound to a context derives the pairs from the
-     * structural view it already fetches. Same answer either way, and no route
-     * was added for a projection of data the client holds.
-     *
-     * @param schemeId - Scheme to use. Omit it for the default scheme.
-     */
-    listCategoriesFlat(
-        schemeId?: string,
-    ): MaybePromise<
-        Array<{
-            /** Category id. */
-            id: string;
-            /** Category display label. */
-            label: string;
-        }>
-    >;
-
-    /**
      * Return concepts in a category as resolved `ConceptView` objects.
-     *
-     * When `options.nested` is true, walks the in-category parent chain and
-     * returns each concept with its depth (0 = root, 1 = child, ...) so
-     * consumers like the Handbook panel can render child concepts indented
-     * beneath their parent.
-     *
-     * Required on every adapter: `implements SchemeEngineAdapter` will fail to
-     * compile if either overload is missing.
      *
      * @param categoryId - Id of the category.
      * @param schemeId - Scheme to use. Omit it for the default scheme.
      */
     getConceptsInCategory(categoryId: string, schemeId?: string): ConceptView[];
-    /**
-     * The nested form: each concept with its depth under its in-category
-     * parents.
-     *
-     * @param categoryId - Id of the category.
-     * @param options - `{ nested: true }` selects the nested form.
-     * @param schemeId - Scheme to use. Omit it for the default scheme.
-     */
-    getConceptsInCategory(
-        categoryId: string,
-        options: { nested: true },
-        schemeId?: string,
-    ): Array<{
-        /** The concept, as a display view. */
-        concept: ConceptView;
-        /** Nesting depth: 0 for a root, 1 for its child, and so on. */
-        depth: number;
-    }>;
 
     /**
      * Return scheme identity and configuration metadata without loading
@@ -1739,41 +1509,12 @@ export interface SchemeEngineAdapter {
     getSchemeMeta(schemeId?: string): SchemeMetaView;
 
     /**
-     * Return how the scheme's reader compares a spelling it finds against the
-     * vocabulary: its letter-case and whitespace policy, with the scheme's
-     * defaults applied. Operates synchronously on the loaded scheme.
-     *
-     * @param schemeId - Scheme to inspect; defaults to the loaded default
-     *   scheme.
-     */
-    getGrammar(schemeId?: string): SchemeGrammar;
-
-    /**
      * Return resolved category views for every category in the scheme.
      *
      * @param schemeId - Scheme to inspect; defaults to the loaded default
      *   scheme.
      */
     listCategories(schemeId?: string): CategoryView[];
-
-    /**
-     * Coverage diff: return the assertions in `candidates` that are not covered
-     * by `parent`. For `hierarchyRoot` categories a parent concept whose rank
-     * meets or exceeds a candidate's rank in the same category counts as
-     * covering it, so a whole marking at the higher rank covers a part at a
-     * lower one. Falls back to strict concept-id inclusion for non-hierarchical
-     * categories. Always synchronous: operates on already-loaded assertions and
-     * the loaded scheme.
-     *
-     * @param candidates - Assertions to check.
-     * @param parent - Assertions of the marking expected to cover them.
-     * @param schemeId - Scheme to use. Omit it for the default scheme.
-     */
-    uncoveredAssertions(
-        candidates: Assertion[],
-        parent: Assertion[],
-        schemeId?: string,
-    ): Assertion[];
 
     /**
      * Cover check for a list of child markings against one parent marking. The
@@ -1822,17 +1563,8 @@ export interface SchemeEngineAdapter {
 }
 
 /**
- * A `SchemeEngineAdapter` implemented by the in-process engine.
- *
- * For schemes backed by finite in-memory concept sets, all methods complete
- * synchronously. For schemes backed by a queryable-only source
- * (SourceCapabilities.queryableOnly: true), the parse pipeline goes async
- * through the source: process, validate, suggest, aggregate, and
- * aggregateAssertions return a resolved Promise at runtime. Callers should use
- * `await engine.process(...)` to handle both cases correctly.
- *
- * The method signatures declare synchronous return types; the implementation
- * returns MaybePromise<T>, so `await` handles both paths.
+ * A `SchemeEngineAdapter` implemented by the in-process engine. Every method
+ * completes synchronously.
  */
 export interface LocalSchemeEngineAdapter extends SchemeEngineAdapter {
     loadScheme(schemeId: string): void;
@@ -2265,26 +1997,7 @@ export interface LocalSchemeEngineAdapter extends SchemeEngineAdapter {
         options?: { view?: string },
     ): ConceptDescription;
     getConceptsInCategory(categoryId: string, schemeId?: string): ConceptView[];
-    /**
-     * The nested form: each concept with its depth under its in-category
-     * parents.
-     *
-     * @param categoryId - Id of the category.
-     * @param options - `{ nested: true }` selects the nested form.
-     * @param schemeId - Scheme to use. Omit it for the default scheme.
-     */
-    getConceptsInCategory(
-        categoryId: string,
-        options: { nested: true },
-        schemeId?: string,
-    ): Array<{
-        /** The concept, as a display view. */
-        concept: ConceptView;
-        /** Nesting depth: 0 for a root, 1 for its child, and so on. */
-        depth: number;
-    }>;
     getSchemeMeta(schemeId?: string): SchemeMetaView;
-    getGrammar(schemeId?: string): SchemeGrammar;
     listCategories(schemeId?: string): CategoryView[];
     checkCoverage(
         children: string[],
@@ -2305,23 +2018,6 @@ export interface LocalSchemeEngineAdapter extends SchemeEngineAdapter {
             signal?: AbortSignal;
         },
     ): CoverageReport;
-    normalize(
-        input: string,
-        schemeId: string,
-        options?: {
-            inputFormat?: string;
-            outputFormat?: string;
-            signal?: AbortSignal;
-        },
-    ): string;
-    normalize(
-        input: string,
-        options?: {
-            inputFormat?: string;
-            outputFormat?: string;
-            signal?: AbortSignal;
-        },
-    ): string;
     diff(
         a: string,
         b: string,
@@ -2341,14 +2037,7 @@ export interface LocalSchemeEngineAdapter extends SchemeEngineAdapter {
             signal?: AbortSignal;
         },
     ): DiffResult;
-    listCategoriesFlat(schemeId?: string): Array<{
-        /** Category id. */
-        id: string;
-        /** Category display label. */
-        label: string;
-    }>;
     buildSchemeView(schemeId?: string): SchemeStructuralView;
-    filterConcepts(query: string, schemeId?: string): FilterResult;
     /**
      * Populated by the caller when a guide engine is available alongside this
      * scheme engine. Guidebook-style components call this fallback when no
@@ -2822,23 +2511,6 @@ export interface RemoteSchemeEngineAdapter extends SchemeEngineAdapter {
             signal?: AbortSignal;
         },
     ): Promise<CoverageReport>;
-    normalize(
-        input: string,
-        schemeId: string,
-        options?: {
-            inputFormat?: string;
-            outputFormat?: string;
-            signal?: AbortSignal;
-        },
-    ): Promise<string>;
-    normalize(
-        input: string,
-        options?: {
-            inputFormat?: string;
-            outputFormat?: string;
-            signal?: AbortSignal;
-        },
-    ): Promise<string>;
     diff(
         a: string,
         b: string,
@@ -2858,18 +2530,7 @@ export interface RemoteSchemeEngineAdapter extends SchemeEngineAdapter {
             signal?: AbortSignal;
         },
     ): Promise<DiffResult>;
-    filterConcepts(query: string, schemeId?: string): Promise<FilterResult>;
     buildSchemeView(schemeId?: string): Promise<SchemeStructuralView>;
-    listCategoriesFlat(
-        schemeId?: string,
-    ): Promise<
-        Array<{
-            /** Category id. */
-            id: string;
-            /** Category display label. */
-            label: string;
-        }>
-    >;
 }
 
 /**
@@ -3023,29 +2684,8 @@ type SynchronousContextOperations<T> = {
 export type LocalContextSchemeEngineAdapter =
     SynchronousContextOperations<
         Omit<RemoteContextSchemeEngineAdapter,
-            'getConceptsInCategory' | 'getFormatCoverage' | 'diff' | 'destroy'>
+            'getFormatCoverage' | 'diff' | 'destroy'>
     > & {
-        /**
-         * Return the concepts in the named category.
-         *
-         * @param categoryId - Id of the category.
-         */
-        getConceptsInCategory(categoryId: string): ConceptView[];
-        /**
-         * Return category concepts with their display-tree depth.
-         *
-         * @param categoryId - Id of the category.
-         * @param options - `{ nested: true }` selects the nested form.
-         */
-        getConceptsInCategory(
-            categoryId: string,
-            options: { nested: true },
-        ): Array<{
-            /** The concept, as a display view. */
-            concept: ConceptView;
-            /** Nesting depth: 0 for a root, 1 for its child, and so on. */
-            depth: number;
-        }>;
         /**
          * Describe input and rendering coverage for a format.
          *
@@ -3072,12 +2712,10 @@ export type LocalContextSchemeEngineAdapter =
 /**
  * Guide queries bound to one local Context, with no caller-supplied processor.
  *
- * The Context supplies the marking processor for evaluation. Local document
- * validation remains available because this view holds the authored guides.
+ * The Context supplies the marking processor for evaluation.
  */
 export type LocalContextGuideEngineAdapter =
-    SynchronousContextOperations<GuideEngineAdapter> &
-    Pick<LocalGuideEngineAdapter, 'validate'>;
+    SynchronousContextOperations<GuideEngineAdapter>;
 
 /**
  * The schemes a Context holds, reached by key.
@@ -3268,7 +2906,6 @@ export interface RemoteContextSchemeEngineAdapter
         | 'validate'
         | 'explain'
         | 'render'
-        | 'normalize'
         | 'diff'
         | 'getFormatCoverage'
         | 'suggest'
@@ -3278,14 +2915,10 @@ export interface RemoteContextSchemeEngineAdapter
         | 'collectNotices'
         | 'scan'
         | 'describeConcept'
-        | 'filterConcepts'
         | 'buildSchemeView'
-        | 'listCategoriesFlat'
         | 'getConceptsInCategory'
         | 'getSchemeMeta'
-        | 'getGrammar'
         | 'listCategories'
-        | 'uncoveredAssertions'
         | 'checkCoverage'
     > {
     /**
@@ -3466,21 +3099,6 @@ export interface RemoteContextSchemeEngineAdapter
         options?: RenderOptions,
     ): Promise<RenderResult>;
     /**
-     * Rewrites a marking in its canonical form. See {@link
-     * SchemeEngineAdapter.normalize}.
-     *
-     * @param input - Marking text.
-     * @param options - Input and output formats and a cancellation signal.
-     */
-    normalize(
-        input: string,
-        options?: {
-            inputFormat?: string;
-            outputFormat?: string;
-            signal?: AbortSignal;
-        },
-    ): Promise<string>;
-    /**
      * Reports what changed between two markings. See {@link
      * SchemeEngineAdapter.diff}.
      *
@@ -3607,8 +3225,7 @@ export interface RemoteContextSchemeEngineAdapter
      * Scans document text for markings. See {@link SchemeEngineAdapter.scan}.
      *
      * @param text - Document text to scan.
-     * @param options - Input and output formats and a cancellation signal. A
-     *   remote adapter does not report progress.
+     * @param options - Input and output formats and a cancellation signal.
      */
     scan(text: string, options?: ScanOptions): Promise<ScanOutcome>;
     /**
@@ -3625,29 +3242,10 @@ export interface RemoteContextSchemeEngineAdapter
         options?: { view?: string },
     ): Promise<ConceptDescription>;
     /**
-     * Text-searches the scheme's concepts. See {@link
-     * SchemeEngineAdapter.filterConcepts}.
-     *
-     * @param query - Search text.
-     */
-    filterConcepts(query: string): Promise<FilterResult>;
-    /**
      * Builds the Handbook tree. See {@link
      * SchemeEngineAdapter.buildSchemeView}.
      */
     buildSchemeView(): Promise<SchemeStructuralView>;
-    /**
-     * Lists category id and label pairs. See {@link
-     * SchemeEngineAdapter.listCategoriesFlat}.
-     */
-    listCategoriesFlat(): Promise<
-        Array<{
-            /** Category id. */
-            id: string;
-            /** Category display label. */
-            label: string;
-        }>
-    >;
     /**
      * Returns a category's concepts. See {@link
      * SchemeEngineAdapter.getConceptsInCategory}.
@@ -3656,47 +3254,15 @@ export interface RemoteContextSchemeEngineAdapter
      */
     getConceptsInCategory(categoryId: string): ConceptView[];
     /**
-     * The nested form: each concept with its depth under its in-category
-     * parents.
-     *
-     * @param categoryId - Id of the category.
-     * @param options - `{ nested: true }` selects the nested form.
-     */
-    getConceptsInCategory(
-        categoryId: string,
-        options: { nested: true },
-    ): Array<{
-        /** The concept, as a display view. */
-        concept: ConceptView;
-        /** Nesting depth: 0 for a root, 1 for its child, and so on. */
-        depth: number;
-    }>;
-    /**
      * Returns the scheme's metadata. See {@link
      * SchemeEngineAdapter.getSchemeMeta}.
      */
     getSchemeMeta(): SchemeMetaView;
     /**
-     * Returns the scheme's reading policy. See {@link
-     * SchemeEngineAdapter.getGrammar}.
-     */
-    getGrammar(): SchemeGrammar;
-    /**
      * Returns every category view. See {@link
      * SchemeEngineAdapter.listCategories}.
      */
     listCategories(): CategoryView[];
-    /**
-     * Returns the candidates the parent does not cover. See {@link
-     * SchemeEngineAdapter.uncoveredAssertions}.
-     *
-     * @param candidates - Assertions to check.
-     * @param parent - Assertions of the marking expected to cover them.
-     */
-    uncoveredAssertions(
-        candidates: Assertion[],
-        parent: Assertion[],
-    ): Assertion[];
     /**
      * Checks child markings against a parent. See {@link
      * SchemeEngineAdapter.checkCoverage}.

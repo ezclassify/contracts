@@ -14,7 +14,6 @@ import type {
     ProcessResult,
     RecognitionResult,
     RecognitionWithCorrections,
-    RegistryProcessResult,
     RemoteContextSchemeEngineAdapter,
     RemoteSchemeEngineAdapter,
     ScanResult,
@@ -226,7 +225,6 @@ expectTypeOf<
 expectTypeOf<
     CrosswalkCompletedTranslationResult['target']
 >().toEqualTypeOf<ValidateResult>();
-expectTypeOf<RegistryProcessResult['result']>().toEqualTypeOf<ValidateResult>();
 
 // ── The document audit hands back every marking's facts and recognition. ───
 // Whole and parts alike, on the per-marking answer both use.

@@ -16,7 +16,6 @@ import type {
     DiffResult,
     DocumentAuditReport,
     EvaluationResult,
-    FilterResult,
     GuideEngineAdapter,
     GuideScanResult,
     LocalAccessEngineAdapter,
@@ -35,9 +34,7 @@ import type {
     RemoteSchemeEngineAdapter,
     RenderOptions,
     RenderResult,
-    RuleDescription,
     SchemeEngineAdapter,
-    SchemeGrammar,
     SchemeStructuralView,
     SuggestResult,
     ValidateResult,
@@ -63,16 +60,9 @@ declare const assertions: Assertion[];
 // Promoted to the base contract: the wire serves all of them, so a UI can call
 // them without knowing which engine it holds.
 expectTypeOf(base.validate('X')).toEqualTypeOf<MaybePromise<ValidateResult>>();
-expectTypeOf(base.normalize('X')).toEqualTypeOf<MaybePromise<string>>();
 expectTypeOf(base.diff('A', 'B')).toEqualTypeOf<MaybePromise<DiffResult>>();
-expectTypeOf(base.filterConcepts('q')).toEqualTypeOf<
-    MaybePromise<FilterResult>
->();
 expectTypeOf(base.buildSchemeView()).toEqualTypeOf<
     MaybePromise<SchemeStructuralView>
->();
-expectTypeOf(base.listCategoriesFlat()).toEqualTypeOf<
-    MaybePromise<Array<{ id: string; label: string }>>
 >();
 expectTypeOf(base.suggestForCategories(assertions, ['cat'])).toEqualTypeOf<
     MaybePromise<Record<string, SuggestResult>>
@@ -200,11 +190,9 @@ async function pickAMarking(engine: SchemeEngineAdapter): Promise<string> {
     });
     await engine.scan('body text', { signal: abort });
     await engine.diff('SECRET', 'OFFICIAL', { signal: abort });
-    await engine.filterConcepts('sec');
     await engine.buildSchemeView();
-    await engine.listCategoriesFlat();
 
-    return engine.normalize('SECRET', { signal: abort });
+    return processed.rendered;
 }
 void pickAMarking;
 
@@ -218,12 +206,6 @@ expectTypeOf(guide.evaluate('guide', ['rule'])).toEqualTypeOf<
 expectTypeOf(
     guide.evaluateMany([{ guideId: 'guide', ruleId: 'rule' }]),
 ).toEqualTypeOf<MaybePromise<EvaluationResult>>();
-expectTypeOf(guide.describeRule('rule')).toEqualTypeOf<
-    MaybePromise<RuleDescription>
->();
-expectTypeOf(guide.filterRules('q')).toEqualTypeOf<
-    MaybePromise<FilterResult>
->();
 expectTypeOf(
     localGuide.evaluate('guide', ['rule']),
 ).toEqualTypeOf<EvaluationResult>();
@@ -248,14 +230,6 @@ expectTypeOf<GuideEngineAdapter>().not.toHaveProperty('evaluateText');
 expectTypeOf<LocalGuideEngineAdapter>().toHaveProperty('evaluateMany');
 expectTypeOf<LocalGuideEngineAdapter>().toHaveProperty('evaluateText');
 
-// Guide-document consistency is a question about an authored document, and
-// only an engine holding that document can answer it. No wire operation can,
-// so it is not on the base contract and the remote narrowing does not claim
-// it.
-expectTypeOf<GuideEngineAdapter>().not.toHaveProperty('validate');
-expectTypeOf<RemoteGuideEngineAdapter>().not.toHaveProperty('validate');
-expectTypeOf<LocalGuideEngineAdapter>().toHaveProperty('validate');
-
 declare const access: AccessEngineAdapter;
 declare const localAccess: LocalAccessEngineAdapter;
 declare const remoteAccess: RemoteAccessEngineAdapter;
@@ -278,9 +252,6 @@ expectTypeOf(remoteAccess.describeAccessMarking()).toEqualTypeOf<
 expectTypeOf(localAccess.check(assertions, {})).toEqualTypeOf<AccessDecision>();
 expectTypeOf(remoteAccess.check(assertions, {})).toEqualTypeOf<
     Promise<AccessDecision>
->();
-expectTypeOf(remoteAccess.listAccessRuleIds()).toEqualTypeOf<
-    Promise<string[]>
 >();
 
 declare const context: ContextAdapter;
@@ -356,15 +327,6 @@ expectTypeOf<
     ContextCrosswalkDescriptor['selections'][number]['candidates'][number]['disposition']
 >().toEqualTypeOf<'carry' | 'review' | 'omit' | 'forbid'>();
 
-// The grammar is part of the scheme profile a remote Context reads when it
-// connects, so both modes answer it synchronously, and from the Context's own
-// scheme rather than a selected one.
-expectTypeOf(localContext.scheme.getGrammar()).toEqualTypeOf<SchemeGrammar>();
-expectTypeOf(remoteContext.scheme.getGrammar()).toEqualTypeOf<SchemeGrammar>();
-expectTypeOf<
-    RemoteContextSchemeEngineAdapter['getGrammar']
->().parameters.toEqualTypeOf<[]>();
-
 // A remote Context owns its composition. Its marking surface therefore has no
 // lifecycle methods and no selector in the operation position.
 expectTypeOf<RemoteContextAdapter>().not.toHaveProperty('process');
@@ -438,9 +400,6 @@ contextGuide.evaluate(['rule'], {});
 expectTypeOf(
     localContext.scheme.getConceptsInCategory('category'),
 ).toEqualTypeOf<ConceptView[]>();
-expectTypeOf(
-    localContext.scheme.getConceptsInCategory('category', { nested: true }),
-).toEqualTypeOf<Array<{ concept: ConceptView; depth: number }>>();
 // @ts-expect-error Context category queries cannot select another scheme.
 localContext.scheme.getConceptsInCategory('category', 'another-scheme');
 

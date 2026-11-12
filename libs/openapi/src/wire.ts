@@ -44,7 +44,6 @@ import type {
     ReferenceSurfaceLabel,
     RenderAssessment,
     RenderPreservation,
-    RuleDescription,
     ScanLimits,
     ScanResult,
     UnreadMark,
@@ -58,12 +57,6 @@ import type {
 export type {
     ContextDocumentAuditResult,
 } from '@ezclassify/types';
-
-/** Response body for Context normalization. */
-export interface NormalizeResponseBody {
-    /** Canonical normalized form of the marking string. */
-    result: string;
-}
 
 /** Response body for Context rendering. */
 export interface RenderResponseBody {
@@ -211,48 +204,6 @@ export interface SchemeSummaryResponseBody {
      * `defaultPartRenderFormat` is for a part.
      */
     defaultWholeRenderFormat?: string;
-}
-
-/**
- * Context scheme grammar response: the scheme's recognition policy.
- *
- * No separator. Every boundary belongs to the field that writes it, so there is
- * no global one to publish; what is left is how a spelling found at a boundary
- * is compared against the vocabulary.
- */
-export interface PublicGrammarResponseBody {
-    /** Whether the vocabulary is matched case-sensitively. */
-    caseSensitive: boolean;
-    /** Whether surrounding whitespace is ignored when a spelling is compared. */
-    stripWhitespace: boolean;
-}
-
-/**
- * JSON-safe serialization of the engine's Set/Map-based FilterResult.
- *
- * The engine returns FilterResult with Set<string> and Map<string, ...> fields;
- * this interface is what the server writes to the wire.
- */
-export interface WireFilterResult {
-    /** IDs of concepts or rules that matched the query. */
-    visibleIds: string[];
-    /** Per-category counts. */
-    categoryCounts: Record<
-        string,
-        {
-            /** Items in the category that matched the query. @asType integer */
-            visible: number;
-            /** Items in the category. @asType integer */
-            total: number;
-        }
-    >;
-    /** Aggregate counts across all categories. */
-    total: {
-        /** Items that matched the query. @asType integer */
-        visible: number;
-        /** Items in every category. @asType integer */
-        total: number;
-    };
 }
 
 /**
@@ -628,29 +579,6 @@ export interface CtxSchemeValidateRequestBody {
     parts?: string[];
 }
 
-/** POST /v1/ctx/{ctxId}/{version?}/scheme/normalize */
-export interface CtxSchemeNormalizeRequestBody {
-    /** Marking string to normalize. */
-    input: string;
-    /**
-     * The format `input` is written in. For a scheme that declares
-     * `render.surfaces`, the view it is read as, or one of its forms, as the
-     * scheme document's `render.surfaces` defines them. Omitted or empty,
-     * recognition works it out and reports what the text was read as on
-     * `recognition.inputFormat`.
-     */
-    inputFormat?: string;
-    /**
-     * The format the result is rendered in. Omitted or empty, the scheme's
-     * default format. It selects output only: it never narrows what may be
-     * read.
-     *
-     * For a scheme that declares `render.surfaces`, an output as the scheme
-     * document's `render.surfaces` defines it.
-     */
-    outputFormat?: string;
-}
-
 /** POST /v1/ctx/{ctxId}/{version?}/scheme/render */
 export interface CtxSchemeRenderRequestBody {
     /** Assertions to render into a marking string. */
@@ -702,34 +630,6 @@ export interface CtxSchemeNoticesRequestBody {
      * collected.
      */
     assertions: Assertion[];
-}
-
-/** POST /v1/ctx/{ctxId}/{version?}/scheme/filter-concepts */
-export interface CtxSchemeFilterConceptsRequestBody {
-    /** Text query to filter the concept list. */
-    query: string;
-}
-
-/** POST /v1/ctx/{ctxId}/{version?}/guide/describe-rule */
-export interface CtxGuideDescribeRuleRequestBody {
-    /** Rule id to describe. */
-    ruleId: string;
-    /**
-     * Guide id when the context has multiple guides. Defaults to the first
-     * guide.
-     */
-    guideId?: string;
-}
-
-/** POST /v1/ctx/{ctxId}/{version?}/guide/filter-rules */
-export interface CtxGuideFilterRulesRequestBody {
-    /** Text query to filter rules. */
-    query: string;
-    /**
-     * Guide id when the context has multiple guides. Defaults to the first
-     * guide.
-     */
-    guideId?: string;
 }
 
 /** POST /v1/ctx/{ctxId}/{version?}/guide/view */
@@ -880,12 +780,6 @@ export interface CtxAccessCheckRequestBody {
     context?: Record<string, unknown>;
 }
 
-/** POST /v1/ctx/{ctxId}/{version?}/access/describe-rule */
-export interface CtxAccessDescribeRuleRequestBody {
-    /** Access rule id from the loaded access policy. */
-    ruleId: string;
-}
-
 /** POST /v1/ctx/{ctxId}/{version?}/access/describe-requirements */
 export interface CtxAccessDescribeRequirementsRequestBody {
     /** Marking parsed through the Context's bound scheme. */
@@ -896,12 +790,7 @@ export interface CtxAccessDescribeRequirementsRequestBody {
 
 /**
  * Response body for GET /v1/ctx/{ctxId}/{version?}/access/rules: every rule in
- * the context's access policy.
- *
- * One route serves both halves of the adapter contract. A caller that wants the
- * descriptions has them; a caller that only wants the rule ids reads them off
- * the same response instead of spending a second round trip on a projection of
- * what it already holds.
+ * the context's access policy, with the policy's own marking.
  */
 export interface CtxAccessRulesResponseBody {
     /**
@@ -940,10 +829,6 @@ export type ContextSchemeValidateResult = ContextOperationResult<ValidateResult>
 export type ContextSchemeExplainResult =
     ContextOperationResult<ExplanationTrace>;
 
-/** Context envelope returned by scheme normalization. */
-export type ContextSchemeNormalizeResult =
-    ContextOperationResult<NormalizeResponseBody>;
-
 /** Context envelope returned by scheme rendering. */
 export type ContextSchemeRenderResult =
     ContextOperationResult<RenderResponseBody>;
@@ -959,10 +844,6 @@ export type ContextSchemeViewResult =
 export type ContextSchemeNoticesResult = ContextOperationResult<
     CollectedNotice[]
 >;
-
-/** Context envelope returned by scheme concept filtering. */
-export type ContextSchemeFilterConceptsResult =
-    ContextOperationResult<WireFilterResult>;
 
 /**
  * What a scan answers on the wire.
@@ -1019,10 +900,6 @@ export type ContextSchemeConceptDescriptionResult =
 export type ContextAccessDecisionResult =
     ContextOperationResult<AccessDecision>;
 
-/** Context envelope returned by access-rule description. */
-export type ContextAccessRuleDescriptionResult =
-    ContextOperationResult<AccessRuleDescription>;
-
 /** Context envelope returned by immutable-policy requirement description. */
 export type ContextAccessRequirementsResult =
     ContextOperationResult<AccessRequirementsDescription>;
@@ -1033,14 +910,6 @@ export type ContextGuideScanResult = ContextOperationResult<GuideScanResult[]>;
 /** Context envelope returned by guide evaluation. */
 export type ContextGuideEvaluationResult =
     ContextOperationResult<EvaluationResult>;
-
-/** Context envelope returned by guide-rule description. */
-export type ContextGuideRuleDescriptionResult =
-    ContextOperationResult<RuleDescription>;
-
-/** Context envelope returned by guide rule filtering. */
-export type ContextGuideFilterRulesResult =
-    ContextOperationResult<WireFilterResult>;
 
 /** Context envelope returned by guide structural view. */
 export type ContextGuideViewResult =
