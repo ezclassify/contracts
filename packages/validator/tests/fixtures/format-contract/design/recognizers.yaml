@@ -22,8 +22,6 @@ scheme:
     - id: banner
       label: Banner
   parse:
-    case_sensitive: false
-    strip_whitespace: true
     recognizers:
       - id: bracketed-reference
         pattern: '\[ref ([0-9]{4})\]'
@@ -43,18 +41,17 @@ scheme:
         label: Reference
         rollup: union
     concepts:
-      inline:
-        - id: LEVEL_ONE
-          name: Level one
-          views: { default: ONE }
-          categories: [level]
-        - id: REFERENCE_NUMBER
-          name: Reference number
-          views: { default: '{value}' }
-          categories: [reference]
-          text_input:
-            label: Reference number
-            encoding: { type: text, pattern: '[0-9]{4}' }
+      - id: LEVEL_ONE
+        name: Level one
+        views: { default: ONE }
+        categories: [level]
+      - id: REFERENCE_NUMBER
+        name: Reference number
+        views: { default: '{value}' }
+        categories: [reference]
+        text_input:
+          label: Reference number
+          encoding: { type: text, pattern: '[0-9]{4}' }
   render:
     default: banner
     formats:

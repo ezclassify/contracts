@@ -23,28 +23,27 @@ scheme:
         label: Handling
         rollup: union
     concepts:
-      inline:
-        - id: LEVEL_ONE
-          name: Level one
-          views:
-            default: ONE
-          categories: [level]
-        - id: NOCONTRACT
-          name: No contractor handling
-          views:
-            default: NOCONTRACT
-          categories: [handling]
-          input_aliases:
-            - text: NC
-              position: non-leading
-        - id: HANDLING_ONE
-          name: Handling one
-          views:
-            default: H1
-          categories: [handling]
-          input_aliases:
-            - text: H
-              after_category: handling
+      - id: LEVEL_ONE
+        name: Level one
+        views:
+          default: ONE
+        categories: [level]
+      - id: NOCONTRACT
+        name: No contractor handling
+        views:
+          default: NOCONTRACT
+        categories: [handling]
+        input_aliases:
+          - text: NC
+            position: non-leading
+      - id: HANDLING_ONE
+        name: Handling one
+        views:
+          default: H1
+        categories: [handling]
+        input_aliases:
+          - text: H
+            after_category: handling
   render:
     default: banner
     formats:

@@ -85,8 +85,8 @@ export const PLAN_DIAGNOSTICS = Object.freeze({
     /**
      * A form a view is only read in reads a spelling two concepts share as one
      * of them, binds no category of the other, and a form the scheme writes
-     * reads it as the other. Only inline concepts are compared, and a form that
-     * binds the other's category counts as reading it.
+     * reads it as the other. Only the scheme's own concepts are compared, and a
+     * form that binds the other's category counts as reading it.
      */
     READ_ONLY_FORM_SHARED_SPELLING: 'plan/read-only-form-shared-spelling',
     /**
@@ -157,7 +157,7 @@ function indexDocument(scheme) {
     }
     const concepts = new Map();
     const byCategory = new Map();
-    for (const concept of scheme?.data?.concepts?.inline ?? []) {
+    for (const concept of scheme?.data?.concepts ?? []) {
         if (!concept?.id) continue;
         concepts.set(concept.id, concept);
         for (const categoryId of concept.categories ?? []) {
@@ -231,9 +231,9 @@ function spellingsIn(concept, view) {
  * Resolve the one composition head a field may use for each tiered concept.
  *
  * The inputs are deliberately smaller than an authored field. A runtime can
- * supply concepts resolved from an external source and normalized tier keys,
- * while the document walker supplies the same shapes from inline authoring.
- * Both therefore use one relation for eligibility and effective head views.
+ * supply imported concepts and normalized tier keys, while the document walker
+ * supplies the same shapes from authored concepts. Both therefore use one
+ * relation for eligibility and effective head views.
  *
  * @param {object} input
  * @param {object[]} input.concepts Concepts eligible for this field.
@@ -860,14 +860,14 @@ class PlanBuilder {
      * failure that is hard to see in a passing test run.
      */
     checkInputAliases() {
-        const concepts = this.scheme?.data?.concepts?.inline ?? [];
+        const concepts = this.scheme?.data?.concepts ?? [];
         concepts.forEach((concept, index) => {
             (concept?.input_aliases ?? []).forEach((alias, at) => {
                 if (alias?.after_category === undefined) return;
                 if (this.index.categories.has(alias.after_category)) return;
                 this.report(
                     PLAN_DIAGNOSTICS.UNRESOLVED_REFERENCE,
-                    `/scheme/data/concepts/inline/${index}/input_aliases/${at}/after_category`,
+                    `/scheme/data/concepts/${index}/input_aliases/${at}/after_category`,
                     `concept \`${concept?.id}\` reads \`${alias.text}\` only after \`${alias.after_category}\`, which is not a category of this scheme.`,
                 );
             });
@@ -891,7 +891,7 @@ class PlanBuilder {
                 );
                 this.report(
                     PLAN_DIAGNOSTICS.HIERARCHY_CYCLE,
-                    '/scheme/data/concepts/inline',
+                    '/scheme/data/concepts',
                     `\`${id}\` is its own ancestor: ${cycle}. A parent chain has to end.`,
                 );
                 return;
@@ -1415,10 +1415,10 @@ class PlanBuilder {
      * A spelling that carries a value is a shape, not a spelling, and is left
      * out.
      *
-     * Two clashes go unseen here. Only the scheme's inline concepts are
-     * compared, so a concept a source feeds is never the other concept. And a
-     * form that binds the other concept's category counts as reading it, even
-     * where its field leaves that concept out with `exclude_concepts`.
+     * Two clashes go unseen here. Only the scheme's own concepts are compared,
+     * so a concept an import feeds is never the other concept. And a form that
+     * binds the other concept's category counts as reading it, even where its
+     * field leaves that concept out with `exclude_concepts`.
      *
      * @param {{ formatId: string; at: string; address: string }[]} readOnly
      *   Each `also_read_in` entry that names a form of its view, with its path
@@ -1519,15 +1519,9 @@ class PlanBuilder {
         return spellers;
     }
 
-    /**
-     * One spelling as the scheme compares text: trimmed, and in one case unless
-     * the scheme says case carries meaning.
-     */
+    /** One spelling as the scheme compares text: trimmed, and in one case. */
     spellingKey(text) {
-        const trimmed = text.trim();
-        return this.scheme?.parse?.case_sensitive === true
-            ? trimmed
-            : trimmed.toUpperCase();
+        return text.trim().toUpperCase();
     }
 
     /**
@@ -2930,7 +2924,7 @@ class PlanBuilder {
     }
 
     /**
-     * Free text inside a plain format that declares no escape.
+     * Free text inside a plain block format, which has no escape.
      *
      * Most values are fine, so this is not a general ban on free text: a value
      * that happens to contain an inline separator is a run-time unrepresentable
@@ -2946,13 +2940,11 @@ class PlanBuilder {
      * against the value that actually caused it. Refusing the document instead
      * left an author one way out: declaring an escape the represented format
      * does not have, which makes the document state something untrue about the
-     * scheme and makes a renderer emit text no consumer of that format
-     * accepts.
+     * scheme.
      */
     checkFraming(field, eligible, context, path) {
         if (context.syntax?.type !== 'text') return;
         if (context.mode !== 'block') return;
-        if (context.syntax?.escape && context.syntax.escape !== 'none') return;
         const freeText = eligible.filter(
             (concept) =>
                 carriesValue(concept) &&
@@ -2966,7 +2958,7 @@ class PlanBuilder {
                 .map((concept) => `\`${concept.id}\``)
                 .join(
                     ', ',
-                )}) in a block format whose fields are separated by line breaks, and the syntax declares no escape. A value containing a line break followed by text that looks like the next field would be written out and read back as that field. Such a value is an unrepresentable-value result at run time rather than a silent round trip. Declare \`syntax: {type: text, escape: backslash}\` only if the represented format really escapes that way; otherwise this is the accounting for a value that cannot be written here.`,
+                )}) in a block format whose fields are separated by line breaks, and plain text has no escape. A value containing a line break followed by text that looks like the next field would be written out and read back as that field. Such a value is an unrepresentable-value result at run time rather than a silent round trip. This is the accounting for a value that cannot be written here.`,
         );
     }
 

@@ -25,28 +25,27 @@ scheme:
         rollup: union
         sort: position
     concepts:
-      inline:
-        - {
-              id: H_ONE,
-              name: Handling one,
-              views: { default: HONE },
-              categories: [handling],
-              position: 1,
-          }
-        - {
-              id: H_TWO,
-              name: Handling two,
-              views: { default: HTWO },
-              categories: [handling],
-              position: 2,
-          }
-        - {
-              id: R_ONE,
-              name: Recipient one,
-              views: { default: RONE },
-              categories: [recipients],
-              position: 1,
-          }
+      - {
+            id: H_ONE,
+            name: Handling one,
+            views: { default: HONE },
+            categories: [handling],
+            position: 1,
+        }
+      - {
+            id: H_TWO,
+            name: Handling two,
+            views: { default: HTWO },
+            categories: [handling],
+            position: 2,
+        }
+      - {
+            id: R_ONE,
+            name: Recipient one,
+            views: { default: RONE },
+            categories: [recipients],
+            position: 1,
+        }
   render:
     default: banner
     formats:

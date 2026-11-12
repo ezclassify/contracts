@@ -8,10 +8,10 @@ import { validateDocument } from '../src/index.mjs';
 
 /**
  * A scheme document may carry its own markings: the scheme block holds the
- * whole, and categories, inline concepts, render formats and scheme rules each
- * hold a part. `marking_scheme` names the scheme those markings are written in,
- * by reference or as `self`. No other position in a scheme takes a `marking`,
- * and a Context takes none. The other marked families are in
+ * whole, and categories, concepts, render formats and scheme rules each hold a
+ * part. `marking_scheme` names the scheme those markings are written in, by
+ * reference or as `self`. No other position in a scheme takes a `marking`, and
+ * a Context takes none. The other marked families are in
  * `document-markings.spec.ts`.
  */
 
@@ -48,7 +48,7 @@ function errors(document: Doc): string[] {
 const positions: { name: string; at: (doc: Doc) => Doc }[] = [
     { name: 'scheme block (whole)', at: (doc) => doc.scheme },
     { name: 'category', at: (doc) => doc.scheme.data.categories[0] },
-    { name: 'inline concept', at: (doc) => doc.scheme.data.concepts.inline[0] },
+    { name: 'concept', at: (doc) => doc.scheme.data.concepts[0] },
     { name: 'render format', at: (doc) => doc.scheme.render.formats[0] },
     { name: 'scheme rule', at: (doc) => doc.scheme.rules[0] },
 ];
@@ -71,10 +71,16 @@ describe('scheme document markings', () => {
 
     it.each([
         {
-            name: 'concept group',
+            name: 'concept import',
             place: (doc: Doc) => {
-                doc.scheme.data.concept_groups = [
-                    { id: 'g', concept_ids: ['LOW'], marking: 'L' },
+                doc.scheme.data.concept_imports = [
+                    {
+                        id: 'g',
+                        attribution: { name: 'G', license: 'CC0-1.0' },
+                        records: [],
+                        mapping: { concept: { id: 'id', name: 'name' } },
+                        marking: 'L',
+                    },
                 ];
             },
         },
@@ -169,7 +175,7 @@ describe('a Context composes other documents and takes no marking', () => {
             },
         },
     ])('refuses a marking on the $name', ({ place }) => {
-        const doc = example('context-with-sources.yaml');
+        const doc = example('context.yaml');
         expect(errors(doc)).toEqual([]);
         place(doc);
         expect(errors(doc).length).toBeGreaterThan(0);

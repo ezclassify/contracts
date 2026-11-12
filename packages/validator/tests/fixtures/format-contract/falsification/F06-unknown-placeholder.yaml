@@ -23,14 +23,13 @@ scheme:
         single: true
         required: true
     concepts:
-      inline:
-        - id: DECLASS_DATE
-          name: Specific date
-          views:
-            default: '{value}'
-            hyphenated: '{year}-{month}-{day}'
-          categories: [declass]
-          text_input: { label: Date, required: true }
+      - id: DECLASS_DATE
+        name: Specific date
+        views:
+          default: '{value}'
+          hyphenated: '{year}-{month}-{day}'
+        categories: [declass]
+        text_input: { label: Date, required: true }
   render:
     default: hyphenated
     formats:

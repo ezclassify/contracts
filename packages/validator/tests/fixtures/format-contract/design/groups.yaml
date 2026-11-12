@@ -35,35 +35,34 @@ scheme:
         label: Release list
         rollup: union
     concepts:
-      inline:
-        - id: LEVEL_ONE
-          name: Level one
-          views: { default: ONE, portion: '1', banner_abbreviation: ONE }
-          categories: [level]
-        - id: OWNER_HOME
-          name: Home owner
-          views: { default: HOME, portion: HOME, banner_abbreviation: HOME }
-          categories: [owner]
-        - id: OWNER_OTHER
-          name: Other owner
-          views: { default: OTHER, portion: OTHER, banner_abbreviation: OTHER }
-          categories: [owner]
-        - id: RELEASE_HEADER
-          name: Authorized release
-          views: { default: RELEASE }
-          categories: [handling]
-        - id: HANDLING_ONE
-          name: Handling one
-          views: { default: H1 }
-          categories: [handling]
-        - id: PARTNER_A
-          name: Partner A
-          views: { default: PA }
-          categories: [partner]
-        - id: PARTNER_B
-          name: Partner B
-          views: { default: PB }
-          categories: [partner]
+      - id: LEVEL_ONE
+        name: Level one
+        views: { default: ONE, portion: '1', banner_abbreviation: ONE }
+        categories: [level]
+      - id: OWNER_HOME
+        name: Home owner
+        views: { default: HOME, portion: HOME, banner_abbreviation: HOME }
+        categories: [owner]
+      - id: OWNER_OTHER
+        name: Other owner
+        views: { default: OTHER, portion: OTHER, banner_abbreviation: OTHER }
+        categories: [owner]
+      - id: RELEASE_HEADER
+        name: Authorized release
+        views: { default: RELEASE }
+        categories: [handling]
+      - id: HANDLING_ONE
+        name: Handling one
+        views: { default: H1 }
+        categories: [handling]
+      - id: PARTNER_A
+        name: Partner A
+        views: { default: PA }
+        categories: [partner]
+      - id: PARTNER_B
+        name: Partner B
+        views: { default: PB }
+        categories: [partner]
   render:
     default: fgi_origin_portion
     formats:

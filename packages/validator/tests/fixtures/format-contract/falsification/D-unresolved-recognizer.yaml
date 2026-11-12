@@ -34,13 +34,12 @@ scheme:
         label: Reference
         rollup: union
     concepts:
-      inline:
-        - { id: LEVEL_ONE, name: Level one, views: { default: ONE }, categories: [level] }
-        - id: REFERENCE_NUMBER
-          name: Reference number
-          views: { default: '{value}' }
-          categories: [reference]
-          text_input: { label: Reference number }
+      - { id: LEVEL_ONE, name: Level one, views: { default: ONE }, categories: [level] }
+      - id: REFERENCE_NUMBER
+        name: Reference number
+        views: { default: '{value}' }
+        categories: [reference]
+        text_input: { label: Reference number }
   render:
     default: banner
     formats:

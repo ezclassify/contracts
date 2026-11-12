@@ -38,7 +38,7 @@ var require_ucs2length = __commonJS({
 // crosswalk.validator.mjs
 var validate = validate20;
 var crosswalk_validator_default = validate20;
-var schema31 = { "$defs": { "AssertionReference": { "additionalProperties": false, "description": "Compact reference to an assertion without engine-production metadata.", "properties": { "categoryId": { "description": "Category containing the asserted concept.", "type": "string" }, "conceptId": { "description": "Asserted concept identifier.", "type": "string" }, "value": { "description": "Captured value for value-bearing concepts.", "type": "string" } }, "required": ["categoryId", "conceptId"], "type": "object" }, "CrosswalkDisposition": { "description": "Decision a reviewed crosswalk makes for one source assertion.", "enum": ["carry", "review", "omit", "forbid"], "type": "string" }, "CrosswalkLayer": { "additionalProperties": false, "description": "The crosswalk family's layer payload. Required when `type: 'layer'`, forbidden otherwise.\n\nA crosswalk layer is how an organization covers source assertions its base crosswalk has never seen. Concepts local to that organization arrive through its own scheme layer, and the sold crosswalk above it structurally could not have mapped them; without a layer they translate as `unmapped`, which is safe but leaves a reviewer holding the decision. The layer's own `mappings` and `selections` are the additions and overrides, written as an ordinary crosswalk document; what it takes away is listed here.\n\nBinding and merge rules are the cross-family ones: see `LayerBinding`. A crosswalk layer may add, override, and remove; later wins on a colliding id. The layer's `sourceScheme` and `targetScheme` must name the same pair its base does, since a mapping between one pair of schemes says nothing about another.", "properties": { "base": { "description": "The artifact or layer this one stacks on, as `id@version`.", "type": "string" }, "removes": { "description": "Mappings and selections inherited from below that this layer takes away.", "items": { "$ref": "#/$defs/CrosswalkLayerRemoval" }, "type": "array" }, "requires": { "description": "Layers that must be present AND composed before this one. A layer that builds on what another layer introduced, or restores what another layer removed, only means anything on top of that layer, so the ordering is a load-time constraint rather than a hint.", "items": { "type": "string" }, "type": "array" }, "restores": { "description": "Mappings and selections an earlier layer removed that this one brings back, with the decision they carried below. Naming an element in both `removes` and `restores` is a load error.", "items": { "$ref": "#/$defs/CrosswalkLayerRemoval" }, "type": "array" } }, "required": ["base"], "type": "object" }, "CrosswalkLayerRemoval": { "anyOf": [{ "additionalProperties": false, "properties": { "mapping": { "description": "The id of the mapping to remove.", "type": "string" } }, "required": ["mapping"], "type": "object" }, { "additionalProperties": false, "properties": { "selection": { "description": "The id of the selection to remove.", "type": "string" } }, "required": ["selection"], "type": "object" }], "description": "One element a crosswalk layer takes away, named by kind and id. Exactly one key.\n\nThe same reference-not-a-path reasoning as the scheme family: a mapping or a selection is addressed by the id it was reviewed under, which survives a storage change and validates as a closed set." }, "CrosswalkMappingDoc": { "additionalProperties": false, "description": "A mapping as a crosswalk document authors it: the reviewed treatment, plus the part marking the document gives it. A mapping a Context describes is a `CrosswalkMapping` and has no marking.", "properties": { "authority": { "description": "Authority or reviewed source behind the mapping, when one exists.", "type": "string" }, "citation": { "description": "Citation supporting this mapping decision.", "type": "string" }, "disposition": { "$ref": "#/$defs/CrosswalkDisposition", "description": "Whether the value is carried, reviewed, omitted, or forbids translation." }, "guidance": { "description": "Operator guidance for applying or reviewing this mapping.", "type": "string" }, "id": { "description": "Stable identifier for audit and review.", "type": "string" }, "marking": { "description": "This mapping's part marking, written in the scheme the document's `marking_scheme` names. Text, never interpreted: no engine parses it, checks it, acts on it, or reports it.", "type": "string" }, "reason": { "description": "Human-readable basis for the decision.", "type": "string" }, "source": { "$ref": "#/$defs/AssertionReference", "description": "Source assertion matched by this mapping." }, "targets": { "description": "Target assertions. `carry` mappings emit these automatically; `review` mappings expose them only as proposals. `omit` and `forbid` mappings have no targets.", "items": { "$ref": "#/$defs/CrosswalkTarget" }, "type": "array" } }, "required": ["disposition", "id", "reason", "source"], "type": "object" }, "CrosswalkSchemeDependency": { "additionalProperties": false, "description": "Scheme dependency declared by a directional crosswalk.", "properties": { "id": { "description": "Scheme artifact identifier.", "type": "string" }, "version": { "description": "Required scheme version or semver range.", "type": "string" } }, "required": ["id"], "type": "object" }, "CrosswalkSelectionCandidateDoc": { "additionalProperties": false, "description": "A selection candidate as a crosswalk document authors it.", "properties": { "authority": { "description": "Authority behind the candidate decision, when one exists.", "type": "string" }, "citation": { "description": "Citation supporting the candidate decision.", "type": "string" }, "disposition": { "$ref": "#/$defs/CrosswalkDisposition", "description": "Treatment applied when this candidate is selected. Omitted, the candidate carries (`carry`)." }, "guidance": { "description": "Operator guidance for the candidate decision.", "type": "string" }, "id": { "description": "Stable candidate identifier within its selection.", "type": "string" }, "mappings": { "description": "Per-assertion mappings activated when this candidate is selected.", "items": { "$ref": "#/$defs/CrosswalkMappingDoc" }, "type": "array" }, "reason": { "description": "Human-readable basis for selecting and applying this candidate.", "type": "string" }, "score": { "description": "Assertions counted by a `most-matches` selection.", "items": { "$ref": "#/$defs/AssertionReference" }, "type": "array" }, "sources": { "description": "Source assertions covered when this candidate is selected.", "items": { "$ref": "#/$defs/AssertionReference" }, "type": "array" }, "targets": { "description": "Targets emitted once when this candidate is selected.", "items": { "$ref": "#/$defs/CrosswalkTarget" }, "type": "array" }, "when": { "$ref": "#/$defs/CrosswalkSelectionCondition", "description": "Predicate used by a `first-match` selection; omission makes this the fallback." } }, "required": ["id", "reason"], "type": "object" }, "CrosswalkSelectionCondition": { "additionalProperties": false, "description": "Boolean test over source assertions used to choose a crosswalk candidate.", "properties": { "all": { "description": "Every referenced assertion must be present.", "items": { "$ref": "#/$defs/AssertionReference" }, "type": "array" }, "any": { "description": "At least one referenced assertion must be present.", "items": { "$ref": "#/$defs/AssertionReference" }, "type": "array" }, "none": { "description": "None of the referenced assertions may be present.", "items": { "$ref": "#/$defs/AssertionReference" }, "type": "array" } }, "type": "object" }, "CrosswalkSelectionDoc": { "additionalProperties": false, "description": "A cross-field decision as a crosswalk document authors it.", "properties": { "candidates": { "description": "Ordered candidates; order breaks ties and places a fallback last.", "items": { "$ref": "#/$defs/CrosswalkSelectionCandidateDoc" }, "type": "array" }, "id": { "description": "Stable selection identifier for audit and review.", "type": "string" }, "strategy": { "$ref": "#/$defs/CrosswalkSelectionStrategy", "description": "Deterministic candidate-selection strategy." } }, "required": ["candidates", "id", "strategy"], "type": "object" }, "CrosswalkSelectionStrategy": { "description": "Strategy for choosing one candidate from a reviewed cross-field decision.", "enum": ["first-match", "most-matches"], "type": "string" }, "CrosswalkTarget": { "additionalProperties": false, "description": "One target assertion a crosswalk can emit or propose.", "properties": { "categoryId": { "description": "Category containing the asserted concept.", "type": "string" }, "conceptId": { "description": "Asserted concept identifier.", "type": "string" }, "copyValue": { "description": "Copy the source assertion's captured value onto this target.", "type": "boolean" }, "value": { "description": "Captured value for value-bearing concepts.", "type": "string" } }, "required": ["categoryId", "conceptId"], "type": "object" }, "MarkingSchemeRefDoc": { "additionalProperties": false, "description": "The scheme a document's markings are written in, named by id and, optionally, version. Every document that can be marked names one this way; a scheme document may also write `self`. See `SchemeBlock.marking_scheme`.", "properties": { "id": { "description": "The marking scheme's id.", "minLength": 1, "type": "string" }, "version": { "description": "The marking scheme's version. Omitted, any version.", "type": "string" } }, "required": ["id"], "type": "object" } }, "$id": "https://ezclassify.com/schemas/v1/crosswalk.schema.json", "$schema": "https://json-schema.org/draft/2020-12/schema", "additionalProperties": false, "description": "Directional, versioned mapping between two schemes.\n\nA reverse operation requires a separate definition. Directionality is explicit because a safe source-to-target mapping is not necessarily safe in the other direction.", "properties": { "crosswalk": { "additionalProperties": false, "description": "Root `crosswalk:` envelope.", "properties": { "citation": { "description": "Primary citation for the crosswalk artifact.", "type": "string" }, "description": { "description": "Longer description of what this crosswalk translates.", "type": "string" }, "guidance": { "description": "General usage and review guidance for this crosswalk.", "type": "string" }, "id": { "description": "Unique crosswalk identifier.", "type": "string" }, "layer": { "$ref": "#/$defs/CrosswalkLayer", "description": "The crosswalk family's layer payload. Required when `type: 'layer'`, forbidden otherwise." }, "mappings": { "description": "How each source concept translates into the target scheme.", "items": { "$ref": "#/$defs/CrosswalkMappingDoc" }, "type": "array" }, "marking": { "description": "The whole marking of this crosswalk document, written in the scheme `marking_scheme` names. Every `marking` on one of its mappings is a part of it.\n\nText, never interpreted: no engine parses it, checks it, or acts on it. The Context's description of the crosswalk reports it unchanged for display.", "type": "string" }, "marking_scheme": { "$ref": "#/$defs/MarkingSchemeRefDoc", "description": "The scheme this document's markings are written in. A crosswalk is not a scheme, so it always names one by reference.\n\nAuthoring data only: no engine resolves the scheme it names." }, "name": { "description": "Human-readable crosswalk name.", "type": "string" }, "selections": { "description": "Optional cross-field decisions whose selected mappings supplement `mappings`.", "items": { "$ref": "#/$defs/CrosswalkSelectionDoc" }, "type": "array" }, "sourceScheme": { "$ref": "#/$defs/CrosswalkSchemeDependency", "description": "The scheme this crosswalk translates from." }, "targetScheme": { "$ref": "#/$defs/CrosswalkSchemeDependency", "description": "The scheme this crosswalk translates to." }, "type": { "description": "What kind of document this is. Absent means `'crosswalk'`. `type: 'layer'` requires the `layer` block and `type: 'crosswalk'` forbids it, both enforced at load. Every layerable family wears this same envelope; see `LayerBinding`.", "enum": ["crosswalk", "layer"], "type": "string" }, "version": { "description": "Semantic version of this crosswalk.", "type": "string" } }, "required": ["id", "version", "name", "sourceScheme", "targetScheme", "mappings"], "type": "object" } }, "required": ["crosswalk"], "title": "EzClassify Crosswalk Schema", "type": "object" };
+var schema31 = { "$defs": { "CrosswalkAssertionDoc": { "additionalProperties": false, "description": "A concept in a category, as a crosswalk document names it.", "properties": { "category": { "description": "The category the concept is asserted in.", "type": "string" }, "concept": { "description": "The concept.", "type": "string" }, "value": { "description": "The captured value, for a value-bearing concept.", "type": "string" } }, "required": ["category", "concept"], "type": "object" }, "CrosswalkDisposition": { "description": "Decision a reviewed crosswalk makes for one source assertion.", "enum": ["carry", "review", "omit", "forbid"], "type": "string" }, "CrosswalkLayer": { "additionalProperties": false, "description": "The crosswalk family's layer payload. Required when `type: 'layer'`, forbidden otherwise.\n\nA crosswalk layer is how an organization covers source assertions its base crosswalk has never seen. Concepts local to that organization arrive through its own scheme layer, and the sold crosswalk above it structurally could not have mapped them; without a layer they translate as `unmapped`, which is safe but leaves a reviewer holding the decision. The layer's own `mappings` and `selections` are the additions and overrides, written as an ordinary crosswalk document; what it takes away is listed here.\n\nBinding and merge rules are the cross-family ones: see `LayerBinding`. A crosswalk layer may add, override, and remove; later wins on a colliding id. The layer's `source_scheme` and `target_scheme` must name the same pair its base does, since a mapping between one pair of schemes says nothing about another.", "properties": { "base": { "description": "The artifact or layer this one stacks on, as `id@version`.", "type": "string" }, "removes": { "description": "Mappings and selections inherited from below that this layer takes away.", "items": { "$ref": "#/$defs/CrosswalkLayerRemoval" }, "type": "array" }, "requires": { "description": "Layers that must be present AND composed before this one. A layer that builds on what another layer introduced, or restores what another layer removed, only means anything on top of that layer, so the ordering is a load-time constraint rather than a hint.", "items": { "type": "string" }, "type": "array" }, "restores": { "description": "Mappings and selections an earlier layer removed that this one brings back, with the decision they carried below. Naming an element in both `removes` and `restores` is a load error.", "items": { "$ref": "#/$defs/CrosswalkLayerRemoval" }, "type": "array" } }, "required": ["base"], "type": "object" }, "CrosswalkLayerRemoval": { "anyOf": [{ "additionalProperties": false, "properties": { "mapping": { "description": "The id of the mapping to remove.", "type": "string" } }, "required": ["mapping"], "type": "object" }, { "additionalProperties": false, "properties": { "selection": { "description": "The id of the selection to remove.", "type": "string" } }, "required": ["selection"], "type": "object" }], "description": "One element a crosswalk layer takes away, named by kind and id. Exactly one key.\n\nThe same reference-not-a-path reasoning as the scheme family: a mapping or a selection is addressed by the id it was reviewed under, which survives a storage change and validates as a closed set." }, "CrosswalkMappingDoc": { "additionalProperties": false, "description": "A reviewed treatment of one source assertion, as a crosswalk document authors it. A mapping a Context describes is a `CrosswalkMapping`, which carries the same facts in the wire shape and no marking.", "properties": { "authority": { "description": "Authority or reviewed source behind the mapping, when one exists.", "type": "string" }, "citation": { "description": "Citation supporting this mapping decision.", "type": "string" }, "disposition": { "$ref": "#/$defs/CrosswalkDisposition", "description": "Whether the value is carried, reviewed, omitted, or forbids translation." }, "guidance": { "description": "Operator guidance for applying or reviewing this mapping.", "type": "string" }, "id": { "description": "Stable identifier for audit and review.", "type": "string" }, "marking": { "description": "This mapping's part marking, written in the scheme the document's `marking_scheme` names. Text, never interpreted: no engine parses it, checks it, acts on it, or reports it.", "type": "string" }, "reason": { "description": "Human-readable basis for the decision.", "type": "string" }, "source": { "$ref": "#/$defs/CrosswalkAssertionDoc", "description": "Source assertion matched by this mapping." }, "targets": { "description": "Target assertions. `carry` mappings emit these automatically; `review` mappings expose them only as proposals. `omit` and `forbid` mappings have no targets.", "items": { "$ref": "#/$defs/CrosswalkTargetDoc" }, "type": "array" } }, "required": ["id", "source", "disposition", "reason"], "type": "object" }, "CrosswalkSchemeDependency": { "additionalProperties": false, "description": "Scheme dependency declared by a directional crosswalk.", "properties": { "id": { "description": "Scheme artifact identifier.", "type": "string" }, "version": { "description": "Required scheme version or semver range.", "type": "string" } }, "required": ["id"], "type": "object" }, "CrosswalkSelectionCandidateDoc": { "additionalProperties": false, "description": "A selection candidate as a crosswalk document authors it.", "properties": { "authority": { "description": "Authority behind the candidate decision, when one exists.", "type": "string" }, "citation": { "description": "Citation supporting the candidate decision.", "type": "string" }, "disposition": { "$ref": "#/$defs/CrosswalkDisposition", "description": "Treatment applied when this candidate is selected. Omitted, the candidate carries (`carry`)." }, "guidance": { "description": "Operator guidance for the candidate decision.", "type": "string" }, "id": { "description": "Stable candidate identifier within its selection.", "type": "string" }, "mappings": { "description": "Per-assertion mappings activated when this candidate is selected.", "items": { "$ref": "#/$defs/CrosswalkMappingDoc" }, "type": "array" }, "reason": { "description": "Human-readable basis for selecting and applying this candidate.", "type": "string" }, "score": { "description": "Assertions counted by a `most-matches` selection.", "items": { "$ref": "#/$defs/CrosswalkAssertionDoc" }, "type": "array" }, "sources": { "description": "Source assertions covered when this candidate is selected.", "items": { "$ref": "#/$defs/CrosswalkAssertionDoc" }, "type": "array" }, "targets": { "description": "Targets emitted once when this candidate is selected.", "items": { "$ref": "#/$defs/CrosswalkTargetDoc" }, "type": "array" }, "when": { "$ref": "#/$defs/CrosswalkSelectionConditionDoc", "description": "Predicate used by a `first-match` selection; omission makes this the fallback." } }, "required": ["id", "reason"], "type": "object" }, "CrosswalkSelectionConditionDoc": { "additionalProperties": false, "description": "The test that chooses a selection candidate, as a crosswalk document authors it.", "properties": { "all": { "description": "Every one of these must be present.", "items": { "$ref": "#/$defs/CrosswalkAssertionDoc" }, "type": "array" }, "any": { "description": "At least one of these must be present.", "items": { "$ref": "#/$defs/CrosswalkAssertionDoc" }, "type": "array" }, "none": { "description": "None of these may be present.", "items": { "$ref": "#/$defs/CrosswalkAssertionDoc" }, "type": "array" } }, "type": "object" }, "CrosswalkSelectionDoc": { "additionalProperties": false, "description": "A cross-field decision as a crosswalk document authors it.", "properties": { "candidates": { "description": "Ordered candidates; order breaks ties and places a fallback last.", "items": { "$ref": "#/$defs/CrosswalkSelectionCandidateDoc" }, "type": "array" }, "id": { "description": "Stable selection identifier for audit and review.", "type": "string" }, "strategy": { "$ref": "#/$defs/CrosswalkSelectionStrategy", "description": "Deterministic candidate-selection strategy." } }, "required": ["id", "strategy", "candidates"], "type": "object" }, "CrosswalkSelectionStrategy": { "description": "Strategy for choosing one candidate from a reviewed cross-field decision.", "enum": ["first-match", "most-matches"], "type": "string" }, "CrosswalkTargetDoc": { "additionalProperties": false, "description": "A target a crosswalk document's mapping emits or proposes.", "properties": { "category": { "description": "The category the concept is asserted in.", "type": "string" }, "concept": { "description": "The concept.", "type": "string" }, "copy_value": { "description": "Copy the source assertion's captured value onto this target.", "type": "boolean" }, "value": { "description": "The captured value, for a value-bearing concept.", "type": "string" } }, "required": ["category", "concept"], "type": "object" }, "MarkingSchemeRefDoc": { "additionalProperties": false, "description": "The scheme a document's markings are written in, named by id and, optionally, version. Every document that can be marked names one this way; a scheme document may also write `self`. See `SchemeBlock.marking_scheme`.", "properties": { "id": { "description": "The marking scheme's id.", "minLength": 1, "type": "string" }, "version": { "description": "The marking scheme's version. Omitted, any version.", "type": "string" } }, "required": ["id"], "type": "object" } }, "$id": "https://ezclassify.com/schemas/v1/crosswalk.schema.json", "$schema": "https://json-schema.org/draft/2020-12/schema", "additionalProperties": false, "description": "Directional, versioned mapping between two schemes.\n\nA reverse operation requires a separate definition. Directionality is explicit because a safe source-to-target mapping is not necessarily safe in the other direction.", "properties": { "crosswalk": { "additionalProperties": false, "description": "Root `crosswalk:` envelope.", "properties": { "citation": { "description": "Primary citation for the crosswalk artifact.", "type": "string" }, "description": { "description": "Longer description of what this crosswalk translates.", "type": "string" }, "guidance": { "description": "General usage and review guidance for this crosswalk.", "type": "string" }, "id": { "description": "Unique crosswalk identifier.", "type": "string" }, "layer": { "$ref": "#/$defs/CrosswalkLayer", "description": "The crosswalk family's layer payload. Required when `type: 'layer'`, forbidden otherwise." }, "mappings": { "description": "How each source concept translates into the target scheme.", "items": { "$ref": "#/$defs/CrosswalkMappingDoc" }, "type": "array" }, "marking": { "description": "The whole marking of this crosswalk document, written in the scheme `marking_scheme` names. Every `marking` on one of its mappings is a part of it.\n\nText, never interpreted: no engine parses it, checks it, or acts on it. The Context's description of the crosswalk reports it unchanged for display.", "type": "string" }, "marking_scheme": { "$ref": "#/$defs/MarkingSchemeRefDoc", "description": "The scheme this document's markings are written in. A crosswalk is not a scheme, so it always names one by reference.\n\nAuthoring data only: no engine resolves the scheme it names." }, "name": { "description": "Human-readable crosswalk name.", "type": "string" }, "selections": { "description": "Optional cross-field decisions whose selected mappings supplement `mappings`.", "items": { "$ref": "#/$defs/CrosswalkSelectionDoc" }, "type": "array" }, "source_scheme": { "$ref": "#/$defs/CrosswalkSchemeDependency", "description": "The scheme this crosswalk translates from." }, "target_scheme": { "$ref": "#/$defs/CrosswalkSchemeDependency", "description": "The scheme this crosswalk translates to." }, "type": { "description": "What kind of document this is. Absent means `'crosswalk'`. `type: 'layer'` requires the `layer` block and `type: 'crosswalk'` forbids it, both enforced at load. Every layerable family wears this same envelope; see `LayerBinding`.", "enum": ["crosswalk", "layer"], "type": "string" }, "version": { "description": "Semantic version of this crosswalk.", "type": "string" } }, "required": ["id", "version", "name", "source_scheme", "target_scheme", "mappings"], "type": "object" } }, "required": ["crosswalk"], "title": "EzClassify Crosswalk Schema", "type": "object" };
 var func1 = Object.prototype.hasOwnProperty;
 var func3 = require_ucs2length().default;
 function validate21(data, { instancePath = "", parentData, parentDataProperty, rootData = data, dynamicAnchors = {} } = {}) {
@@ -387,7 +387,7 @@ function validate21(data, { instancePath = "", parentData, parentDataProperty, r
   return errors === 0;
 }
 validate21.evaluated = { "props": true, "dynamicProps": false, "dynamicItems": false };
-var schema35 = { "additionalProperties": false, "description": "A mapping as a crosswalk document authors it: the reviewed treatment, plus the part marking the document gives it. A mapping a Context describes is a `CrosswalkMapping` and has no marking.", "properties": { "authority": { "description": "Authority or reviewed source behind the mapping, when one exists.", "type": "string" }, "citation": { "description": "Citation supporting this mapping decision.", "type": "string" }, "disposition": { "$ref": "#/$defs/CrosswalkDisposition", "description": "Whether the value is carried, reviewed, omitted, or forbids translation." }, "guidance": { "description": "Operator guidance for applying or reviewing this mapping.", "type": "string" }, "id": { "description": "Stable identifier for audit and review.", "type": "string" }, "marking": { "description": "This mapping's part marking, written in the scheme the document's `marking_scheme` names. Text, never interpreted: no engine parses it, checks it, acts on it, or reports it.", "type": "string" }, "reason": { "description": "Human-readable basis for the decision.", "type": "string" }, "source": { "$ref": "#/$defs/AssertionReference", "description": "Source assertion matched by this mapping." }, "targets": { "description": "Target assertions. `carry` mappings emit these automatically; `review` mappings expose them only as proposals. `omit` and `forbid` mappings have no targets.", "items": { "$ref": "#/$defs/CrosswalkTarget" }, "type": "array" } }, "required": ["disposition", "id", "reason", "source"], "type": "object" };
+var schema35 = { "additionalProperties": false, "description": "A reviewed treatment of one source assertion, as a crosswalk document authors it. A mapping a Context describes is a `CrosswalkMapping`, which carries the same facts in the wire shape and no marking.", "properties": { "authority": { "description": "Authority or reviewed source behind the mapping, when one exists.", "type": "string" }, "citation": { "description": "Citation supporting this mapping decision.", "type": "string" }, "disposition": { "$ref": "#/$defs/CrosswalkDisposition", "description": "Whether the value is carried, reviewed, omitted, or forbids translation." }, "guidance": { "description": "Operator guidance for applying or reviewing this mapping.", "type": "string" }, "id": { "description": "Stable identifier for audit and review.", "type": "string" }, "marking": { "description": "This mapping's part marking, written in the scheme the document's `marking_scheme` names. Text, never interpreted: no engine parses it, checks it, acts on it, or reports it.", "type": "string" }, "reason": { "description": "Human-readable basis for the decision.", "type": "string" }, "source": { "$ref": "#/$defs/CrosswalkAssertionDoc", "description": "Source assertion matched by this mapping." }, "targets": { "description": "Target assertions. `carry` mappings emit these automatically; `review` mappings expose them only as proposals. `omit` and `forbid` mappings have no targets.", "items": { "$ref": "#/$defs/CrosswalkTargetDoc" }, "type": "array" } }, "required": ["id", "source", "disposition", "reason"], "type": "object" };
 var schema36 = { "description": "Decision a reviewed crosswalk makes for one source assertion.", "enum": ["carry", "review", "omit", "forbid"], "type": "string" };
 function validate23(data, { instancePath = "", parentData, parentDataProperty, rootData = data, dynamicAnchors = {} } = {}) {
   let vErrors = null;
@@ -400,8 +400,8 @@ function validate23(data, { instancePath = "", parentData, parentDataProperty, r
     evaluated0.items = void 0;
   }
   if (data && typeof data == "object" && !Array.isArray(data)) {
-    if (data.disposition === void 0) {
-      const err0 = { instancePath, schemaPath: "#/required", keyword: "required", params: { missingProperty: "disposition" }, message: "must have required property 'disposition'" };
+    if (data.id === void 0) {
+      const err0 = { instancePath, schemaPath: "#/required", keyword: "required", params: { missingProperty: "id" }, message: "must have required property 'id'" };
       if (vErrors === null) {
         vErrors = [err0];
       } else {
@@ -409,8 +409,8 @@ function validate23(data, { instancePath = "", parentData, parentDataProperty, r
       }
       errors++;
     }
-    if (data.id === void 0) {
-      const err1 = { instancePath, schemaPath: "#/required", keyword: "required", params: { missingProperty: "id" }, message: "must have required property 'id'" };
+    if (data.source === void 0) {
+      const err1 = { instancePath, schemaPath: "#/required", keyword: "required", params: { missingProperty: "source" }, message: "must have required property 'source'" };
       if (vErrors === null) {
         vErrors = [err1];
       } else {
@@ -418,8 +418,8 @@ function validate23(data, { instancePath = "", parentData, parentDataProperty, r
       }
       errors++;
     }
-    if (data.reason === void 0) {
-      const err2 = { instancePath, schemaPath: "#/required", keyword: "required", params: { missingProperty: "reason" }, message: "must have required property 'reason'" };
+    if (data.disposition === void 0) {
+      const err2 = { instancePath, schemaPath: "#/required", keyword: "required", params: { missingProperty: "disposition" }, message: "must have required property 'disposition'" };
       if (vErrors === null) {
         vErrors = [err2];
       } else {
@@ -427,8 +427,8 @@ function validate23(data, { instancePath = "", parentData, parentDataProperty, r
       }
       errors++;
     }
-    if (data.source === void 0) {
-      const err3 = { instancePath, schemaPath: "#/required", keyword: "required", params: { missingProperty: "source" }, message: "must have required property 'source'" };
+    if (data.reason === void 0) {
+      const err3 = { instancePath, schemaPath: "#/required", keyword: "required", params: { missingProperty: "reason" }, message: "must have required property 'reason'" };
       if (vErrors === null) {
         vErrors = [err3];
       } else {
@@ -537,8 +537,8 @@ function validate23(data, { instancePath = "", parentData, parentDataProperty, r
     if (data.source !== void 0) {
       let data7 = data.source;
       if (data7 && typeof data7 == "object" && !Array.isArray(data7)) {
-        if (data7.categoryId === void 0) {
-          const err13 = { instancePath: instancePath + "/source", schemaPath: "#/$defs/AssertionReference/required", keyword: "required", params: { missingProperty: "categoryId" }, message: "must have required property 'categoryId'" };
+        if (data7.category === void 0) {
+          const err13 = { instancePath: instancePath + "/source", schemaPath: "#/$defs/CrosswalkAssertionDoc/required", keyword: "required", params: { missingProperty: "category" }, message: "must have required property 'category'" };
           if (vErrors === null) {
             vErrors = [err13];
           } else {
@@ -546,8 +546,8 @@ function validate23(data, { instancePath = "", parentData, parentDataProperty, r
           }
           errors++;
         }
-        if (data7.conceptId === void 0) {
-          const err14 = { instancePath: instancePath + "/source", schemaPath: "#/$defs/AssertionReference/required", keyword: "required", params: { missingProperty: "conceptId" }, message: "must have required property 'conceptId'" };
+        if (data7.concept === void 0) {
+          const err14 = { instancePath: instancePath + "/source", schemaPath: "#/$defs/CrosswalkAssertionDoc/required", keyword: "required", params: { missingProperty: "concept" }, message: "must have required property 'concept'" };
           if (vErrors === null) {
             vErrors = [err14];
           } else {
@@ -556,8 +556,8 @@ function validate23(data, { instancePath = "", parentData, parentDataProperty, r
           errors++;
         }
         for (const key1 in data7) {
-          if (!(key1 === "categoryId" || key1 === "conceptId" || key1 === "value")) {
-            const err15 = { instancePath: instancePath + "/source", schemaPath: "#/$defs/AssertionReference/additionalProperties", keyword: "additionalProperties", params: { additionalProperty: key1 }, message: "must NOT have additional properties" };
+          if (!(key1 === "category" || key1 === "concept" || key1 === "value")) {
+            const err15 = { instancePath: instancePath + "/source", schemaPath: "#/$defs/CrosswalkAssertionDoc/additionalProperties", keyword: "additionalProperties", params: { additionalProperty: key1 }, message: "must NOT have additional properties" };
             if (vErrors === null) {
               vErrors = [err15];
             } else {
@@ -566,9 +566,9 @@ function validate23(data, { instancePath = "", parentData, parentDataProperty, r
             errors++;
           }
         }
-        if (data7.categoryId !== void 0) {
-          if (typeof data7.categoryId !== "string") {
-            const err16 = { instancePath: instancePath + "/source/categoryId", schemaPath: "#/$defs/AssertionReference/properties/categoryId/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+        if (data7.category !== void 0) {
+          if (typeof data7.category !== "string") {
+            const err16 = { instancePath: instancePath + "/source/category", schemaPath: "#/$defs/CrosswalkAssertionDoc/properties/category/type", keyword: "type", params: { type: "string" }, message: "must be string" };
             if (vErrors === null) {
               vErrors = [err16];
             } else {
@@ -577,9 +577,9 @@ function validate23(data, { instancePath = "", parentData, parentDataProperty, r
             errors++;
           }
         }
-        if (data7.conceptId !== void 0) {
-          if (typeof data7.conceptId !== "string") {
-            const err17 = { instancePath: instancePath + "/source/conceptId", schemaPath: "#/$defs/AssertionReference/properties/conceptId/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+        if (data7.concept !== void 0) {
+          if (typeof data7.concept !== "string") {
+            const err17 = { instancePath: instancePath + "/source/concept", schemaPath: "#/$defs/CrosswalkAssertionDoc/properties/concept/type", keyword: "type", params: { type: "string" }, message: "must be string" };
             if (vErrors === null) {
               vErrors = [err17];
             } else {
@@ -590,7 +590,7 @@ function validate23(data, { instancePath = "", parentData, parentDataProperty, r
         }
         if (data7.value !== void 0) {
           if (typeof data7.value !== "string") {
-            const err18 = { instancePath: instancePath + "/source/value", schemaPath: "#/$defs/AssertionReference/properties/value/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+            const err18 = { instancePath: instancePath + "/source/value", schemaPath: "#/$defs/CrosswalkAssertionDoc/properties/value/type", keyword: "type", params: { type: "string" }, message: "must be string" };
             if (vErrors === null) {
               vErrors = [err18];
             } else {
@@ -600,7 +600,7 @@ function validate23(data, { instancePath = "", parentData, parentDataProperty, r
           }
         }
       } else {
-        const err19 = { instancePath: instancePath + "/source", schemaPath: "#/$defs/AssertionReference/type", keyword: "type", params: { type: "object" }, message: "must be object" };
+        const err19 = { instancePath: instancePath + "/source", schemaPath: "#/$defs/CrosswalkAssertionDoc/type", keyword: "type", params: { type: "object" }, message: "must be object" };
         if (vErrors === null) {
           vErrors = [err19];
         } else {
@@ -616,8 +616,8 @@ function validate23(data, { instancePath = "", parentData, parentDataProperty, r
         for (let i0 = 0; i0 < len0; i0++) {
           let data12 = data11[i0];
           if (data12 && typeof data12 == "object" && !Array.isArray(data12)) {
-            if (data12.categoryId === void 0) {
-              const err20 = { instancePath: instancePath + "/targets/" + i0, schemaPath: "#/$defs/CrosswalkTarget/required", keyword: "required", params: { missingProperty: "categoryId" }, message: "must have required property 'categoryId'" };
+            if (data12.category === void 0) {
+              const err20 = { instancePath: instancePath + "/targets/" + i0, schemaPath: "#/$defs/CrosswalkTargetDoc/required", keyword: "required", params: { missingProperty: "category" }, message: "must have required property 'category'" };
               if (vErrors === null) {
                 vErrors = [err20];
               } else {
@@ -625,8 +625,8 @@ function validate23(data, { instancePath = "", parentData, parentDataProperty, r
               }
               errors++;
             }
-            if (data12.conceptId === void 0) {
-              const err21 = { instancePath: instancePath + "/targets/" + i0, schemaPath: "#/$defs/CrosswalkTarget/required", keyword: "required", params: { missingProperty: "conceptId" }, message: "must have required property 'conceptId'" };
+            if (data12.concept === void 0) {
+              const err21 = { instancePath: instancePath + "/targets/" + i0, schemaPath: "#/$defs/CrosswalkTargetDoc/required", keyword: "required", params: { missingProperty: "concept" }, message: "must have required property 'concept'" };
               if (vErrors === null) {
                 vErrors = [err21];
               } else {
@@ -635,8 +635,8 @@ function validate23(data, { instancePath = "", parentData, parentDataProperty, r
               errors++;
             }
             for (const key2 in data12) {
-              if (!(key2 === "categoryId" || key2 === "conceptId" || key2 === "copyValue" || key2 === "value")) {
-                const err22 = { instancePath: instancePath + "/targets/" + i0, schemaPath: "#/$defs/CrosswalkTarget/additionalProperties", keyword: "additionalProperties", params: { additionalProperty: key2 }, message: "must NOT have additional properties" };
+              if (!(key2 === "category" || key2 === "concept" || key2 === "copy_value" || key2 === "value")) {
+                const err22 = { instancePath: instancePath + "/targets/" + i0, schemaPath: "#/$defs/CrosswalkTargetDoc/additionalProperties", keyword: "additionalProperties", params: { additionalProperty: key2 }, message: "must NOT have additional properties" };
                 if (vErrors === null) {
                   vErrors = [err22];
                 } else {
@@ -645,9 +645,9 @@ function validate23(data, { instancePath = "", parentData, parentDataProperty, r
                 errors++;
               }
             }
-            if (data12.categoryId !== void 0) {
-              if (typeof data12.categoryId !== "string") {
-                const err23 = { instancePath: instancePath + "/targets/" + i0 + "/categoryId", schemaPath: "#/$defs/CrosswalkTarget/properties/categoryId/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+            if (data12.category !== void 0) {
+              if (typeof data12.category !== "string") {
+                const err23 = { instancePath: instancePath + "/targets/" + i0 + "/category", schemaPath: "#/$defs/CrosswalkTargetDoc/properties/category/type", keyword: "type", params: { type: "string" }, message: "must be string" };
                 if (vErrors === null) {
                   vErrors = [err23];
                 } else {
@@ -656,9 +656,9 @@ function validate23(data, { instancePath = "", parentData, parentDataProperty, r
                 errors++;
               }
             }
-            if (data12.conceptId !== void 0) {
-              if (typeof data12.conceptId !== "string") {
-                const err24 = { instancePath: instancePath + "/targets/" + i0 + "/conceptId", schemaPath: "#/$defs/CrosswalkTarget/properties/conceptId/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+            if (data12.concept !== void 0) {
+              if (typeof data12.concept !== "string") {
+                const err24 = { instancePath: instancePath + "/targets/" + i0 + "/concept", schemaPath: "#/$defs/CrosswalkTargetDoc/properties/concept/type", keyword: "type", params: { type: "string" }, message: "must be string" };
                 if (vErrors === null) {
                   vErrors = [err24];
                 } else {
@@ -667,9 +667,9 @@ function validate23(data, { instancePath = "", parentData, parentDataProperty, r
                 errors++;
               }
             }
-            if (data12.copyValue !== void 0) {
-              if (typeof data12.copyValue !== "boolean") {
-                const err25 = { instancePath: instancePath + "/targets/" + i0 + "/copyValue", schemaPath: "#/$defs/CrosswalkTarget/properties/copyValue/type", keyword: "type", params: { type: "boolean" }, message: "must be boolean" };
+            if (data12.copy_value !== void 0) {
+              if (typeof data12.copy_value !== "boolean") {
+                const err25 = { instancePath: instancePath + "/targets/" + i0 + "/copy_value", schemaPath: "#/$defs/CrosswalkTargetDoc/properties/copy_value/type", keyword: "type", params: { type: "boolean" }, message: "must be boolean" };
                 if (vErrors === null) {
                   vErrors = [err25];
                 } else {
@@ -680,7 +680,7 @@ function validate23(data, { instancePath = "", parentData, parentDataProperty, r
             }
             if (data12.value !== void 0) {
               if (typeof data12.value !== "string") {
-                const err26 = { instancePath: instancePath + "/targets/" + i0 + "/value", schemaPath: "#/$defs/CrosswalkTarget/properties/value/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+                const err26 = { instancePath: instancePath + "/targets/" + i0 + "/value", schemaPath: "#/$defs/CrosswalkTargetDoc/properties/value/type", keyword: "type", params: { type: "string" }, message: "must be string" };
                 if (vErrors === null) {
                   vErrors = [err26];
                 } else {
@@ -690,7 +690,7 @@ function validate23(data, { instancePath = "", parentData, parentDataProperty, r
               }
             }
           } else {
-            const err27 = { instancePath: instancePath + "/targets/" + i0, schemaPath: "#/$defs/CrosswalkTarget/type", keyword: "type", params: { type: "object" }, message: "must be object" };
+            const err27 = { instancePath: instancePath + "/targets/" + i0, schemaPath: "#/$defs/CrosswalkTargetDoc/type", keyword: "type", params: { type: "object" }, message: "must be object" };
             if (vErrors === null) {
               vErrors = [err27];
             } else {
@@ -723,7 +723,7 @@ function validate23(data, { instancePath = "", parentData, parentDataProperty, r
 }
 validate23.evaluated = { "props": true, "dynamicProps": false, "dynamicItems": false };
 var schema50 = { "description": "Strategy for choosing one candidate from a reviewed cross-field decision.", "enum": ["first-match", "most-matches"], "type": "string" };
-var schema41 = { "additionalProperties": false, "description": "A selection candidate as a crosswalk document authors it.", "properties": { "authority": { "description": "Authority behind the candidate decision, when one exists.", "type": "string" }, "citation": { "description": "Citation supporting the candidate decision.", "type": "string" }, "disposition": { "$ref": "#/$defs/CrosswalkDisposition", "description": "Treatment applied when this candidate is selected. Omitted, the candidate carries (`carry`)." }, "guidance": { "description": "Operator guidance for the candidate decision.", "type": "string" }, "id": { "description": "Stable candidate identifier within its selection.", "type": "string" }, "mappings": { "description": "Per-assertion mappings activated when this candidate is selected.", "items": { "$ref": "#/$defs/CrosswalkMappingDoc" }, "type": "array" }, "reason": { "description": "Human-readable basis for selecting and applying this candidate.", "type": "string" }, "score": { "description": "Assertions counted by a `most-matches` selection.", "items": { "$ref": "#/$defs/AssertionReference" }, "type": "array" }, "sources": { "description": "Source assertions covered when this candidate is selected.", "items": { "$ref": "#/$defs/AssertionReference" }, "type": "array" }, "targets": { "description": "Targets emitted once when this candidate is selected.", "items": { "$ref": "#/$defs/CrosswalkTarget" }, "type": "array" }, "when": { "$ref": "#/$defs/CrosswalkSelectionCondition", "description": "Predicate used by a `first-match` selection; omission makes this the fallback." } }, "required": ["id", "reason"], "type": "object" };
+var schema41 = { "additionalProperties": false, "description": "A selection candidate as a crosswalk document authors it.", "properties": { "authority": { "description": "Authority behind the candidate decision, when one exists.", "type": "string" }, "citation": { "description": "Citation supporting the candidate decision.", "type": "string" }, "disposition": { "$ref": "#/$defs/CrosswalkDisposition", "description": "Treatment applied when this candidate is selected. Omitted, the candidate carries (`carry`)." }, "guidance": { "description": "Operator guidance for the candidate decision.", "type": "string" }, "id": { "description": "Stable candidate identifier within its selection.", "type": "string" }, "mappings": { "description": "Per-assertion mappings activated when this candidate is selected.", "items": { "$ref": "#/$defs/CrosswalkMappingDoc" }, "type": "array" }, "reason": { "description": "Human-readable basis for selecting and applying this candidate.", "type": "string" }, "score": { "description": "Assertions counted by a `most-matches` selection.", "items": { "$ref": "#/$defs/CrosswalkAssertionDoc" }, "type": "array" }, "sources": { "description": "Source assertions covered when this candidate is selected.", "items": { "$ref": "#/$defs/CrosswalkAssertionDoc" }, "type": "array" }, "targets": { "description": "Targets emitted once when this candidate is selected.", "items": { "$ref": "#/$defs/CrosswalkTargetDoc" }, "type": "array" }, "when": { "$ref": "#/$defs/CrosswalkSelectionConditionDoc", "description": "Predicate used by a `first-match` selection; omission makes this the fallback." } }, "required": ["id", "reason"], "type": "object" };
 function validate28(data, { instancePath = "", parentData, parentDataProperty, rootData = data, dynamicAnchors = {} } = {}) {
   let vErrors = null;
   let errors = 0;
@@ -753,8 +753,8 @@ function validate28(data, { instancePath = "", parentData, parentDataProperty, r
         for (let i0 = 0; i0 < len0; i0++) {
           let data1 = data0[i0];
           if (data1 && typeof data1 == "object" && !Array.isArray(data1)) {
-            if (data1.categoryId === void 0) {
-              const err1 = { instancePath: instancePath + "/all/" + i0, schemaPath: "#/$defs/AssertionReference/required", keyword: "required", params: { missingProperty: "categoryId" }, message: "must have required property 'categoryId'" };
+            if (data1.category === void 0) {
+              const err1 = { instancePath: instancePath + "/all/" + i0, schemaPath: "#/$defs/CrosswalkAssertionDoc/required", keyword: "required", params: { missingProperty: "category" }, message: "must have required property 'category'" };
               if (vErrors === null) {
                 vErrors = [err1];
               } else {
@@ -762,8 +762,8 @@ function validate28(data, { instancePath = "", parentData, parentDataProperty, r
               }
               errors++;
             }
-            if (data1.conceptId === void 0) {
-              const err2 = { instancePath: instancePath + "/all/" + i0, schemaPath: "#/$defs/AssertionReference/required", keyword: "required", params: { missingProperty: "conceptId" }, message: "must have required property 'conceptId'" };
+            if (data1.concept === void 0) {
+              const err2 = { instancePath: instancePath + "/all/" + i0, schemaPath: "#/$defs/CrosswalkAssertionDoc/required", keyword: "required", params: { missingProperty: "concept" }, message: "must have required property 'concept'" };
               if (vErrors === null) {
                 vErrors = [err2];
               } else {
@@ -772,8 +772,8 @@ function validate28(data, { instancePath = "", parentData, parentDataProperty, r
               errors++;
             }
             for (const key1 in data1) {
-              if (!(key1 === "categoryId" || key1 === "conceptId" || key1 === "value")) {
-                const err3 = { instancePath: instancePath + "/all/" + i0, schemaPath: "#/$defs/AssertionReference/additionalProperties", keyword: "additionalProperties", params: { additionalProperty: key1 }, message: "must NOT have additional properties" };
+              if (!(key1 === "category" || key1 === "concept" || key1 === "value")) {
+                const err3 = { instancePath: instancePath + "/all/" + i0, schemaPath: "#/$defs/CrosswalkAssertionDoc/additionalProperties", keyword: "additionalProperties", params: { additionalProperty: key1 }, message: "must NOT have additional properties" };
                 if (vErrors === null) {
                   vErrors = [err3];
                 } else {
@@ -782,9 +782,9 @@ function validate28(data, { instancePath = "", parentData, parentDataProperty, r
                 errors++;
               }
             }
-            if (data1.categoryId !== void 0) {
-              if (typeof data1.categoryId !== "string") {
-                const err4 = { instancePath: instancePath + "/all/" + i0 + "/categoryId", schemaPath: "#/$defs/AssertionReference/properties/categoryId/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+            if (data1.category !== void 0) {
+              if (typeof data1.category !== "string") {
+                const err4 = { instancePath: instancePath + "/all/" + i0 + "/category", schemaPath: "#/$defs/CrosswalkAssertionDoc/properties/category/type", keyword: "type", params: { type: "string" }, message: "must be string" };
                 if (vErrors === null) {
                   vErrors = [err4];
                 } else {
@@ -793,9 +793,9 @@ function validate28(data, { instancePath = "", parentData, parentDataProperty, r
                 errors++;
               }
             }
-            if (data1.conceptId !== void 0) {
-              if (typeof data1.conceptId !== "string") {
-                const err5 = { instancePath: instancePath + "/all/" + i0 + "/conceptId", schemaPath: "#/$defs/AssertionReference/properties/conceptId/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+            if (data1.concept !== void 0) {
+              if (typeof data1.concept !== "string") {
+                const err5 = { instancePath: instancePath + "/all/" + i0 + "/concept", schemaPath: "#/$defs/CrosswalkAssertionDoc/properties/concept/type", keyword: "type", params: { type: "string" }, message: "must be string" };
                 if (vErrors === null) {
                   vErrors = [err5];
                 } else {
@@ -806,7 +806,7 @@ function validate28(data, { instancePath = "", parentData, parentDataProperty, r
             }
             if (data1.value !== void 0) {
               if (typeof data1.value !== "string") {
-                const err6 = { instancePath: instancePath + "/all/" + i0 + "/value", schemaPath: "#/$defs/AssertionReference/properties/value/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+                const err6 = { instancePath: instancePath + "/all/" + i0 + "/value", schemaPath: "#/$defs/CrosswalkAssertionDoc/properties/value/type", keyword: "type", params: { type: "string" }, message: "must be string" };
                 if (vErrors === null) {
                   vErrors = [err6];
                 } else {
@@ -816,7 +816,7 @@ function validate28(data, { instancePath = "", parentData, parentDataProperty, r
               }
             }
           } else {
-            const err7 = { instancePath: instancePath + "/all/" + i0, schemaPath: "#/$defs/AssertionReference/type", keyword: "type", params: { type: "object" }, message: "must be object" };
+            const err7 = { instancePath: instancePath + "/all/" + i0, schemaPath: "#/$defs/CrosswalkAssertionDoc/type", keyword: "type", params: { type: "object" }, message: "must be object" };
             if (vErrors === null) {
               vErrors = [err7];
             } else {
@@ -842,8 +842,8 @@ function validate28(data, { instancePath = "", parentData, parentDataProperty, r
         for (let i1 = 0; i1 < len1; i1++) {
           let data6 = data5[i1];
           if (data6 && typeof data6 == "object" && !Array.isArray(data6)) {
-            if (data6.categoryId === void 0) {
-              const err9 = { instancePath: instancePath + "/any/" + i1, schemaPath: "#/$defs/AssertionReference/required", keyword: "required", params: { missingProperty: "categoryId" }, message: "must have required property 'categoryId'" };
+            if (data6.category === void 0) {
+              const err9 = { instancePath: instancePath + "/any/" + i1, schemaPath: "#/$defs/CrosswalkAssertionDoc/required", keyword: "required", params: { missingProperty: "category" }, message: "must have required property 'category'" };
               if (vErrors === null) {
                 vErrors = [err9];
               } else {
@@ -851,8 +851,8 @@ function validate28(data, { instancePath = "", parentData, parentDataProperty, r
               }
               errors++;
             }
-            if (data6.conceptId === void 0) {
-              const err10 = { instancePath: instancePath + "/any/" + i1, schemaPath: "#/$defs/AssertionReference/required", keyword: "required", params: { missingProperty: "conceptId" }, message: "must have required property 'conceptId'" };
+            if (data6.concept === void 0) {
+              const err10 = { instancePath: instancePath + "/any/" + i1, schemaPath: "#/$defs/CrosswalkAssertionDoc/required", keyword: "required", params: { missingProperty: "concept" }, message: "must have required property 'concept'" };
               if (vErrors === null) {
                 vErrors = [err10];
               } else {
@@ -861,8 +861,8 @@ function validate28(data, { instancePath = "", parentData, parentDataProperty, r
               errors++;
             }
             for (const key2 in data6) {
-              if (!(key2 === "categoryId" || key2 === "conceptId" || key2 === "value")) {
-                const err11 = { instancePath: instancePath + "/any/" + i1, schemaPath: "#/$defs/AssertionReference/additionalProperties", keyword: "additionalProperties", params: { additionalProperty: key2 }, message: "must NOT have additional properties" };
+              if (!(key2 === "category" || key2 === "concept" || key2 === "value")) {
+                const err11 = { instancePath: instancePath + "/any/" + i1, schemaPath: "#/$defs/CrosswalkAssertionDoc/additionalProperties", keyword: "additionalProperties", params: { additionalProperty: key2 }, message: "must NOT have additional properties" };
                 if (vErrors === null) {
                   vErrors = [err11];
                 } else {
@@ -871,9 +871,9 @@ function validate28(data, { instancePath = "", parentData, parentDataProperty, r
                 errors++;
               }
             }
-            if (data6.categoryId !== void 0) {
-              if (typeof data6.categoryId !== "string") {
-                const err12 = { instancePath: instancePath + "/any/" + i1 + "/categoryId", schemaPath: "#/$defs/AssertionReference/properties/categoryId/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+            if (data6.category !== void 0) {
+              if (typeof data6.category !== "string") {
+                const err12 = { instancePath: instancePath + "/any/" + i1 + "/category", schemaPath: "#/$defs/CrosswalkAssertionDoc/properties/category/type", keyword: "type", params: { type: "string" }, message: "must be string" };
                 if (vErrors === null) {
                   vErrors = [err12];
                 } else {
@@ -882,9 +882,9 @@ function validate28(data, { instancePath = "", parentData, parentDataProperty, r
                 errors++;
               }
             }
-            if (data6.conceptId !== void 0) {
-              if (typeof data6.conceptId !== "string") {
-                const err13 = { instancePath: instancePath + "/any/" + i1 + "/conceptId", schemaPath: "#/$defs/AssertionReference/properties/conceptId/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+            if (data6.concept !== void 0) {
+              if (typeof data6.concept !== "string") {
+                const err13 = { instancePath: instancePath + "/any/" + i1 + "/concept", schemaPath: "#/$defs/CrosswalkAssertionDoc/properties/concept/type", keyword: "type", params: { type: "string" }, message: "must be string" };
                 if (vErrors === null) {
                   vErrors = [err13];
                 } else {
@@ -895,7 +895,7 @@ function validate28(data, { instancePath = "", parentData, parentDataProperty, r
             }
             if (data6.value !== void 0) {
               if (typeof data6.value !== "string") {
-                const err14 = { instancePath: instancePath + "/any/" + i1 + "/value", schemaPath: "#/$defs/AssertionReference/properties/value/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+                const err14 = { instancePath: instancePath + "/any/" + i1 + "/value", schemaPath: "#/$defs/CrosswalkAssertionDoc/properties/value/type", keyword: "type", params: { type: "string" }, message: "must be string" };
                 if (vErrors === null) {
                   vErrors = [err14];
                 } else {
@@ -905,7 +905,7 @@ function validate28(data, { instancePath = "", parentData, parentDataProperty, r
               }
             }
           } else {
-            const err15 = { instancePath: instancePath + "/any/" + i1, schemaPath: "#/$defs/AssertionReference/type", keyword: "type", params: { type: "object" }, message: "must be object" };
+            const err15 = { instancePath: instancePath + "/any/" + i1, schemaPath: "#/$defs/CrosswalkAssertionDoc/type", keyword: "type", params: { type: "object" }, message: "must be object" };
             if (vErrors === null) {
               vErrors = [err15];
             } else {
@@ -931,8 +931,8 @@ function validate28(data, { instancePath = "", parentData, parentDataProperty, r
         for (let i2 = 0; i2 < len2; i2++) {
           let data11 = data10[i2];
           if (data11 && typeof data11 == "object" && !Array.isArray(data11)) {
-            if (data11.categoryId === void 0) {
-              const err17 = { instancePath: instancePath + "/none/" + i2, schemaPath: "#/$defs/AssertionReference/required", keyword: "required", params: { missingProperty: "categoryId" }, message: "must have required property 'categoryId'" };
+            if (data11.category === void 0) {
+              const err17 = { instancePath: instancePath + "/none/" + i2, schemaPath: "#/$defs/CrosswalkAssertionDoc/required", keyword: "required", params: { missingProperty: "category" }, message: "must have required property 'category'" };
               if (vErrors === null) {
                 vErrors = [err17];
               } else {
@@ -940,8 +940,8 @@ function validate28(data, { instancePath = "", parentData, parentDataProperty, r
               }
               errors++;
             }
-            if (data11.conceptId === void 0) {
-              const err18 = { instancePath: instancePath + "/none/" + i2, schemaPath: "#/$defs/AssertionReference/required", keyword: "required", params: { missingProperty: "conceptId" }, message: "must have required property 'conceptId'" };
+            if (data11.concept === void 0) {
+              const err18 = { instancePath: instancePath + "/none/" + i2, schemaPath: "#/$defs/CrosswalkAssertionDoc/required", keyword: "required", params: { missingProperty: "concept" }, message: "must have required property 'concept'" };
               if (vErrors === null) {
                 vErrors = [err18];
               } else {
@@ -950,8 +950,8 @@ function validate28(data, { instancePath = "", parentData, parentDataProperty, r
               errors++;
             }
             for (const key3 in data11) {
-              if (!(key3 === "categoryId" || key3 === "conceptId" || key3 === "value")) {
-                const err19 = { instancePath: instancePath + "/none/" + i2, schemaPath: "#/$defs/AssertionReference/additionalProperties", keyword: "additionalProperties", params: { additionalProperty: key3 }, message: "must NOT have additional properties" };
+              if (!(key3 === "category" || key3 === "concept" || key3 === "value")) {
+                const err19 = { instancePath: instancePath + "/none/" + i2, schemaPath: "#/$defs/CrosswalkAssertionDoc/additionalProperties", keyword: "additionalProperties", params: { additionalProperty: key3 }, message: "must NOT have additional properties" };
                 if (vErrors === null) {
                   vErrors = [err19];
                 } else {
@@ -960,9 +960,9 @@ function validate28(data, { instancePath = "", parentData, parentDataProperty, r
                 errors++;
               }
             }
-            if (data11.categoryId !== void 0) {
-              if (typeof data11.categoryId !== "string") {
-                const err20 = { instancePath: instancePath + "/none/" + i2 + "/categoryId", schemaPath: "#/$defs/AssertionReference/properties/categoryId/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+            if (data11.category !== void 0) {
+              if (typeof data11.category !== "string") {
+                const err20 = { instancePath: instancePath + "/none/" + i2 + "/category", schemaPath: "#/$defs/CrosswalkAssertionDoc/properties/category/type", keyword: "type", params: { type: "string" }, message: "must be string" };
                 if (vErrors === null) {
                   vErrors = [err20];
                 } else {
@@ -971,9 +971,9 @@ function validate28(data, { instancePath = "", parentData, parentDataProperty, r
                 errors++;
               }
             }
-            if (data11.conceptId !== void 0) {
-              if (typeof data11.conceptId !== "string") {
-                const err21 = { instancePath: instancePath + "/none/" + i2 + "/conceptId", schemaPath: "#/$defs/AssertionReference/properties/conceptId/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+            if (data11.concept !== void 0) {
+              if (typeof data11.concept !== "string") {
+                const err21 = { instancePath: instancePath + "/none/" + i2 + "/concept", schemaPath: "#/$defs/CrosswalkAssertionDoc/properties/concept/type", keyword: "type", params: { type: "string" }, message: "must be string" };
                 if (vErrors === null) {
                   vErrors = [err21];
                 } else {
@@ -984,7 +984,7 @@ function validate28(data, { instancePath = "", parentData, parentDataProperty, r
             }
             if (data11.value !== void 0) {
               if (typeof data11.value !== "string") {
-                const err22 = { instancePath: instancePath + "/none/" + i2 + "/value", schemaPath: "#/$defs/AssertionReference/properties/value/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+                const err22 = { instancePath: instancePath + "/none/" + i2 + "/value", schemaPath: "#/$defs/CrosswalkAssertionDoc/properties/value/type", keyword: "type", params: { type: "string" }, message: "must be string" };
                 if (vErrors === null) {
                   vErrors = [err22];
                 } else {
@@ -994,7 +994,7 @@ function validate28(data, { instancePath = "", parentData, parentDataProperty, r
               }
             }
           } else {
-            const err23 = { instancePath: instancePath + "/none/" + i2, schemaPath: "#/$defs/AssertionReference/type", keyword: "type", params: { type: "object" }, message: "must be object" };
+            const err23 = { instancePath: instancePath + "/none/" + i2, schemaPath: "#/$defs/CrosswalkAssertionDoc/type", keyword: "type", params: { type: "object" }, message: "must be object" };
             if (vErrors === null) {
               vErrors = [err23];
             } else {
@@ -1169,8 +1169,8 @@ function validate26(data, { instancePath = "", parentData, parentDataProperty, r
         for (let i1 = 0; i1 < len1; i1++) {
           let data9 = data8[i1];
           if (data9 && typeof data9 == "object" && !Array.isArray(data9)) {
-            if (data9.categoryId === void 0) {
-              const err11 = { instancePath: instancePath + "/score/" + i1, schemaPath: "#/$defs/AssertionReference/required", keyword: "required", params: { missingProperty: "categoryId" }, message: "must have required property 'categoryId'" };
+            if (data9.category === void 0) {
+              const err11 = { instancePath: instancePath + "/score/" + i1, schemaPath: "#/$defs/CrosswalkAssertionDoc/required", keyword: "required", params: { missingProperty: "category" }, message: "must have required property 'category'" };
               if (vErrors === null) {
                 vErrors = [err11];
               } else {
@@ -1178,8 +1178,8 @@ function validate26(data, { instancePath = "", parentData, parentDataProperty, r
               }
               errors++;
             }
-            if (data9.conceptId === void 0) {
-              const err12 = { instancePath: instancePath + "/score/" + i1, schemaPath: "#/$defs/AssertionReference/required", keyword: "required", params: { missingProperty: "conceptId" }, message: "must have required property 'conceptId'" };
+            if (data9.concept === void 0) {
+              const err12 = { instancePath: instancePath + "/score/" + i1, schemaPath: "#/$defs/CrosswalkAssertionDoc/required", keyword: "required", params: { missingProperty: "concept" }, message: "must have required property 'concept'" };
               if (vErrors === null) {
                 vErrors = [err12];
               } else {
@@ -1188,8 +1188,8 @@ function validate26(data, { instancePath = "", parentData, parentDataProperty, r
               errors++;
             }
             for (const key1 in data9) {
-              if (!(key1 === "categoryId" || key1 === "conceptId" || key1 === "value")) {
-                const err13 = { instancePath: instancePath + "/score/" + i1, schemaPath: "#/$defs/AssertionReference/additionalProperties", keyword: "additionalProperties", params: { additionalProperty: key1 }, message: "must NOT have additional properties" };
+              if (!(key1 === "category" || key1 === "concept" || key1 === "value")) {
+                const err13 = { instancePath: instancePath + "/score/" + i1, schemaPath: "#/$defs/CrosswalkAssertionDoc/additionalProperties", keyword: "additionalProperties", params: { additionalProperty: key1 }, message: "must NOT have additional properties" };
                 if (vErrors === null) {
                   vErrors = [err13];
                 } else {
@@ -1198,9 +1198,9 @@ function validate26(data, { instancePath = "", parentData, parentDataProperty, r
                 errors++;
               }
             }
-            if (data9.categoryId !== void 0) {
-              if (typeof data9.categoryId !== "string") {
-                const err14 = { instancePath: instancePath + "/score/" + i1 + "/categoryId", schemaPath: "#/$defs/AssertionReference/properties/categoryId/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+            if (data9.category !== void 0) {
+              if (typeof data9.category !== "string") {
+                const err14 = { instancePath: instancePath + "/score/" + i1 + "/category", schemaPath: "#/$defs/CrosswalkAssertionDoc/properties/category/type", keyword: "type", params: { type: "string" }, message: "must be string" };
                 if (vErrors === null) {
                   vErrors = [err14];
                 } else {
@@ -1209,9 +1209,9 @@ function validate26(data, { instancePath = "", parentData, parentDataProperty, r
                 errors++;
               }
             }
-            if (data9.conceptId !== void 0) {
-              if (typeof data9.conceptId !== "string") {
-                const err15 = { instancePath: instancePath + "/score/" + i1 + "/conceptId", schemaPath: "#/$defs/AssertionReference/properties/conceptId/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+            if (data9.concept !== void 0) {
+              if (typeof data9.concept !== "string") {
+                const err15 = { instancePath: instancePath + "/score/" + i1 + "/concept", schemaPath: "#/$defs/CrosswalkAssertionDoc/properties/concept/type", keyword: "type", params: { type: "string" }, message: "must be string" };
                 if (vErrors === null) {
                   vErrors = [err15];
                 } else {
@@ -1222,7 +1222,7 @@ function validate26(data, { instancePath = "", parentData, parentDataProperty, r
             }
             if (data9.value !== void 0) {
               if (typeof data9.value !== "string") {
-                const err16 = { instancePath: instancePath + "/score/" + i1 + "/value", schemaPath: "#/$defs/AssertionReference/properties/value/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+                const err16 = { instancePath: instancePath + "/score/" + i1 + "/value", schemaPath: "#/$defs/CrosswalkAssertionDoc/properties/value/type", keyword: "type", params: { type: "string" }, message: "must be string" };
                 if (vErrors === null) {
                   vErrors = [err16];
                 } else {
@@ -1232,7 +1232,7 @@ function validate26(data, { instancePath = "", parentData, parentDataProperty, r
               }
             }
           } else {
-            const err17 = { instancePath: instancePath + "/score/" + i1, schemaPath: "#/$defs/AssertionReference/type", keyword: "type", params: { type: "object" }, message: "must be object" };
+            const err17 = { instancePath: instancePath + "/score/" + i1, schemaPath: "#/$defs/CrosswalkAssertionDoc/type", keyword: "type", params: { type: "object" }, message: "must be object" };
             if (vErrors === null) {
               vErrors = [err17];
             } else {
@@ -1258,8 +1258,8 @@ function validate26(data, { instancePath = "", parentData, parentDataProperty, r
         for (let i2 = 0; i2 < len2; i2++) {
           let data14 = data13[i2];
           if (data14 && typeof data14 == "object" && !Array.isArray(data14)) {
-            if (data14.categoryId === void 0) {
-              const err19 = { instancePath: instancePath + "/sources/" + i2, schemaPath: "#/$defs/AssertionReference/required", keyword: "required", params: { missingProperty: "categoryId" }, message: "must have required property 'categoryId'" };
+            if (data14.category === void 0) {
+              const err19 = { instancePath: instancePath + "/sources/" + i2, schemaPath: "#/$defs/CrosswalkAssertionDoc/required", keyword: "required", params: { missingProperty: "category" }, message: "must have required property 'category'" };
               if (vErrors === null) {
                 vErrors = [err19];
               } else {
@@ -1267,8 +1267,8 @@ function validate26(data, { instancePath = "", parentData, parentDataProperty, r
               }
               errors++;
             }
-            if (data14.conceptId === void 0) {
-              const err20 = { instancePath: instancePath + "/sources/" + i2, schemaPath: "#/$defs/AssertionReference/required", keyword: "required", params: { missingProperty: "conceptId" }, message: "must have required property 'conceptId'" };
+            if (data14.concept === void 0) {
+              const err20 = { instancePath: instancePath + "/sources/" + i2, schemaPath: "#/$defs/CrosswalkAssertionDoc/required", keyword: "required", params: { missingProperty: "concept" }, message: "must have required property 'concept'" };
               if (vErrors === null) {
                 vErrors = [err20];
               } else {
@@ -1277,8 +1277,8 @@ function validate26(data, { instancePath = "", parentData, parentDataProperty, r
               errors++;
             }
             for (const key2 in data14) {
-              if (!(key2 === "categoryId" || key2 === "conceptId" || key2 === "value")) {
-                const err21 = { instancePath: instancePath + "/sources/" + i2, schemaPath: "#/$defs/AssertionReference/additionalProperties", keyword: "additionalProperties", params: { additionalProperty: key2 }, message: "must NOT have additional properties" };
+              if (!(key2 === "category" || key2 === "concept" || key2 === "value")) {
+                const err21 = { instancePath: instancePath + "/sources/" + i2, schemaPath: "#/$defs/CrosswalkAssertionDoc/additionalProperties", keyword: "additionalProperties", params: { additionalProperty: key2 }, message: "must NOT have additional properties" };
                 if (vErrors === null) {
                   vErrors = [err21];
                 } else {
@@ -1287,9 +1287,9 @@ function validate26(data, { instancePath = "", parentData, parentDataProperty, r
                 errors++;
               }
             }
-            if (data14.categoryId !== void 0) {
-              if (typeof data14.categoryId !== "string") {
-                const err22 = { instancePath: instancePath + "/sources/" + i2 + "/categoryId", schemaPath: "#/$defs/AssertionReference/properties/categoryId/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+            if (data14.category !== void 0) {
+              if (typeof data14.category !== "string") {
+                const err22 = { instancePath: instancePath + "/sources/" + i2 + "/category", schemaPath: "#/$defs/CrosswalkAssertionDoc/properties/category/type", keyword: "type", params: { type: "string" }, message: "must be string" };
                 if (vErrors === null) {
                   vErrors = [err22];
                 } else {
@@ -1298,9 +1298,9 @@ function validate26(data, { instancePath = "", parentData, parentDataProperty, r
                 errors++;
               }
             }
-            if (data14.conceptId !== void 0) {
-              if (typeof data14.conceptId !== "string") {
-                const err23 = { instancePath: instancePath + "/sources/" + i2 + "/conceptId", schemaPath: "#/$defs/AssertionReference/properties/conceptId/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+            if (data14.concept !== void 0) {
+              if (typeof data14.concept !== "string") {
+                const err23 = { instancePath: instancePath + "/sources/" + i2 + "/concept", schemaPath: "#/$defs/CrosswalkAssertionDoc/properties/concept/type", keyword: "type", params: { type: "string" }, message: "must be string" };
                 if (vErrors === null) {
                   vErrors = [err23];
                 } else {
@@ -1311,7 +1311,7 @@ function validate26(data, { instancePath = "", parentData, parentDataProperty, r
             }
             if (data14.value !== void 0) {
               if (typeof data14.value !== "string") {
-                const err24 = { instancePath: instancePath + "/sources/" + i2 + "/value", schemaPath: "#/$defs/AssertionReference/properties/value/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+                const err24 = { instancePath: instancePath + "/sources/" + i2 + "/value", schemaPath: "#/$defs/CrosswalkAssertionDoc/properties/value/type", keyword: "type", params: { type: "string" }, message: "must be string" };
                 if (vErrors === null) {
                   vErrors = [err24];
                 } else {
@@ -1321,7 +1321,7 @@ function validate26(data, { instancePath = "", parentData, parentDataProperty, r
               }
             }
           } else {
-            const err25 = { instancePath: instancePath + "/sources/" + i2, schemaPath: "#/$defs/AssertionReference/type", keyword: "type", params: { type: "object" }, message: "must be object" };
+            const err25 = { instancePath: instancePath + "/sources/" + i2, schemaPath: "#/$defs/CrosswalkAssertionDoc/type", keyword: "type", params: { type: "object" }, message: "must be object" };
             if (vErrors === null) {
               vErrors = [err25];
             } else {
@@ -1347,8 +1347,8 @@ function validate26(data, { instancePath = "", parentData, parentDataProperty, r
         for (let i3 = 0; i3 < len3; i3++) {
           let data19 = data18[i3];
           if (data19 && typeof data19 == "object" && !Array.isArray(data19)) {
-            if (data19.categoryId === void 0) {
-              const err27 = { instancePath: instancePath + "/targets/" + i3, schemaPath: "#/$defs/CrosswalkTarget/required", keyword: "required", params: { missingProperty: "categoryId" }, message: "must have required property 'categoryId'" };
+            if (data19.category === void 0) {
+              const err27 = { instancePath: instancePath + "/targets/" + i3, schemaPath: "#/$defs/CrosswalkTargetDoc/required", keyword: "required", params: { missingProperty: "category" }, message: "must have required property 'category'" };
               if (vErrors === null) {
                 vErrors = [err27];
               } else {
@@ -1356,8 +1356,8 @@ function validate26(data, { instancePath = "", parentData, parentDataProperty, r
               }
               errors++;
             }
-            if (data19.conceptId === void 0) {
-              const err28 = { instancePath: instancePath + "/targets/" + i3, schemaPath: "#/$defs/CrosswalkTarget/required", keyword: "required", params: { missingProperty: "conceptId" }, message: "must have required property 'conceptId'" };
+            if (data19.concept === void 0) {
+              const err28 = { instancePath: instancePath + "/targets/" + i3, schemaPath: "#/$defs/CrosswalkTargetDoc/required", keyword: "required", params: { missingProperty: "concept" }, message: "must have required property 'concept'" };
               if (vErrors === null) {
                 vErrors = [err28];
               } else {
@@ -1366,8 +1366,8 @@ function validate26(data, { instancePath = "", parentData, parentDataProperty, r
               errors++;
             }
             for (const key3 in data19) {
-              if (!(key3 === "categoryId" || key3 === "conceptId" || key3 === "copyValue" || key3 === "value")) {
-                const err29 = { instancePath: instancePath + "/targets/" + i3, schemaPath: "#/$defs/CrosswalkTarget/additionalProperties", keyword: "additionalProperties", params: { additionalProperty: key3 }, message: "must NOT have additional properties" };
+              if (!(key3 === "category" || key3 === "concept" || key3 === "copy_value" || key3 === "value")) {
+                const err29 = { instancePath: instancePath + "/targets/" + i3, schemaPath: "#/$defs/CrosswalkTargetDoc/additionalProperties", keyword: "additionalProperties", params: { additionalProperty: key3 }, message: "must NOT have additional properties" };
                 if (vErrors === null) {
                   vErrors = [err29];
                 } else {
@@ -1376,9 +1376,9 @@ function validate26(data, { instancePath = "", parentData, parentDataProperty, r
                 errors++;
               }
             }
-            if (data19.categoryId !== void 0) {
-              if (typeof data19.categoryId !== "string") {
-                const err30 = { instancePath: instancePath + "/targets/" + i3 + "/categoryId", schemaPath: "#/$defs/CrosswalkTarget/properties/categoryId/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+            if (data19.category !== void 0) {
+              if (typeof data19.category !== "string") {
+                const err30 = { instancePath: instancePath + "/targets/" + i3 + "/category", schemaPath: "#/$defs/CrosswalkTargetDoc/properties/category/type", keyword: "type", params: { type: "string" }, message: "must be string" };
                 if (vErrors === null) {
                   vErrors = [err30];
                 } else {
@@ -1387,9 +1387,9 @@ function validate26(data, { instancePath = "", parentData, parentDataProperty, r
                 errors++;
               }
             }
-            if (data19.conceptId !== void 0) {
-              if (typeof data19.conceptId !== "string") {
-                const err31 = { instancePath: instancePath + "/targets/" + i3 + "/conceptId", schemaPath: "#/$defs/CrosswalkTarget/properties/conceptId/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+            if (data19.concept !== void 0) {
+              if (typeof data19.concept !== "string") {
+                const err31 = { instancePath: instancePath + "/targets/" + i3 + "/concept", schemaPath: "#/$defs/CrosswalkTargetDoc/properties/concept/type", keyword: "type", params: { type: "string" }, message: "must be string" };
                 if (vErrors === null) {
                   vErrors = [err31];
                 } else {
@@ -1398,9 +1398,9 @@ function validate26(data, { instancePath = "", parentData, parentDataProperty, r
                 errors++;
               }
             }
-            if (data19.copyValue !== void 0) {
-              if (typeof data19.copyValue !== "boolean") {
-                const err32 = { instancePath: instancePath + "/targets/" + i3 + "/copyValue", schemaPath: "#/$defs/CrosswalkTarget/properties/copyValue/type", keyword: "type", params: { type: "boolean" }, message: "must be boolean" };
+            if (data19.copy_value !== void 0) {
+              if (typeof data19.copy_value !== "boolean") {
+                const err32 = { instancePath: instancePath + "/targets/" + i3 + "/copy_value", schemaPath: "#/$defs/CrosswalkTargetDoc/properties/copy_value/type", keyword: "type", params: { type: "boolean" }, message: "must be boolean" };
                 if (vErrors === null) {
                   vErrors = [err32];
                 } else {
@@ -1411,7 +1411,7 @@ function validate26(data, { instancePath = "", parentData, parentDataProperty, r
             }
             if (data19.value !== void 0) {
               if (typeof data19.value !== "string") {
-                const err33 = { instancePath: instancePath + "/targets/" + i3 + "/value", schemaPath: "#/$defs/CrosswalkTarget/properties/value/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+                const err33 = { instancePath: instancePath + "/targets/" + i3 + "/value", schemaPath: "#/$defs/CrosswalkTargetDoc/properties/value/type", keyword: "type", params: { type: "string" }, message: "must be string" };
                 if (vErrors === null) {
                   vErrors = [err33];
                 } else {
@@ -1421,7 +1421,7 @@ function validate26(data, { instancePath = "", parentData, parentDataProperty, r
               }
             }
           } else {
-            const err34 = { instancePath: instancePath + "/targets/" + i3, schemaPath: "#/$defs/CrosswalkTarget/type", keyword: "type", params: { type: "object" }, message: "must be object" };
+            const err34 = { instancePath: instancePath + "/targets/" + i3, schemaPath: "#/$defs/CrosswalkTargetDoc/type", keyword: "type", params: { type: "object" }, message: "must be object" };
             if (vErrors === null) {
               vErrors = [err34];
             } else {
@@ -1470,8 +1470,8 @@ function validate25(data, { instancePath = "", parentData, parentDataProperty, r
     evaluated0.items = void 0;
   }
   if (data && typeof data == "object" && !Array.isArray(data)) {
-    if (data.candidates === void 0) {
-      const err0 = { instancePath, schemaPath: "#/required", keyword: "required", params: { missingProperty: "candidates" }, message: "must have required property 'candidates'" };
+    if (data.id === void 0) {
+      const err0 = { instancePath, schemaPath: "#/required", keyword: "required", params: { missingProperty: "id" }, message: "must have required property 'id'" };
       if (vErrors === null) {
         vErrors = [err0];
       } else {
@@ -1479,8 +1479,8 @@ function validate25(data, { instancePath = "", parentData, parentDataProperty, r
       }
       errors++;
     }
-    if (data.id === void 0) {
-      const err1 = { instancePath, schemaPath: "#/required", keyword: "required", params: { missingProperty: "id" }, message: "must have required property 'id'" };
+    if (data.strategy === void 0) {
+      const err1 = { instancePath, schemaPath: "#/required", keyword: "required", params: { missingProperty: "strategy" }, message: "must have required property 'strategy'" };
       if (vErrors === null) {
         vErrors = [err1];
       } else {
@@ -1488,8 +1488,8 @@ function validate25(data, { instancePath = "", parentData, parentDataProperty, r
       }
       errors++;
     }
-    if (data.strategy === void 0) {
-      const err2 = { instancePath, schemaPath: "#/required", keyword: "required", params: { missingProperty: "strategy" }, message: "must have required property 'strategy'" };
+    if (data.candidates === void 0) {
+      const err2 = { instancePath, schemaPath: "#/required", keyword: "required", params: { missingProperty: "candidates" }, message: "must have required property 'candidates'" };
       if (vErrors === null) {
         vErrors = [err2];
       } else {
@@ -1635,8 +1635,8 @@ function validate20(data, { instancePath = "", parentData, parentDataProperty, r
           }
           errors++;
         }
-        if (data0.sourceScheme === void 0) {
-          const err5 = { instancePath: instancePath + "/crosswalk", schemaPath: "#/properties/crosswalk/required", keyword: "required", params: { missingProperty: "sourceScheme" }, message: "must have required property 'sourceScheme'" };
+        if (data0.source_scheme === void 0) {
+          const err5 = { instancePath: instancePath + "/crosswalk", schemaPath: "#/properties/crosswalk/required", keyword: "required", params: { missingProperty: "source_scheme" }, message: "must have required property 'source_scheme'" };
           if (vErrors === null) {
             vErrors = [err5];
           } else {
@@ -1644,8 +1644,8 @@ function validate20(data, { instancePath = "", parentData, parentDataProperty, r
           }
           errors++;
         }
-        if (data0.targetScheme === void 0) {
-          const err6 = { instancePath: instancePath + "/crosswalk", schemaPath: "#/properties/crosswalk/required", keyword: "required", params: { missingProperty: "targetScheme" }, message: "must have required property 'targetScheme'" };
+        if (data0.target_scheme === void 0) {
+          const err6 = { instancePath: instancePath + "/crosswalk", schemaPath: "#/properties/crosswalk/required", keyword: "required", params: { missingProperty: "target_scheme" }, message: "must have required property 'target_scheme'" };
           if (vErrors === null) {
             vErrors = [err6];
           } else {
@@ -1851,11 +1851,11 @@ function validate20(data, { instancePath = "", parentData, parentDataProperty, r
             errors++;
           }
         }
-        if (data0.sourceScheme !== void 0) {
-          let data15 = data0.sourceScheme;
+        if (data0.source_scheme !== void 0) {
+          let data15 = data0.source_scheme;
           if (data15 && typeof data15 == "object" && !Array.isArray(data15)) {
             if (data15.id === void 0) {
-              const err23 = { instancePath: instancePath + "/crosswalk/sourceScheme", schemaPath: "#/$defs/CrosswalkSchemeDependency/required", keyword: "required", params: { missingProperty: "id" }, message: "must have required property 'id'" };
+              const err23 = { instancePath: instancePath + "/crosswalk/source_scheme", schemaPath: "#/$defs/CrosswalkSchemeDependency/required", keyword: "required", params: { missingProperty: "id" }, message: "must have required property 'id'" };
               if (vErrors === null) {
                 vErrors = [err23];
               } else {
@@ -1865,7 +1865,7 @@ function validate20(data, { instancePath = "", parentData, parentDataProperty, r
             }
             for (const key3 in data15) {
               if (!(key3 === "id" || key3 === "version")) {
-                const err24 = { instancePath: instancePath + "/crosswalk/sourceScheme", schemaPath: "#/$defs/CrosswalkSchemeDependency/additionalProperties", keyword: "additionalProperties", params: { additionalProperty: key3 }, message: "must NOT have additional properties" };
+                const err24 = { instancePath: instancePath + "/crosswalk/source_scheme", schemaPath: "#/$defs/CrosswalkSchemeDependency/additionalProperties", keyword: "additionalProperties", params: { additionalProperty: key3 }, message: "must NOT have additional properties" };
                 if (vErrors === null) {
                   vErrors = [err24];
                 } else {
@@ -1876,7 +1876,7 @@ function validate20(data, { instancePath = "", parentData, parentDataProperty, r
             }
             if (data15.id !== void 0) {
               if (typeof data15.id !== "string") {
-                const err25 = { instancePath: instancePath + "/crosswalk/sourceScheme/id", schemaPath: "#/$defs/CrosswalkSchemeDependency/properties/id/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+                const err25 = { instancePath: instancePath + "/crosswalk/source_scheme/id", schemaPath: "#/$defs/CrosswalkSchemeDependency/properties/id/type", keyword: "type", params: { type: "string" }, message: "must be string" };
                 if (vErrors === null) {
                   vErrors = [err25];
                 } else {
@@ -1887,7 +1887,7 @@ function validate20(data, { instancePath = "", parentData, parentDataProperty, r
             }
             if (data15.version !== void 0) {
               if (typeof data15.version !== "string") {
-                const err26 = { instancePath: instancePath + "/crosswalk/sourceScheme/version", schemaPath: "#/$defs/CrosswalkSchemeDependency/properties/version/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+                const err26 = { instancePath: instancePath + "/crosswalk/source_scheme/version", schemaPath: "#/$defs/CrosswalkSchemeDependency/properties/version/type", keyword: "type", params: { type: "string" }, message: "must be string" };
                 if (vErrors === null) {
                   vErrors = [err26];
                 } else {
@@ -1897,7 +1897,7 @@ function validate20(data, { instancePath = "", parentData, parentDataProperty, r
               }
             }
           } else {
-            const err27 = { instancePath: instancePath + "/crosswalk/sourceScheme", schemaPath: "#/$defs/CrosswalkSchemeDependency/type", keyword: "type", params: { type: "object" }, message: "must be object" };
+            const err27 = { instancePath: instancePath + "/crosswalk/source_scheme", schemaPath: "#/$defs/CrosswalkSchemeDependency/type", keyword: "type", params: { type: "object" }, message: "must be object" };
             if (vErrors === null) {
               vErrors = [err27];
             } else {
@@ -1906,11 +1906,11 @@ function validate20(data, { instancePath = "", parentData, parentDataProperty, r
             errors++;
           }
         }
-        if (data0.targetScheme !== void 0) {
-          let data18 = data0.targetScheme;
+        if (data0.target_scheme !== void 0) {
+          let data18 = data0.target_scheme;
           if (data18 && typeof data18 == "object" && !Array.isArray(data18)) {
             if (data18.id === void 0) {
-              const err28 = { instancePath: instancePath + "/crosswalk/targetScheme", schemaPath: "#/$defs/CrosswalkSchemeDependency/required", keyword: "required", params: { missingProperty: "id" }, message: "must have required property 'id'" };
+              const err28 = { instancePath: instancePath + "/crosswalk/target_scheme", schemaPath: "#/$defs/CrosswalkSchemeDependency/required", keyword: "required", params: { missingProperty: "id" }, message: "must have required property 'id'" };
               if (vErrors === null) {
                 vErrors = [err28];
               } else {
@@ -1920,7 +1920,7 @@ function validate20(data, { instancePath = "", parentData, parentDataProperty, r
             }
             for (const key4 in data18) {
               if (!(key4 === "id" || key4 === "version")) {
-                const err29 = { instancePath: instancePath + "/crosswalk/targetScheme", schemaPath: "#/$defs/CrosswalkSchemeDependency/additionalProperties", keyword: "additionalProperties", params: { additionalProperty: key4 }, message: "must NOT have additional properties" };
+                const err29 = { instancePath: instancePath + "/crosswalk/target_scheme", schemaPath: "#/$defs/CrosswalkSchemeDependency/additionalProperties", keyword: "additionalProperties", params: { additionalProperty: key4 }, message: "must NOT have additional properties" };
                 if (vErrors === null) {
                   vErrors = [err29];
                 } else {
@@ -1931,7 +1931,7 @@ function validate20(data, { instancePath = "", parentData, parentDataProperty, r
             }
             if (data18.id !== void 0) {
               if (typeof data18.id !== "string") {
-                const err30 = { instancePath: instancePath + "/crosswalk/targetScheme/id", schemaPath: "#/$defs/CrosswalkSchemeDependency/properties/id/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+                const err30 = { instancePath: instancePath + "/crosswalk/target_scheme/id", schemaPath: "#/$defs/CrosswalkSchemeDependency/properties/id/type", keyword: "type", params: { type: "string" }, message: "must be string" };
                 if (vErrors === null) {
                   vErrors = [err30];
                 } else {
@@ -1942,7 +1942,7 @@ function validate20(data, { instancePath = "", parentData, parentDataProperty, r
             }
             if (data18.version !== void 0) {
               if (typeof data18.version !== "string") {
-                const err31 = { instancePath: instancePath + "/crosswalk/targetScheme/version", schemaPath: "#/$defs/CrosswalkSchemeDependency/properties/version/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+                const err31 = { instancePath: instancePath + "/crosswalk/target_scheme/version", schemaPath: "#/$defs/CrosswalkSchemeDependency/properties/version/type", keyword: "type", params: { type: "string" }, message: "must be string" };
                 if (vErrors === null) {
                   vErrors = [err31];
                 } else {
@@ -1952,7 +1952,7 @@ function validate20(data, { instancePath = "", parentData, parentDataProperty, r
               }
             }
           } else {
-            const err32 = { instancePath: instancePath + "/crosswalk/targetScheme", schemaPath: "#/$defs/CrosswalkSchemeDependency/type", keyword: "type", params: { type: "object" }, message: "must be object" };
+            const err32 = { instancePath: instancePath + "/crosswalk/target_scheme", schemaPath: "#/$defs/CrosswalkSchemeDependency/type", keyword: "type", params: { type: "object" }, message: "must be object" };
             if (vErrors === null) {
               vErrors = [err32];
             } else {

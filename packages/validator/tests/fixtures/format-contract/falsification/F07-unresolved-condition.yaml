@@ -23,9 +23,8 @@ scheme:
         label: Owner
         rollup: union
     concepts:
-      inline:
-        - { id: LEVEL_ONE, name: Level one, views: { default: ONE }, categories: [level] }
-        - { id: OWNER_HOME, name: Home owner, views: { default: HOME }, categories: [owner] }
+      - { id: LEVEL_ONE, name: Level one, views: { default: ONE }, categories: [level] }
+      - { id: OWNER_HOME, name: Home owner, views: { default: HOME }, categories: [owner] }
   render:
     default: banner
     formats:

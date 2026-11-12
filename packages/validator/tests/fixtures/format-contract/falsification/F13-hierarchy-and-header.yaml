@@ -27,13 +27,12 @@ scheme:
         label: Release list
         rollup: union
     concepts:
-      inline:
-        - { id: RELEASE_HEADER, name: Authorized release, views: { default: RELEASE }, categories: [handling] }
-        - { id: HANDLING_OTHER, name: Unrelated instruction, views: { default: OTHER }, categories: [handling] }
-        - { id: DEEP_ROOT, name: Deep root, views: { default: ROOT }, categories: [handling], parents: [DEEP_LEAF] }
-        - { id: DEEP_MIDDLE, name: Deep middle, views: { default: MIDDLE }, categories: [handling], parents: [DEEP_ROOT] }
-        - { id: DEEP_LEAF, name: Deep leaf, views: { default: LEAF }, categories: [handling], parents: [DEEP_MIDDLE] }
-        - { id: PARTNER_A, name: Partner A, views: { default: PA }, categories: [release] }
+      - { id: RELEASE_HEADER, name: Authorized release, views: { default: RELEASE }, categories: [handling] }
+      - { id: HANDLING_OTHER, name: Unrelated instruction, views: { default: OTHER }, categories: [handling] }
+      - { id: DEEP_ROOT, name: Deep root, views: { default: ROOT }, categories: [handling], parents: [DEEP_LEAF] }
+      - { id: DEEP_MIDDLE, name: Deep middle, views: { default: MIDDLE }, categories: [handling], parents: [DEEP_ROOT] }
+      - { id: DEEP_LEAF, name: Deep leaf, views: { default: LEAF }, categories: [handling], parents: [DEEP_MIDDLE] }
+      - { id: PARTNER_A, name: Partner A, views: { default: PA }, categories: [release] }
   render:
     default: banner
     formats:

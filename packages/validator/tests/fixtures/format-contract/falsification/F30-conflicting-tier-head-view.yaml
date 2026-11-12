@@ -16,27 +16,26 @@ scheme:
         rollup: union
         required: true
     concepts:
-      inline:
-        - id: HEAD
-          name: Shared head
-          views:
-            default: HEAD
-            abbreviated: H
-          categories: [program]
-        - id: ALPHA
-          name: Alpha child
-          views:
-            default: ALPHA
-          categories: [program]
-          parents: [HEAD]
-          tier: alpha
-        - id: BETA
-          name: Beta child
-          views:
-            default: BETA
-          categories: [program]
-          parents: [HEAD]
-          tier: beta
+      - id: HEAD
+        name: Shared head
+        views:
+          default: HEAD
+          abbreviated: H
+        categories: [program]
+      - id: ALPHA
+        name: Alpha child
+        views:
+          default: ALPHA
+        categories: [program]
+        parents: [HEAD]
+        tier: alpha
+      - id: BETA
+        name: Beta child
+        views:
+          default: BETA
+        categories: [program]
+        parents: [HEAD]
+        tier: beta
   render:
     default: banner
     formats:

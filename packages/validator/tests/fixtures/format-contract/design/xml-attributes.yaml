@@ -33,37 +33,35 @@ scheme:
         rollup: first
         single: true
     concepts:
-      inline:
-        - id: DECLASS_DATE
-          name: Specific date
-          views: { default: '{value}', structured: '{value}' }
-          categories: [declass]
-          text_input:
-            label: Date
-            encoding:
-              type: calendar-date
-              canonical: 'YYYY-MM-DD'
-              accepts: ['YYYY-MM-DD']
-        - id: DECLASS_EVENT
-          name: Event
-          views: { default: '{value}', structured: '{value}' }
-          categories: [declass]
-          text_input:
-            label: Event
-        - id: DECLASS_EVENT_DATE
-          name: Companion date
-          views: { default: '{value}', structured: '{value}' }
-          categories: [declass_date]
-          text_input:
-            label: Companion date
-            encoding:
-              type: calendar-date
-              canonical: 'YYYY-MM-DD'
-              accepts: ['YYYY-MM-DD']
+      - id: DECLASS_DATE
+        name: Specific date
+        views: { default: '{value}', structured: '{value}' }
+        categories: [declass]
+        text_input:
+          label: Date
+          encoding:
+            type: calendar-date
+            canonical: 'YYYY-MM-DD'
+            accepts: ['YYYY-MM-DD']
+      - id: DECLASS_EVENT
+        name: Event
+        views: { default: '{value}', structured: '{value}' }
+        categories: [declass]
+        text_input:
+          label: Event
+      - id: DECLASS_EVENT_DATE
+        name: Companion date
+        views: { default: '{value}', structured: '{value}' }
+        categories: [declass_date]
+        text_input:
+          label: Companion date
+          encoding:
+            type: calendar-date
+            canonical: 'YYYY-MM-DD'
+            accepts: ['YYYY-MM-DD']
   rules:
     - id: declass-event-requires-date
       name: Structured event instructions include a companion date
-      formats: [structured, structured_namespaced]
       when: DECLASS_EVENT
       action: require
       target: DECLASS_EVENT_DATE

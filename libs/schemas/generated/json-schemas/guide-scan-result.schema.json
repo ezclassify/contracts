@@ -1,57 +1,6 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
     "definitions": {
-        "Attribution": {
-            "description": "Provenance attached to every source so downstream consumers can render proper attribution and license notices.\n\nMandatory because most source data we'll integrate (NIST, ICS, IANA, external taxonomies) requires citation. Sources that don't have a formal license should set `license: 'unspecified'` rather than omit it.",
-            "properties": {
-                "citation": {
-                    "description": "Suggested citation string for academic / regulatory use.",
-                    "type": "string"
-                },
-                "license": {
-                    "description": "SPDX identifier or short license token (e.g. \"CC-BY-4.0\", \"public-domain\").",
-                    "type": "string"
-                },
-                "licenseUrl": {
-                    "description": "Canonical URL where the license terms can be inspected.",
-                    "type": "string"
-                },
-                "name": {
-                    "description": "Display name of the upstream source (e.g. \"NIST CSWP-29\").",
-                    "type": "string"
-                }
-            },
-            "required": ["name", "license"],
-            "type": "object"
-        },
-        "BestEffortSourceReference": {
-            "description": "Best-effort source identity and mandatory attribution for an operation.",
-            "properties": {
-                "attribution": {
-                    "$ref": "#/definitions/Attribution",
-                    "description": "Attribution and license information for the observed source."
-                },
-                "locator": {
-                    "description": "Location from which the mutable content was observed.",
-                    "type": "string"
-                },
-                "providerId": {
-                    "description": "Stable identifier for the source provider.",
-                    "type": "string"
-                },
-                "reproducibility": {
-                    "const": "best-effort",
-                    "description": "Whether the source observation can be reproduced byte-for-byte.",
-                    "type": "string"
-                },
-                "snapshotId": {
-                    "description": "Snapshot identity is forbidden when reproducibility is not proven.",
-                    "not": {}
-                }
-            },
-            "required": ["attribution", "providerId", "reproducibility"],
-            "type": "object"
-        },
         "CharacterWindow": {
             "description": "Proximity measured in raw characters.",
             "properties": {
@@ -112,7 +61,7 @@
             "type": "object"
         },
         "GuideRule": {
-            "description": "A rule in a marking guide: a data-element description with an outcome that contributes to the aggregate marking when activated.\n\nRules are presented as checkboxes in the UI. `keywords` enables keyword-search filtering; `match` enables text-scan detection (e.g., finding IPv4 addresses in a document body). `outcome.rendered` or `outcome.concepts` provides the marking contribution. Rules with `when` are computed; they auto-activate based on sibling rule selection state and do not appear as user-visible checkboxes.\n\nThis is the named runtime/read-result shape. Authoring input is carried by the guide definition's `rules.inline` entries.",
+            "description": "A rule in a marking guide: a data-element description with an outcome that contributes to the aggregate marking when activated.\n\nRules are presented as checkboxes in the UI. `keywords` enables keyword-search filtering; `match` enables text-scan detection (e.g., finding IPv4 addresses in a document body). `outcome.rendered` or `outcome.concepts` provides the marking contribution. Rules with `when` are computed; they auto-activate based on sibling rule selection state and do not appear as user-visible checkboxes.\n\nThis is the named runtime/read-result shape. A guide document authors its rules as `GuideRuleDoc` entries in `guide.rules`.",
             "properties": {
                 "category": {
                     "description": "Guide category ID for grouping in the UI.",
@@ -432,39 +381,6 @@
             "enum": ["whole", "part"],
             "type": "string"
         },
-        "ReproducibleSourceReference": {
-            "description": "Reproducible source identity and mandatory attribution for an operation.",
-            "properties": {
-                "attribution": {
-                    "$ref": "#/definitions/Attribution",
-                    "description": "Attribution and license information for the observed source."
-                },
-                "locator": {
-                    "description": "Location from which the content was observed.",
-                    "type": "string"
-                },
-                "providerId": {
-                    "description": "Stable identifier for the source provider.",
-                    "type": "string"
-                },
-                "reproducibility": {
-                    "const": "reproducible",
-                    "description": "Whether the source observation can be reproduced byte-for-byte.",
-                    "type": "string"
-                },
-                "snapshotId": {
-                    "description": "Immutable content identity.",
-                    "type": "string"
-                }
-            },
-            "required": [
-                "attribution",
-                "providerId",
-                "reproducibility",
-                "snapshotId"
-            ],
-            "type": "object"
-        },
         "RuleCondition": {
             "description": "A single condition in a rule's `when` block. Can test category contents, processing context role, or concept presence.",
             "properties": {
@@ -573,17 +489,6 @@
             },
             "type": "object"
         },
-        "SourceReference": {
-            "anyOf": [
-                {
-                    "$ref": "#/definitions/ReproducibleSourceReference"
-                },
-                {
-                    "$ref": "#/definitions/BestEffortSourceReference"
-                }
-            ],
-            "description": "Records source identity and mandatory attribution for an operation."
-        },
         "TokenWindow": {
             "description": "Proximity measured in whitespace-delimited tokens.",
             "properties": {
@@ -620,10 +525,6 @@
                 "type": "string"
             },
             "type": "array"
-        },
-        "provenance": {
-            "$ref": "#/definitions/SourceReference",
-            "description": "Source provenance for the guide-rule source that supplied the matched rule.\n\nPopulated only when the rule came from an external `GuideRuleSource` override wired into the `GuideEngine` at load time (typically a `MappedGuideRuleSource` the server's Context loader built from a guide YAML's `rules.external` block). Inline-backed results leave this field undefined to keep payloads compact for the common single-source case.\n\nIdentity fields mirror the source's `sourceIdentity()` observation at engine-construction time."
         },
         "rule": {
             "$ref": "#/definitions/GuideRule",

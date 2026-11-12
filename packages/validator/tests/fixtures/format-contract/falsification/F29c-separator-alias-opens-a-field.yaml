@@ -22,25 +22,24 @@ scheme:
         rollup: union
         single: true
     concepts:
-      inline:
-        - {
-              id: CONTROL_A,
-              name: Control A,
-              views: { default: AAA },
-              categories: [control],
-          }
-        - {
-              id: CONTROL_B,
-              name: Control B,
-              views: { default: BBB },
-              categories: [control],
-          }
-        - {
-              id: SOURCE_ONE,
-              name: Source one,
-              views: { default: Source One },
-              categories: [source],
-          }
+      - {
+            id: CONTROL_A,
+            name: Control A,
+            views: { default: AAA },
+            categories: [control],
+        }
+      - {
+            id: CONTROL_B,
+            name: Control B,
+            views: { default: BBB },
+            categories: [control],
+        }
+      - {
+            id: SOURCE_ONE,
+            name: Source one,
+            views: { default: Source One },
+            categories: [source],
+        }
   render:
     default: block
     formats:

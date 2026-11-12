@@ -27,23 +27,22 @@ scheme:
         label: Handling
         rollup: union
     concepts:
-      inline:
-        - id: LEVEL_ONE
-          name: Level one
-          views: { default: ONE }
-          categories: [level]
-        - id: RESTRICTED_HANDLING
-          name: Restricted handling
-          views: { default: RESTRICTED HANDLING }
-          categories: [handling]
-          notices:
-            - type: handling
-              required: true
-              text: This material is handled under the restricted handling procedure.
-        - id: HANDLING_ONE
-          name: Handling one
-          views: { default: H1 }
-          categories: [handling]
+      - id: LEVEL_ONE
+        name: Level one
+        views: { default: ONE }
+        categories: [level]
+      - id: RESTRICTED_HANDLING
+        name: Restricted handling
+        views: { default: RESTRICTED HANDLING }
+        categories: [handling]
+        notices:
+          - type: warning
+            required: true
+            text: This material is handled under the restricted handling procedure.
+      - id: HANDLING_ONE
+        name: Handling one
+        views: { default: H1 }
+        categories: [handling]
   render:
     default: handling_block
     formats:

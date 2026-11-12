@@ -21,14 +21,13 @@ scheme:
         rollup: union
         required: true
     concepts:
-      inline:
-        - { id: PROGRAM_ROOT, name: Program root, views: { default: ROOT }, categories: [program] }
-        - id: PROGRAM_PART
-          name: Program part
-          views: { default: PART }
-          categories: [program]
-          parents: [PROGRAM_ROOT]
-          tier: subprogram
+      - { id: PROGRAM_ROOT, name: Program root, views: { default: ROOT }, categories: [program] }
+      - id: PROGRAM_PART
+        name: Program part
+        views: { default: PART }
+        categories: [program]
+        parents: [PROGRAM_ROOT]
+        tier: subprogram
   render:
     default: banner
     formats:

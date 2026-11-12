@@ -23,26 +23,25 @@ scheme:
         rollup: highest
         single: true
     concepts:
-      inline:
-        - {
-              id: LEVEL_ONE,
-              name: Level one,
-              views: { default: ONE },
-              categories: [level],
-              rank: 1,
-          }
-        - {
-              id: CONTROL_A,
-              name: Control A,
-              views: { default: AAA },
-              categories: [control],
-          }
-        - {
-              id: CONTROL_B,
-              name: Control B,
-              views: { default: BBB },
-              categories: [control],
-          }
+      - {
+            id: LEVEL_ONE,
+            name: Level one,
+            views: { default: ONE },
+            categories: [level],
+            rank: 1,
+        }
+      - {
+            id: CONTROL_A,
+            name: Control A,
+            views: { default: AAA },
+            categories: [control],
+        }
+      - {
+            id: CONTROL_B,
+            name: Control B,
+            views: { default: BBB },
+            categories: [control],
+        }
   render:
     default: inline
     formats:

@@ -85,22 +85,22 @@
         },
         "AttributionDoc": {
             "additionalProperties": false,
-            "description": "Provenance attached to every external source. Mirrors the runtime `Attribution` declared in `./source.ts`; redeclared here so the YAML schema can validate it without depending on the runtime source contract.",
+            "description": "Where a concept import's records come from, as the people who publish them want to be credited.",
             "properties": {
                 "citation": {
-                    "description": "Suggested citation for the source.",
+                    "description": "Suggested citation for the list.",
                     "type": "string"
                 },
                 "license": {
                     "description": "SPDX identifier or short license token, such as `CC-BY-4.0`.",
                     "type": "string"
                 },
-                "licenseUrl": {
+                "license_url": {
                     "description": "Canonical URL where the license terms can be inspected.",
                     "type": "string"
                 },
                 "name": {
-                    "description": "Display name of the upstream source.",
+                    "description": "Display name of the list, such as `GENC Standard Edition 3.0`.",
                     "type": "string"
                 }
             },
@@ -111,11 +111,6 @@
             "additionalProperties": false,
             "description": "A category: a dimension of a marking that groups related concepts.",
             "properties": {
-                "allowed_concepts": {
-                    "description": "If set, only these concept IDs are valid (overrides categories[] membership).",
-                    "items": { "type": "string" },
-                    "type": "array"
-                },
                 "citation": {
                     "description": "Where in the governing document this category was read from. Free text, e.g. `2016 IC Markings Register, Table 3 row 24`.\n\nProvenance only: nothing parses it, matches on it, or renders it.",
                     "type": "string"
@@ -175,8 +170,6 @@
                         "union",
                         "intersection",
                         "first",
-                        "last",
-                        "least_upper_bound",
                         "pipeline"
                     ],
                     "type": "string"
@@ -194,24 +187,15 @@
                     "anyOf": [
                         { "const": "position", "type": "string" },
                         { "const": "alphabetical", "type": "string" },
-                        { "const": "numeric", "type": "string" },
                         {
                             "items": {
-                                "enum": ["position", "alphabetical", "numeric"],
+                                "enum": ["position", "alphabetical"],
                                 "type": "string"
                             },
                             "type": "array"
                         }
                     ],
                     "description": "Sort order for concepts within this category during rendering."
-                },
-                "suppress_if_subset_of": {
-                    "description": "Suppress this category if its concept set is a subset of another category's set.",
-                    "type": "string"
-                },
-                "views": {
-                    "$ref": "#/definitions/Record%3Cstring%2Cstring%3E",
-                    "description": "Additional display views keyed by view name."
                 }
             },
             "required": ["id", "label", "rollup"],
@@ -415,7 +399,7 @@
         },
         "ChildrenOfSelectorDoc": {
             "additionalProperties": false,
-            "description": "Every concept whose `parents` list names a concept.\n\n`{ children_of: PROGRAM }` stands for every concept whose `parents` list names `PROGRAM`. Only direct children count: a concept whose parent is itself a child of `PROGRAM` is not one. The set is read from the scheme as composed, after every layer has added and removed its concepts, so a layer that adds a child needs no rule of its own, and a scheme with no children of `PROGRAM` has an empty set. The children are the concepts the scheme declares, inline or from a source it holds in full; a scheme whose concepts are only looked up one at a time cannot list them, and refuses a selector at load.\n\nWhere a rule needs one of its targets (`require_any`), an empty set fails every marking the rule fires on: a concept that requires one of its children is refused while it has none.",
+            "description": "Every concept whose `parents` list names a concept.\n\n`{ children_of: PROGRAM }` stands for every concept whose `parents` list names `PROGRAM`. Only direct children count: a concept whose parent is itself a child of `PROGRAM` is not one. The set is read from the scheme as composed, after every layer has added and removed its concepts, so a layer that adds a child needs no rule of its own, and a scheme with no children of `PROGRAM` has an empty set. The children are the concepts the scheme declares in `data.concepts` or produces from a concept import.\n\nWhere a rule needs one of its targets (`require_any`), an empty set fails every marking the rule fires on: a concept that requires one of its children is refused while it has none.",
             "properties": {
                 "children_of": {
                     "description": "The concept whose direct children are the targets.",
@@ -478,26 +462,6 @@
                     "type": "array"
                 }
             },
-            "type": "object"
-        },
-        "ConceptCategoryMappingDoc": {
-            "additionalProperties": false,
-            "description": "One category membership in a concept mapping, applied only to the records that satisfy its condition.\n\nA bare string entry in `categories` gives every record the same membership. That is right for a category every record belongs to and wrong for one that holds for most of them, which is why this form exists: the membership is still declared once, and the condition says which records it reaches.\n\n`when` and `unless` are conditions over the record. A bare field holds when it is present and not empty; `field == 'X'`, `field != 'X'` and `field in ['X', 'Y']` compare projected values as strings. Declare one or the other, whichever reads as the plainer sentence.",
-            "properties": {
-                "id": {
-                    "description": "Expression for the category id, or ids, this entry contributes.",
-                    "type": "string"
-                },
-                "unless": {
-                    "description": "Apply the membership to every record except those this condition holds for.",
-                    "type": "string"
-                },
-                "when": {
-                    "description": "Apply the membership only to records this condition holds for.",
-                    "type": "string"
-                }
-            },
-            "required": ["id"],
             "type": "object"
         },
         "ConceptColor": {
@@ -617,15 +581,6 @@
                     "description": "A category whose values this concept stands for: the values the whole holds in it.\n\nSome schemes let a part leave out a list because it is the same as its whole's, and write a word in its place. The concept is that word. When a part holding it is read against a whole, the part takes the whole's values in the named category, so its rules judge the list the word stands for. The concept stays in the part, and a format that sets `omit_whole_values` writes the part back the way it was read.\n\nA part that writes values of its own in the category takes nothing and is judged by its own facts. A part that leaves the category to the word needs a verified whole, one that reads and is valid. Without one (no whole given, a whole that does not read, or a whole that reads but is invalid) the part carries a `_stand_in_requires_whole` error naming the word, whatever format it was read in. A verified whole that holds nothing in the category leaves the part to the scheme's own rules. Only a part is judged so: a whole may hold the same concept as a value of its own. In a rollup the word goes through its own category's rollup like any other concept.\n\nNames a category declared in the same scheme.",
                     "type": "string"
                 },
-                "supersedes": {
-                    "description": "Concept IDs that this concept supersedes.",
-                    "items": { "type": "string" },
-                    "type": "array"
-                },
-                "synonyms": {
-                    "$ref": "#/definitions/Record%3Cstring%2Cstring%3E",
-                    "description": "Locale-specific display labels: locale code → display string."
-                },
                 "text_input": {
                     "$ref": "#/definitions/TextInputDoc",
                     "description": "Free-text input configuration."
@@ -655,38 +610,67 @@
             "required": ["id", "name", "views", "categories"],
             "type": "object"
         },
-        "ConceptGroupDoc": {
+        "ConceptImportCategoryDoc": {
             "additionalProperties": false,
-            "description": "A named collection of concepts. It groups concepts for people reading or browsing the scheme; it has no effect on parsing, rules or rendering.",
+            "description": "One category membership a concept import gives, applied only to the records that satisfy its condition.\n\nA bare string entry in `categories` gives every record the same membership. That is right for a category every record belongs to and wrong for one that holds for most of them, which is why this form exists: the membership is still declared once, and the condition says which records it reaches.\n\n`when` and `unless` are conditions over the record. A bare field holds when it is present and not empty; `field == 'X'`, `field != 'X'` and `field in ['X', 'Y']` compare record values as strings. Declare one or the other, whichever reads as the plainer sentence.",
             "properties": {
-                "concept_ids": {
-                    "description": "The concepts in the group, by id.",
-                    "items": { "type": "string" },
-                    "type": "array"
-                },
-                "description": {
-                    "description": "What the group collects.",
-                    "type": "string"
-                },
                 "id": {
-                    "description": "Unique group id within the scheme.",
+                    "description": "Expression for the category id this entry gives.",
                     "type": "string"
                 },
-                "name": {
-                    "description": "Display name. Defaults to the id.",
+                "unless": {
+                    "description": "Give the membership to every record except those this condition holds for.",
+                    "type": "string"
+                },
+                "when": {
+                    "description": "Give the membership only to records this condition holds for.",
                     "type": "string"
                 }
             },
-            "required": ["id", "concept_ids"],
+            "required": ["id"],
             "type": "object"
         },
-        "ConceptMappingDoc": {
+        "ConceptImportDoc": {
             "additionalProperties": false,
-            "description": "Mapping spec for an external concept source: declarative projection of upstream records into canonical Concept fields. Expression strings use a small JMESPath subset: field paths, literal and wildcard indexes, quoted literals, `@`, `+` concatenation, and `??` for the first present operand.",
+            "description": "A list of records pasted into the scheme, and how each record becomes a concept.\n\nIt is how a scheme carries a list someone else publishes, such as a country code standard, without retyping every entry as a concept. The records are kept exactly as published; the mapping says what each one means here. To take a newer edition of the list, paste its records and publish a new version of the scheme.\n\nThe concepts it produces sit beside `data.concepts`. A concept declared in `data.concepts` with the same id as an imported one is the one used, which is how an author corrects one record of a list they do not control. Between two imports, the first that produces an id is the one used. Across a layered stack, layer precedence decides first: an imported concept counts as declared by the document that declares the import, and the later declaration wins (see `LayerBinding`).",
+            "properties": {
+                "attribution": {
+                    "$ref": "#/definitions/AttributionDoc",
+                    "description": "Who publishes the records, and how to credit them."
+                },
+                "id": {
+                    "description": "Identifier of this import within the scheme. A layer names it to remove the import and every concept it produced.",
+                    "minLength": 1,
+                    "type": "string"
+                },
+                "mapping": {
+                    "$ref": "#/definitions/ConceptImportMappingDoc",
+                    "description": "How each record becomes a concept."
+                },
+                "records": {
+                    "description": "The records, as the publisher wrote them: one object per entry.",
+                    "items": {
+                        "$ref": "#/definitions/Record%3Cstring%2Cunknown%3E"
+                    },
+                    "minItems": 1,
+                    "type": "array"
+                },
+                "snapshot_id": {
+                    "description": "Optional pin on the records: the sha256 digest of their RFC 8785 canonical JSON, written `sha256:` followed by 64 lowercase hex digits. When it is set, the scheme loads only if the records still hash to it, so a pasted list cannot change without the pin changing with it.",
+                    "pattern": "^sha256:[0-9a-f]{64}$",
+                    "type": "string"
+                }
+            },
+            "required": ["id", "attribution", "records", "mapping"],
+            "type": "object"
+        },
+        "ConceptImportMappingDoc": {
+            "additionalProperties": false,
+            "description": "How each record of a concept import becomes a concept.\n\nEvery value is an expression evaluated against one record, in a small JMESPath subset: field paths, literal and wildcard indexes, quoted literals, `@`, `+` concatenation, and `??` for the first present operand. A mapping produces concepts and nothing else. The categories it names are declared in `data.categories`, and the rules, formats and views that use the concepts are declared where they always are.",
             "properties": {
                 "concept": {
                     "additionalProperties": false,
-                    "description": "How each record's fields project onto a concept.",
+                    "description": "How each record's fields become a concept.",
                     "properties": {
                         "aliases": {
                             "description": "Expressions for the concept's aliases, one per entry.",
@@ -700,7 +684,7 @@
                                         "anyOf": [
                                             { "type": "string" },
                                             {
-                                                "$ref": "#/definitions/ConceptCategoryMappingDoc"
+                                                "$ref": "#/definitions/ConceptImportCategoryDoc"
                                             }
                                         ]
                                     },
@@ -708,14 +692,14 @@
                                 },
                                 { "type": "string" }
                             ],
-                            "description": "The categories each record's concept belongs to: an expression or list of expressions for category ids, or conditional memberships."
+                            "description": "The categories each concept belongs to: an expression or list of expressions for category ids, or conditional memberships."
                         },
                         "citation": {
-                            "description": "Expression for the provenance citation (concept.citation on the output). A record that carries its own citation keeps it; a source whose citation is the same for every record can supply a literal.",
+                            "description": "Expression for the concept's `citation`. A list whose citation is the same for every record supplies a quoted literal.",
                             "type": "string"
                         },
                         "definition": {
-                            "description": "Expression for a human-readable definition (concept.definition on the output).",
+                            "description": "Expression for the concept's `definition`.",
                             "type": "string"
                         },
                         "deprecated": {
@@ -723,7 +707,7 @@
                             "type": "string"
                         },
                         "guidance": {
-                            "description": "Expression for usage guidance text (concept.guidance on the output).",
+                            "description": "Expression for the concept's `guidance`.",
                             "type": "string"
                         },
                         "id": {
@@ -746,18 +730,6 @@
                             "description": "Expression for the concept's numeric rank. A value that does not convert to a number leaves the concept unranked.",
                             "type": "string"
                         },
-                        "search": {
-                            "additionalProperties": false,
-                            "description": "Declares that the upstream supports a search call and names the query parameter that carries the search term. Presence infers `capabilities.search` and `capabilities.prefixMatch`, and supplies the transport's default search parameter name unless `queryParams.search` overrides it.",
-                            "properties": {
-                                "queryParam": {
-                                    "description": "Name of the query parameter that carries the search term.",
-                                    "type": "string"
-                                }
-                            },
-                            "required": ["queryParam"],
-                            "type": "object"
-                        },
                         "views": {
                             "$ref": "#/definitions/Record%3Cstring%2Cstring%3E",
                             "description": "Expressions for the concept's display representations, keyed by view name. The `default` view falls back to the name."
@@ -767,11 +739,7 @@
                     "type": "object"
                 },
                 "omit": {
-                    "description": "Condition, in the same expression subset as `record`, evaluated against each upstream record. A record it holds for is dropped before any concept is projected, so the omitted records are absent from enumerate, count, search and resolve alike.\n\nUse it when the upstream snapshot is the right source of truth and a few of its records have no representation in the scheme being built. Every field the condition names must exist on the records, or the source fails to load.",
-                    "type": "string"
-                },
-                "record": {
-                    "description": "Selector for the array of records on a transport response.",
+                    "description": "Condition evaluated against each record. A record it holds for produces no concept.\n\nUse it when the list is the right source of truth and a few of its records have no place in this scheme. Every field the condition names must exist on the records, or the scheme fails to load.",
                     "type": "string"
                 }
             },
@@ -796,13 +764,7 @@
                 },
                 "type": {
                     "description": "Notice category.",
-                    "enum": [
-                        "warning",
-                        "handling",
-                        "admonition",
-                        "distribution",
-                        "info"
-                    ],
+                    "enum": ["warning", "admonition"],
                     "type": "string"
                 },
                 "views": {
@@ -815,14 +777,10 @@
         },
         "ConditionDoc": {
             "additionalProperties": false,
-            "description": "A single condition in a rule's `when:` block.\n\nRule conditions name their category via `category`; structured `when:` blocks elsewhere (categories, render formats, rollup pipelines, filters) use `category_id`. The shorthand `is:` packs an operator+value into one string (e.g. `'has_content'`, `'count_eq 1'`). `has:` is shorthand for `operator: has_concept, value: <id>`.",
+            "description": "A single condition in a `when:` block.\n\nEvery condition names its category with `category`, wherever the `when:` sits: a rule, a category default, a render format, a rollup pipeline or a filter. The shorthand `is:` packs an operator+value into one string (e.g. `'has_content'`, `'count_eq 1'`). `has:` is shorthand for `operator: has_concept, value: <id>`.",
             "properties": {
                 "category": {
-                    "description": "Category ID to evaluate against (rule conditions).",
-                    "type": "string"
-                },
-                "category_id": {
-                    "description": "Category ID to evaluate against (structured `when:` blocks).",
+                    "description": "Category ID to evaluate against.",
                     "type": "string"
                 },
                 "has": {
@@ -863,12 +821,7 @@
                 "count_gt",
                 "count_gte",
                 "count_eq",
-                "count_lt",
                 "count_unique_gt",
-                "count_unique_gte",
-                "count_unique_eq",
-                "count_unique_lt",
-                "count_unique_lte",
                 "min_order",
                 "min_rank",
                 "subset_of",
@@ -928,8 +881,8 @@
             "description": "Embedded-marking style: pattern wrapping an inner marking in free text.",
             "properties": {
                 "auto_insert": {
-                    "description": "When the host UI should auto-prompt for a marking.",
-                    "enum": ["every-paragraph", "first-line", "manual"],
+                    "const": "every-paragraph",
+                    "description": "Set to `every-paragraph` to have the host UI prompt for a marking on each new paragraph. Absent, the host never prompts on its own.",
                     "type": "string"
                 },
                 "pattern": {
@@ -943,322 +896,6 @@
             },
             "required": ["pattern", "template"],
             "type": "object"
-        },
-        "ExternalSourceAuth": {
-            "additionalProperties": false,
-            "description": "Request-level authentication on an external source. `flow` selects the registered handler (Basic, Bearer, a named header, AWS-SigV4, OAuth2 client credentials) that decorates each request; the credential refs are provider-specific opaque ids that are resolved server-side.\n\nCertificates are not request-level. A client certificate for mutual TLS, and a CA bundle for a private upstream, belong to the connection and are declared in the source's `tls` block.",
-            "properties": {
-                "accessKeyRef": {
-                    "$ref": "#/definitions/SecretRefDoc",
-                    "description": "AWS access key ref, used by `aws-sigv4`."
-                },
-                "clientCredentialRef": {
-                    "$ref": "#/definitions/SecretRefDoc",
-                    "description": "OAuth2 client credential, used by `oauth2-cc`."
-                },
-                "credentialRef": {
-                    "$ref": "#/definitions/SecretRefDoc",
-                    "description": "Single primary credential, used by `basic`, `bearer`, `header`."
-                },
-                "flow": {
-                    "description": "Registered AuthFlowHandler id.",
-                    "enum": [
-                        "none",
-                        "basic",
-                        "bearer",
-                        "header",
-                        "aws-sigv4",
-                        "oauth2-cc"
-                    ],
-                    "type": "string"
-                },
-                "params": {
-                    "$ref": "#/definitions/Record%3Cstring%2Cstring%3E",
-                    "description": "Optional scopes / region / token endpoint params, provider-specific."
-                },
-                "secretKeyRef": {
-                    "$ref": "#/definitions/SecretRefDoc",
-                    "description": "AWS secret access key ref, used by `aws-sigv4`."
-                }
-            },
-            "required": ["flow"],
-            "type": "object"
-        },
-        "ExternalSourceCapabilities": {
-            "additionalProperties": false,
-            "description": "Capability hints declared on an external source. The compiler infers defaults from the mapping shape; an explicit block overrides inference.",
-            "properties": {
-                "ancestorsOf": {
-                    "description": "Whether the upstream can list a concept's ancestors.",
-                    "type": "boolean"
-                },
-                "childrenOf": {
-                    "description": "Whether the upstream can list a concept's children.",
-                    "type": "boolean"
-                },
-                "count": {
-                    "description": "Whether the upstream reports how many records it holds. Used by authoring tools.",
-                    "type": "boolean"
-                },
-                "enumerate": {
-                    "description": "Whether the upstream can be browsed page by page. Used by authoring tools, not by the runtime.",
-                    "type": "boolean"
-                },
-                "prefixMatch": {
-                    "description": "Whether the upstream answers a prefix lookup.",
-                    "type": "boolean"
-                },
-                "resolveAliases": {
-                    "description": "How the upstream resolves an alias to a concept: `exact` for literal matches, `fuzzy` for tolerant ones, or `none` when it cannot.",
-                    "enum": ["exact", "fuzzy", "none"],
-                    "type": "string"
-                },
-                "search": {
-                    "description": "Whether the upstream answers a free-text search.",
-                    "type": "boolean"
-                }
-            },
-            "type": "object"
-        },
-        "ExternalSourcePagination": {
-            "anyOf": [
-                {
-                    "additionalProperties": false,
-                    "properties": {
-                        "style": {
-                            "const": "none",
-                            "description": "The upstream answers in a single response.",
-                            "type": "string"
-                        }
-                    },
-                    "required": ["style"],
-                    "type": "object"
-                },
-                {
-                    "additionalProperties": false,
-                    "properties": {
-                        "pageParam": {
-                            "description": "Name of the query parameter that carries the page number.",
-                            "type": "string"
-                        },
-                        "start": {
-                            "description": "The number of the first page, usually `0` or `1`.",
-                            "type": "integer"
-                        },
-                        "style": {
-                            "const": "page",
-                            "description": "The upstream pages by page number: `start` first, then one more per page, until a page comes back empty.",
-                            "type": "string"
-                        }
-                    },
-                    "required": ["style", "pageParam", "start"],
-                    "type": "object"
-                },
-                {
-                    "additionalProperties": false,
-                    "properties": {
-                        "offsetParam": {
-                            "description": "Name of the query parameter that carries the record offset.",
-                            "type": "string"
-                        },
-                        "style": {
-                            "const": "offset",
-                            "description": "The upstream pages by record offset: `0` first, then the previous offset plus the records that page returned, until a page comes back empty.",
-                            "type": "string"
-                        }
-                    },
-                    "required": ["style", "offsetParam"],
-                    "type": "object"
-                },
-                {
-                    "additionalProperties": false,
-                    "properties": {
-                        "cursorParam": {
-                            "description": "Name of the query parameter that carries the cursor.",
-                            "type": "string"
-                        },
-                        "nextField": {
-                            "description": "Dot-path in the response body to the next page's cursor.",
-                            "type": "string"
-                        },
-                        "style": {
-                            "const": "cursor",
-                            "description": "The upstream pages by an opaque cursor it returns. The read ends at the first page whose response names no next cursor.",
-                            "type": "string"
-                        }
-                    },
-                    "required": ["style", "cursorParam", "nextField"],
-                    "type": "object"
-                },
-                {
-                    "additionalProperties": false,
-                    "properties": {
-                        "style": {
-                            "const": "link-header",
-                            "description": "The upstream links the next page in its `Link` response header. The read ends at the first page whose response links no next page.",
-                            "type": "string"
-                        }
-                    },
-                    "required": ["style"],
-                    "type": "object"
-                }
-            ],
-            "description": "Pagination shape declared on an HTTP transport.\n\nA read follows the declared style until the style's last page, and fails rather than return a partial set when it cannot get there: a failed page, a repeated continuation or page, or a read past the host's page, record or time limit. The page size, for every style, is the `queryParams.pageSize` parameter.\n\nThe `page` and `offset` styles compute the next request themselves, so an empty page is the only page that ends the read; a short page does not, because the upstream's page size is not something the read trusts. The `cursor` and `link-header` styles follow the continuation the upstream returns, and the read ends at the first page that names none."
-        },
-        "ExternalSourceQueryParams": {
-            "additionalProperties": false,
-            "description": "Upstream-specific query-parameter names for an HTTP external source. Each field overrides the transport's built-in default name (`search` → `q`, `prefix` → `prefix`, `scope` → `scope`, `pageSize` → `pageSize`) so a customer mapping an upstream that searches via `?query=` or `?filter=` isn't stuck with the transport's own convention. Page continuation parameters belong to the `pagination` block.",
-            "properties": {
-                "pageSize": {
-                    "description": "Name of the query parameter that carries the page size, for every pagination style. Default `pageSize`.",
-                    "type": "string"
-                },
-                "prefix": {
-                    "description": "Name of the query parameter that carries a prefix to match. Default `prefix`.",
-                    "type": "string"
-                },
-                "scope": {
-                    "description": "Name of the query parameter that carries a scope. Default `scope`.",
-                    "type": "string"
-                },
-                "search": {
-                    "description": "Name of the query parameter that carries a search term. Default `q`.",
-                    "type": "string"
-                }
-            },
-            "type": "object"
-        },
-        "ExternalSourceSpec<ConceptMappingDoc>": {
-            "additionalProperties": false,
-            "description": "The body of an `external:` block on a concept / guide-rule / access source. The mapping field is one of `ConceptMappingDoc`, `RuleMappingDoc`, or `AccessMappingDoc` depending on which artifact this block belongs to.",
-            "properties": {
-                "attribution": {
-                    "$ref": "#/definitions/AttributionDoc",
-                    "description": "Provenance for downstream attribution UIs."
-                },
-                "auth": {
-                    "$ref": "#/definitions/ExternalSourceAuth",
-                    "description": "Request-level authentication, applied to each request."
-                },
-                "capabilities": {
-                    "$ref": "#/definitions/ExternalSourceCapabilities",
-                    "description": "Capability overrides. When omitted, inferred from `mapping`."
-                },
-                "grantId": {
-                    "description": "The publisher's opaque reference (`grantId:<uuid>`) to the sharing grant under which it read the source `srcref` names. Provenance only; the engine accepts it and does not act on it.",
-                    "type": "string"
-                },
-                "headers": {
-                    "$ref": "#/definitions/Record%3Cstring%2Cstring%3E",
-                    "description": "Static request headers (HTTP only)."
-                },
-                "id": {
-                    "description": "Stable identifier for this source within the containing artifact. Required when multiple external sources appear on the same scheme; the loader synthesizes `external-${i}` when the field is absent.",
-                    "type": "string"
-                },
-                "liveFetch": {
-                    "description": "How the publisher obtained the records it published for this source: `true` when it read the upstream as it composed the artifact, `false` (the default) when it used a stored snapshot, named by `snapshotRef`. Provenance only; the engine accepts it and does not act on it.",
-                    "type": "boolean"
-                },
-                "mapping": {
-                    "$ref": "#/definitions/ConceptMappingDoc",
-                    "description": "Declarative projection from foreign records into canonical shape."
-                },
-                "mappingHash": {
-                    "description": "The publisher's anchor over this spec block: SHA-256 hex of its canonical sorted-key JSON serialization, excluding this field. Whoever publishes the artifact writes it. The engine recomputes it when it loads the Context and refuses to load on a mismatch, so a block edited after publication is caught. Absent means the block carries no anchor and nothing is checked.",
-                    "type": "string"
-                },
-                "pagination": {
-                    "$ref": "#/definitions/ExternalSourcePagination",
-                    "description": "HTTP-only knobs. Ignored for non-http transports."
-                },
-                "query": {
-                    "$ref": "#/definitions/Record%3Cstring%2Cstring%3E",
-                    "description": "Static query params (HTTP only)."
-                },
-                "queryParams": {
-                    "$ref": "#/definitions/ExternalSourceQueryParams",
-                    "description": "HTTP-only: override the transport's default query-parameter names."
-                },
-                "rateLimit": {
-                    "additionalProperties": false,
-                    "description": "Per-instance rate-limit bucket.",
-                    "properties": {
-                        "burst": {
-                            "description": "Most requests allowed in one window.",
-                            "type": "integer"
-                        },
-                        "windowMs": {
-                            "description": "Length of the window, in milliseconds.",
-                            "type": "number"
-                        }
-                    },
-                    "required": ["burst", "windowMs"],
-                    "type": "object"
-                },
-                "recordsPath": {
-                    "description": "Dot-path into the JSON response body that locates the records array (HTTP only). Omit when the response body is itself the array. Use this for upstreams that wrap their payload, e.g. GeoJSON `FeatureCollection.features`, ArcGIS REST `features`, Elasticsearch `hits.hits`.",
-                    "type": "string"
-                },
-                "snapshotId": {
-                    "description": "Optional pin on the records this source serves: the sha256 records digest the source reports for them, written `sha256:` followed by 64 lowercase hex digits (the pattern `^sha256:[0-9a-f]{64}$`). When it is set, the engine loads the artifact only if the source reports the same digest, so an artifact version is immutable around it. To absorb new data from upstream, mint a new artifact version with the new digest.\n\nA label such as a release name never matches and is refused; it belongs in `attribution.citation`. Omit the pin for a best-effort live source that cannot report a stable digest.",
-                    "pattern": "^sha256:[0-9a-f]{64}$",
-                    "type": "string"
-                },
-                "snapshotRef": {
-                    "description": "The publisher's content-addressed reference to the stored snapshot the records came from, when `liveFetch` is `false`. Provenance only; the engine accepts it and does not act on it.",
-                    "type": "string"
-                },
-                "source": {
-                    "description": "URI for the upstream: http(s), file://, or inline:// (rare).",
-                    "type": "string"
-                },
-                "srcref": {
-                    "description": "The publisher's opaque reference (`srcref:<uuid>`) to a source another organization shared with it, when the records came through such a share. Provenance only; the engine accepts it and does not act on it.",
-                    "type": "string"
-                },
-                "timeoutMs": {
-                    "description": "Per-request timeout in ms.",
-                    "type": "number"
-                },
-                "tls": {
-                    "$ref": "#/definitions/ExternalSourceTls",
-                    "description": "HTTP only: the connection's TLS settings (a private CA, a client certificate for mutual TLS). Independent of `auth`, so a source can present a client certificate and a bearer token together. A source whose only credential is its client certificate has `tls` and no `auth`."
-                },
-                "transport": {
-                    "$ref": "#/definitions/ExternalSourceTransport",
-                    "description": "Inferred from `source` when omitted."
-                }
-            },
-            "required": ["source", "mapping"],
-            "type": "object"
-        },
-        "ExternalSourceTls": {
-            "additionalProperties": false,
-            "description": "TLS settings for an HTTP external source's connections. They apply to requests to `source` and to same-origin redirects. Any `tls` setting pins the source to its origin, so a cross-origin redirect is refused. Server verification is always on and cannot be turned off here.\n\nDeclare at least one field, and give `keyPassphraseRef` only together with `clientCertAndKeyRef`. The block is valid only on an `http` transport whose `source` is an `https:` URL; the runtime refuses it anywhere else when it builds the source.",
-            "if": { "required": ["keyPassphraseRef"] },
-            "minProperties": 1,
-            "properties": {
-                "caBundleRef": {
-                    "$ref": "#/definitions/SecretRefDoc",
-                    "description": "PEM CA bundle that verifies the upstream server certificate. Resolves to a string-secret. When set, it replaces the platform's default roots for this source. The material is public, but it is referenced rather than inlined so the deployment can rotate it without a new artifact version."
-                },
-                "clientCertAndKeyRef": {
-                    "$ref": "#/definitions/SecretRefDoc",
-                    "description": "Client certificate and private key presented in the handshake (mutual TLS). Resolves to a cert-and-key-pair."
-                },
-                "keyPassphraseRef": {
-                    "$ref": "#/definitions/SecretRefDoc",
-                    "description": "Passphrase for an encrypted private key in `clientCertAndKeyRef`. Resolves to a string-secret. Requires `clientCertAndKeyRef`. Leave it unset when the pair already carries its passphrase; supplying both is refused."
-                }
-            },
-            "then": { "required": ["clientCertAndKeyRef"] },
-            "type": "object"
-        },
-        "ExternalSourceTransport": {
-            "description": "Discriminated transport union for an external source. `transport` is inferred from the URI scheme when omitted (`https://` → `http`, `file://` → `file`, no scheme → `inline-data`); explicit values win.",
-            "enum": ["http", "file", "inline-data"],
-            "type": "string"
         },
         "FieldDoc": {
             "anyOf": [
@@ -1285,11 +922,6 @@
                 "id": { "description": "Filter identifier.", "type": "string" },
                 "in": {
                     "description": "Contexts the filter applies in (e.g. ['render', 'suggest']).",
-                    "items": { "type": "string" },
-                    "type": "array"
-                },
-                "keep": {
-                    "description": "Concept or category IDs to keep (whitelist) when the filter fires.",
                     "items": { "type": "string" },
                     "type": "array"
                 },
@@ -1364,16 +996,8 @@
                             "enum": ["inline", "block"],
                             "type": "string"
                         },
-                        "omit_defaults": {
-                            "description": "Leave assertions with `source: 'default'` out of the printed output. A print filter only: every condition in this format still sees the real, unfiltered state.",
-                            "type": "boolean"
-                        },
-                        "omit_empty": {
-                            "description": "Skip empty fields. Defaults to true for `block`, false for `inline`.",
-                            "type": "boolean"
-                        },
                         "omit_whole_values": {
-                            "description": "Write a part's stand-in in place of the values it took from its whole.\n\nA part that holds a stand-in (a concept that declares `stands_for_whole`) and was read against a whole holds the whole's values in the category the stand-in names. This format leaves those values out, so the part is written back with the word it was read with. It applies only to a part read on its own: a rollup is a whole, and is always written with its values. A print filter only, like `omit_defaults`: every condition in this format still sees the values.",
+                            "description": "Write a part's stand-in in place of the values it took from its whole.\n\nA part that holds a stand-in (a concept that declares `stands_for_whole`) and was read against a whole holds the whole's values in the category the stand-in names. This format leaves those values out, so the part is written back with the word it was read with. It applies only to a part read on its own: a rollup is a whole, and is always written with its values. A print filter only: every condition in this format still sees the values.",
                             "type": "boolean"
                         },
                         "prefix": {
@@ -1435,16 +1059,8 @@
                             "enum": ["inline", "block"],
                             "type": "string"
                         },
-                        "omit_defaults": {
-                            "description": "Leave assertions with `source: 'default'` out of the printed output. A print filter only: every condition in this format still sees the real, unfiltered state.",
-                            "type": "boolean"
-                        },
-                        "omit_empty": {
-                            "description": "Skip empty fields. Defaults to true for `block`, false for `inline`.",
-                            "type": "boolean"
-                        },
                         "omit_whole_values": {
-                            "description": "Write a part's stand-in in place of the values it took from its whole.\n\nA part that holds a stand-in (a concept that declares `stands_for_whole`) and was read against a whole holds the whole's values in the category the stand-in names. This format leaves those values out, so the part is written back with the word it was read with. It applies only to a part read on its own: a rollup is a whole, and is always written with its values. A print filter only, like `omit_defaults`: every condition in this format still sees the values.",
+                            "description": "Write a part's stand-in in place of the values it took from its whole.\n\nA part that holds a stand-in (a concept that declares `stands_for_whole`) and was read against a whole holds the whole's values in the category the stand-in names. This format leaves those values out, so the part is written back with the word it was read with. It applies only to a part read on its own: a rollup is a whole, and is always written with its values. A print filter only: every condition in this format still sees the values.",
                             "type": "boolean"
                         },
                         "prefix": {
@@ -1587,7 +1203,7 @@
         },
         "LayerBlockDoc": {
             "additionalProperties": false,
-            "description": "The scheme family's layer payload. Required when `type: 'layer'`, forbidden otherwise, so layer-ness is never inferred from a combination of fields.\n\nBinding and ordering are the cross-family rules: see `LayerBinding`.\n\n## Three operations, the same for every element kind\n\n- Add: declare an element whose id the stack below does not hold, in the section it normally lives in.\n- Override: declare an element whose id the stack below already holds, complete. It replaces the one below in the same position.\n- Remove: name it in `removes`. It stays gone until a later layer names it in `restores`, which brings back the definition it had below.\n\nThe element kinds, where each lives, and whether `removes` can name it:\n\n| Kind              | Section                  | Removable | | ----------------- | ------------------------ | --------- | | `category`        | `data.categories`        | yes       | | `concept`         | `data.concepts.inline`   | yes       | | `external_source` | `data.concepts.external` | yes       | | `concept_group`   | `data.concept_groups`    | no        | | `scope`           | `scopes`                 | no        | | `named_condition` | `named_conditions`       | no        | | `recognizer`      | `parse.recognizers`      | yes       | | `repair_rule`     | `parse.normalize`        | yes       | | `rollup_pipeline` | `rollup_pipelines`       | yes       | | `render_format`   | `render.formats`         | yes       | | `render_surface`  | `render.surfaces`        | yes       | | `render_view`     | `render.surfaces.views`  | yes       | | `rule`            | `rules`                  | yes       | | `filter`          | `filters`                | no        | | `label_preset`    | `ui.label_presets`       | yes       | | `wizard_step`     | `ui.wizard_questions`    | no        |\n\nA named condition is addressed by its key, an external source by its `id` (or `external-<n>`, its one-based position, when it has none), a render surface by its `surface`, a render view as `surface/view` with each id percent-encoded, and every other element by its `id`. Removing an external source takes the concepts it supplied with it. A header value that is not a collection (a name, a license, a parse or render setting, a `ui` setting) is not an element: a layer overrides it by stating it.\n\nA render surface and each of its views are separate elements. A layer that states a surface the stack below holds overrides what belongs to the surface itself, its `default`, which it replaces whole, a view id or a map by role, and treats every view it lists as an element of its own: the view is added, or it overrides the view below with the same `surface/view`, complete, `role`, `format`, `cases` and `also_read_in` together, so a case list is replaced and never extended, and a view restated without a role has none. Views of that surface the layer does not list stay where they were.\n\n## What a removal does to what names it\n\nThe stack behaves as if the removed element never existed, so whatever names it is narrowed, not dropped. A rule loses the removed member of a set (`when`, `target`, `rank`, `exclude`, `from`, a `with` table) and keeps the rest. A condition reads a removed concept as never present and a removed category as empty, and the surrounding `any`, `all` and `none` simplify around that. A concept that loses every category, or every parent, is removed. A rule is dropped only when its trigger can never hold, its target set is empty (an `exclusive` needs two members left), or the category it acts on is gone. Three actions keep a rule whose targets are gone. A `restrict` left with no targets stays and allows nothing in its category. A `require` or `require_any` that can no longer be met is never dropped: the stack takes its trigger away, or the stack is refused. A render format field bound to a removed element goes, along with any group or `joins` entry left with nothing to write. A view whose format is removed goes, as does a case or an `also_read_in` entry whose format is removed, and a surface left with no views goes too. A view takes its forms with it: when it goes, so does each format it names, as its `format`, in a case or in `also_read_in`, that no view left in the stack names. A restated view is not a removal: a format it stops naming that no other view in the stack names is refused at load, as any format no view names is, so the same layer removes that format or names it on a view. A surface that keeps some views but loses a view its default names, removed directly or with its format, is refused at load unless the same layer restates the surface with a default it still declares. A condition the removal leaves undecidable is refused at load with the element named; restate that element in the layer.",
+            "description": "The scheme family's layer payload. Required when `type: 'layer'`, forbidden otherwise, so layer-ness is never inferred from a combination of fields.\n\nBinding and ordering are the cross-family rules: see `LayerBinding`.\n\n## Three operations, the same for every element kind\n\n- Add: declare an element whose id the stack below does not hold, in the section it normally lives in.\n- Override: declare an element whose id the stack below already holds, complete. It replaces the one below in the same position.\n- Remove: name it in `removes`. It stays gone until a later layer names it in `restores`, which brings back the definition it had below.\n\nThe element kinds, where each lives, and whether `removes` can name it:\n\n| Kind              | Section                 | Removable | | ----------------- | ----------------------- | --------- | | `category`        | `data.categories`       | yes       | | `concept`         | `data.concepts`         | yes       | | `concept_import`  | `data.concept_imports`  | yes       | | `scope`           | `scopes`                | no        | | `named_condition` | `named_conditions`      | no        | | `recognizer`      | `parse.recognizers`     | yes       | | `repair_rule`     | `parse.normalize`       | yes       | | `rollup_pipeline` | `rollup_pipelines`      | yes       | | `render_format`   | `render.formats`        | yes       | | `render_surface`  | `render.surfaces`       | yes       | | `render_view`     | `render.surfaces.views` | yes       | | `rule`            | `rules`                 | yes       | | `filter`          | `filters`               | no        | | `label_preset`    | `ui.label_presets`      | yes       |\n\nA named condition is addressed by its key, a render surface by its `surface`, a render view as `surface/view` with each id percent-encoded, and every other element by its `id`. Removing a concept import takes the concepts it produced with it. A header value that is not a collection (a name, a parse or render setting, a `ui` setting) is not an element: a layer overrides it by stating it.\n\nA render surface and each of its views are separate elements. A layer that states a surface the stack below holds overrides what belongs to the surface itself, its `default`, which it replaces whole, a view id or a map by role, and treats every view it lists as an element of its own: the view is added, or it overrides the view below with the same `surface/view`, complete, `role`, `format`, `cases` and `also_read_in` together, so a case list is replaced and never extended, and a view restated without a role has none. Views of that surface the layer does not list stay where they were.\n\n## What a removal does to what names it\n\nThe stack behaves as if the removed element never existed, so whatever names it is narrowed, not dropped. A rule loses the removed member of a set (`when`, `target`, `rank`, `exclude`, `from`, a `with` table) and keeps the rest. A condition reads a removed concept as never present and a removed category as empty, and the surrounding `any`, `all` and `none` simplify around that. A concept that loses every category, or every parent, is removed. A rule is dropped only when its trigger can never hold, its target set is empty (an `exclusive` needs two members left), or the category it acts on is gone. Three actions keep a rule whose targets are gone. A `restrict` left with no targets stays and allows nothing in its category. A `require` or `require_any` that can no longer be met is never dropped: the stack takes its trigger away, or the stack is refused. A render format field bound to a removed element goes, along with any group or `joins` entry left with nothing to write. A view whose format is removed goes, as does a case or an `also_read_in` entry whose format is removed, and a surface left with no views goes too. A view takes its forms with it: when it goes, so does each format it names, as its `format`, in a case or in `also_read_in`, that no view left in the stack names. A restated view is not a removal: a format it stops naming that no other view in the stack names is refused at load, as any format no view names is, so the same layer removes that format or names it on a view. A surface that keeps some views but loses a view its default names, removed directly or with its format, is refused at load unless the same layer restates the surface with a default it still declares. A condition the removal leaves undecidable is refused at load with the element named; restate that element in the layer.",
             "properties": {
                 "base": {
                     "description": "The artifact or layer this one stacks on, as `id@version`.",
@@ -1727,16 +1343,16 @@
                 {
                     "additionalProperties": false,
                     "properties": {
-                        "external_source": {
-                            "description": "The id of the external concept source to remove.",
+                        "concept_import": {
+                            "description": "The id of the concept import to remove.",
                             "type": "string"
                         }
                     },
-                    "required": ["external_source"],
+                    "required": ["concept_import"],
                     "type": "object"
                 }
             ],
-            "description": "One element a scheme layer takes away, named by kind and id. Exactly one key.\n\nA reference rather than a path: `data.concepts.inline.X` would bake today's storage shape into every saved layer, and the collections are not uniformly addressable anyway. `{ concept: 'X' }` says what it means, survives a storage refactor, and validates as a closed set so a typo fails at load instead of silently removing nothing."
+            "description": "One element a scheme layer takes away, named by kind and id. Exactly one key.\n\nA reference rather than a path: `data.concepts[3]` would bake today's storage shape into every saved layer, and the collections are not uniformly addressable anyway. `{ concept: 'X' }` says what it means, survives a storage refactor, and validates as a closed set so a typo fails at load instead of silently removing nothing."
         },
         "MarkingColorRuleDoc": {
             "additionalProperties": false,
@@ -1787,12 +1403,8 @@
             "additionalProperties": false,
             "description": "A single normalize/repair rule: input rewrite during parse.",
             "properties": {
-                "confidence": {
-                    "$ref": "#/definitions/RepairConfidence",
-                    "description": "Confidence level."
-                },
                 "correction": {
-                    "description": "The correction to apply, read per type: replacement text for `separator`, and for `case` the grammar's canonical case, `'upper'` (the default) or `'lower'`.",
+                    "description": "For `case`: the grammar's canonical case, `'upper'` (the default) or `'lower'`.",
                     "type": "string"
                 },
                 "description": {
@@ -1805,16 +1417,16 @@
                 },
                 "id": { "description": "Rule identifier.", "type": "string" },
                 "pattern": {
-                    "description": "Detection or match regex, read per type: for `case` it selects the input that needs correcting; for `separator` it matches the text to replace.",
+                    "description": "For `case`: the regex that selects the input that needs correcting.",
                     "type": "string"
                 },
                 "type": {
-                    "description": "Repair type: `separator` rewrites separator text, `dedup` removes repeated tokens, and `case` corrects letter case.",
-                    "enum": ["separator", "dedup", "case"],
+                    "description": "Repair type: `dedup` removes repeated tokens, and `case` corrects letter case.",
+                    "enum": ["dedup", "case"],
                     "type": "string"
                 }
             },
-            "required": ["id", "type", "confidence", "explanation"],
+            "required": ["id", "type", "explanation"],
             "type": "object"
         },
         "OutputCaseDoc": {
@@ -1866,12 +1478,8 @@
         },
         "ParseConfigDoc": {
             "additionalProperties": false,
-            "description": "Parse configuration: recognition policy, exceptional recognizers, and the repair rules applied before recognition.\n\nNo tokenizer settings. Every boundary in a marking belongs to the field that writes it, so there is no global separator to declare here and nothing for a split exception to be an exception to.",
+            "description": "Parse configuration: exceptional recognizers, and the repair rules applied before recognition.\n\nNo tokenizer settings and no comparison policy. Every boundary in a marking belongs to the field that writes it, and a spelling is compared against the vocabulary without regard to case or the whitespace around it.",
             "properties": {
-                "case_sensitive": {
-                    "description": "Whether the vocabulary is matched case-sensitively.\n\nRecognition policy, not lexing: every boundary in a marking belongs to the field that writes it, and this says how a spelling found at one of those boundaries is compared against the vocabulary. Default false.",
-                    "type": "boolean"
-                },
                 "normalize": {
                     "description": "Normalize/repair rules applied during parse.",
                     "items": { "$ref": "#/definitions/NormalizeRuleDoc" },
@@ -1881,10 +1489,6 @@
                     "description": "Declarations for input no field tree can describe.",
                     "items": { "$ref": "#/definitions/RecognizerDoc" },
                     "type": "array"
-                },
-                "strip_whitespace": {
-                    "description": "Whether surrounding whitespace is ignored when a spelling is compared.\n\nRecognition policy, like `case_sensitive`. It does not split anything; it decides whether the space an author left around a value keeps that value from being recognized. Default true.",
-                    "type": "boolean"
                 }
             },
             "type": "object"
@@ -1938,34 +1542,9 @@
                     },
                     "required": ["after"],
                     "type": "object"
-                },
-                {
-                    "additionalProperties": false,
-                    "properties": {
-                        "before": {
-                            "description": "The concept this one renders before.",
-                            "type": "string"
-                        }
-                    },
-                    "required": ["before"],
-                    "type": "object"
-                },
-                {
-                    "additionalProperties": false,
-                    "properties": {
-                        "between": {
-                            "description": "The two concepts this one renders between, in either order.",
-                            "items": { "type": "string" },
-                            "maxItems": 2,
-                            "minItems": 2,
-                            "type": "array"
-                        }
-                    },
-                    "required": ["between"],
-                    "type": "object"
                 }
             ],
-            "description": "Position spec for a concept: where it renders among the concepts of its category.\n\n- `'first'` / `'last'`: ahead of or behind every other position.\n- Number: absolute position; lower renders earlier.\n- `{ after: <id> }`: renders after the named concept.\n- `{ before: <id> }`: renders before the named concept.\n- `{ between: [a, b] }`: renders between the two named concepts.\n\n`before` mirrors `after`: `A: { before: B }` orders the pair exactly as `B: { after: A }` does. A relative spec names a concept of the same category. A name that resolves to no concept places this one last and reports a warning; relative specs that form a cycle are a load error."
+            "description": "Position spec for a concept: where it renders among the concepts of its category.\n\n- `'first'` / `'last'`: ahead of or behind every other position.\n- Number: absolute position; lower renders earlier.\n- `{ after: <id> }`: renders after the named concept.\n\nA relative spec names a concept of the same category. A name that resolves to no concept places this one last and reports a warning; relative specs that form a cycle are a load error."
         },
         "ProcessingRole": {
             "description": "Structural role of a marking within a processing operation.",
@@ -1987,34 +1566,9 @@
                     },
                     "required": ["above"],
                     "type": "object"
-                },
-                {
-                    "additionalProperties": false,
-                    "properties": {
-                        "below": {
-                            "description": "The concept this one ranks below.",
-                            "type": "string"
-                        }
-                    },
-                    "required": ["below"],
-                    "type": "object"
-                },
-                {
-                    "additionalProperties": false,
-                    "properties": {
-                        "between": {
-                            "description": "The two concepts this one ranks between, in either order.",
-                            "items": { "type": "string" },
-                            "maxItems": 2,
-                            "minItems": 2,
-                            "type": "array"
-                        }
-                    },
-                    "required": ["between"],
-                    "type": "object"
                 }
             ],
-            "description": "Rank spec for a concept: its severity for rank-based rollup (max, min, least_upper_bound).\n\n- `'top'` / `'bottom'`: highest or lowest rank.\n- Number: absolute rank; higher is more severe.\n- `{ above: <id> }`: more severe than the named concept.\n- `{ below: <id> }`: less severe than the named concept.\n- `{ between: [a, b] }`: between the two named concepts.\n\n`below` mirrors `above`: `A: { below: B }` ranks the pair exactly as `B: { above: A }` does. A relative spec names a ranked concept of the same category. A name that resolves to no ranked concept gives this one the top rank, failing closed, and reports a warning; relative specs that form a cycle are a load error."
+            "description": "Rank spec for a concept: its severity for rank-based rollup (max, min).\n\n- `'top'` / `'bottom'`: highest or lowest rank.\n- Number: absolute rank; higher is more severe.\n- `{ above: <id> }`: more severe than the named concept.\n\nA relative spec names a ranked concept of the same category. A name that resolves to no ranked concept gives this one the top rank, failing closed, and reports a warning; relative specs that form a cycle are a load error."
         },
         "RecognizerDoc": {
             "additionalProperties": false,
@@ -2038,10 +1592,6 @@
                         "type": "object"
                     },
                     "type": "array"
-                },
-                "case_sensitive": {
-                    "description": "Whether this pattern reads case as a difference.\n\nAbsent, the pattern follows `parse.case_sensitive`, which is the policy the vocabulary beside it is compared under: one scheme, one answer to the question of whether a spelling in the wrong case is the same spelling. Present, it overrides that policy for this pattern alone, for the declaration whose shape genuinely is case-bearing when the rest of the scheme's is not. There is no flags string: a pattern carrying its own flag could read case one way while the vocabulary it feeds read it the other, and nothing said which was meant.",
-                    "type": "boolean"
                 },
                 "format": {
                     "description": "The format whose field tree these captures feed.",
@@ -2115,15 +1665,6 @@
                     "items": { "$ref": "#/definitions/FormatDoc" },
                     "type": "array"
                 },
-                "of_invalid": {
-                    "description": "Render-of-invalid policy: how the renderer treats input tokens that match no concept. `preserve_unmatched` (the default) echoes them through to the output; `drop_unmatched` discards them; `refuse` renders nothing for an invalid marking. Consumed by the engine's scheme-mapper (D8).",
-                    "enum": ["preserve_unmatched", "drop_unmatched", "refuse"],
-                    "type": "string"
-                },
-                "refusal_marker": {
-                    "description": "What the `refuse` policy renders in place of the marking. The optional `{tokens}` placeholder is replaced with the comma-joined unmatched tokens. Defaults to `[INVALID MARKING: unrecognized {tokens}]`. Only consulted when `of_invalid` is `refuse`.",
-                    "type": "string"
-                },
                 "surface_separator": {
                     "description": "Written between the outputs of two surfaces when one rendered string carries both, unless their syntax merges them, as attributes on one XML element do. Required when `surfaces` lists more than one surface, and not declared without `surfaces`.",
                     "type": "string"
@@ -2137,10 +1678,31 @@
             },
             "type": "object"
         },
-        "RepairConfidence": {
-            "description": "Confidence assigned to a deterministic repair.",
-            "enum": ["safe", "uncertain"],
-            "type": "string"
+        "RollupIntersectDoc": {
+            "additionalProperties": false,
+            "description": "One intersection a rollup step computes: what every contributing marking holds in a category, or across several categories read together.\n\nExactly one of `category` and `categories` is declared.",
+            "properties": {
+                "categories": {
+                    "description": "Categories read together as one set and intersected across the inputs. The first names the category whose header the result carries.",
+                    "items": { "type": "string" },
+                    "minItems": 1,
+                    "type": "array"
+                },
+                "category": {
+                    "description": "The category intersected.",
+                    "type": "string"
+                },
+                "empty_fallback": {
+                    "description": "Concept asserted when the intersection is empty. Firing it also clears the intersected categories.",
+                    "type": "string"
+                },
+                "fallback_if_only": {
+                    "description": "Concepts that, if they are all the intersection holds, make it count as empty.",
+                    "items": { "type": "string" },
+                    "type": "array"
+                }
+            },
+            "type": "object"
         },
         "RollupPipelineDoc": {
             "additionalProperties": false,
@@ -2175,19 +1737,110 @@
         },
         "RollupPipelineStepDoc": {
             "additionalProperties": false,
-            "description": "A rollup-pipeline step: conditional then/else block evaluated in order.",
+            "description": "A rollup-pipeline step: a condition and what happens when it holds.",
             "properties": {
-                "else": {
-                    "$ref": "#/definitions/Record%3Cstring%2Cunknown%3E",
-                    "description": "Else-block: applied when `when` does not match."
-                },
                 "then": {
-                    "$ref": "#/definitions/Record%3Cstring%2Cunknown%3E",
-                    "description": "Then-block: how to combine and remove concepts when this step fires."
+                    "$ref": "#/definitions/RollupStepActionDoc",
+                    "description": "How to combine and remove concepts when this step fires."
                 },
                 "when": {
                     "$ref": "#/definitions/WhenDoc",
                     "description": "Trigger condition for this step. Omit for unconditional fallback step."
+                }
+            },
+            "type": "object"
+        },
+        "RollupStepActionDoc": {
+            "additionalProperties": false,
+            "description": "What a rollup step does to the merged result when it fires.",
+            "properties": {
+                "add": {
+                    "description": "Add concepts to specific categories in the result, to re-home a concept into a scheme-defined category during merge.",
+                    "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                            "category": {
+                                "description": "Id of the category to add them to.",
+                                "type": "string"
+                            },
+                            "concept": {
+                                "anyOf": [
+                                    { "type": "string" },
+                                    {
+                                        "items": { "type": "string" },
+                                        "type": "array"
+                                    }
+                                ],
+                                "description": "Id of the concept or concepts to add."
+                            }
+                        },
+                        "required": ["concept", "category"],
+                        "type": "object"
+                    },
+                    "type": "array"
+                },
+                "clear_categories": {
+                    "description": "Also clear these categories from the result.",
+                    "items": { "type": "string" },
+                    "type": "array"
+                },
+                "intersect": {
+                    "anyOf": [
+                        { "$ref": "#/definitions/RollupIntersectDoc" },
+                        {
+                            "items": {
+                                "$ref": "#/definitions/RollupIntersectDoc"
+                            },
+                            "type": "array"
+                        }
+                    ],
+                    "description": "Intersect a category's concepts across the inputs, with an optional fallback. A group concept is expanded to its members before a single category is intersected. A list runs in order until one intersection falls back; the intersections after it are skipped."
+                },
+                "keep": {
+                    "anyOf": [
+                        { "type": "string" },
+                        { "items": { "type": "string" }, "type": "array" }
+                    ],
+                    "description": "Assert these concepts in the pipeline's primary category, replacing every other concept in that category."
+                },
+                "move": {
+                    "additionalProperties": false,
+                    "description": "Move concepts from one category into another in the result (copy, then remove from the source). Concepts named in `exclude` are not moved; they stay in the source category. `keep_intersection: true` also keeps in the source every concept that appears in the source category on every contributing part, but only when at least one concept named in `exclude` is among them. That shared excluded concept anchors the parts as one joint source. When no excluded concept is on every part, every concept not named in `exclude` moves, shared or not.",
+                    "properties": {
+                        "exclude": {
+                            "anyOf": [
+                                { "type": "string" },
+                                {
+                                    "items": { "type": "string" },
+                                    "type": "array"
+                                }
+                            ],
+                            "description": "Ids of concepts that stay in the source category."
+                        },
+                        "from": {
+                            "description": "Id of the source category.",
+                            "type": "string"
+                        },
+                        "keep_intersection": {
+                            "description": "Also keep in the source the concepts every contributing part shares, as described above.",
+                            "type": "boolean"
+                        },
+                        "to": {
+                            "description": "Id of the destination category.",
+                            "type": "string"
+                        }
+                    },
+                    "required": ["from", "to"],
+                    "type": "object"
+                },
+                "remove": {
+                    "description": "Remove these concepts from the result.",
+                    "items": { "type": "string" },
+                    "type": "array"
+                },
+                "union": {
+                    "description": "Union all assertions from the inputs for the primary category.",
+                    "type": "boolean"
                 }
             },
             "type": "object"
@@ -2229,7 +1882,7 @@
             "properties": {
                 "data": {
                     "$ref": "#/definitions/SchemeDataDoc",
-                    "description": "Categories, concepts, and bulk-concept groups."
+                    "description": "Categories, concepts, and concept imports."
                 },
                 "default_scope": {
                     "description": "The scope a marking is in when nothing names one: one of `scopes`, by id.\n\nRequired whenever a scheme declares at least one scope, and the only way to name the default: the scheme names its default scope once, as a surface names its default view. A layer may leave it out and keep the default of the stack it sits on, or state it to name another; a layer that gives the stack its first scopes names one.",
@@ -2237,14 +1890,6 @@
                 },
                 "definition": {
                     "description": "Official description or definition of this scheme.",
-                    "type": "string"
-                },
-                "deprecated": {
-                    "description": "Whether this scheme as a whole is deprecated.",
-                    "type": "boolean"
-                },
-                "deprecated_since": {
-                    "description": "Date the scheme was deprecated, as `YYYY-MM-DD`.",
                     "type": "string"
                 },
                 "description": {
@@ -2275,10 +1920,6 @@
                     "$ref": "#/definitions/LayerBlockDoc",
                     "description": "The scheme family's layer payload. Required when `type: 'layer'`, forbidden otherwise."
                 },
-                "license": {
-                    "description": "License label shown with the scheme, such as `enterprise`. Informational only: it does not grant or restrict use.",
-                    "type": "string"
-                },
                 "marking": {
                     "description": "The whole marking of this scheme document, written in the scheme `marking_scheme` names. Every `marking` on an element of this document is a part of it.\n\nText, never interpreted: no engine parses it, checks it, or acts on it. A scheme summary reports it unchanged for display.",
                     "type": "string"
@@ -2303,17 +1944,13 @@
                     "description": "Parse configuration."
                 },
                 "part_scope": {
-                    "description": "How much text a part marking governs in a document audit: `'paragraph'` (default, the mark's own line(s)), `'until-next'` (through to the next part marking, a section style), or `'document'`. Lets schemes that place/scope markings differently audit correctly. Maps to runtime `Scheme.partScope`.",
-                    "enum": ["paragraph", "until-next", "document"],
+                    "description": "How much text a part marking governs in a document audit: `'paragraph'` (default, the mark's own line(s)) or `'until-next'` (through to the next part marking, a section style). Lets schemes that place/scope markings differently audit correctly. Maps to runtime `Scheme.partScope`.",
+                    "enum": ["paragraph", "until-next"],
                     "type": "string"
                 },
                 "render": {
                     "$ref": "#/definitions/RenderConfigDoc",
                     "description": "Render configuration."
-                },
-                "replaced_by": {
-                    "description": "Scheme id that supersedes this one.",
-                    "type": "string"
                 },
                 "role_aware": {
                     "description": "When true, this scheme reads a marking in the role its context gives, and a part's rules can read the whole it is part of. Whether or not it is, `process`, `validate` and `explain` compare a part that is valid on its own with a whole that reads and is valid.",
@@ -2418,7 +2055,7 @@
                 },
                 "ui": {
                     "$ref": "#/definitions/Record%3Cstring%2Cunknown%3E",
-                    "description": "UI metadata: engine knows `label_presets` and `wizard_questions`; other keys opaque. `vocabulary` is a top-level SchemeBlock field, not a `ui` sub-key, so it is schema-validated the same way as guide's and access's."
+                    "description": "UI metadata: the engine knows `label_presets`; other keys are opaque. `vocabulary` is a top-level SchemeBlock field, not a `ui` sub-key, so it is schema-validated the same way as guide's and access's."
                 },
                 "version": {
                     "description": "Semantic version (e.g. `3.0.0`, `20161231.0.0`).",
@@ -2432,42 +2069,24 @@
             "required": ["id", "version", "name", "data"],
             "type": "object"
         },
-        "SchemeConceptsBlock": {
-            "additionalProperties": false,
-            "description": "Inline-or-external concepts block: the canonical 1.0 wire shape for a scheme's concept set, per the Context-with-sources schema.\n\nWhen a concept in `inline` and a record from one of this block's `external` sources have the same id, the inline concept is the one used, for reading, writing, suggesting, describing, validating and judging coverage. The source's record for that id is not used, and assertions of the concept carry no `provenance`. This is how an author overrides one record of a source they do not control. Among external sources, the first source that supplies an id is the one used.\n\nThose two rules settle a collision inside one scheme document. Across the documents of a layered stack, layer precedence decides first: a colliding id means the later declaration wins (see `LayerBinding`), and a concept an `external` source supplies counts as declared by the document that declares the source. So when a later layer's source supplies a concept that an earlier document in the stack declares `inline`, the later layer's record is the one used. Inline-over-external never reaches back across layers. The same holds the other way round, and between two sources declared in different layers.",
-            "properties": {
-                "external": {
-                    "description": "Live external sources. An array allows a scheme to draw concepts from multiple upstream endpoints; the loader rejects a bare (non-array) source spec.",
-                    "items": {
-                        "$ref": "#/definitions/ExternalSourceSpec%3CConceptMappingDoc%3E"
-                    },
-                    "type": "array"
-                },
-                "inline": {
-                    "description": "Inline concepts: a flat array of `ConceptDoc`, each carrying its own `id`. Matches the `rules.inline` shape on guides and access docs.",
-                    "items": { "$ref": "#/definitions/ConceptDoc" },
-                    "type": "array"
-                }
-            },
-            "type": "object"
-        },
         "SchemeDataDoc": {
             "additionalProperties": false,
-            "description": "The `data` block: categories and concepts.\n\n`concepts` is the `SchemeConceptsBlock` with `inline` and `external` peers; the loader rejects any other shape.",
+            "description": "The `data` block: categories and concepts.",
             "properties": {
                 "categories": {
                     "description": "Categories: dimensions of the marking.",
                     "items": { "$ref": "#/definitions/CategoryDoc" },
                     "type": "array"
                 },
-                "concept_groups": {
-                    "description": "Named groupings of concepts, for organizing them in a UI or in docs.",
-                    "items": { "$ref": "#/definitions/ConceptGroupDoc" },
+                "concept_imports": {
+                    "description": "Lists of records pasted into the scheme, each producing concepts.",
+                    "items": { "$ref": "#/definitions/ConceptImportDoc" },
                     "type": "array"
                 },
                 "concepts": {
-                    "$ref": "#/definitions/SchemeConceptsBlock",
-                    "description": "Concepts: `{ inline, external }` block."
+                    "description": "Concepts, each carrying its own `id`.",
+                    "items": { "$ref": "#/definitions/ConceptDoc" },
+                    "type": "array"
                 }
             },
             "type": "object"
@@ -2495,11 +2114,6 @@
                 "explanation": {
                     "description": "Human-readable explanation of what this rule does.",
                     "type": "string"
-                },
-                "formats": {
-                    "description": "Render formats the rule applies to, by format id. Absent means all.",
-                    "items": { "type": "string" },
-                    "type": "array"
                 },
                 "from": {
                     "description": "For copy: the category concepts are copied from.",
@@ -2582,99 +2196,6 @@
             "required": ["id", "action"],
             "type": "object"
         },
-        "SecretRefDoc": {
-            "anyOf": [
-                {
-                    "additionalProperties": false,
-                    "properties": {
-                        "envVar": {
-                            "description": "Name of the environment variable that holds the secret.",
-                            "type": "string"
-                        },
-                        "provider": {
-                            "const": "env",
-                            "description": "Read the secret from an environment variable.",
-                            "type": "string"
-                        }
-                    },
-                    "required": ["provider", "envVar"],
-                    "type": "object"
-                },
-                {
-                    "additionalProperties": false,
-                    "properties": {
-                        "certVar": {
-                            "description": "Environment variable that holds the PEM certificate.",
-                            "type": "string"
-                        },
-                        "keyVar": {
-                            "description": "Environment variable that holds the PEM private key.",
-                            "type": "string"
-                        },
-                        "provider": {
-                            "const": "env",
-                            "description": "Read a certificate and key pair from two environment variables.",
-                            "type": "string"
-                        }
-                    },
-                    "required": ["provider", "certVar", "keyVar"],
-                    "type": "object"
-                },
-                {
-                    "additionalProperties": false,
-                    "properties": {
-                        "path": {
-                            "description": "Path of the file that holds the secret. It must lie under a file root the deployment allows.",
-                            "type": "string"
-                        },
-                        "provider": {
-                            "const": "file",
-                            "description": "Read the secret from a mounted file.",
-                            "type": "string"
-                        }
-                    },
-                    "required": ["provider", "path"],
-                    "type": "object"
-                },
-                {
-                    "additionalProperties": false,
-                    "properties": {
-                        "certPath": {
-                            "description": "Path of the PEM certificate file, under an allowed file root.",
-                            "type": "string"
-                        },
-                        "keyPath": {
-                            "description": "Path of the PEM private key file, under an allowed file root.",
-                            "type": "string"
-                        },
-                        "provider": {
-                            "const": "file",
-                            "description": "Read a certificate and key pair from two mounted files.",
-                            "type": "string"
-                        }
-                    },
-                    "required": ["provider", "certPath", "keyPath"],
-                    "type": "object"
-                },
-                {
-                    "additionalProperties": false,
-                    "properties": {
-                        "provider": {
-                            "const": "secret-store",
-                            "description": "Ask the deployment's secret store for the secret.",
-                            "type": "string"
-                        },
-                        "secretId": {
-                            "description": "The id of the secret in that store.",
-                            "type": "string"
-                        }
-                    },
-                    "required": ["provider", "secretId"],
-                    "type": "object"
-                }
-            ],
-            "description": "A reference to a piece of secret material, never the material itself. `provider` says where the server finds it when the source issues a request: `env` reads an environment variable (or a certificate and key pair of them), `file` reads a mounted file (or a certificate and key pair of files), and `secret-store` asks the secret store the deployment names for the secret with that id.\n\nBrowsers never see raw secrets, only the reference. The material stays on the server that resolves it."
-        },
         "SurfaceOutputDoc": {
             "additionalProperties": false,
             "description": "The outputs one surface offers: its named views, in order, and the one it writes when a request does not choose.\n\nA surface `sensitivity` whose everyday view is `full`, whose part markings are written `short`, and which also writes `xml` for a caller that asks for it by name declares those three views, `full` a whole and `short` a part, and `default: { whole: full, part: short }`. A surface `retention` with one view, `block`, declares `default: block`. A request for a view a surface does not declare gets that surface's default for the marking's role.",
@@ -2705,11 +2226,6 @@
                 {
                     "additionalProperties": false,
                     "properties": {
-                        "escape": {
-                            "description": "How a character the syntax cannot frame is escaped.",
-                            "enum": ["none", "backslash"],
-                            "type": "string"
-                        },
                         "type": {
                             "const": "text",
                             "description": "Plain text.",

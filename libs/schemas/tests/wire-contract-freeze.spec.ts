@@ -4,10 +4,10 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 /**
- * # Input-schema freeze gate
+ * # Document-schema freeze gate
  *
- * The generated input JSON-schemas
- * (`generated/json-schemas-input/*.schema.json`) are 1.0-locked public
+ * The generated document JSON-schemas
+ * (`generated/validation/v1/*.schema.json`) are 1.0-locked public
  * contracts: every SDK, integrator, and Studio consumes them. The
  * schemas-freshness check proves generated snapshots match the current
  * TypeScript source; it does NOT stop the source itself from changing shape.
@@ -56,13 +56,13 @@ function project(value: unknown): unknown {
     return value;
 }
 
-function loadInputSchemasProjection(): Record<string, unknown> {
-    const inputDir = path.join(generatedDir, 'json-schemas-input');
+function loadDocumentSchemasProjection(): Record<string, unknown> {
+    const documentDir = path.join(generatedDir, 'validation/v1');
     const out: Record<string, unknown> = {};
-    for (const file of fs.readdirSync(inputDir).sort()) {
+    for (const file of fs.readdirSync(documentDir).sort()) {
         if (!file.endsWith('.schema.json')) continue;
         out[file] = project(
-            JSON.parse(fs.readFileSync(path.join(inputDir, file), 'utf8')),
+            JSON.parse(fs.readFileSync(path.join(documentDir, file), 'utf8')),
         );
     }
     return out;
@@ -87,19 +87,19 @@ function checkAgainstGolden(name: string, current: unknown): void {
     ).toEqual(golden);
 }
 
-describe('input JSON-schema freeze (scheme / guide / access / crosswalk / context)', () => {
-    it('the full input-schema set matches the reviewed golden', () => {
-        const current = loadInputSchemasProjection();
+describe('document JSON-schema freeze (scheme / guide / access / crosswalk / context / test suite)', () => {
+    it('the full document-schema set matches the reviewed golden', () => {
+        const current = loadDocumentSchemasProjection();
         // The set itself is contract: a definition schema appearing or
         // vanishing is as breaking as a field change.
         expect(Object.keys(current)).toEqual([
-            'access-policy.schema.json',
-            'context-definition.schema.json',
-            'crosswalk-definition.schema.json',
-            'guide-definition.schema.json',
-            'scheme-definition.schema.json',
+            'access.schema.json',
+            'context.schema.json',
+            'crosswalk.schema.json',
+            'guide.schema.json',
+            'scheme.schema.json',
             'test-suite.schema.json',
         ]);
-        checkAgainstGolden('input-schemas-contract.golden.json', current);
+        checkAgainstGolden('document-schemas-contract.golden.json', current);
     });
 });

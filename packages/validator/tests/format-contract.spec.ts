@@ -81,7 +81,7 @@ function tierHeadRelation(document: Doc) {
     const scheme = document.scheme as any;
     const field = scheme.render.formats[0].fields[0];
     return resolveTierHeadRelation({
-        concepts: scheme.data.concepts.inline,
+        concepts: scheme.data.concepts,
         tiers: field.tiers.map((tier: any) => ({
             tier: tier.tier,
             view: tier.view,
@@ -103,8 +103,8 @@ function tierHeadRelation(document: Doc) {
  * a rule firing where it should not or a fixture that stopped being about the
  * one thing it was written for, and `toContain` reports neither. Warnings are
  * listed separately because they do not make a document invalid: an author
- * whose block format has a free-text field is told about it and is not asked to
- * declare an escape mechanism their format does not have.
+ * whose block format has a free-text field is told about it and is not
+ * refused.
  */
 const EXPECTED: Record<string, { errors: string[]; warnings: string[] }> = {
     'D-indeterminate-separator.yaml': {
@@ -205,7 +205,6 @@ const EXPECTED: Record<string, { errors: string[]; warnings: string[] }> = {
         errors: [],
         warnings: ['plan/unframable-value'],
     },
-    'F20-async-source.yaml': { errors: [], warnings: [] },
     'F21-reserved-literal.yaml': {
         errors: [],
         warnings: ['plan/unframable-value', 'plan/reserved-literal-collision'],
@@ -326,12 +325,12 @@ describe('compile-only plan walker', () => {
         const document = structuredClone(load('design', 'inline-fields.yaml'));
         const scheme = document.scheme as any;
         const [level, handling] = scheme.data.categories;
-        const [levelOne, , compartmentA] = scheme.data.concepts.inline;
+        const [levelOne, , compartmentA] = scheme.data.concepts;
         scheme.data.categories = [
             { ...level, id: 'a::b' },
             { ...handling, id: 'a' },
         ];
-        scheme.data.concepts.inline = [
+        scheme.data.concepts = [
             { ...levelOne, id: 'c', categories: ['a::b'] },
             { ...compartmentA, id: 'b::c', categories: ['a'] },
         ];
@@ -700,22 +699,20 @@ describe('compile-only plan walker', () => {
                             required: true,
                         },
                     ],
-                    concepts: {
-                        inline: [
-                            {
-                                id: 'ORIGIN_A',
-                                name: 'Origin A',
-                                views: { default: 'A' },
-                                categories: ['origin'],
-                            },
-                            {
-                                id: 'ORIGIN_B',
-                                name: 'Origin B',
-                                views: { default: 'B' },
-                                categories: ['origin'],
-                            },
-                        ],
-                    },
+                    concepts: [
+                        {
+                            id: 'ORIGIN_A',
+                            name: 'Origin A',
+                            views: { default: 'A' },
+                            categories: ['origin'],
+                        },
+                        {
+                            id: 'ORIGIN_B',
+                            name: 'Origin B',
+                            views: { default: 'B' },
+                            categories: ['origin'],
+                        },
+                    ],
                 },
                 render: {
                     default: 'banner',
@@ -809,19 +806,15 @@ describe('compile-only plan walker', () => {
         // the layering case the tier rule itself already distinguishes: a
         // warning, because a layer may bring the head in.
         const headless = JSON.parse(JSON.stringify(document)) as Doc;
-        const concepts = (
-            headless.scheme.data as {
-                concepts: { inline: Array<{ id: string }> };
-            }
-        ).concepts;
-        concepts.inline = concepts.inline.filter(
-            (one) => one.id !== 'PROGRAM_ROOT',
-        );
+        (headless.scheme.data as { concepts: Array<{ id: string }> }).concepts =
+            (
+                headless.scheme.data as { concepts: Array<{ id: string }> }
+            ).concepts.filter((one) => one.id !== 'PROGRAM_ROOT');
         (
             headless.scheme.data as {
-                concepts: { inline: Array<{ parents?: string[] }> };
+                concepts: Array<{ parents?: string[] }>;
             }
-        ).concepts.inline[0].parents = ['PROGRAM_ROOT'];
+        ).concepts[0].parents = ['PROGRAM_ROOT'];
         // Both formats declare the rule, so both report it.
         expect(diagnosticIds(headless)).toEqual([
             'plan/unbound-tier-view',
@@ -840,7 +833,7 @@ describe('compile-only plan walker', () => {
 
         const reordered = structuredClone(document);
         const scheme = reordered.scheme as any;
-        scheme.data.concepts.inline.reverse();
+        scheme.data.concepts.reverse();
         scheme.render.formats[0].fields[0].tiers.reverse();
         expect(errorIds(reordered)).toEqual([
             'plan/conflicting-tier-head-view',
@@ -851,7 +844,7 @@ describe('compile-only plan walker', () => {
         // on another child boundary.
         const inherited = structuredClone(document);
         const inheritedScheme = inherited.scheme as any;
-        inheritedScheme.data.concepts.inline.find(
+        inheritedScheme.data.concepts.find(
             (concept: { id: string }) => concept.id === 'HEAD',
         ).tier = 'head';
         const inheritedTiers =
@@ -875,7 +868,7 @@ describe('compile-only plan walker', () => {
         // names that resolve to the same text make the same composed token and
         // therefore do not conflict.
         const sameSpelling = structuredClone(document);
-        (sameSpelling.scheme.data as any).concepts.inline.find(
+        (sameSpelling.scheme.data as any).concepts.find(
             (concept: { id: string }) => concept.id === 'HEAD',
         ).views.abbreviated = 'HEAD';
         expect(errorIds(sameSpelling)).toEqual([]);
@@ -888,7 +881,7 @@ describe('compile-only plan walker', () => {
             'F30-conflicting-tier-head-view.yaml',
         );
         const reversedConflict = structuredClone(conflict);
-        (reversedConflict.scheme as any).data.concepts.inline.reverse();
+        (reversedConflict.scheme as any).data.concepts.reverse();
         (
             reversedConflict.scheme as any
         ).render.formats[0].fields[0].tiers.reverse();
@@ -905,8 +898,8 @@ describe('compile-only plan walker', () => {
 
         const ambiguous = load('falsification', 'F31-ambiguous-tier-head.yaml');
         const reversedAmbiguous = structuredClone(ambiguous);
-        const reversedConcepts = (reversedAmbiguous.scheme as any).data.concepts
-            .inline;
+        const reversedConcepts = (reversedAmbiguous.scheme as any).data
+            .concepts;
         reversedConcepts.reverse();
         reversedConcepts
             .find((concept: { id: string }) => concept.id === 'CHILD')
@@ -920,9 +913,9 @@ describe('compile-only plan walker', () => {
             ]);
 
             const narrowed = structuredClone(document);
-            (narrowed.scheme as any).data.concepts.inline = (
+            (narrowed.scheme as any).data.concepts = (
                 narrowed.scheme as any
-            ).data.concepts.inline.filter(
+            ).data.concepts.filter(
                 (concept: { id: string }) => concept.id !== 'HEAD_ONE',
             );
             const narrowedRelation = tierHeadRelation(narrowed);
@@ -939,8 +932,7 @@ describe('compile-only plan walker', () => {
         expect(validateDocument(document).ok).toBe(false);
 
         const reordered = structuredClone(document);
-        const reorderedConcepts = (reordered.scheme.data as any).concepts
-            .inline;
+        const reorderedConcepts = (reordered.scheme.data as any).concepts;
         reorderedConcepts.reverse();
         reorderedConcepts
             .find((concept: { id: string }) => concept.id === 'CHILD')
@@ -951,7 +943,7 @@ describe('compile-only plan walker', () => {
         // it. Put it first to prove validation resolves the one eligible head
         // instead of accepting whichever parent declaration order presents.
         const oneEligible = structuredClone(document);
-        const concepts = (oneEligible.scheme.data as any).concepts.inline;
+        const concepts = (oneEligible.scheme.data as any).concepts;
         concepts.find(
             (concept: { id: string }) => concept.id === 'HEAD_TWO',
         ).categories = ['taxonomy'];
@@ -977,9 +969,8 @@ describe('compile-only plan walker', () => {
 
     it('a warning does not make a document invalid', () => {
         // F05 is the framing case. The document is well-formed; the values that
-        // cannot be written are a run-time result, and refusing the document
-        // here would push the author into declaring an escape their format does
-        // not have.
+        // cannot be written are a run-time result, so the document is not
+        // refused.
         const result = validateDocument(
             load('falsification', 'F05-unframable-value.yaml'),
         );
@@ -1057,7 +1048,7 @@ describe('compile-only plan walker', () => {
         // An explicit choice remains valid when a concept belongs to both.
         const multiCategory = structuredClone(document);
         const multiScheme = multiCategory.scheme as any;
-        multiScheme.data.concepts.inline
+        multiScheme.data.concepts
             .find((concept: { id: string }) => concept.id === 'HANDLING_A')
             .categories.push('level');
         multiScheme.render.formats[0].fields[0] = {
@@ -1130,30 +1121,20 @@ describe('compile-only plan walker', () => {
             expect(diagnosticIds(document)).toContain('plan/unbound-tier-view');
         });
 
-        it('declaring an escape silences the framing rule, and only that', () => {
-            // Read in the direction that proves something for a rule that is a
-            // warning. The fixture declares no escape, because the format it
-            // stands for has none, and the warning is the accounting for it.
+        it('a plain block format with free text carries the framing warning', () => {
+            // Plain text has no escape, so the warning is the accounting for a
+            // value the format cannot write back.
             const document = load('design', 'block-alternatives.yaml');
             expect(errorIds(document)).toEqual([]);
             expect(warningIds(document)).toEqual([
                 'plan/unframable-value',
                 'plan/unframable-value',
             ]);
-
-            // An author whose format really does escape says so, and the rule
-            // has nothing left to say. If it still fired, the escape would be
-            // decorative and every block format would carry the warning.
-            (document.scheme.render as any).formats[0].syntax = {
-                type: 'text',
-                escape: 'backslash',
-            };
-            expect(warningIds(document)).toEqual([]);
         });
 
         it('a parent chain that closes trips the hierarchy rule', () => {
             const document = load('design', 'tiers.yaml');
-            (document.scheme.data as any).concepts.inline[0].parents = [
+            (document.scheme.data as any).concepts[0].parents = [
                 'PROGRAM_LEAF',
             ];
             expect(diagnosticIds(document)).toContain('plan/hierarchy-cycle');
@@ -1169,7 +1150,7 @@ describe('compile-only plan walker', () => {
 
         it('a second placeholder in a view trips the placeholder rule', () => {
             const document = load('design', 'typed-values.yaml');
-            (document.scheme.data as any).concepts.inline[0].views.default =
+            (document.scheme.data as any).concepts[0].views.default =
                 '{year}-{value}';
             expect(diagnosticIds(document)).toContain(
                 'plan/unknown-placeholder',
@@ -1204,7 +1185,7 @@ describe('compile-only plan walker', () => {
 
             // Break the chain and the same two fields are provably exclusive:
             // the closure no longer asserts one alongside the other.
-            delete (document.scheme.data as any).concepts.inline[1].parents;
+            delete (document.scheme.data as any).concepts[1].parents;
             expect(errorIds(document)).toEqual([]);
         });
 
@@ -1215,7 +1196,7 @@ describe('compile-only plan walker', () => {
             // one instead. The concepts still share `declass`, but the field no
             // longer writes it, so the reading this format produces is not the
             // one the cardinality constrains.
-            const concepts = (document.scheme.data as any).concepts.inline;
+            const concepts = (document.scheme.data as any).concepts;
             concepts[0].categories = ['declass', 'declass_date'];
             (document.scheme.render as any).formats[0].fields[0].category =
                 'declass_date';
@@ -1229,7 +1210,7 @@ describe('compile-only plan walker', () => {
             // asserted there instead, with both fields active.
             const document = load('design', 'xml-attributes.yaml');
             expect(errorIds(document)).toEqual([]);
-            const concepts = (document.scheme.data as any).concepts.inline;
+            const concepts = (document.scheme.data as any).concepts;
             concepts[1].categories = ['declass', 'declass_date'];
             // The field that writes it now has to name its category too, so
             // pin that down and keep the attribute question the only one left.
@@ -1245,7 +1226,7 @@ describe('compile-only plan walker', () => {
 
         it('a concept in two categories has to say which one the field binds', () => {
             const document = load('design', 'xml-attributes.yaml');
-            (document.scheme.data as any).concepts.inline[1].categories = [
+            (document.scheme.data as any).concepts[1].categories = [
                 'declass',
                 'declass_date',
             ];
@@ -1272,7 +1253,7 @@ describe('compile-only plan walker', () => {
             expect(errorIds(document)).toEqual([]);
             (
                 document.scheme.data as any
-            ).concepts.inline[2].input_aliases[0].after_category = 'nope';
+            ).concepts[2].input_aliases[0].after_category = 'nope';
             expect(errorIds(document)).toEqual(['plan/unresolved-reference']);
         });
 
@@ -1322,7 +1303,7 @@ describe('compile-only plan walker', () => {
                 'F14b-attribute-ancestor-pair.yaml',
             );
             const data = document.scheme.data as any;
-            delete data.concepts.inline[1].parents;
+            delete data.concepts[1].parents;
             expect(errorIds(document)).toEqual([]);
 
             data.categories.push({
@@ -1330,7 +1311,7 @@ describe('compile-only plan walker', () => {
                 label: 'Other',
                 rollup: 'union',
             });
-            data.concepts.inline.push({
+            data.concepts.push({
                 id: 'BOTH',
                 name: 'Both instructions',
                 views: { default: 'BOTH' },
@@ -1356,7 +1337,7 @@ describe('compile-only plan walker', () => {
             // the common one: a category that holds both kinds of concept is,
             // and a rule that only looked at alternatives said nothing about it.
             const document = load('design', 'block-alternatives.yaml');
-            const concepts = (document.scheme.data as any).concepts.inline;
+            const concepts = (document.scheme.data as any).concepts;
             delete concepts[4].text_input.encoding;
             // One category now holds the free-text date and a fixed word.
             concepts.push({
@@ -1380,7 +1361,7 @@ describe('compile-only plan walker', () => {
             // instruction spelled as a word and one written as a description is
             // ordinary; refusing it would be a claim about the domain.
             const document = load('design', 'block-alternatives.yaml');
-            delete (document.scheme.data as any).concepts.inline[4].text_input
+            delete (document.scheme.data as any).concepts[4].text_input
                 .encoding;
             expect(diagnosticIds(document)).toContain(
                 'plan/reserved-literal-collision',
@@ -1422,7 +1403,7 @@ describe('compile-only plan walker', () => {
             const document = load('design', 'block-alternatives.yaml');
             // The block alternatives are safe because the date is encoded. Take
             // the encoding away and the free value can spell the code beside it.
-            delete (document.scheme.data as any).concepts.inline[4].text_input
+            delete (document.scheme.data as any).concepts[4].text_input
                 .encoding;
             expect(diagnosticIds(document)).toContain(
                 'plan/reserved-literal-collision',
@@ -1441,22 +1422,20 @@ describe('a field that declares `unspelled`', () => {
                 categories: [
                     { id: 'control', label: 'Control', rollup: 'union' },
                 ],
-                concepts: {
-                    inline: [
-                        {
-                            id: 'LISTED',
-                            name: 'Listed',
-                            views: { default: 'LSD', short: 'LS' },
-                            categories: ['control'],
-                        },
-                        {
-                            id: 'UNLISTED',
-                            name: 'Unlisted',
-                            views: { default: 'ULS' },
-                            categories: ['control'],
-                        },
-                    ],
-                },
+                concepts: [
+                    {
+                        id: 'LISTED',
+                        name: 'Listed',
+                        views: { default: 'LSD', short: 'LS' },
+                        categories: ['control'],
+                    },
+                    {
+                        id: 'UNLISTED',
+                        name: 'Unlisted',
+                        views: { default: 'ULS' },
+                        categories: ['control'],
+                    },
+                ],
             },
             render: {
                 formats: [

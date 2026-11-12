@@ -34,44 +34,43 @@ scheme:
         rollup: first
         single: true
     concepts:
-      inline:
-        - id: CLASSIFIER_NAME
-          name: Classifier name
-          views: { default: '{value}' }
-          categories: [classifier]
-          text_input:
-            label: Classifier
-            required: true
-        - id: SOURCE_CITATION
-          name: A named source
-          views: { default: '{value}' }
-          categories: [source]
-          text_input:
-            label: Source citation
-            required: true
-        - id: REASON_ONE
-          name: Reason one
-          views: { default: R1 }
-          categories: [reason]
-        - id: REASON_TWO
-          name: Reason two
-          views: { default: R2 }
-          categories: [reason]
-        - id: DECLASS_DATE
-          name: Specific date
-          views: { default: '{value}' }
-          categories: [declass]
-          text_input:
-            label: Declassification date
-            required: true
-            encoding:
-              type: calendar-date
-              canonical: 'YYYY-MM-DD'
-              accepts: ['YYYYMMDD', 'YYYY-MM-DD']
-        - id: EXEMPT_CODE_ONE
-          name: Exemption one
-          views: { default: X1 }
-          categories: [exemption]
+      - id: CLASSIFIER_NAME
+        name: Classifier name
+        views: { default: '{value}' }
+        categories: [classifier]
+        text_input:
+          label: Classifier
+          required: true
+      - id: SOURCE_CITATION
+        name: A named source
+        views: { default: '{value}' }
+        categories: [source]
+        text_input:
+          label: Source citation
+          required: true
+      - id: REASON_ONE
+        name: Reason one
+        views: { default: R1 }
+        categories: [reason]
+      - id: REASON_TWO
+        name: Reason two
+        views: { default: R2 }
+        categories: [reason]
+      - id: DECLASS_DATE
+        name: Specific date
+        views: { default: '{value}' }
+        categories: [declass]
+        text_input:
+          label: Declassification date
+          required: true
+          encoding:
+            type: calendar-date
+            canonical: 'YYYY-MM-DD'
+            accepts: ['YYYYMMDD', 'YYYY-MM-DD']
+      - id: EXEMPT_CODE_ONE
+        name: Exemption one
+        views: { default: X1 }
+        categories: [exemption]
   render:
     default: authority_block
     formats:

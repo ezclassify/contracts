@@ -21,20 +21,19 @@ scheme:
         label: Handling
         rollup: union
     concepts:
-      inline:
-        - { id: LEVEL_ONE, name: Level one, views: { default: ONE }, categories: [level] }
-        - id: NO_CONTRACTOR
-          name: No contractor dissemination
-          views: { default: NOCONTRACT }
-          categories: [handling]
-          input_aliases:
-            - { text: NC, position: non-leading }
-        - id: NORTHERN_COALITION
-          name: Northern coalition
-          views: { default: NORTHERN }
-          categories: [handling]
-          input_aliases:
-            - { text: NC, position: leading }
+      - { id: LEVEL_ONE, name: Level one, views: { default: ONE }, categories: [level] }
+      - id: NO_CONTRACTOR
+        name: No contractor dissemination
+        views: { default: NOCONTRACT }
+        categories: [handling]
+        input_aliases:
+          - { text: NC, position: non-leading }
+      - id: NORTHERN_COALITION
+        name: Northern coalition
+        views: { default: NORTHERN }
+        categories: [handling]
+        input_aliases:
+          - { text: NC, position: leading }
   render:
     default: banner
     formats:

@@ -1,29 +1,5 @@
 {
     "$defs": {
-        "attribution": {
-            "additionalProperties": false,
-            "description": "Provenance attached to every external source. Mirrors the runtime `Attribution` declared in `./source.ts`; redeclared here so the YAML schema can validate it without depending on the runtime source contract.",
-            "properties": {
-                "citation": {
-                    "description": "Suggested citation for the source.",
-                    "type": "string"
-                },
-                "license": {
-                    "description": "SPDX identifier or short license token, such as `CC-BY-4.0`.",
-                    "type": "string"
-                },
-                "licenseUrl": {
-                    "description": "Canonical URL where the license terms can be inspected.",
-                    "type": "string"
-                },
-                "name": {
-                    "description": "Display name of the upstream source.",
-                    "type": "string"
-                }
-            },
-            "required": ["name", "license"],
-            "type": "object"
-        },
         "character_window": {
             "additionalProperties": false,
             "description": "Proximity measured in raw characters.",
@@ -57,322 +33,6 @@
             },
             "required": ["id"],
             "type": "object"
-        },
-        "external_source": {
-            "additionalProperties": false,
-            "description": "The body of an `external:` block on a concept / guide-rule / access source. The mapping field is one of `ConceptMappingDoc`, `RuleMappingDoc`, or `AccessMappingDoc` depending on which artifact this block belongs to.",
-            "properties": {
-                "attribution": {
-                    "$ref": "#/$defs/attribution",
-                    "description": "Provenance for downstream attribution UIs."
-                },
-                "auth": {
-                    "$ref": "#/$defs/external_source_auth",
-                    "description": "Request-level authentication, applied to each request."
-                },
-                "capabilities": {
-                    "$ref": "#/$defs/external_source_capabilities",
-                    "description": "Capability overrides. When omitted, inferred from `mapping`."
-                },
-                "grantId": {
-                    "description": "The publisher's opaque reference (`grantId:<uuid>`) to the sharing grant under which it read the source `srcref` names. Provenance only; the engine accepts it and does not act on it.",
-                    "type": "string"
-                },
-                "headers": {
-                    "$ref": "#/$defs/string_map",
-                    "description": "Static request headers (HTTP only)."
-                },
-                "id": {
-                    "description": "Stable identifier for this source within the containing artifact. Required when multiple external sources appear on the same scheme; the loader synthesizes `external-${i}` when the field is absent.",
-                    "type": "string"
-                },
-                "liveFetch": {
-                    "description": "How the publisher obtained the records it published for this source: `true` when it read the upstream as it composed the artifact, `false` (the default) when it used a stored snapshot, named by `snapshotRef`. Provenance only; the engine accepts it and does not act on it.",
-                    "type": "boolean"
-                },
-                "mapping": {
-                    "$ref": "#/$defs/rule_mapping",
-                    "description": "Declarative projection from foreign records into canonical shape."
-                },
-                "mappingHash": {
-                    "description": "The publisher's anchor over this spec block: SHA-256 hex of its canonical sorted-key JSON serialization, excluding this field. Whoever publishes the artifact writes it. The engine recomputes it when it loads the Context and refuses to load on a mismatch, so a block edited after publication is caught. Absent means the block carries no anchor and nothing is checked.",
-                    "type": "string"
-                },
-                "pagination": {
-                    "$ref": "#/$defs/external_source_pagination",
-                    "description": "HTTP-only knobs. Ignored for non-http transports."
-                },
-                "query": {
-                    "$ref": "#/$defs/string_map",
-                    "description": "Static query params (HTTP only)."
-                },
-                "queryParams": {
-                    "$ref": "#/$defs/external_source_query_params",
-                    "description": "HTTP-only: override the transport's default query-parameter names."
-                },
-                "rateLimit": {
-                    "additionalProperties": false,
-                    "description": "Per-instance rate-limit bucket.",
-                    "properties": {
-                        "burst": {
-                            "description": "Most requests allowed in one window.",
-                            "type": "integer"
-                        },
-                        "windowMs": {
-                            "description": "Length of the window, in milliseconds.",
-                            "type": "number"
-                        }
-                    },
-                    "required": ["burst", "windowMs"],
-                    "type": "object"
-                },
-                "recordsPath": {
-                    "description": "Dot-path into the JSON response body that locates the records array (HTTP only). Omit when the response body is itself the array. Use this for upstreams that wrap their payload, e.g. GeoJSON `FeatureCollection.features`, ArcGIS REST `features`, Elasticsearch `hits.hits`.",
-                    "type": "string"
-                },
-                "snapshotId": {
-                    "description": "Optional pin on the records this source serves: the sha256 records digest the source reports for them, written `sha256:` followed by 64 lowercase hex digits (the pattern `^sha256:[0-9a-f]{64}$`). When it is set, the engine loads the artifact only if the source reports the same digest, so an artifact version is immutable around it. To absorb new data from upstream, mint a new artifact version with the new digest.\n\nA label such as a release name never matches and is refused; it belongs in `attribution.citation`. Omit the pin for a best-effort live source that cannot report a stable digest.",
-                    "pattern": "^sha256:[0-9a-f]{64}$",
-                    "type": "string"
-                },
-                "snapshotRef": {
-                    "description": "The publisher's content-addressed reference to the stored snapshot the records came from, when `liveFetch` is `false`. Provenance only; the engine accepts it and does not act on it.",
-                    "type": "string"
-                },
-                "source": {
-                    "description": "URI for the upstream: http(s), file://, or inline:// (rare).",
-                    "type": "string"
-                },
-                "srcref": {
-                    "description": "The publisher's opaque reference (`srcref:<uuid>`) to a source another organization shared with it, when the records came through such a share. Provenance only; the engine accepts it and does not act on it.",
-                    "type": "string"
-                },
-                "timeoutMs": {
-                    "description": "Per-request timeout in ms.",
-                    "type": "number"
-                },
-                "tls": {
-                    "$ref": "#/$defs/external_source_tls",
-                    "description": "HTTP only: the connection's TLS settings (a private CA, a client certificate for mutual TLS). Independent of `auth`, so a source can present a client certificate and a bearer token together. A source whose only credential is its client certificate has `tls` and no `auth`."
-                },
-                "transport": {
-                    "$ref": "#/$defs/external_source_transport",
-                    "description": "Inferred from `source` when omitted."
-                }
-            },
-            "required": ["source", "mapping"],
-            "type": "object"
-        },
-        "external_source_auth": {
-            "additionalProperties": false,
-            "description": "Request-level authentication on an external source. `flow` selects the registered handler (Basic, Bearer, a named header, AWS-SigV4, OAuth2 client credentials) that decorates each request; the credential refs are provider-specific opaque ids that are resolved server-side.\n\nCertificates are not request-level. A client certificate for mutual TLS, and a CA bundle for a private upstream, belong to the connection and are declared in the source's `tls` block.",
-            "properties": {
-                "accessKeyRef": {
-                    "$ref": "#/$defs/secret_ref",
-                    "description": "AWS access key ref, used by `aws-sigv4`."
-                },
-                "clientCredentialRef": {
-                    "$ref": "#/$defs/secret_ref",
-                    "description": "OAuth2 client credential, used by `oauth2-cc`."
-                },
-                "credentialRef": {
-                    "$ref": "#/$defs/secret_ref",
-                    "description": "Single primary credential, used by `basic`, `bearer`, `header`."
-                },
-                "flow": {
-                    "description": "Registered AuthFlowHandler id.",
-                    "enum": [
-                        "none",
-                        "basic",
-                        "bearer",
-                        "header",
-                        "aws-sigv4",
-                        "oauth2-cc"
-                    ],
-                    "type": "string"
-                },
-                "params": {
-                    "$ref": "#/$defs/string_map",
-                    "description": "Optional scopes / region / token endpoint params, provider-specific."
-                },
-                "secretKeyRef": {
-                    "$ref": "#/$defs/secret_ref",
-                    "description": "AWS secret access key ref, used by `aws-sigv4`."
-                }
-            },
-            "required": ["flow"],
-            "type": "object"
-        },
-        "external_source_capabilities": {
-            "additionalProperties": false,
-            "description": "Capability hints declared on an external source. The compiler infers defaults from the mapping shape; an explicit block overrides inference.",
-            "properties": {
-                "ancestorsOf": {
-                    "description": "Whether the upstream can list a concept's ancestors.",
-                    "type": "boolean"
-                },
-                "childrenOf": {
-                    "description": "Whether the upstream can list a concept's children.",
-                    "type": "boolean"
-                },
-                "count": {
-                    "description": "Whether the upstream reports how many records it holds. Used by authoring tools.",
-                    "type": "boolean"
-                },
-                "enumerate": {
-                    "description": "Whether the upstream can be browsed page by page. Used by authoring tools, not by the runtime.",
-                    "type": "boolean"
-                },
-                "prefixMatch": {
-                    "description": "Whether the upstream answers a prefix lookup.",
-                    "type": "boolean"
-                },
-                "resolveAliases": {
-                    "description": "How the upstream resolves an alias to a concept: `exact` for literal matches, `fuzzy` for tolerant ones, or `none` when it cannot.",
-                    "enum": ["exact", "fuzzy", "none"],
-                    "type": "string"
-                },
-                "search": {
-                    "description": "Whether the upstream answers a free-text search.",
-                    "type": "boolean"
-                }
-            },
-            "type": "object"
-        },
-        "external_source_pagination": {
-            "anyOf": [
-                {
-                    "additionalProperties": false,
-                    "properties": {
-                        "style": {
-                            "const": "none",
-                            "description": "The upstream answers in a single response.",
-                            "type": "string"
-                        }
-                    },
-                    "required": ["style"],
-                    "type": "object"
-                },
-                {
-                    "additionalProperties": false,
-                    "properties": {
-                        "pageParam": {
-                            "description": "Name of the query parameter that carries the page number.",
-                            "type": "string"
-                        },
-                        "start": {
-                            "description": "The number of the first page, usually `0` or `1`.",
-                            "type": "integer"
-                        },
-                        "style": {
-                            "const": "page",
-                            "description": "The upstream pages by page number: `start` first, then one more per page, until a page comes back empty.",
-                            "type": "string"
-                        }
-                    },
-                    "required": ["style", "pageParam", "start"],
-                    "type": "object"
-                },
-                {
-                    "additionalProperties": false,
-                    "properties": {
-                        "offsetParam": {
-                            "description": "Name of the query parameter that carries the record offset.",
-                            "type": "string"
-                        },
-                        "style": {
-                            "const": "offset",
-                            "description": "The upstream pages by record offset: `0` first, then the previous offset plus the records that page returned, until a page comes back empty.",
-                            "type": "string"
-                        }
-                    },
-                    "required": ["style", "offsetParam"],
-                    "type": "object"
-                },
-                {
-                    "additionalProperties": false,
-                    "properties": {
-                        "cursorParam": {
-                            "description": "Name of the query parameter that carries the cursor.",
-                            "type": "string"
-                        },
-                        "nextField": {
-                            "description": "Dot-path in the response body to the next page's cursor.",
-                            "type": "string"
-                        },
-                        "style": {
-                            "const": "cursor",
-                            "description": "The upstream pages by an opaque cursor it returns. The read ends at the first page whose response names no next cursor.",
-                            "type": "string"
-                        }
-                    },
-                    "required": ["style", "cursorParam", "nextField"],
-                    "type": "object"
-                },
-                {
-                    "additionalProperties": false,
-                    "properties": {
-                        "style": {
-                            "const": "link-header",
-                            "description": "The upstream links the next page in its `Link` response header. The read ends at the first page whose response links no next page.",
-                            "type": "string"
-                        }
-                    },
-                    "required": ["style"],
-                    "type": "object"
-                }
-            ],
-            "description": "Pagination shape declared on an HTTP transport.\n\nA read follows the declared style until the style's last page, and fails rather than return a partial set when it cannot get there: a failed page, a repeated continuation or page, or a read past the host's page, record or time limit. The page size, for every style, is the `queryParams.pageSize` parameter.\n\nThe `page` and `offset` styles compute the next request themselves, so an empty page is the only page that ends the read; a short page does not, because the upstream's page size is not something the read trusts. The `cursor` and `link-header` styles follow the continuation the upstream returns, and the read ends at the first page that names none."
-        },
-        "external_source_query_params": {
-            "additionalProperties": false,
-            "description": "Upstream-specific query-parameter names for an HTTP external source. Each field overrides the transport's built-in default name (`search` → `q`, `prefix` → `prefix`, `scope` → `scope`, `pageSize` → `pageSize`) so a customer mapping an upstream that searches via `?query=` or `?filter=` isn't stuck with the transport's own convention. Page continuation parameters belong to the `pagination` block.",
-            "properties": {
-                "pageSize": {
-                    "description": "Name of the query parameter that carries the page size, for every pagination style. Default `pageSize`.",
-                    "type": "string"
-                },
-                "prefix": {
-                    "description": "Name of the query parameter that carries a prefix to match. Default `prefix`.",
-                    "type": "string"
-                },
-                "scope": {
-                    "description": "Name of the query parameter that carries a scope. Default `scope`.",
-                    "type": "string"
-                },
-                "search": {
-                    "description": "Name of the query parameter that carries a search term. Default `q`.",
-                    "type": "string"
-                }
-            },
-            "type": "object"
-        },
-        "external_source_tls": {
-            "additionalProperties": false,
-            "description": "TLS settings for an HTTP external source's connections. They apply to requests to `source` and to same-origin redirects. Any `tls` setting pins the source to its origin, so a cross-origin redirect is refused. Server verification is always on and cannot be turned off here.\n\nDeclare at least one field, and give `keyPassphraseRef` only together with `clientCertAndKeyRef`. The block is valid only on an `http` transport whose `source` is an `https:` URL; the runtime refuses it anywhere else when it builds the source.",
-            "if": { "required": ["keyPassphraseRef"] },
-            "minProperties": 1,
-            "properties": {
-                "caBundleRef": {
-                    "$ref": "#/$defs/secret_ref",
-                    "description": "PEM CA bundle that verifies the upstream server certificate. Resolves to a string-secret. When set, it replaces the platform's default roots for this source. The material is public, but it is referenced rather than inlined so the deployment can rotate it without a new artifact version."
-                },
-                "clientCertAndKeyRef": {
-                    "$ref": "#/$defs/secret_ref",
-                    "description": "Client certificate and private key presented in the handshake (mutual TLS). Resolves to a cert-and-key-pair."
-                },
-                "keyPassphraseRef": {
-                    "$ref": "#/$defs/secret_ref",
-                    "description": "Passphrase for an encrypted private key in `clientCertAndKeyRef`. Resolves to a string-secret. Requires `clientCertAndKeyRef`. Leave it unset when the pair already carries its passphrase; supplying both is refused."
-                }
-            },
-            "then": { "required": ["clientCertAndKeyRef"] },
-            "type": "object"
-        },
-        "external_source_transport": {
-            "description": "Discriminated transport union for an external source. `transport` is inferred from the URI scheme when omitted (`https://` → `http`, `file://` → `file`, no scheme → `inline-data`); explicit values win.",
-            "enum": ["http", "file", "inline-data"],
-            "type": "string"
         },
         "guide_category": {
             "additionalProperties": false,
@@ -460,12 +120,88 @@
             },
             "type": "object"
         },
-        "guide_match_spec": {
+        "guide_match_all": {
             "additionalProperties": false,
-            "description": "A named pattern matcher specification. Use built-in types like 'ipv4', 'email', 'coordinates', or 'regex' with a custom pattern.",
+            "description": "The `all` combinator: every child must match within `within` of the first child's span, which is the span kept.",
             "properties": {
-                "caseSensitive": {
-                    "description": "Case-sensitivity for a `type: 'regex'` leaf. When true the pattern compiles without the `i` flag, so an `[A-Z]` class means uppercase only. Absent or false, the pattern matches case-insensitively. Ignored on non-`regex` leaves.",
+                "all": {
+                    "description": "The signals that must all match. The first is the anchor.",
+                    "items": { "$ref": "#/$defs/guide_match_node" },
+                    "minItems": 1,
+                    "type": "array"
+                },
+                "label": {
+                    "description": "Display label for this node's matches. Defaults to `all`.",
+                    "type": "string"
+                },
+                "within": {
+                    "$ref": "#/$defs/match_window",
+                    "description": "How close every other child's match must lie to the anchor's."
+                }
+            },
+            "required": ["all", "within"],
+            "type": "object"
+        },
+        "guide_match_any": {
+            "additionalProperties": false,
+            "description": "The `any` combinator: a span any child matches is a match.",
+            "properties": {
+                "any": {
+                    "description": "The alternatives.",
+                    "items": { "$ref": "#/$defs/guide_match_node" },
+                    "minItems": 1,
+                    "type": "array"
+                },
+                "label": {
+                    "description": "Display label for this node's matches. Defaults to `any`.",
+                    "type": "string"
+                }
+            },
+            "required": ["any"],
+            "type": "object"
+        },
+        "guide_match_context": {
+            "additionalProperties": false,
+            "description": "The `context` combinator: keep each candidate span only when a cue span lies within `within` on the given side.",
+            "properties": {
+                "context": {
+                    "additionalProperties": false,
+                    "description": "The candidate and the cue it needs.",
+                    "properties": {
+                        "candidate": {
+                            "$ref": "#/$defs/guide_match_node",
+                            "description": "The spans to keep when the cue is present."
+                        },
+                        "cue": {
+                            "$ref": "#/$defs/guide_match_node",
+                            "description": "The span that must lie near a candidate for it to count."
+                        },
+                        "side": {
+                            "$ref": "#/$defs/match_context_side",
+                            "description": "Where the cue may lie: `before`, `after`, or `both` (the default)."
+                        },
+                        "within": {
+                            "$ref": "#/$defs/match_window",
+                            "description": "How close the cue must lie to the candidate."
+                        }
+                    },
+                    "required": ["candidate", "cue", "within"],
+                    "type": "object"
+                },
+                "label": {
+                    "description": "Display label for this node's matches. Defaults to `context`.",
+                    "type": "string"
+                }
+            },
+            "required": ["context"],
+            "type": "object"
+        },
+        "guide_match_leaf": {
+            "additionalProperties": false,
+            "description": "A match leaf: a built-in matcher by name, or `regex` with its own pattern.",
+            "properties": {
+                "case_sensitive": {
+                    "description": "Case-sensitivity for a `type: regex` leaf. When true the pattern matches case exactly, so an `[A-Z]` class means uppercase only. Absent or false, the pattern matches case-insensitively. Ignored on other leaves.",
                     "type": "boolean"
                 },
                 "label": {
@@ -473,15 +209,15 @@
                     "type": "string"
                 },
                 "pattern": {
-                    "description": "Custom regex pattern: only used when type is 'regex'.",
+                    "description": "Custom regex pattern: only used when type is `regex`.",
                     "type": "string"
                 },
                 "runtime": {
-                    "description": "`runtime: true` marks a matcher provided by the host at runtime. Such a leaf is always valid at load; if the named matcher is not registered it matches nothing here, and resolves normally where it is registered.",
+                    "description": "`runtime: true` marks a matcher the host provides at runtime. Such a leaf is always valid at load; if the named matcher is not registered it matches nothing, and it resolves normally where it is registered.",
                     "type": "boolean"
                 },
                 "type": {
-                    "description": "Matcher type: a built-in name (ipv4, cidr, ipv6, mac_address, email, hostname, url, coordinates, mgrs, phone, ssn, credit_card, date, uuid) or 'regex' for custom. Domain-specific packs (usgov, healthcare, financial, ...) add further names when registered.",
+                    "description": "Matcher type: a built-in name (ipv4, cidr, ipv6, mac_address, email, hostname, url, coordinates, mgrs, phone, ssn, credit_card, date, uuid) or `regex` for a custom pattern.",
                     "minLength": 1,
                     "type": "string"
                 }
@@ -489,12 +225,120 @@
             "required": ["type"],
             "type": "object"
         },
+        "guide_match_near": {
+            "additionalProperties": false,
+            "description": "The `near` combinator: pair an `a` span with a `b` span within `within`.",
+            "properties": {
+                "label": {
+                    "description": "Display label for this node's matches. Defaults to `near`.",
+                    "type": "string"
+                },
+                "near": {
+                    "additionalProperties": false,
+                    "description": "The pairing to match.",
+                    "properties": {
+                        "a": {
+                            "$ref": "#/$defs/guide_match_node",
+                            "description": "The first span of the pair. Kept by default."
+                        },
+                        "b": {
+                            "$ref": "#/$defs/guide_match_node",
+                            "description": "The second span of the pair."
+                        },
+                        "emit": {
+                            "$ref": "#/$defs/match_near_emit",
+                            "description": "Which span survives a match: `a` (the default), `b`, or `envelope`."
+                        },
+                        "within": {
+                            "$ref": "#/$defs/match_window",
+                            "description": "How close the `b` span must lie to the `a` span."
+                        }
+                    },
+                    "required": ["a", "b", "within"],
+                    "type": "object"
+                }
+            },
+            "required": ["near"],
+            "type": "object"
+        },
+        "guide_match_node": {
+            "anyOf": [
+                { "$ref": "#/$defs/guide_match_leaf" },
+                { "$ref": "#/$defs/guide_match_any" },
+                { "$ref": "#/$defs/guide_match_all" },
+                { "$ref": "#/$defs/guide_match_not" },
+                { "$ref": "#/$defs/guide_match_near" },
+                { "$ref": "#/$defs/guide_match_context" },
+                { "$ref": "#/$defs/guide_match_validate" }
+            ],
+            "description": "One node of a guide rule's `match` list: a leaf, or a combinator over child nodes."
+        },
+        "guide_match_not": {
+            "additionalProperties": false,
+            "description": "The `not` combinator: keep each `of` span only when no `not` span lies within `within` of it.",
+            "properties": {
+                "label": {
+                    "description": "Display label for this node's matches. Defaults to `not`.",
+                    "type": "string"
+                },
+                "not": {
+                    "$ref": "#/$defs/guide_match_node",
+                    "description": "The competing cue."
+                },
+                "of": {
+                    "$ref": "#/$defs/guide_match_node",
+                    "description": "The candidate spans to keep or drop."
+                },
+                "within": {
+                    "$ref": "#/$defs/match_window",
+                    "description": "How close a `not` span must lie to a candidate to drop it."
+                }
+            },
+            "required": ["not", "of", "within"],
+            "type": "object"
+        },
+        "guide_match_validate": {
+            "additionalProperties": false,
+            "description": "The `validate` combinator: run a registered validator over each candidate span and keep the candidates that pass, or the ones that fail.",
+            "properties": {
+                "label": {
+                    "description": "Display label for this node's matches. Defaults to `validate`.",
+                    "type": "string"
+                },
+                "validate": {
+                    "additionalProperties": false,
+                    "description": "The validator to run and which outcome to keep.",
+                    "properties": {
+                        "args": {
+                            "description": "Optional opaque arguments passed through to the validator."
+                        },
+                        "candidate": {
+                            "$ref": "#/$defs/guide_match_node",
+                            "description": "The spans whose matched text the validator checks."
+                        },
+                        "keep": {
+                            "$ref": "#/$defs/match_validation_keep",
+                            "description": "Which outcome keeps a candidate: `pass` (the default) or `fail`."
+                        },
+                        "with": {
+                            "description": "Registered validator name.",
+                            "minLength": 1,
+                            "type": "string"
+                        }
+                    },
+                    "required": ["candidate", "with"],
+                    "type": "object"
+                }
+            },
+            "required": ["validate"],
+            "type": "object"
+        },
         "guide_rule": {
             "additionalProperties": false,
-            "description": "A guide rule as a guide document authors it: the rule, plus the part marking the document gives it. A rule an engine answers with is a `GuideRule` and has no marking.",
+            "description": "A guide rule as a guide document authors it. A rule an engine answers with is a `GuideRule`, which carries the same facts in the wire shape and no marking.\n\nRules are presented as checkboxes. `keywords` and `match` find the rule in text; `outcome` is what it contributes to the marking. A rule with `when` is computed: it activates from the rules the user selected and is not offered as a checkbox.",
             "properties": {
                 "category": {
-                    "description": "Guide category ID for grouping in the UI.",
+                    "description": "Guide category id for grouping in the UI.",
                     "type": "string"
                 },
                 "description": {
@@ -507,7 +351,7 @@
                     "type": "string"
                 },
                 "keywords": {
-                    "description": "Searchable terms for literal keyword filtering (absent on computed rules).",
+                    "description": "Searchable terms for literal keyword matching.",
                     "items": { "type": "string" },
                     "type": "array"
                 },
@@ -516,8 +360,8 @@
                     "type": "string"
                 },
                 "match": {
-                    "description": "Named pattern matchers for content evaluation. Each entry is a `MatchNode`: a leaf spec referencing a built-in matcher (e.g. `{ type: 'ipv4' }`) or a custom regex (`{ type: 'regex', pattern: '...' }`), or a combinator node (`any` / `all` / `not` / `near` / `context` / `validate`) composed over child nodes. When content is evaluated, both `keywords` and `match` are checked.",
-                    "items": { "$ref": "#/$defs/match_node" },
+                    "description": "Pattern matchers for content evaluation, checked beside `keywords`.",
+                    "items": { "$ref": "#/$defs/guide_match_node" },
                     "type": "array"
                 },
                 "name": {
@@ -527,10 +371,10 @@
                 },
                 "outcome": {
                     "$ref": "#/$defs/guide_rule_outcome",
-                    "description": "What this rule contributes when active. At least one of rendered or concepts must be set."
+                    "description": "What this rule contributes when active. At least one of `rendered` or `concepts` is set."
                 },
                 "overrides": {
-                    "description": "Rule IDs whose outcomes this rule replaces when active. When omitted (default), this rule's outcome is additive: it contributes alongside the rules it depends on.",
+                    "description": "Rule ids whose outcomes this rule replaces when active. Omitted, this rule's outcome is added alongside the rules it depends on.",
                     "items": { "type": "string" },
                     "type": "array"
                 },
@@ -539,8 +383,8 @@
                     "type": "string"
                 },
                 "when": {
-                    "$ref": "#/$defs/rule_when",
-                    "description": "When present, this rule auto-activates based on other rules' selection state. Uses the same when framework as scheme rules. `has` references guide rule IDs. Rules with `when` are \"computed\"; they don't appear as checkboxes."
+                    "$ref": "#/$defs/guide_when",
+                    "description": "When present, the rule is computed: it activates when this block holds over the selectable rules the user selected."
                 }
             },
             "required": ["id", "name", "outcome"],
@@ -566,6 +410,85 @@
             },
             "type": "object"
         },
+        "guide_when": {
+            "additionalProperties": false,
+            "description": "A block of conditions over the rules the user selected. Every list present must hold: `any` when one of its nodes holds, `all` when each does, `none` when none does. Each list present is non-empty.",
+            "properties": {
+                "all": {
+                    "description": "Every one of these holds.",
+                    "items": { "$ref": "#/$defs/guide_when_node" },
+                    "minItems": 1,
+                    "type": "array"
+                },
+                "any": {
+                    "description": "At least one of these holds.",
+                    "items": { "$ref": "#/$defs/guide_when_node" },
+                    "minItems": 1,
+                    "type": "array"
+                },
+                "none": {
+                    "description": "None of these holds.",
+                    "items": { "$ref": "#/$defs/guide_when_node" },
+                    "minItems": 1,
+                    "type": "array"
+                }
+            },
+            "type": "object"
+        },
+        "guide_when_has": {
+            "additionalProperties": false,
+            "description": "A condition that holds when the user selected one rule.",
+            "properties": {
+                "has": {
+                    "description": "The id of a selectable rule of this guide.",
+                    "type": "string"
+                }
+            },
+            "required": ["has"],
+            "type": "object"
+        },
+        "guide_when_node": {
+            "anyOf": [
+                { "$ref": "#/$defs/guide_when_has" },
+                { "$ref": "#/$defs/guide_when_test" },
+                { "$ref": "#/$defs/guide_when" }
+            ],
+            "description": "One node of a guide `when` block: a condition, or a nested block."
+        },
+        "guide_when_operator": {
+            "description": "The tests a guide `when` condition can apply to the rules the user selected. `has_concept` and `not_has_concept` name a rule by id in `value`; the `count_*` tests compare the number of selected rules with the number in `value`; `has_content` holds when any rule is selected.",
+            "enum": [
+                "has_concept",
+                "not_has_concept",
+                "has_content",
+                "count_gt",
+                "count_gte",
+                "count_eq",
+                "count_lt",
+                "count_unique_gt",
+                "count_unique_gte",
+                "count_unique_eq",
+                "count_unique_lt",
+                "count_unique_lte"
+            ],
+            "type": "string"
+        },
+        "guide_when_test": {
+            "additionalProperties": false,
+            "description": "A condition that tests the selection with an operator.",
+            "properties": {
+                "operator": {
+                    "$ref": "#/$defs/guide_when_operator",
+                    "description": "The test to apply."
+                },
+                "value": {
+                    "description": "A rule id for `has_concept` and `not_has_concept`, a count for the `count_*` tests, absent for `has_content`.",
+                    "type": ["string", "number"]
+                }
+            },
+            "required": ["operator"],
+            "type": "object"
+        },
         "marking_scheme_ref": {
             "additionalProperties": false,
             "description": "The scheme a document's markings are written in, named by id and, optionally, version. Every document that can be marked names one this way; a scheme document may also write `self`. See `SchemeBlock.marking_scheme`.",
@@ -583,86 +506,6 @@
             "required": ["id"],
             "type": "object"
         },
-        "match_all_node": {
-            "additionalProperties": false,
-            "description": "The `all` combinator: every child must match, and all children must overlap within `within` of the first child's span. The emitted span is the first child's (the anchor). Used to require several signals co-occur.",
-            "properties": {
-                "all": {
-                    "description": "The signals that must all match. The first is the anchor whose span is kept.",
-                    "items": { "$ref": "#/$defs/match_node" },
-                    "minItems": 1,
-                    "type": "array"
-                },
-                "label": {
-                    "description": "Display label for this node's matches. Defaults to `all`.",
-                    "type": "string"
-                },
-                "within": {
-                    "$ref": "#/$defs/match_window",
-                    "description": "How close every other child's match must lie to the anchor's."
-                }
-            },
-            "required": ["all", "within"],
-            "type": "object"
-        },
-        "match_any_node": {
-            "additionalProperties": false,
-            "description": "The `any` combinator: a union of child spans under one label. Used to express a multi-format value as several small, individually screened leaves instead of one giant alternation.",
-            "properties": {
-                "any": {
-                    "description": "The alternatives. A span any of them matches is a match.",
-                    "items": { "$ref": "#/$defs/match_node" },
-                    "minItems": 1,
-                    "type": "array"
-                },
-                "label": {
-                    "description": "Display label for this node's matches. Defaults to `any`.",
-                    "type": "string"
-                }
-            },
-            "required": ["any"],
-            "type": "object"
-        },
-        "match_context_expression": {
-            "additionalProperties": false,
-            "description": "Cue relationship used by the context combinator.",
-            "properties": {
-                "candidate": {
-                    "$ref": "#/$defs/match_node",
-                    "description": "The spans to keep when the cue is present."
-                },
-                "cue": {
-                    "$ref": "#/$defs/match_node",
-                    "description": "The span that must lie near a candidate for it to count."
-                },
-                "side": {
-                    "$ref": "#/$defs/match_context_side",
-                    "description": "Where the cue may lie relative to the candidate: `before`, `after`, or `both` (the default)."
-                },
-                "within": {
-                    "$ref": "#/$defs/match_window",
-                    "description": "How close the cue must lie to the candidate."
-                }
-            },
-            "required": ["candidate", "cue", "within"],
-            "type": "object"
-        },
-        "match_context_node": {
-            "additionalProperties": false,
-            "description": "The `context` combinator: keep each `candidate` span only when a `cue` span lies within `within` on the given `side` (default `both`). Used to require a positive cue (e.g. a ZIP only counts with a postal/state cue nearby).",
-            "properties": {
-                "context": {
-                    "$ref": "#/$defs/match_context_expression",
-                    "description": "The candidate and the cue it needs."
-                },
-                "label": {
-                    "description": "Display label for this node's matches. Defaults to `context`.",
-                    "type": "string"
-                }
-            },
-            "required": ["context"],
-            "type": "object"
-        },
         "match_context_side": {
             "description": "Relative position accepted by a context-expression cue.",
             "enum": ["before", "after", "both"],
@@ -672,122 +515,6 @@
             "description": "Span emitted by a near-expression match.",
             "enum": ["a", "b", "envelope"],
             "type": "string"
-        },
-        "match_near_expression": {
-            "additionalProperties": false,
-            "description": "Pairing expression used by the near combinator.",
-            "properties": {
-                "a": {
-                    "$ref": "#/$defs/match_node",
-                    "description": "The first span of the pair. Kept by default."
-                },
-                "b": {
-                    "$ref": "#/$defs/match_node",
-                    "description": "The second span of the pair."
-                },
-                "emit": {
-                    "$ref": "#/$defs/match_near_emit",
-                    "description": "Which span survives a match: `a` (the default), `b`, or `envelope`, the span covering both."
-                },
-                "within": {
-                    "$ref": "#/$defs/match_window",
-                    "description": "How close the `b` span must lie to the `a` span."
-                }
-            },
-            "required": ["a", "b", "within"],
-            "type": "object"
-        },
-        "match_near_node": {
-            "additionalProperties": false,
-            "description": "The `near` combinator: pair an `a` span with a `b` span that lies within `within`. `emit` selects which span survives: the `a` span (default), the `b` span, or the envelope spanning both.",
-            "properties": {
-                "label": {
-                    "description": "Display label for this node's matches. Defaults to `near`.",
-                    "type": "string"
-                },
-                "near": {
-                    "$ref": "#/$defs/match_near_expression",
-                    "description": "The pairing to match."
-                }
-            },
-            "required": ["near"],
-            "type": "object"
-        },
-        "match_node": {
-            "anyOf": [
-                { "$ref": "#/$defs/guide_match_spec" },
-                { "$ref": "#/$defs/match_any_node" },
-                { "$ref": "#/$defs/match_all_node" },
-                { "$ref": "#/$defs/match_not_node" },
-                { "$ref": "#/$defs/match_near_node" },
-                { "$ref": "#/$defs/match_context_node" },
-                { "$ref": "#/$defs/match_validate_node" }
-            ],
-            "description": "A declarative match expression: a `GuideMatchSpec` leaf, or one of the combinator nodes composed over child nodes. A guide rule's `match` array is a list of these."
-        },
-        "match_not_node": {
-            "additionalProperties": false,
-            "description": "The `not` combinator: keep each `of` candidate span only when NO `not` span lies within `within` of it. Drops a candidate that has a competing cue nearby.",
-            "properties": {
-                "label": {
-                    "description": "Display label for this node's matches. Defaults to `not`.",
-                    "type": "string"
-                },
-                "not": {
-                    "$ref": "#/$defs/match_node",
-                    "description": "The competing cue. A candidate with one of its spans nearby is dropped."
-                },
-                "of": {
-                    "$ref": "#/$defs/match_node",
-                    "description": "The candidate spans to keep or drop."
-                },
-                "within": {
-                    "$ref": "#/$defs/match_window",
-                    "description": "How close a `not` span must lie to a candidate to drop it."
-                }
-            },
-            "required": ["not", "of", "within"],
-            "type": "object"
-        },
-        "match_validate_node": {
-            "additionalProperties": false,
-            "description": "The `validate` combinator: run the named validator over each `candidate` span's matched text and keep the candidate when the validator passes (`keep: 'pass'`, the default) or when it fails (`keep: 'fail'`). The validator is content-free arithmetic or structure registered in the validator registry; an unknown name is a load-time error.",
-            "properties": {
-                "label": {
-                    "description": "Display label for this node's matches. Defaults to `validate`.",
-                    "type": "string"
-                },
-                "validate": {
-                    "$ref": "#/$defs/match_validation_expression",
-                    "description": "The validator to run and which outcome to keep."
-                }
-            },
-            "required": ["validate"],
-            "type": "object"
-        },
-        "match_validation_expression": {
-            "additionalProperties": false,
-            "description": "Validator invocation used by the validate combinator.",
-            "properties": {
-                "args": {
-                    "description": "Optional opaque arguments passed through to the validator."
-                },
-                "candidate": {
-                    "$ref": "#/$defs/match_node",
-                    "description": "The spans whose matched text the validator checks."
-                },
-                "keep": {
-                    "$ref": "#/$defs/match_validation_keep",
-                    "description": "Which outcome keeps a candidate: `pass` (the default) or `fail`."
-                },
-                "with": {
-                    "description": "Registered validator name.",
-                    "minLength": 1,
-                    "type": "string"
-                }
-            },
-            "required": ["candidate", "with"],
-            "type": "object"
         },
         "match_validation_keep": {
             "description": "Validator outcome retained by a validation expression.",
@@ -800,193 +527,6 @@
                 { "$ref": "#/$defs/character_window" }
             ],
             "description": "A bounded proximity window. Exactly one token or character bound is present, so a windowed operation can never widen to the whole line accidentally."
-        },
-        "rule_mapping": {
-            "additionalProperties": false,
-            "description": "Mapping spec for an external guide-rule source: declarative projection of upstream records into guide rules. Every value is an expression in the same subset a concept mapping uses, evaluated against one record.",
-            "properties": {
-                "record": {
-                    "description": "Selector for the array of records on a transport response.",
-                    "type": "string"
-                },
-                "rule": {
-                    "additionalProperties": false,
-                    "description": "How each record's fields project onto a guide rule.",
-                    "properties": {
-                        "category": {
-                            "description": "Expression for the guide category the rule is listed under.",
-                            "type": "string"
-                        },
-                        "description": {
-                            "description": "Expression for the rule's description.",
-                            "type": "string"
-                        },
-                        "id": {
-                            "description": "Expression for the rule id. A record that yields none is refused.",
-                            "type": "string"
-                        },
-                        "keywords": {
-                            "anyOf": [
-                                {
-                                    "items": { "type": "string" },
-                                    "type": "array"
-                                },
-                                { "type": "string" }
-                            ],
-                            "description": "One expression, or a list of them, for the rule's keywords."
-                        },
-                        "name": {
-                            "description": "Expression for the display name. Falls back to the id.",
-                            "type": "string"
-                        },
-                        "outcome": {
-                            "additionalProperties": false,
-                            "description": "What the rule contributes to the marking when it is activated. Give either or both.",
-                            "properties": {
-                                "concepts": {
-                                    "description": "Expression for a list of concepts. Each item is a concept id, or an object with `id` (or `conceptId`) and optional `category` (or `categoryId`) and `value`.",
-                                    "type": "string"
-                                },
-                                "rendered": {
-                                    "description": "Expression for a pre-rendered marking string.",
-                                    "type": "string"
-                                }
-                            },
-                            "type": "object"
-                        }
-                    },
-                    "required": ["id"],
-                    "type": "object"
-                }
-            },
-            "required": ["rule"],
-            "type": "object"
-        },
-        "rule_when": {
-            "description": "Conditions that trigger a rule. Supports shorthand forms:\n\n- `string`: concept ID must be present (any category)\n- `string[]`: any of these concept IDs must be present\n- `object`: structured `{ any | all | none }` block, possibly nested",
-            "oneOf": [
-                { "type": "string" },
-                { "items": { "type": "string" }, "type": "array" },
-                {
-                    "additionalProperties": false,
-                    "description": "A node in a rule `when`-tree: either a leaf `RuleCondition` or a nested quantifier (`any` / `all` / `none`) over further nodes.\n\nThe tree structure allows arbitrarily deep boolean logic within a rule's trigger condition. Leaf nodes test assertion or context state; inner nodes combine them with OR (`any`), AND (`all`), or NOT-OR (`none`).",
-                    "properties": {
-                        "all": {
-                            "description": "Satisfied when every one of these nodes is.",
-                            "items": { "$ref": "#/$defs/when_node" },
-                            "type": "array"
-                        },
-                        "any": {
-                            "description": "Satisfied when at least one of these nodes is.",
-                            "items": { "$ref": "#/$defs/when_node" },
-                            "type": "array"
-                        },
-                        "none": {
-                            "description": "Satisfied when none of these nodes is.",
-                            "items": { "$ref": "#/$defs/when_node" },
-                            "type": "array"
-                        }
-                    },
-                    "type": "object"
-                }
-            ]
-        },
-        "secret_ref": {
-            "anyOf": [
-                {
-                    "additionalProperties": false,
-                    "properties": {
-                        "envVar": {
-                            "description": "Name of the environment variable that holds the secret.",
-                            "type": "string"
-                        },
-                        "provider": {
-                            "const": "env",
-                            "description": "Read the secret from an environment variable.",
-                            "type": "string"
-                        }
-                    },
-                    "required": ["provider", "envVar"],
-                    "type": "object"
-                },
-                {
-                    "additionalProperties": false,
-                    "properties": {
-                        "certVar": {
-                            "description": "Environment variable that holds the PEM certificate.",
-                            "type": "string"
-                        },
-                        "keyVar": {
-                            "description": "Environment variable that holds the PEM private key.",
-                            "type": "string"
-                        },
-                        "provider": {
-                            "const": "env",
-                            "description": "Read a certificate and key pair from two environment variables.",
-                            "type": "string"
-                        }
-                    },
-                    "required": ["provider", "certVar", "keyVar"],
-                    "type": "object"
-                },
-                {
-                    "additionalProperties": false,
-                    "properties": {
-                        "path": {
-                            "description": "Path of the file that holds the secret. It must lie under a file root the deployment allows.",
-                            "type": "string"
-                        },
-                        "provider": {
-                            "const": "file",
-                            "description": "Read the secret from a mounted file.",
-                            "type": "string"
-                        }
-                    },
-                    "required": ["provider", "path"],
-                    "type": "object"
-                },
-                {
-                    "additionalProperties": false,
-                    "properties": {
-                        "certPath": {
-                            "description": "Path of the PEM certificate file, under an allowed file root.",
-                            "type": "string"
-                        },
-                        "keyPath": {
-                            "description": "Path of the PEM private key file, under an allowed file root.",
-                            "type": "string"
-                        },
-                        "provider": {
-                            "const": "file",
-                            "description": "Read a certificate and key pair from two mounted files.",
-                            "type": "string"
-                        }
-                    },
-                    "required": ["provider", "certPath", "keyPath"],
-                    "type": "object"
-                },
-                {
-                    "additionalProperties": false,
-                    "properties": {
-                        "provider": {
-                            "const": "secret-store",
-                            "description": "Ask the deployment's secret store for the secret.",
-                            "type": "string"
-                        },
-                        "secretId": {
-                            "description": "The id of the secret in that store.",
-                            "type": "string"
-                        }
-                    },
-                    "required": ["provider", "secretId"],
-                    "type": "object"
-                }
-            ],
-            "description": "A reference to a piece of secret material, never the material itself. `provider` says where the server finds it when the source issues a request: `env` reads an environment variable (or a certificate and key pair of them), `file` reads a mounted file (or a certificate and key pair of files), and `secret-store` asks the secret store the deployment names for the secret with that id.\n\nBrowsers never see raw secrets, only the reference. The material stays on the server that resolves it."
-        },
-        "string_map": {
-            "additionalProperties": { "type": "string" },
-            "type": "object"
         },
         "term": {
             "additionalProperties": false,
@@ -1022,59 +562,6 @@
             "additionalProperties": { "$ref": "#/$defs/term" },
             "description": "Author-facing vocabulary: an open map from a term key (e.g. \"rule\", \"concept\", \"tag\") to the display words. Term keys are not enumerated here; consumers pick the keys that matter to them.\n\nPurely a presentation hint: nothing in the engine's evaluation logic reads it. Each consumer owns its own default map and calls `resolveVocabulary(source, defaults)` to merge.",
             "type": "object"
-        },
-        "when_node": {
-            "description": "A leaf condition or recursively nested boolean quantifier in a rule tree.",
-            "oneOf": [
-                {
-                    "additionalProperties": false,
-                    "description": "A single condition in a rule's `when` block. Can test category contents, processing context role, or concept presence.",
-                    "properties": {
-                        "category": {
-                            "description": "Category to evaluate against. Also serves as a shorthand matching any concept in this category within when blocks.",
-                            "type": "string"
-                        },
-                        "has": {
-                            "description": "Shorthand for has_concept: check if this concept is present",
-                            "type": "string"
-                        },
-                        "is": {
-                            "description": "Combined operator+value shorthand (e.g. \"count_eq 1\", \"has_content\")",
-                            "type": "string"
-                        },
-                        "operator": {
-                            "description": "Explicit operator for the condition",
-                            "type": "string"
-                        },
-                        "value": {
-                            "description": "Explicit value for the operator"
-                        }
-                    },
-                    "type": "object"
-                },
-                {
-                    "additionalProperties": false,
-                    "description": "A node in a rule `when`-tree: either a leaf `RuleCondition` or a nested quantifier (`any` / `all` / `none`) over further nodes.\n\nThe tree structure allows arbitrarily deep boolean logic within a rule's trigger condition. Leaf nodes test assertion or context state; inner nodes combine them with OR (`any`), AND (`all`), or NOT-OR (`none`).",
-                    "properties": {
-                        "all": {
-                            "description": "Satisfied when every one of these nodes is.",
-                            "items": { "$ref": "#/$defs/when_node" },
-                            "type": "array"
-                        },
-                        "any": {
-                            "description": "Satisfied when at least one of these nodes is.",
-                            "items": { "$ref": "#/$defs/when_node" },
-                            "type": "array"
-                        },
-                        "none": {
-                            "description": "Satisfied when none of these nodes is.",
-                            "items": { "$ref": "#/$defs/when_node" },
-                            "type": "array"
-                        }
-                    },
-                    "type": "object"
-                }
-            ]
         }
     },
     "$id": "https://ezclassify.com/schemas/v1/guide.schema.json",
@@ -1118,24 +605,12 @@
                     "type": "string"
                 },
                 "rules": {
-                    "additionalProperties": false,
-                    "description": "Guide rules: inline array and/or external sources.",
-                    "properties": {
-                        "external": {
-                            "description": "Live external rule sources. An array allows a guide to draw rules from multiple upstream endpoints, composed via `ChainedGuideRuleSource` at load time.",
-                            "items": { "$ref": "#/$defs/external_source" },
-                            "type": "array"
-                        },
-                        "inline": {
-                            "description": "Inline rules, authored as an array of `GuideRuleDoc` entries with `id` carried as a field on each entry, matches the scheme inline shape (`data.concepts.inline: [...]`) so authoring stays uniform across scheme and guide YAML. Uniqueness of `id` within the array is enforced by the loader's validator; the engine builds a `Map<string, GuideRule>` index at load time to keep id lookups O(1).",
-                            "items": { "$ref": "#/$defs/guide_rule" },
-                            "type": "array"
-                        }
-                    },
-                    "type": "object"
+                    "description": "The guide's rules, in the order they are offered.",
+                    "items": { "$ref": "#/$defs/guide_rule" },
+                    "type": "array"
                 },
-                "targetSchemes": {
-                    "description": "Target scheme dependencies: at least one required.",
+                "target_schemes": {
+                    "description": "The schemes this guide's outcomes are written in: at least one.",
                     "items": { "$ref": "#/$defs/guide_dependency" },
                     "minItems": 1,
                     "type": "array"
@@ -1155,7 +630,7 @@
                     "description": "Display words this guide advertises for UI consumers. A presentation hint only."
                 }
             },
-            "required": ["id", "version", "name", "targetSchemes", "rules"],
+            "required": ["id", "version", "name", "target_schemes", "rules"],
             "type": "object"
         }
     },

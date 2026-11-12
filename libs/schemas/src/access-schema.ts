@@ -5,10 +5,10 @@ import schema from '../generated/validation/v1/access.schema.json';
  * Static access policy schema JSON for validating a complete access policy
  * document.
  *
- * Root shape: `{ access: { id, targetScheme: { id }, rules: { inline?: [...],
- * external?: [...] } } }`. Required top-level fields: `access.id`,
- * `access.targetScheme.id`, `access.rules`. The `targetScheme` field pins which
- * marking scheme this policy governs.
+ * Root shape: `{ access: { id, target_scheme: { id }, rules: [...] } }`.
+ * Required top-level fields: `access.id`, `access.target_scheme.id`,
+ * `access.rules`. The `target_scheme` field pins which marking scheme this
+ * policy governs.
  *
  * Used by `AccessEngine.fromJSON()` to validate an access policy before
  * loading. Works in both Node and browser contexts: imported as a static JSON
@@ -23,10 +23,7 @@ const envelopeProps = reader.properties(
     reader.definition('AccessPolicyEnvelope'),
     'AccessPolicyEnvelope',
 );
-const ruleEntry = reader.items(
-    reader.properties(envelopeProps.rules, 'access.rules').inline,
-    'access.rules.inline',
-);
+const ruleEntry = reader.items(envelopeProps.rules, 'access.rules');
 const metadataKeys = new Set([
     'id',
     'version',
@@ -34,12 +31,12 @@ const metadataKeys = new Set([
     'marking_scheme',
     'marking',
     'description',
-    'targetScheme',
+    'target_scheme',
 ]);
 
 /**
  * Sub-schema for access policy root metadata (id, version, name,
- * marking_scheme, marking, description, targetScheme). Sourced from AccessPolicyEnvelope inside the
+ * marking_scheme, marking, description, target_scheme). Sourced from AccessPolicyEnvelope inside the
  * access.schema.json definitions.
  */
 export const accessMetaSchema: Record<string, unknown> = {
@@ -53,10 +50,10 @@ export const accessMetaSchema: Record<string, unknown> = {
 };
 
 /**
- * Sub-schema for a single access rule entry within `access.rules.inline[]`.
+ * Sub-schema for a single access rule within `access.rules[]`.
  *
  * Required fields: `id`, `name`. Optional fields include the part `marking`;
- * simple-mapping fields are `attribute`, `categoryId`, and `strategy`;
+ * simple-mapping fields are `attribute`, `category`, and `strategy`;
  * cross-source rules use `check`.
  * Semantic rule requirements remain runtime-owned. Used when validating
  * individual access rules in isolation (e.g., Studio's AccessBuilder editor).
@@ -68,7 +65,7 @@ export const accessRuleSchema: Record<string, unknown> = {
 
 /**
  * All `definitions` from the access schema: includes `AccessPolicyEnvelope`,
- * `AccessRuleEntry`, and their sub-schemas.
+ * `AccessRuleDoc`, and their sub-schemas.
  *
  * Pass to validators that resolve `$ref` pointers within access policy
  * fragments (e.g. when validating a partial access rule in the AccessBuilder).

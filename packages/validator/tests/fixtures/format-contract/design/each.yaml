@@ -20,15 +20,14 @@ scheme:
         rollup: union
         required: true
     concepts:
-      inline:
-        - id: PROGRAM_ONE
-          name: Program one
-          views: { default: ONE }
-          categories: [program]
-        - id: PROGRAM_TWO
-          name: Program two
-          views: { default: TWO }
-          categories: [program]
+      - id: PROGRAM_ONE
+        name: Program one
+        views: { default: ONE }
+        categories: [program]
+      - id: PROGRAM_TWO
+        name: Program two
+        views: { default: TWO }
+        categories: [program]
   render:
     default: banner
     formats:

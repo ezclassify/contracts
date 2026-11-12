@@ -1,9 +1,9 @@
 /**
  * Validation tests for the guide document schema.
  *
- * Root shape: { guide: { id, version, name, description, targetSchemes: [...],
- * rules: {...} } } Required: guide.id, version, name,
- * targetSchemes (minItems: 1), rules Strict: additionalProperties: false
+ * Root shape: { guide: { id, version, name, description, target_schemes: [...],
+ * rules: [...] } } Required: guide.id, version, name,
+ * target_schemes (minItems: 1), rules Strict: additionalProperties: false
  * throughout; description is optional
  */
 import { describe, it, expect, beforeAll } from 'vitest';
@@ -39,8 +39,8 @@ describe('guideSchema: accept paths', () => {
                 version: '1.0.0',
                 name: 'My Guide',
                 description: 'A test guide',
-                targetSchemes: [{ id: 'demo' }],
-                rules: {},
+                target_schemes: [{ id: 'demo' }],
+                rules: [],
             },
         };
         expect(validate(doc)).toBe(true);
@@ -52,8 +52,8 @@ describe('guideSchema: accept paths', () => {
                 id: 'x',
                 version: '1.0.0',
                 name: 'X',
-                targetSchemes: [{ id: 'demo' }],
-                rules: {},
+                target_schemes: [{ id: 'demo' }],
+                rules: [],
             },
         };
         expect(validate(doc)).toBe(true);
@@ -77,23 +77,22 @@ describe('guideSchema: accept paths', () => {
                     removes: [{ rule: 'handles-source-code' }],
                     restores: [{ category: 'handling' }],
                 },
-                targetSchemes: [{ id: 'demo' }],
-                rules: {},
+                target_schemes: [{ id: 'demo' }],
+                rules: [],
             },
         };
         expect(validate(doc)).toBe(true);
     });
 
-    it('accepts a guide document with canonical inline rules', () => {
+    it('accepts a guide document with canonical rules', () => {
         const doc = {
             guide: {
                 id: 'allergen-guide',
                 version: '2.0.0',
                 name: 'Allergen Guide',
                 description: 'Identifies allergens in text',
-                targetSchemes: [{ id: 'pantry', version: '>=1.0.0' }],
-                rules: {
-                    inline: [
+                target_schemes: [{ id: 'pantry', version: '>=1.0.0' }],
+                rules: [
                         {
                             id: 'r1',
                             name: 'Nut allergy',
@@ -105,7 +104,6 @@ describe('guideSchema: accept paths', () => {
                             outcome: { rendered: 'DAIRY' },
                         },
                     ],
-                },
             },
         };
         expect(validate(doc)).toBe(true);
@@ -126,8 +124,8 @@ describe('guideSchema: accept paths', () => {
                     base: 'quickmark@1.0.0',
                     removes: [{ rule: 'handles-pii', category: 'handling' }],
                 },
-                targetSchemes: [{ id: 'demo' }],
-                rules: {},
+                target_schemes: [{ id: 'demo' }],
+                rules: [],
             },
         };
         expect(validate(doc)).toBe(false);
@@ -150,35 +148,35 @@ describe('guideSchema: reject paths', () => {
                 id: 'x',
                 version: '1.0.0',
                 description: 'Desc',
-                targetSchemes: [{ id: 'demo' }],
-                rules: {},
+                target_schemes: [{ id: 'demo' }],
+                rules: [],
             },
         };
         expect(validate(doc)).toBe(false);
     });
 
-    it('rejects a document missing guide.targetSchemes', () => {
+    it('rejects a document missing guide.target_schemes', () => {
         const doc = {
             guide: {
                 id: 'x',
                 version: '1.0.0',
                 name: 'X',
                 description: 'Desc',
-                rules: {},
+                rules: [],
             },
         };
         expect(validate(doc)).toBe(false);
     });
 
-    it('rejects a document with empty targetSchemes (minItems: 1)', () => {
+    it('rejects a document with empty target_schemes (minItems: 1)', () => {
         const doc = {
             guide: {
                 id: 'x',
                 version: '1.0.0',
                 name: 'X',
                 description: 'Desc',
-                targetSchemes: [],
-                rules: {},
+                target_schemes: [],
+                rules: [],
             },
         };
         expect(validate(doc)).toBe(false);
@@ -191,12 +189,85 @@ describe('guideSchema: reject paths', () => {
                 version: '1.0.0',
                 name: 'X',
                 description: 'Desc',
-                targetSchemes: [{ id: 'demo' }],
-                rules: {},
+                target_schemes: [{ id: 'demo' }],
+                rules: [],
                 unknown_field: 'bad',
             },
         };
         expect(validate(doc)).toBe(false);
+    });
+
+    it.each([
+        ['a rules block instead of a list', { rules: { inline: [] } }],
+        ['the camelCase target schemes key', { targetSchemes: [{ id: 'demo' }] }],
+        [
+            'a string when condition',
+            {
+                rules: [
+                    {
+                        id: 'r',
+                        name: 'R',
+                        outcome: { rendered: 'R' },
+                        when: 'has_content',
+                    },
+                ],
+            },
+        ],
+        [
+            'an empty when list',
+            {
+                rules: [
+                    {
+                        id: 'r',
+                        name: 'R',
+                        outcome: { rendered: 'R' },
+                        when: { any: [] },
+                    },
+                ],
+            },
+        ],
+    ])('rejects %s', (_label, change) => {
+        const doc = {
+            guide: {
+                id: 'x',
+                version: '1.0.0',
+                name: 'X',
+                target_schemes: [{ id: 'demo' }],
+                rules: [],
+                ...change,
+            },
+        };
+        expect(validate(doc)).toBe(false);
+    });
+
+    it('accepts a computed rule whose when block nests conditions', () => {
+        const doc = {
+            guide: {
+                id: 'x',
+                version: '1.0.0',
+                name: 'X',
+                target_schemes: [{ id: 'demo' }],
+                rules: [
+                    {
+                        id: 'combined',
+                        name: 'Combined',
+                        outcome: { rendered: 'C' },
+                        when: {
+                            all: [
+                                { has: 'a' },
+                                {
+                                    any: [
+                                        { has: 'b' },
+                                        { operator: 'count_gte', value: 2 },
+                                    ],
+                                },
+                            ],
+                        },
+                    },
+                ],
+            },
+        };
+        expect(validate(doc), JSON.stringify(validate.errors)).toBe(true);
     });
 
     it('rejects a document missing the top-level guide wrapper', () => {
@@ -205,8 +276,8 @@ describe('guideSchema: reject paths', () => {
             version: '1.0.0',
             name: 'X',
             description: 'Desc',
-            targetSchemes: [{ id: 'demo' }],
-            rules: {},
+            target_schemes: [{ id: 'demo' }],
+            rules: [],
         };
         expect(validate(doc)).toBe(false);
     });
@@ -217,13 +288,13 @@ describe('guideSchema: reject paths', () => {
 // ---------------------------------------------------------------------------
 
 describe('guide-schema exports: sub-schema structure', () => {
-    it('guideMetaSchema has id, version, name, description, targetSchemes in its properties', () => {
+    it('guideMetaSchema has id, version, name, description, target_schemes in its properties', () => {
         const props = guideMetaSchema.properties as Record<string, unknown>;
         expect(props).toHaveProperty('id');
         expect(props).toHaveProperty('version');
         expect(props).toHaveProperty('name');
         expect(props).toHaveProperty('description');
-        expect(props).toHaveProperty('targetSchemes');
+        expect(props).toHaveProperty('target_schemes');
     });
 
     it('guideRuleSchema exposes id, name, and outcome', () => {

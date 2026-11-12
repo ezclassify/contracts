@@ -22,9 +22,8 @@ scheme:
         rollup: union
         required: true
     concepts:
-      inline:
-        - { id: HANDLING_HEADER, name: Handling header, views: { default: HEAD }, categories: [handling] }
-        - { id: HANDLING_A, name: Handling A, views: { default: HA }, categories: [handling] }
+      - { id: HANDLING_HEADER, name: Handling header, views: { default: HEAD }, categories: [handling] }
+      - { id: HANDLING_A, name: Handling A, views: { default: HA }, categories: [handling] }
   render:
     default: banner
     formats:

@@ -36,8 +36,8 @@ const referenceGuide = path.join(
     'libs/conformance/fixtures/v1/ref-guide-1.json',
 );
 const examplesDir = path.join(repoRoot, 'libs/types/examples');
-const exampleAccess = path.join(examplesDir, 'access-with-sources.yaml');
-const exampleContext = path.join(examplesDir, 'context-with-sources.yaml');
+const exampleAccess = path.join(examplesDir, 'access.yaml');
+const exampleContext = path.join(examplesDir, 'context.yaml');
 const exampleCrosswalk = path.join(examplesDir, 'crosswalk-layer.yaml');
 
 function scratchFile(name: string, contents: string): string {
@@ -182,28 +182,28 @@ describe('the reference scheme fixture', () => {
         expect(result.ok).toBe(true);
     });
 
+    const conceptImport = (snapshotId?: string) => ({
+        id: 'upstream-concepts',
+        attribution: { name: 'Upstream concepts', license: 'CC0-1.0' },
+        records: [{ id: 'ALPHA', label: 'Alpha', view: 'A' }],
+        ...(snapshotId === undefined ? {} : { snapshot_id: snapshotId }),
+        mapping: {
+            concept: {
+                id: 'id',
+                name: 'label',
+                categories: ["'level'"],
+                views: { default: 'view' },
+            },
+        },
+    });
+
     it.each([undefined, `sha256:${'0123456789abcdef'.repeat(4)}`])(
-        'accepts an external source with snapshot %s',
+        'accepts a concept import with snapshot %s',
         (snapshotId) => {
             const document = JSON.parse(readFileSync(referenceScheme, 'utf8'));
-            document.scheme.data.concepts.external = [
-                {
-                    source: 'https://upstream.example.com/concepts',
-                    transport: 'http',
-                    mapping: {
-                        record: '@',
-                        concept: {
-                            id: 'id',
-                            name: 'label',
-                            categories: ["'level'"],
-                            views: { default: 'view' },
-                        },
-                    },
-                    ...(snapshotId === undefined ? {} : { snapshotId }),
-                },
-            ];
+            document.scheme.data.concept_imports = [conceptImport(snapshotId)];
             const file = scratchFile(
-                'external-source.json',
+                'concept-import.json',
                 JSON.stringify(document),
             );
             const result = validateFile(file);
@@ -212,23 +212,10 @@ describe('the reference scheme fixture', () => {
         },
     );
 
-    it('refuses an external source whose snapshot pin is a label', () => {
+    it('refuses a concept import whose snapshot pin is a label', () => {
         const document = JSON.parse(readFileSync(referenceScheme, 'utf8'));
-        document.scheme.data.concepts.external = [
-            {
-                source: 'https://upstream.example.com/concepts',
-                transport: 'http',
-                mapping: {
-                    record: '@',
-                    concept: {
-                        id: 'id',
-                        name: 'label',
-                        categories: ["'level'"],
-                        views: { default: 'view' },
-                    },
-                },
-                snapshotId: 'upstream-concepts-v1',
-            },
+        document.scheme.data.concept_imports = [
+            conceptImport('upstream-concepts-v1'),
         ];
         const result = validateFile(
             scratchFile('labeled-pin.yaml', yaml.dump(document)),
@@ -237,7 +224,24 @@ describe('the reference scheme fixture', () => {
         expect(result.errors).toContainEqual(
             expect.objectContaining({
                 keyword: 'pattern',
-                path: '/scheme/data/concepts/external/0/snapshotId',
+                path: '/scheme/data/concept_imports/0/snapshot_id',
+            }),
+        );
+    });
+
+    it('refuses a concept import that names a remote source', () => {
+        const document = JSON.parse(readFileSync(referenceScheme, 'utf8'));
+        document.scheme.data.concept_imports = [
+            { ...conceptImport(), source: 'https://upstream.example.com' },
+        ];
+        const result = validateFile(
+            scratchFile('remote-import.yaml', yaml.dump(document)),
+        );
+        expect(result.ok).toBe(false);
+        expect(result.errors).toContainEqual(
+            expect.objectContaining({
+                keyword: 'additionalProperties',
+                path: '/scheme/data/concept_imports/0',
             }),
         );
     });
@@ -415,13 +419,13 @@ describe('values and keys the scheme contract does not declare', () => {
 
     it('refuses a concept key the contract does not declare', () => {
         const document = referenceDocument();
-        document.scheme.data.concepts.inline[0].unlisted_key = 'x';
+        document.scheme.data.concepts[0].unlisted_key = 'x';
         const result = validateSchemeDocument(document);
         expect(result.ok).toBe(false);
         expect(result.errors).toEqual([
             expect.objectContaining({
                 keyword: 'additionalProperties',
-                path: '/scheme/data/concepts/inline/0',
+                path: '/scheme/data/concepts/0',
                 params: { additionalProperty: 'unlisted_key' },
             }),
         ]);
@@ -489,275 +493,6 @@ describe('rule ids the engine keeps for itself', () => {
         expect(status).toBe(1);
         expect(output).toContain("reserved for the engine's own ids");
     });
-});
-
-describe('external source connection TLS in the shipped v1 scheme schema', () => {
-    const pair = { provider: 'secret-store', secretId: 'sec_01HXY7' };
-
-    function validateSource(source: Record<string, unknown>) {
-        const document = JSON.parse(readFileSync(referenceScheme, 'utf8'));
-        document.scheme.data.concepts.external = [
-            {
-                source: 'https://upstream.example.com/concepts',
-                transport: 'http',
-                mapping: {
-                    record: '@',
-                    concept: {
-                        id: 'id',
-                        name: 'label',
-                        categories: ["'level'"],
-                        views: { default: 'view' },
-                    },
-                },
-                ...source,
-            },
-        ];
-        return validateFile(
-            scratchFile('external-source-tls.json', JSON.stringify(document)),
-        );
-    }
-
-    it.each([
-        [
-            'mutual TLS with a private CA',
-            {
-                tls: {
-                    caBundleRef: {
-                        provider: 'file',
-                        path: '/run/ca-bundle.pem',
-                    },
-                    clientCertAndKeyRef: pair,
-                },
-            },
-        ],
-        [
-            'a bearer token over a private CA',
-            {
-                tls: {
-                    caBundleRef: { provider: 'env', envVar: 'INTERNAL_CA' },
-                },
-                auth: {
-                    flow: 'bearer',
-                    credentialRef: { provider: 'env', envVar: 'TOKEN' },
-                },
-            },
-        ],
-        [
-            'mutual TLS with an encrypted key',
-            {
-                tls: {
-                    clientCertAndKeyRef: {
-                        provider: 'file',
-                        certPath: '/run/client.crt',
-                        keyPath: '/run/client.key',
-                    },
-                    keyPassphraseRef: { provider: 'file', path: '/run/pass' },
-                },
-            },
-        ],
-    ])('accepts %s', (_name, source) => {
-        const result = validateSource(source);
-        expect(result.errors).toEqual([]);
-        expect(result.ok).toBe(true);
-    });
-
-    it.each([
-        ['`flow: mtls`', { auth: { flow: 'mtls' } }, '/auth/flow'],
-        [
-            'a client certificate under `auth`',
-            { auth: { flow: 'none', clientCertAndKeyRef: pair } },
-            'clientCertAndKeyRef',
-        ],
-        [
-            'a `tls` field the block does not declare',
-            { tls: { clientCertAndKeyRef: pair, insecureSkipVerify: true } },
-            'insecureSkipVerify',
-        ],
-        ['an empty `tls` block', { tls: {} }, '"minProperties"'],
-        [
-            'a key passphrase without a client certificate',
-            {
-                tls: {
-                    keyPassphraseRef: { provider: 'env', envVar: 'KEY_PASS' },
-                },
-            },
-            '"missingProperty":"clientCertAndKeyRef"',
-        ],
-    ])('refuses %s', (_name, source, named) => {
-        const result = validateSource(source);
-        expect(result.ok).toBe(false);
-        expect(JSON.stringify(result.errors)).toContain(named);
-    });
-});
-
-describe('guide and access external sources in the shipped v1 schemas', () => {
-    // Guide and access sources are the same ExternalSourceSpec as scheme
-    // sources, with their own mapping, and the shipped validator refuses a
-    // malformed one before the runtime sees it.
-    const pair = { provider: 'secret-store', secretId: 'sec_01HXY7' };
-    const families = [
-        { kind: 'guide', example: 'guide-with-sources.yaml' },
-        { kind: 'access', example: 'access-with-sources.yaml' },
-    ] as const;
-
-    function validateSource(
-        family: (typeof families)[number],
-        change: (source: Record<string, unknown>) => Record<string, unknown>,
-    ) {
-        const document = yaml.load(
-            readFileSync(path.join(examplesDir, family.example), 'utf8'),
-        ) as Record<string, { rules: { external: Record<string, unknown>[] } }>;
-        const body = document[family.kind];
-        body.rules.external = [change(body.rules.external[0])];
-        return validateFile(
-            scratchFile(`${family.kind}-source.json`, JSON.stringify(document)),
-        );
-    }
-
-    const https = {
-        source: 'https://rules.acme.example.com/v1',
-        transport: 'http',
-    };
-
-    for (const family of families) {
-        describe(family.kind, () => {
-            it('accepts a bearer token over a private CA', () => {
-                const result = validateSource(family, (source) => ({
-                    ...source,
-                    ...https,
-                    tls: { caBundleRef: { provider: 'env', envVar: 'CA' } },
-                    auth: {
-                        flow: 'bearer',
-                        credentialRef: { provider: 'env', envVar: 'TOKEN' },
-                    },
-                }));
-                expect(result.errors).toEqual([]);
-                expect(result.ok).toBe(true);
-            });
-
-            it.each([
-                ['`flow: mtls`', { auth: { flow: 'mtls' } }, '/auth/flow'],
-                [
-                    'a client certificate under `auth`',
-                    { auth: { flow: 'none', clientCertAndKeyRef: pair } },
-                    'clientCertAndKeyRef',
-                ],
-                [
-                    'a `tls` field the block does not declare',
-                    { tls: { clientCertAndKeyRef: pair, insecure: true } },
-                    'insecure',
-                ],
-                ['an empty `tls` block', { tls: {} }, '"minProperties"'],
-                [
-                    'a key passphrase without a client certificate',
-                    {
-                        tls: {
-                            keyPassphraseRef: { provider: 'env', envVar: 'P' },
-                        },
-                    },
-                    '"missingProperty":"clientCertAndKeyRef"',
-                ],
-                [
-                    'a source field the spec does not declare',
-                    { verifyTls: false },
-                    'verifyTls',
-                ],
-            ])('refuses %s', (_name, extra, named) => {
-                const result = validateSource(family, (source) => ({
-                    ...source,
-                    ...https,
-                    ...extra,
-                }));
-                expect(result.ok).toBe(false);
-                expect(JSON.stringify(result.errors)).toContain(named);
-            });
-        });
-    }
-});
-
-describe('guide and access mappings declare exactly what a source reads', () => {
-    // The field sets match the runtime's mapping readers: a guide rule reads
-    // id, name, description, keywords, category and outcome; an access rule
-    // reads id, name, attribute, categoryId and strategy.
-    function validateMapping(kind: 'guide' | 'access', mapping: unknown) {
-        const example =
-            kind === 'guide'
-                ? 'guide-with-sources.yaml'
-                : 'access-with-sources.yaml';
-        const document = yaml.load(
-            readFileSync(path.join(examplesDir, example), 'utf8'),
-        ) as Record<string, { rules: { external: Record<string, unknown>[] } }>;
-        const body = document[kind];
-        body.rules.external = [{ ...body.rules.external[0], mapping }];
-        return validateFile(
-            scratchFile(`${kind}-mapping.json`, JSON.stringify(document)),
-        );
-    }
-
-    it('accepts every field a guide rule mapping reads, outcome included', () => {
-        const result = validateMapping('guide', {
-            record: 'rules[*]',
-            rule: {
-                id: 'id',
-                name: 'title',
-                description: 'summary',
-                keywords: ['tags[*]', 'aliases[*]'],
-                category: 'group',
-                outcome: { rendered: 'marking', concepts: 'concepts' },
-            },
-        });
-        expect(result.errors).toEqual([]);
-        expect(result.ok).toBe(true);
-    });
-
-    it.each(['pattern', 'target'])(
-        'refuses `rule.%s`, which no source reads',
-        (field) => {
-            const result = validateMapping('guide', {
-                rule: { id: 'id', [field]: 'value' },
-            });
-            expect(result.ok).toBe(false);
-            expect(JSON.stringify(result.errors)).toContain(
-                `"additionalProperty":"${field}"`,
-            );
-        },
-    );
-
-    it('refuses an outcome field the rule mapping does not declare', () => {
-        const result = validateMapping('guide', {
-            rule: { id: 'id', outcome: { severity: 'high' } },
-        });
-        expect(result.ok).toBe(false);
-        expect(JSON.stringify(result.errors)).toContain('severity');
-    });
-
-    it('accepts every field an access rule mapping reads', () => {
-        const result = validateMapping('access', {
-            record: 'rules[*]',
-            access: {
-                id: 'id',
-                name: 'name',
-                attribute: 'userAttribute',
-                categoryId: 'category',
-                strategy: 'comparison',
-            },
-        });
-        expect(result.errors).toEqual([]);
-        expect(result.ok).toBe(true);
-    });
-
-    it.each(['subjectPredicate', 'objectPredicate', 'decision'])(
-        'refuses `access.%s`, which no source reads',
-        (field) => {
-            const result = validateMapping('access', {
-                access: { id: 'id', [field]: 'value' },
-            });
-            expect(result.ok).toBe(false);
-            expect(JSON.stringify(result.errors)).toContain(
-                `"additionalProperty":"${field}"`,
-            );
-        },
-    );
 });
 
 describe('every file in libs/types/examples validates against the shipped validator', () => {

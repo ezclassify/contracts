@@ -27,30 +27,28 @@ scheme:
         rollup: first
         single: true
     concepts:
-      inline:
-        - id: DECLASS_EVENT
-          name: Event
-          views: { default: '{value}', structured: '{value}' }
-          categories: [declass]
-          text_input:
-            label: Event description
-            required: true
-            recognition:
-              begins_with_word: [Upon, Completion, End, Termination, When]
-        - id: DECLASS_EVENT_DATE
-          name: Companion date
-          views: { default: '{value}', structured: '{value}' }
-          categories: [declass_event_date]
-          text_input:
-            label: Companion date
-            encoding:
-              type: calendar-date
-              canonical: 'YYYY-MM-DD'
-              accepts: ['YYYY-MM-DD']
+      - id: DECLASS_EVENT
+        name: Event
+        views: { default: '{value}', structured: '{value}' }
+        categories: [declass]
+        text_input:
+          label: Event description
+          required: true
+          recognition:
+            begins_with_word: [Upon, Completion, End, Termination, When]
+      - id: DECLASS_EVENT_DATE
+        name: Companion date
+        views: { default: '{value}', structured: '{value}' }
+        categories: [declass_event_date]
+        text_input:
+          label: Companion date
+          encoding:
+            type: calendar-date
+            canonical: 'YYYY-MM-DD'
+            accepts: ['YYYY-MM-DD']
   rules:
     - id: event-requires-companion-date
       name: Structured event instructions include a companion date
-      formats: [structured]
       phases: [validate]
       when: DECLASS_EVENT
       action: require

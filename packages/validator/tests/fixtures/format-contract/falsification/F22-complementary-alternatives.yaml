@@ -44,10 +44,9 @@ scheme:
         rollup: union
         required: true
     concepts:
-      inline:
-        - { id: LEVEL_ONE, name: Level one, views: { default: ONE }, categories: [level] }
-        - { id: OWNER_HOME, name: Home owner, views: { default: HOME }, categories: [owner] }
-        - { id: OWNER_OTHER, name: Other owner, views: { default: OTHER }, categories: [owner] }
+      - { id: LEVEL_ONE, name: Level one, views: { default: ONE }, categories: [level] }
+      - { id: OWNER_HOME, name: Home owner, views: { default: HOME }, categories: [owner] }
+      - { id: OWNER_OTHER, name: Other owner, views: { default: OTHER }, categories: [owner] }
   render:
     default: banner
     formats:

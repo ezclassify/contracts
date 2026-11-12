@@ -27,11 +27,10 @@ scheme:
         label: Owner
         rollup: union
     concepts:
-      inline:
-        - { id: LEVEL_ONE, name: Level one, views: { default: ONE }, categories: [level] }
-        - { id: HANDLING_A, name: Handling A, views: { default: HA }, categories: [handling] }
-        - { id: HANDLING_B, name: Handling B, views: { default: HB }, categories: [handling] }
-        - { id: OWNER_HOME, name: Home owner, views: { default: HOME }, categories: [owner] }
+      - { id: LEVEL_ONE, name: Level one, views: { default: ONE }, categories: [level] }
+      - { id: HANDLING_A, name: Handling A, views: { default: HA }, categories: [handling] }
+      - { id: HANDLING_B, name: Handling B, views: { default: HB }, categories: [handling] }
+      - { id: OWNER_HOME, name: Home owner, views: { default: HOME }, categories: [owner] }
   render:
     default: banner
     formats:

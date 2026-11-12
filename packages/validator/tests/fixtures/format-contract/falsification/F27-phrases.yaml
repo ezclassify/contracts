@@ -39,62 +39,61 @@ scheme:
         rollup: union
         sort: position
     concepts:
-      inline:
-        - {
-              id: LEVEL_ONE,
-              name: Level one,
-              views: { default: ONE },
-              categories: [level],
-          }
-        - {
-              id: H_ONE,
-              name: Handling one,
-              views: { default: HONE },
-              categories: [handling],
-              position: 1,
-          }
-        - {
-              id: H_TWO,
-              name: Handling two,
-              views: { default: HTWO },
-              categories: [handling],
-              position: 2,
-          }
-        - {
-              id: H_THREE,
-              name: Handling three,
-              views: { default: HTHREE },
-              categories: [handling],
-              position: 3,
-          }
-        - {
-              id: H_FOUR,
-              name: Handling four,
-              views: { default: HFOUR },
-              categories: [handling],
-              position: 4,
-          }
-        - {
-              id: R_ONE,
-              name: Recipient one,
-              views: { default: RONE },
-              categories: [recipients],
-              position: 1,
-          }
-        - {
-              id: R_TWO,
-              name: Recipient two,
-              views: { default: RTWO },
-              categories: [recipients],
-              position: 2,
-          }
-        - {
-              id: V_ONE,
-              name: Reviewer one,
-              views: { default: VONE },
-              categories: [reviewers],
-              position: 1,
-          }
+      - {
+            id: LEVEL_ONE,
+            name: Level one,
+            views: { default: ONE },
+            categories: [level],
+        }
+      - {
+            id: H_ONE,
+            name: Handling one,
+            views: { default: HONE },
+            categories: [handling],
+            position: 1,
+        }
+      - {
+            id: H_TWO,
+            name: Handling two,
+            views: { default: HTWO },
+            categories: [handling],
+            position: 2,
+        }
+      - {
+            id: H_THREE,
+            name: Handling three,
+            views: { default: HTHREE },
+            categories: [handling],
+            position: 3,
+        }
+      - {
+            id: H_FOUR,
+            name: Handling four,
+            views: { default: HFOUR },
+            categories: [handling],
+            position: 4,
+        }
+      - {
+            id: R_ONE,
+            name: Recipient one,
+            views: { default: RONE },
+            categories: [recipients],
+            position: 1,
+        }
+      - {
+            id: R_TWO,
+            name: Recipient two,
+            views: { default: RTWO },
+            categories: [recipients],
+            position: 2,
+        }
+      - {
+            id: V_ONE,
+            name: Reviewer one,
+            views: { default: VONE },
+            categories: [reviewers],
+            position: 1,
+        }
   render:
     default: banner
     formats:

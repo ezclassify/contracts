@@ -47,7 +47,7 @@ const positions: { name: string; file: string; at: (doc: Doc) => Doc }[] = [
     {
         name: 'guide rule',
         file: 'ref-marked-guide-1',
-        at: (doc) => doc.guide.rules.inline[0],
+        at: (doc) => doc.guide.rules[0],
     },
     {
         name: 'access block (whole)',
@@ -57,7 +57,7 @@ const positions: { name: string; file: string; at: (doc: Doc) => Doc }[] = [
     {
         name: 'access rule',
         file: 'ref-marked-access-1',
-        at: (doc) => doc.access.rules.inline[0],
+        at: (doc) => doc.access.rules[0],
     },
     {
         name: 'crosswalk block (whole)',
@@ -134,28 +134,28 @@ describe('guide, access and crosswalk markings', () => {
             name: 'guide rule outcome',
             file: 'ref-marked-guide-1',
             place: (doc: Doc) => {
-                doc.guide.rules.inline[0].outcome.marking = 'L';
+                doc.guide.rules[0].outcome.marking = 'L';
             },
         },
         {
             name: 'guide rule, as a marking_scheme',
             file: 'ref-marked-guide-1',
             place: (doc: Doc) => {
-                doc.guide.rules.inline[0].marking_scheme = { id: 'other' };
+                doc.guide.rules[0].marking_scheme = { id: 'other' };
             },
         },
         {
             name: 'access target scheme',
             file: 'ref-marked-access-1',
             place: (doc: Doc) => {
-                doc.access.targetScheme.marking = 'L';
+                doc.access.target_scheme.marking = 'L';
             },
         },
         {
             name: 'access rule, as a marking_scheme',
             file: 'ref-marked-access-1',
             place: (doc: Doc) => {
-                doc.access.rules.inline[0].marking_scheme = { id: 'other' };
+                doc.access.rules[0].marking_scheme = { id: 'other' };
             },
         },
         {

@@ -4,9 +4,9 @@ import schema from '../generated/validation/v1/guide.schema.json';
 /**
  * Static guide schema JSON for validating a complete guide document.
  *
- * Root shape: `{ guide: { id, version, name, targetSchemes: [...], rules: {
- * inline?: [...], external?: [...] } } }`. Required guide fields: `id`,
- * `version`, `name`, `targetSchemes` (at least one entry), and `rules`.
+ * Root shape: `{ guide: { id, version, name, target_schemes: [...], rules:
+ * [...] } }`. Required guide fields: `id`, `version`, `name`,
+ * `target_schemes` (at least one entry), and `rules`.
  * `description` is optional.
  *
  * Used by the guide loader to validate a guide YAML/JSON file before parsing.
@@ -23,7 +23,7 @@ const guideMetadataKeys = new Set([
     'marking_scheme',
     'marking',
     'description',
-    'targetSchemes',
+    'target_schemes',
     'vocabulary',
     'type',
     'layer',
@@ -85,7 +85,7 @@ export const guideCategorySchema = {
 };
 
 /**
- * Sub-schema for a single `targetSchemes` dependency entry, resolved from
+ * Sub-schema for a single `target_schemes` dependency entry, resolved from
  * `$defs.guide_dependency`.
  *
  * Required field: `id` (scheme ID). Optional: `version` (semver constraint

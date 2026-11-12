@@ -1,8 +1,8 @@
 /**
  * Validation tests for the access policy schema.
  *
- * Root shape: { access: { id, targetScheme: { id }, rules: {...} } } Required:
- * access.id, access.targetScheme.id, access.rules Strict: additionalProperties:
+ * Root shape: { access: { id, target_scheme: { id }, rules: [...] } } Required:
+ * access.id, access.target_scheme.id, access.rules Strict: additionalProperties:
  * false on the access envelope
  */
 import { describe, it, expect, beforeAll } from 'vitest';
@@ -23,7 +23,7 @@ describe('accessSchema: accept paths', () => {
     let validate: ValidateFunction;
 
     beforeAll(() => {
-        // strict: false suppresses the union-type warning on AccessRuleWhenData.value
+        // strict: false suppresses the union-type warning on the gate's value
         const ajv = new (Ajv as unknown as new (o: { strict: boolean }) => {
             compile(s: unknown): ValidateFunction;
         })({ strict: false });
@@ -34,33 +34,31 @@ describe('accessSchema: accept paths', () => {
         const doc = {
             access: {
                 id: 'my-access',
-                targetScheme: { id: 'demo' },
-                rules: {},
+                target_scheme: { id: 'demo' },
+                rules: [],
             },
         };
         expect(validate(doc)).toBe(true);
     });
 
-    it('accepts an access policy with canonical inline rules', () => {
+    it('accepts an access policy with canonical rules', () => {
         const doc = {
             access: {
                 id: 'library-access',
-                targetScheme: {
+                target_scheme: {
                     id: 'cedar-valley-protection',
                     version: '>=1.0.0',
                 },
-                rules: {
-                    inline: [
+                rules: [
                         { id: 'r1', name: 'Clearance check' },
                         {
                             id: 'r2',
                             name: 'Classification level',
                             attribute: 'clearance.level',
-                            categoryId: 'classification',
+                            category: 'classification',
                             strategy: 'gte',
                         },
                     ],
-                },
             },
         };
         expect(validate(doc)).toBe(true);
@@ -72,18 +70,16 @@ describe('accessSchema: accept paths', () => {
                 id: 'division-access',
                 type: 'layer',
                 layer: { base: 'acme-rbac-access@1.0.0' },
-                targetScheme: { id: 'acme-classification-primary' },
-                rules: {
-                    inline: [
+                target_scheme: { id: 'acme-classification-primary' },
+                rules: [
                         {
                             id: 'division-endorsement',
                             name: 'Division endorsement required',
                             attribute: 'divisionEndorsement',
-                            categoryId: 'classification',
+                            category: 'classification',
                             strategy: 'includes',
                         },
                     ],
-                },
             },
         };
         expect(validate(doc)).toBe(true);
@@ -116,8 +112,8 @@ describe('accessSchema: an access layer can only add', () => {
                         base: 'acme-rbac-access@1.0.0',
                         [key]: [{ rule: 'clearance-floor' }],
                     },
-                    targetScheme: { id: 'acme-classification-primary' },
-                    rules: {},
+                    target_scheme: { id: 'acme-classification-primary' },
+                    rules: [],
                 },
             };
             expect(validate(doc)).toBe(false);
@@ -136,23 +132,23 @@ describe('accessSchema: reject paths', () => {
     });
 
     it('rejects a document missing access.id', () => {
-        const doc = { access: { targetScheme: { id: 'demo' }, rules: {} } };
+        const doc = { access: { target_scheme: { id: 'demo' }, rules: [] } };
         expect(validate(doc)).toBe(false);
     });
 
-    it('rejects a document missing access.targetScheme', () => {
-        const doc = { access: { id: 'x', rules: {} } };
+    it('rejects a document missing access.target_scheme', () => {
+        const doc = { access: { id: 'x', rules: [] } };
         expect(validate(doc)).toBe(false);
     });
 
     it('rejects a document missing access.rules', () => {
-        const doc = { access: { id: 'x', targetScheme: { id: 'demo' } } };
+        const doc = { access: { id: 'x', target_scheme: { id: 'demo' } } };
         expect(validate(doc)).toBe(false);
     });
 
     it('rejects a document missing the top-level access wrapper', () => {
         // Passing the inner envelope without the outer { access: ... } key
-        const doc = { id: 'x', targetScheme: { id: 'demo' }, rules: {} };
+        const doc = { id: 'x', target_scheme: { id: 'demo' }, rules: [] };
         expect(validate(doc)).toBe(false);
     });
 
@@ -160,20 +156,78 @@ describe('accessSchema: reject paths', () => {
         const doc = {
             access: {
                 id: 'x',
-                targetScheme: { id: 'demo' },
-                rules: {},
+                target_scheme: { id: 'demo' },
+                rules: [],
                 unknown_field: 'bad',
             },
         };
         expect(validate(doc)).toBe(false);
     });
 
+    it.each([
+        ['a rules block instead of a list', { rules: { inline: [] } }],
+        ['the camelCase target scheme key', { targetScheme: { id: 'demo' } }],
+        [
+            'the camelCase rule category key',
+            { rules: [{ id: 'r', name: 'R', categoryId: 'level' }] },
+        ],
+        [
+            'a strategy the engine does not accept',
+            {
+                rules: [
+                    {
+                        id: 'r',
+                        name: 'R',
+                        attribute: 'level',
+                        category: 'level',
+                        strategy: 'any',
+                    },
+                ],
+            },
+        ],
+    ])('rejects %s', (_label, change) => {
+        const doc = {
+            access: {
+                id: 'x',
+                target_scheme: { id: 'demo' },
+                rules: [],
+                ...change,
+            },
+        };
+        expect(validate(doc)).toBe(false);
+    });
+
+    it('accepts a rule with a data gate and a check', () => {
+        const doc = {
+            access: {
+                id: 'x',
+                target_scheme: { id: 'demo' },
+                rules: [
+                    {
+                        id: 'r',
+                        name: 'R',
+                        when: {
+                            data: { category: 'level', operator: 'has_content' },
+                        },
+                        check: {
+                            user: 'groups',
+                            data_category: 'level',
+                            operator: 'contains_any',
+                        },
+                        deny_reason: 'Needs {level}',
+                    },
+                ],
+            },
+        };
+        expect(validate(doc), JSON.stringify(validate.errors)).toBe(true);
+    });
+
     it('rejects a non-string access.id', () => {
         const doc = {
             access: {
                 id: 42,
-                targetScheme: { id: 'demo' },
-                rules: {},
+                target_scheme: { id: 'demo' },
+                rules: [],
             },
         };
         expect(validate(doc)).toBe(false);
@@ -185,14 +239,14 @@ describe('accessSchema: reject paths', () => {
 // ---------------------------------------------------------------------------
 
 describe('access-schema exports: sub-schema structure', () => {
-    it('accessMetaSchema has id and targetScheme in its properties', () => {
+    it('accessMetaSchema has id and target_scheme in its properties', () => {
         const props = accessMetaSchema.properties as Record<string, unknown>;
         expect(props).toHaveProperty('id');
-        expect(props).toHaveProperty('targetScheme');
+        expect(props).toHaveProperty('target_scheme');
         expect(props).toHaveProperty('version');
     });
 
-    it('accessRuleSchema validates one inline rule entry on its own', () => {
+    it('accessRuleSchema validates one rule on its own', () => {
         const validateRule = new Ajv({ strict: false }).compile(
             accessRuleSchema,
         );
@@ -200,22 +254,22 @@ describe('access-schema exports: sub-schema structure', () => {
             id: 'r2',
             name: 'Classification level',
             attribute: 'clearance.level',
-            categoryId: 'classification',
+            category: 'classification',
             strategy: 'gte',
         };
         expect(validateRule(rule)).toBe(true);
         // Negative controls: a rule without its id, a rule with an unknown
-        // key, and a whole rules block are each refused.
+        // key, and a list of rules are each refused.
         expect(validateRule({ name: 'Classification level' })).toBe(false);
         expect(validateRule({ ...rule, extra: true })).toBe(false);
-        expect(validateRule({ inline: [rule] })).toBe(false);
+        expect(validateRule([rule])).toBe(false);
     });
 
     it('accessRuleSchema includes definitions so $ref pointers resolve', () => {
         expect(accessRuleSchema).toHaveProperty('definitions');
         const ruleDef = (
             accessRuleSchema.definitions as Record<string, unknown>
-        ).AccessRuleEntry as Record<string, unknown>;
+        ).AccessRuleDoc as Record<string, unknown>;
         const ruleProps = ruleDef.properties as Record<string, unknown>;
         expect(ruleProps).toHaveProperty('id');
         expect(ruleProps).toHaveProperty('name');
@@ -223,9 +277,9 @@ describe('access-schema exports: sub-schema structure', () => {
         expect(ruleProps).toHaveProperty('strategy');
     });
 
-    it('accessSchemaDefs carries AccessRuleEntry and AccessRule definitions', () => {
+    it('accessSchemaDefs carries AccessRuleDoc and AccessRule definitions', () => {
         const defs = accessSchemaDefs as Record<string, unknown>;
-        expect(defs).toHaveProperty('AccessRuleEntry');
+        expect(defs).toHaveProperty('AccessRuleDoc');
         expect(defs).toHaveProperty('AccessRule');
     });
 });

@@ -819,7 +819,7 @@ describe('a form a view is only read in', () => {
      */
     function withConferenceRecords(views: Doc, extra: Doc = {}): Doc {
         const document = example();
-        document.scheme.data.concepts.inline.push({
+        document.scheme.data.concepts.push({
             id: 'CONFERENCE_RECORDS',
             name: 'Conference records',
             views,
@@ -898,13 +898,12 @@ describe('a form a view is only read in', () => {
         expect(errors(positional)).toEqual([sharedSpelling('CONF')]);
     });
 
-    it('compares spellings as the scheme compares text', () => {
+    it('compares spellings without regard to case', () => {
         const document = withConferenceRecords(
             { default: 'CONFERENCE RECORDS' },
             { aliases: ['conf'] },
         );
-        document.scheme.parse = { case_sensitive: true };
-        expect(errors(document)).toEqual([]);
+        expect(errors(document)).toEqual([sharedSpelling('CONF')]);
     });
 
     it('is accepted when the other concept is spelled differently in the view the form reads', () => {
@@ -923,7 +922,7 @@ describe('a form a view is only read in', () => {
         // writes and the form reads: text in the form can be read as either,
         // and neither is read as the other.
         const document = example();
-        document.scheme.data.concepts.inline.push({
+        document.scheme.data.concepts.push({
             id: 'CONFERENCE_PARTNERS',
             name: 'Shared with conference partners',
             views: { default: 'CONFERENCE PARTNERS', abbreviated: 'CONF' },

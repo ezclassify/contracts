@@ -23,8 +23,7 @@ scheme:
         single: true
         required: true
     concepts:
-      inline:
-        - { id: LEVEL_ONE, name: Level one, views: { default: ONE, structured: ONE }, categories: [level] }
+      - { id: LEVEL_ONE, name: Level one, views: { default: ONE, structured: ONE }, categories: [level] }
   render:
     default: structured
     formats:
