@@ -305,6 +305,7 @@
     "RollupStepActionDoc",
     "RuleActionDoc",
     "RuleCondition",
+    "RuleConditionOperator",
     "RuleConditionTarget",
     "RuleContributorQuantifier",
     "RuleReference",

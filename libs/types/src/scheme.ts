@@ -52,6 +52,33 @@ export type RuleConditionTarget = 'self' | 'context' | 'contributors';
 export type RuleContributorQuantifier = 'any' | 'all' | 'none';
 
 /**
+ * The test a scheme condition applies to one category's assertions.
+ * `has_concept` and `not_has_concept` name a concept in `value`;
+ * `has_content` holds when the category holds anything; the `count_*` tests
+ * (greater than, greater than or equal, equal, less than, less than or equal)
+ * compare the number of concepts in the category with the number in `value`;
+ * `min_order` holds when a concept sits at or above the order in `value`;
+ * `subset_of` holds when this category's concepts are a subset of the
+ * category named in `value`, and `shares_concept_with` when the two share a
+ * concept; `every_has_concept` and `any_lacks_concept` ask whether every
+ * assertion set, or at least one, holds the concept named in `value`.
+ */
+export type RuleConditionOperator =
+    | 'has_content'
+    | 'has_concept'
+    | 'not_has_concept'
+    | 'count_gt'
+    | 'count_gte'
+    | 'count_eq'
+    | 'count_lt'
+    | 'count_lte'
+    | 'min_order'
+    | 'subset_of'
+    | 'shares_concept_with'
+    | 'every_has_concept'
+    | 'any_lacks_concept';
+
+/**
  * One element a layer takes away or brings back, named by kind and id. Exactly
  * one key. The authored vocabulary also governs the resolved layer.
  *
@@ -128,20 +155,7 @@ export interface Condition {
     /** Id of the category whose assertions the operator tests. */
     category?: string;
     /** The test to apply to the category's assertions. */
-    operator?:
-        | 'has_content'
-        | 'has_concept'
-        | 'not_has_concept'
-        | 'count_gt'
-        | 'count_gte'
-        | 'count_eq'
-        | 'count_lt'
-        | 'count_lte'
-        | 'min_order'
-        | 'subset_of' // this category's concepts are a subset of value category's concepts
-        | 'shares_concept_with' // same concept asserted in BOTH this category and the one named by value
-        | 'every_has_concept' // multi-set only: every assertion set contains the named concept
-        | 'any_lacks_concept'; // multi-set only: at least one assertion set is missing the named concept
+    operator?: RuleConditionOperator;
     /**
      * Operand for the operator: a concept id for the concept tests, a category
      * id for `subset_of` and `shares_concept_with`, and a number for the
@@ -1347,10 +1361,8 @@ export interface RuleCondition {
     category?: string;
     /** Shorthand for has_concept: check if this concept is present */
     has?: string;
-    /** Combined operator+value shorthand (e.g. "count_eq 1", "has_content") */
-    is?: string;
-    /** Explicit operator for the condition */
-    operator?: string;
+    /** The test to apply to the category's assertions. */
+    operator?: RuleConditionOperator;
     /** Explicit value for the operator */
     value?: string | number;
     /** Processing context role filter */
