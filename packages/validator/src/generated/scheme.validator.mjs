@@ -38,7 +38,7 @@ var require_ucs2length = __commonJS({
 // scheme.validator.mjs
 var validate = validate10;
 var scheme_validator_default = validate10;
-var schema12 = { "additionalProperties": false, "description": "The body inside the top-level `scheme:` envelope.", "properties": { "data": { "$ref": "#/definitions/SchemeDataDoc", "description": "Categories, concepts, and concept imports." }, "default_scope": { "description": "The scope a marking is in when nothing names one: one of `scopes`, by id.\n\nRequired whenever a scheme declares at least one scope, and the only way to name the default: the scheme names its default scope once, as a surface names its default view. A layer may leave it out and keep the default of the stack it sits on, or state it to name another; a layer that gives the stack its first scopes names one.", "type": "string" }, "definition": { "description": "Official description or definition of this scheme.", "type": "string" }, "description": { "description": "Longer description of what this scheme covers.", "type": "string" }, "embedded_marking": { "description": "Embedded-marking styles for inline parsing/rendering.", "items": { "$ref": "#/definitions/EmbeddedMarkingStyleDoc" }, "type": "array" }, "filters": { "description": "View filters.", "items": { "$ref": "#/definitions/FilterDoc" }, "type": "array" }, "guidance": { "description": "Usage notes, restrictions, or guidelines for this scheme.", "type": "string" }, "id": { "description": "Unique scheme identifier (e.g. 'tlp-v2', 'cedar-valley-protection').", "type": "string" }, "layer": { "$ref": "#/definitions/LayerBlockDoc", "description": "The scheme family's layer payload. Required when `type: 'layer'`, forbidden otherwise." }, "marking": { "description": "The whole marking of this scheme document, written in the scheme `marking_scheme` names. Every `marking` on an element of this document is a part of it.\n\nText, never interpreted: no engine parses it, checks it, or acts on it. A scheme summary reports it unchanged for display.", "type": "string" }, "marking_scheme": { "anyOf": [{ "$ref": "#/definitions/MarkingSchemeRefDoc" }, { "const": "self", "type": "string" }], "description": "The scheme this document's markings are written in: a reference to another scheme, or `self` when this scheme marks itself.\n\nWith `self`, the markings are read against this scheme at this document's own version, so the id and version are not repeated and a version bump needs no edit here.\n\nAuthoring data only. Loading and compiling the scheme never read it, and no engine resolves the scheme it names." }, "name": { "description": "Human-readable scheme name.", "type": "string" }, "named_conditions": { "$ref": "#/definitions/Record%3Cstring%2CWhenDoc%3E", "description": "Reusable `when` trees referenced with `{ named_condition: <id> }`. A layer may also reference definitions inherited from its base and required layers." }, "parse": { "$ref": "#/definitions/ParseConfigDoc", "description": "Parse configuration." }, "part_scope": { "description": "How much text a part marking governs in a document audit: `'paragraph'` (default, the mark's own line(s)) or `'until-next'` (through to the next part marking, a section style). Lets schemes that place/scope markings differently audit correctly. Maps to runtime `Scheme.partScope`.", "enum": ["paragraph", "until-next"], "type": "string" }, "render": { "$ref": "#/definitions/RenderConfigDoc", "description": "Render configuration." }, "role_aware": { "description": "When true, this scheme reads a marking in the role its context gives, and a part's rules can read the whole it is part of. Whether or not it is, `process`, `validate` and `explain` compare a part that is valid on its own with a whole that reads and is valid.", "type": "boolean" }, "role_detection": { "additionalProperties": false, "description": "When a marking in each role is required and, for a scheme without `render.surfaces`, the formats each role is read in.\n\nA role's `required_when` condition evaluates after discovery against authored whole assertions and authored part contributors. Omitted, a whole is optional and a part required. Named conditions use the same scheme condition registry.\n\nA scheme that declares `render.surfaces` lists no formats here: each of its views states its own `role`, and a role is read in the forms of the views that state it. A role takes `{ required_when: ... }` and nothing else, and a list, flat or under `views`, is refused.\n\nA scheme without `render.surfaces` lists the format ids each role is read in, in one of two shapes:\n\n- Flat: `{ whole: ['full'], part: ['wrapped'] }`.\n- Nested: `{ whole: { views: [...] }, part: { views: [...] } }`: the same list under `views`, beside an optional `required_when`.\n\nEither way the lists are about reading. The view or format a marking in each role is written in, when a request names none, comes from the surface's `default`, or from `render.default`. A role entry that says nothing is refused.", "properties": { "part": { "anyOf": [{ "items": { "type": "string" }, "type": "array" }, { "additionalProperties": false, "properties": { "required_when": { "$ref": "#/definitions/WhenDoc", "description": "The condition under which a part marking is required." }, "views": { "description": "The format ids a part marking is read in.", "items": { "type": "string" }, "type": "array" } }, "type": "object" }], "description": "How a part marking is detected." }, "whole": { "anyOf": [{ "items": { "type": "string" }, "type": "array" }, { "additionalProperties": false, "properties": { "required_when": { "$ref": "#/definitions/WhenDoc", "description": "The condition under which a whole marking is required." }, "views": { "description": "The format ids a whole marking is read in.", "items": { "type": "string" }, "type": "array" } }, "type": "object" }], "description": "How a whole marking is detected." } }, "type": "object" }, "rollup_pipelines": { "description": "Rollup pipelines for categories with `rollup: pipeline`.", "items": { "$ref": "#/definitions/RollupPipelineDoc" }, "type": "array" }, "rules": { "description": "Scheme rules: conditions and the actions they trigger.", "items": { "$ref": "#/definitions/SchemeRuleDoc" }, "type": "array" }, "scope_label": { "description": "Display label for the scope selector.", "type": "string" }, "scopes": { "description": "Scope definitions, in the order a selector offers them.", "items": { "additionalProperties": false, "properties": { "id": { "description": "The scope id.", "type": "string" }, "label": { "description": "The scope's display label.", "type": "string" } }, "required": ["id", "label"], "type": "object" }, "type": "array" }, "tier": { "description": "Distribution tier this document belongs to. Names which catalog carries it; it grants nothing and is read by packaging, not by the engine.", "type": "string" }, "type": { "description": "What kind of document this is. Absent means `'scheme'`.\n\nThe single discriminator for layer-ness: `type: 'layer'` requires the `layer` block and `type: 'scheme'` forbids it, both enforced at load.\n\nEvery layerable family wears this same envelope; see `LayerBinding`.", "enum": ["scheme", "layer"], "type": "string" }, "ui": { "$ref": "#/definitions/Record%3Cstring%2Cunknown%3E", "description": "UI metadata: the engine knows `label_presets`; other keys are opaque. `vocabulary` is a top-level SchemeBlock field, not a `ui` sub-key, so it is schema-validated the same way as guide's and access's." }, "version": { "description": "Semantic version (e.g. `3.0.0`, `20161231.0.0`).", "type": "string" }, "vocabulary": { "$ref": "#/definitions/Vocabulary", "description": 'Display-term overrides consulted by runtime UI components. Same shape and chokepoint as guide\'s and access\'s own top-level `vocabulary` block: an open map from a term key to a `{ singular, plural }` pair (or a bare `singular`, auto-pluralized). Reserved scheme keys are `handbook`, which renames the scheme\'s reference surface, `whole` / `part`, which name the structural context roles, and `marking`, the word a document written in this scheme labels its `marking` fields with (a host shows "Marking" when the marking scheme declares none). For example: `{ handbook: { singular: "Register" }, whole: { singular: "banner" }, marking: { singular: "label" } }`.' } }, "required": ["id", "version", "name", "data"], "type": "object" };
+var schema12 = { "additionalProperties": false, "description": "The body inside the top-level `scheme:` envelope.", "properties": { "data": { "$ref": "#/definitions/SchemeDataDoc", "description": "Categories, concepts, and concept imports." }, "default_scope": { "description": "The scope a marking is in when nothing names one: one of `scopes`, by id.\n\nRequired whenever a scheme declares at least one scope, and the only way to name the default: the scheme names its default scope once, as a surface names its default view. A layer may leave it out and keep the default of the stack it sits on, or state it to name another; a layer that gives the stack its first scopes names one.", "type": "string" }, "definition": { "description": "Official description or definition of this scheme.", "type": "string" }, "description": { "description": "Longer description of what this scheme covers.", "type": "string" }, "embedded_marking": { "description": "Embedded-marking styles for inline parsing/rendering.", "items": { "$ref": "#/definitions/EmbeddedMarkingStyleDoc" }, "type": "array" }, "filters": { "description": "View filters.", "items": { "$ref": "#/definitions/FilterDoc" }, "type": "array" }, "guidance": { "description": "Usage notes, restrictions, or guidelines for this scheme.", "type": "string" }, "id": { "description": "Unique scheme identifier (e.g. 'tlp-v2', 'cedar-valley-protection').", "type": "string" }, "layer": { "$ref": "#/definitions/LayerBlockDoc", "description": "The scheme family's layer payload. Required when `type: 'layer'`, forbidden otherwise." }, "marking": { "description": "The whole marking of this scheme document, written in the scheme `marking_scheme` names. Every `marking` on an element of this document is a part of it.\n\nText, never interpreted: no engine parses it, checks it, or acts on it. A scheme summary reports it unchanged for display.", "type": "string" }, "marking_scheme": { "anyOf": [{ "$ref": "#/definitions/MarkingSchemeRefDoc" }, { "const": "self", "type": "string" }], "description": "The scheme this document's markings are written in: a reference to another scheme, or `self` when this scheme marks itself.\n\nWith `self`, the markings are read against this scheme at this document's own version, so the id and version are not repeated and a version bump needs no edit here.\n\nAuthoring data only. Loading and compiling the scheme never read it, and no engine resolves the scheme it names." }, "name": { "description": "Human-readable scheme name.", "type": "string" }, "named_conditions": { "$ref": "#/definitions/Record%3Cstring%2CWhenDoc%3E", "description": "Reusable `when` trees referenced with `{ named_condition: <id> }`. A layer may also reference definitions inherited from its base and required layers." }, "parse": { "$ref": "#/definitions/ParseConfigDoc", "description": "Parse configuration." }, "part_scope": { "description": "How much text a part marking governs in a document audit: `'paragraph'` (default, the mark's own line(s)) or `'until-next'` (through to the next part marking, a section style). Lets schemes that place/scope markings differently audit correctly. Maps to runtime `Scheme.partScope`.", "enum": ["paragraph", "until-next"], "type": "string" }, "render": { "$ref": "#/definitions/RenderConfigDoc", "description": "Render configuration." }, "role_aware": { "description": "When true, this scheme reads a marking in the role its context gives, and a part's rules can read the whole it is part of. Whether or not it is, `process`, `validate` and `explain` compare a part that is valid on its own with a whole that reads and is valid.", "type": "boolean" }, "role_detection": { "additionalProperties": false, "description": "When a marking in each role is required and, for a scheme without `render.surfaces`, the formats each role is read in.\n\nA role's `required_when` condition evaluates after discovery against authored whole assertions and authored part contributors. Omitted, a whole is optional and a part required. Named conditions use the same scheme condition registry.\n\nA scheme that declares `render.surfaces` lists no formats here: each of its views states its own `role`, and a role is read in the forms of the views that state it. A role takes `{ required_when: ... }` and nothing else, and a list, flat or under `views`, is refused.\n\nA scheme without `render.surfaces` lists the format ids each role is read in, in one of two shapes:\n\n- Flat: `{ whole: ['full'], part: ['wrapped'] }`.\n- Nested: `{ whole: { views: [...] }, part: { views: [...] } }`: the same list under `views`, beside an optional `required_when`.\n\nEither way the lists are about reading. The view or format a marking in each role is written in, when a request names none, comes from the surface's `default`, or from `render.default`. A role entry that says nothing is refused.", "properties": { "part": { "anyOf": [{ "items": { "type": "string" }, "type": "array" }, { "additionalProperties": false, "properties": { "required_when": { "$ref": "#/definitions/WhenDoc", "description": "The condition under which a part marking is required." }, "views": { "description": "The format ids a part marking is read in.", "items": { "type": "string" }, "type": "array" } }, "type": "object" }], "description": "How a part marking is detected." }, "whole": { "anyOf": [{ "items": { "type": "string" }, "type": "array" }, { "additionalProperties": false, "properties": { "required_when": { "$ref": "#/definitions/WhenDoc", "description": "The condition under which a whole marking is required." }, "views": { "description": "The format ids a whole marking is read in.", "items": { "type": "string" }, "type": "array" } }, "type": "object" }], "description": "How a whole marking is detected." } }, "type": "object" }, "rollup_pipelines": { "description": "Rollup pipelines for categories with `rollup: pipeline`.", "items": { "$ref": "#/definitions/RollupPipelineDoc" }, "type": "array" }, "rules": { "description": "Scheme rules: conditions and the actions they trigger.", "items": { "$ref": "#/definitions/SchemeRuleDoc" }, "type": "array" }, "scope_label": { "description": "Display label for the scope selector.", "type": "string" }, "scopes": { "description": "Scope definitions, in the order a selector offers them.", "items": { "additionalProperties": false, "properties": { "id": { "description": "The scope id.", "type": "string" }, "label": { "description": "The scope's display label.", "type": "string" } }, "required": ["id", "label"], "type": "object" }, "type": "array" }, "tier": { "description": "Distribution tier this document belongs to. Names which catalog carries it; it grants nothing and is read by packaging, not by the engine.", "type": "string" }, "type": { "description": "What kind of document this is. Absent means `'scheme'`.\n\nThe single discriminator for layer-ness: `type: 'layer'` requires the `layer` block and `type: 'scheme'` forbids it, both enforced at load.\n\nEvery layerable family wears this same envelope; see `LayerBinding`.", "enum": ["scheme", "layer"], "type": "string" }, "ui": { "$ref": "#/definitions/Record%3Cstring%2Cunknown%3E", "description": "UI metadata: the engine knows `label_presets`; other keys are opaque. `vocabulary` is a top-level SchemeBlock field, not a `ui` sub-key, so it is schema-validated the same way as guide's and access's." }, "version": { "description": "Semantic version (e.g. `3.0.0`, `20161231.0.0`).", "type": "string" }, "vocabulary": { "$ref": "#/definitions/VocabularyDoc", "description": 'Display-term overrides consulted by runtime UI components. Same shape and chokepoint as guide\'s and access\'s own top-level `vocabulary` block: an open map from a term key to a `{ singular, plural }` pair (or a bare `singular`, auto-pluralized). Reserved scheme keys are `handbook`, which renames the scheme\'s reference surface, `whole` / `part`, which name the structural context roles, and `marking`, the word a document written in this scheme labels its `marking` fields with (a host shows "Marking" when the marking scheme declares none). For example: `{ handbook: { singular: "Register" }, whole: { singular: "banner" }, marking: { singular: "label" } }`.' } }, "required": ["id", "version", "name", "data"], "type": "object" };
 var func2 = Object.prototype.hasOwnProperty;
 var func4 = require_ucs2length().default;
 var schema14 = { "additionalProperties": false, "description": "A category: a dimension of a marking that groups related concepts.", "properties": { "citation": { "description": "Where in the governing document this category was read from. Free text, e.g. `2016 IC Markings Register, Table 3 row 24`.\n\nProvenance only: nothing parses it, matches on it, or renders it.", "type": "string" }, "collapse_groups": { "description": "When true, a group concept present together with every one of its members is rendered alone, with the members folded into it. A member named by `group_exclude` does not count toward that check. A group missing any member is rendered as stated, beside whichever members are present.", "type": "boolean" }, "default_concept": { "anyOf": [{ "type": "string" }, { "$ref": "#/definitions/ConditionalDefaultConceptDoc" }], "description": "Default concept when this category is empty; a string is unconditional." }, "format_hint": { "description": "Advisory shape of this category's free-text values, for a host that wants to hint at the expected form in an input box. Provenance and UI only: nothing parses it, matches on it, or validates against it. A value's real shape is its concept's `text_input.encoding`.", "type": "string" }, "group_exclude": { "description": 'Concept ID excluded from the "all members present" check for collapse.', "type": "string" }, "hierarchy_root": { "description": "When true, the category grades its concepts by severity `rank`: every concept it grades must declare one or the scheme fails to load, and a coverage comparison counts a whole-marking concept here as covering a part's concept of equal or lower rank. It does not change rendering.", "type": "boolean" }, "id": { "description": "Unique category identifier.", "type": "string" }, "label": { "$ref": "#/definitions/CategoryLabelDoc", "description": "Human-readable label for UI display." }, "marking": { "description": "This category's part marking, written in the scheme the document's `marking_scheme` names. Text, never interpreted: no engine parses it, checks it, acts on it, or reports it.", "type": "string" }, "position": { "description": "Position of the category within the rendered output (lower = earlier).\n\nAny number, not only a whole one: a fraction is how a category is slotted between two others without renumbering the rest.", "type": "number" }, "position_overrides": { "$ref": "#/definitions/Record%3Cstring%2Cnumber%3E", "description": "Numeric positions keyed by concept ID, used by this category's `position` sort instead of the concept's resolved position. Other concepts retain their own positions. Equal positions use the next sort key, then declared concept order. These values affect only this category and never severity." }, "required": { "description": "Whether at least one concept must be present for a valid marking.", "type": "boolean" }, "rollup": { "description": "Rollup operator used when aggregating multiple markings.\n\n`pipeline` means the category is resolved by an entry in `scheme.rollup_pipelines[]`.", "enum": ["max", "min", "union", "intersection", "first", "pipeline"], "type": "string" }, "scopes": { "description": "Scope IDs this category is visible in.", "items": { "type": "string" }, "type": "array" }, "single": { "description": "When true, only one concept can be selected.", "type": "boolean" }, "sort": { "anyOf": [{ "const": "position", "type": "string" }, { "const": "alphabetical", "type": "string" }, { "items": { "enum": ["position", "alphabetical"], "type": "string" }, "type": "array" }], "description": "Sort order for concepts within this category during rendering." } }, "required": ["id", "label", "rollup"], "type": "object" };
@@ -9044,44 +9044,70 @@ function validate106(data, { instancePath = "", parentData, parentDataProperty, 
       const _errs22 = errors;
       let valid9 = false;
       const _errs23 = errors;
+      const _errs26 = errors;
+      let valid11 = false;
+      let passing0 = null;
+      const _errs27 = errors;
+      if (data7 && typeof data7 == "object" && !Array.isArray(data7)) {
+        if (data7.category === void 0) {
+          const err13 = { instancePath: instancePath + "/intersect", schemaPath: "#/definitions/RollupIntersectDoc/oneOf/0/required", keyword: "required", params: { missingProperty: "category" }, message: "must have required property 'category'" };
+          if (vErrors === null) {
+            vErrors = [err13];
+          } else {
+            vErrors.push(err13);
+          }
+          errors++;
+        }
+      }
+      var _valid2 = _errs27 === errors;
+      if (_valid2) {
+        valid11 = true;
+        passing0 = 0;
+      }
+      const _errs28 = errors;
+      if (data7 && typeof data7 == "object" && !Array.isArray(data7)) {
+        if (data7.categories === void 0) {
+          const err14 = { instancePath: instancePath + "/intersect", schemaPath: "#/definitions/RollupIntersectDoc/oneOf/1/required", keyword: "required", params: { missingProperty: "categories" }, message: "must have required property 'categories'" };
+          if (vErrors === null) {
+            vErrors = [err14];
+          } else {
+            vErrors.push(err14);
+          }
+          errors++;
+        }
+      }
+      var _valid2 = _errs28 === errors;
+      if (_valid2 && valid11) {
+        valid11 = false;
+        passing0 = [passing0, 1];
+      } else {
+        if (_valid2) {
+          valid11 = true;
+          passing0 = 1;
+        }
+      }
+      if (!valid11) {
+        const err15 = { instancePath: instancePath + "/intersect", schemaPath: "#/definitions/RollupIntersectDoc/oneOf", keyword: "oneOf", params: { passingSchemas: passing0 }, message: "must match exactly one schema in oneOf" };
+        if (vErrors === null) {
+          vErrors = [err15];
+        } else {
+          vErrors.push(err15);
+        }
+        errors++;
+      } else {
+        errors = _errs26;
+        if (vErrors !== null) {
+          if (_errs26) {
+            vErrors.length = _errs26;
+          } else {
+            vErrors = null;
+          }
+        }
+      }
       if (data7 && typeof data7 == "object" && !Array.isArray(data7)) {
         for (const key2 in data7) {
           if (!(key2 === "categories" || key2 === "category" || key2 === "empty_fallback" || key2 === "fallback_if_only")) {
-            const err13 = { instancePath: instancePath + "/intersect", schemaPath: "#/definitions/RollupIntersectDoc/additionalProperties", keyword: "additionalProperties", params: { additionalProperty: key2 }, message: "must NOT have additional properties" };
-            if (vErrors === null) {
-              vErrors = [err13];
-            } else {
-              vErrors.push(err13);
-            }
-            errors++;
-          }
-        }
-        if (data7.categories !== void 0) {
-          let data8 = data7.categories;
-          if (Array.isArray(data8)) {
-            if (data8.length < 1) {
-              const err14 = { instancePath: instancePath + "/intersect/categories", schemaPath: "#/definitions/RollupIntersectDoc/properties/categories/minItems", keyword: "minItems", params: { limit: 1 }, message: "must NOT have fewer than 1 items" };
-              if (vErrors === null) {
-                vErrors = [err14];
-              } else {
-                vErrors.push(err14);
-              }
-              errors++;
-            }
-            const len3 = data8.length;
-            for (let i3 = 0; i3 < len3; i3++) {
-              if (typeof data8[i3] !== "string") {
-                const err15 = { instancePath: instancePath + "/intersect/categories/" + i3, schemaPath: "#/definitions/RollupIntersectDoc/properties/categories/items/type", keyword: "type", params: { type: "string" }, message: "must be string" };
-                if (vErrors === null) {
-                  vErrors = [err15];
-                } else {
-                  vErrors.push(err15);
-                }
-                errors++;
-              }
-            }
-          } else {
-            const err16 = { instancePath: instancePath + "/intersect/categories", schemaPath: "#/definitions/RollupIntersectDoc/properties/categories/type", keyword: "type", params: { type: "array" }, message: "must be array" };
+            const err16 = { instancePath: instancePath + "/intersect", schemaPath: "#/definitions/RollupIntersectDoc/additionalProperties", keyword: "additionalProperties", params: { additionalProperty: key2 }, message: "must NOT have additional properties" };
             if (vErrors === null) {
               vErrors = [err16];
             } else {
@@ -9090,24 +9116,58 @@ function validate106(data, { instancePath = "", parentData, parentDataProperty, 
             errors++;
           }
         }
+        if (data7.categories !== void 0) {
+          let data8 = data7.categories;
+          if (Array.isArray(data8)) {
+            if (data8.length < 1) {
+              const err17 = { instancePath: instancePath + "/intersect/categories", schemaPath: "#/definitions/RollupIntersectDoc/properties/categories/minItems", keyword: "minItems", params: { limit: 1 }, message: "must NOT have fewer than 1 items" };
+              if (vErrors === null) {
+                vErrors = [err17];
+              } else {
+                vErrors.push(err17);
+              }
+              errors++;
+            }
+            const len3 = data8.length;
+            for (let i3 = 0; i3 < len3; i3++) {
+              if (typeof data8[i3] !== "string") {
+                const err18 = { instancePath: instancePath + "/intersect/categories/" + i3, schemaPath: "#/definitions/RollupIntersectDoc/properties/categories/items/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+                if (vErrors === null) {
+                  vErrors = [err18];
+                } else {
+                  vErrors.push(err18);
+                }
+                errors++;
+              }
+            }
+          } else {
+            const err19 = { instancePath: instancePath + "/intersect/categories", schemaPath: "#/definitions/RollupIntersectDoc/properties/categories/type", keyword: "type", params: { type: "array" }, message: "must be array" };
+            if (vErrors === null) {
+              vErrors = [err19];
+            } else {
+              vErrors.push(err19);
+            }
+            errors++;
+          }
+        }
         if (data7.category !== void 0) {
           if (typeof data7.category !== "string") {
-            const err17 = { instancePath: instancePath + "/intersect/category", schemaPath: "#/definitions/RollupIntersectDoc/properties/category/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+            const err20 = { instancePath: instancePath + "/intersect/category", schemaPath: "#/definitions/RollupIntersectDoc/properties/category/type", keyword: "type", params: { type: "string" }, message: "must be string" };
             if (vErrors === null) {
-              vErrors = [err17];
+              vErrors = [err20];
             } else {
-              vErrors.push(err17);
+              vErrors.push(err20);
             }
             errors++;
           }
         }
         if (data7.empty_fallback !== void 0) {
           if (typeof data7.empty_fallback !== "string") {
-            const err18 = { instancePath: instancePath + "/intersect/empty_fallback", schemaPath: "#/definitions/RollupIntersectDoc/properties/empty_fallback/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+            const err21 = { instancePath: instancePath + "/intersect/empty_fallback", schemaPath: "#/definitions/RollupIntersectDoc/properties/empty_fallback/type", keyword: "type", params: { type: "string" }, message: "must be string" };
             if (vErrors === null) {
-              vErrors = [err18];
+              vErrors = [err21];
             } else {
-              vErrors.push(err18);
+              vErrors.push(err21);
             }
             errors++;
           }
@@ -9118,50 +9178,110 @@ function validate106(data, { instancePath = "", parentData, parentDataProperty, 
             const len4 = data12.length;
             for (let i4 = 0; i4 < len4; i4++) {
               if (typeof data12[i4] !== "string") {
-                const err19 = { instancePath: instancePath + "/intersect/fallback_if_only/" + i4, schemaPath: "#/definitions/RollupIntersectDoc/properties/fallback_if_only/items/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+                const err22 = { instancePath: instancePath + "/intersect/fallback_if_only/" + i4, schemaPath: "#/definitions/RollupIntersectDoc/properties/fallback_if_only/items/type", keyword: "type", params: { type: "string" }, message: "must be string" };
                 if (vErrors === null) {
-                  vErrors = [err19];
+                  vErrors = [err22];
                 } else {
-                  vErrors.push(err19);
+                  vErrors.push(err22);
                 }
                 errors++;
               }
             }
           } else {
-            const err20 = { instancePath: instancePath + "/intersect/fallback_if_only", schemaPath: "#/definitions/RollupIntersectDoc/properties/fallback_if_only/type", keyword: "type", params: { type: "array" }, message: "must be array" };
+            const err23 = { instancePath: instancePath + "/intersect/fallback_if_only", schemaPath: "#/definitions/RollupIntersectDoc/properties/fallback_if_only/type", keyword: "type", params: { type: "array" }, message: "must be array" };
             if (vErrors === null) {
-              vErrors = [err20];
+              vErrors = [err23];
             } else {
-              vErrors.push(err20);
+              vErrors.push(err23);
             }
             errors++;
           }
         }
       } else {
-        const err21 = { instancePath: instancePath + "/intersect", schemaPath: "#/definitions/RollupIntersectDoc/type", keyword: "type", params: { type: "object" }, message: "must be object" };
+        const err24 = { instancePath: instancePath + "/intersect", schemaPath: "#/definitions/RollupIntersectDoc/type", keyword: "type", params: { type: "object" }, message: "must be object" };
         if (vErrors === null) {
-          vErrors = [err21];
+          vErrors = [err24];
         } else {
-          vErrors.push(err21);
+          vErrors.push(err24);
         }
         errors++;
       }
       var _valid1 = _errs23 === errors;
       valid9 = valid9 || _valid1;
       if (!valid9) {
-        const _errs39 = errors;
+        const _errs42 = errors;
         if (Array.isArray(data7)) {
           const len5 = data7.length;
           for (let i5 = 0; i5 < len5; i5++) {
             let data14 = data7[i5];
+            const _errs47 = errors;
+            let valid20 = false;
+            let passing1 = null;
+            const _errs48 = errors;
+            if (data14 && typeof data14 == "object" && !Array.isArray(data14)) {
+              if (data14.category === void 0) {
+                const err25 = { instancePath: instancePath + "/intersect/" + i5, schemaPath: "#/definitions/RollupIntersectDoc/oneOf/0/required", keyword: "required", params: { missingProperty: "category" }, message: "must have required property 'category'" };
+                if (vErrors === null) {
+                  vErrors = [err25];
+                } else {
+                  vErrors.push(err25);
+                }
+                errors++;
+              }
+            }
+            var _valid3 = _errs48 === errors;
+            if (_valid3) {
+              valid20 = true;
+              passing1 = 0;
+            }
+            const _errs49 = errors;
+            if (data14 && typeof data14 == "object" && !Array.isArray(data14)) {
+              if (data14.categories === void 0) {
+                const err26 = { instancePath: instancePath + "/intersect/" + i5, schemaPath: "#/definitions/RollupIntersectDoc/oneOf/1/required", keyword: "required", params: { missingProperty: "categories" }, message: "must have required property 'categories'" };
+                if (vErrors === null) {
+                  vErrors = [err26];
+                } else {
+                  vErrors.push(err26);
+                }
+                errors++;
+              }
+            }
+            var _valid3 = _errs49 === errors;
+            if (_valid3 && valid20) {
+              valid20 = false;
+              passing1 = [passing1, 1];
+            } else {
+              if (_valid3) {
+                valid20 = true;
+                passing1 = 1;
+              }
+            }
+            if (!valid20) {
+              const err27 = { instancePath: instancePath + "/intersect/" + i5, schemaPath: "#/definitions/RollupIntersectDoc/oneOf", keyword: "oneOf", params: { passingSchemas: passing1 }, message: "must match exactly one schema in oneOf" };
+              if (vErrors === null) {
+                vErrors = [err27];
+              } else {
+                vErrors.push(err27);
+              }
+              errors++;
+            } else {
+              errors = _errs47;
+              if (vErrors !== null) {
+                if (_errs47) {
+                  vErrors.length = _errs47;
+                } else {
+                  vErrors = null;
+                }
+              }
+            }
             if (data14 && typeof data14 == "object" && !Array.isArray(data14)) {
               for (const key3 in data14) {
                 if (!(key3 === "categories" || key3 === "category" || key3 === "empty_fallback" || key3 === "fallback_if_only")) {
-                  const err22 = { instancePath: instancePath + "/intersect/" + i5, schemaPath: "#/definitions/RollupIntersectDoc/additionalProperties", keyword: "additionalProperties", params: { additionalProperty: key3 }, message: "must NOT have additional properties" };
+                  const err28 = { instancePath: instancePath + "/intersect/" + i5, schemaPath: "#/definitions/RollupIntersectDoc/additionalProperties", keyword: "additionalProperties", params: { additionalProperty: key3 }, message: "must NOT have additional properties" };
                   if (vErrors === null) {
-                    vErrors = [err22];
+                    vErrors = [err28];
                   } else {
-                    vErrors.push(err22);
+                    vErrors.push(err28);
                   }
                   errors++;
                 }
@@ -9170,54 +9290,54 @@ function validate106(data, { instancePath = "", parentData, parentDataProperty, 
                 let data15 = data14.categories;
                 if (Array.isArray(data15)) {
                   if (data15.length < 1) {
-                    const err23 = { instancePath: instancePath + "/intersect/" + i5 + "/categories", schemaPath: "#/definitions/RollupIntersectDoc/properties/categories/minItems", keyword: "minItems", params: { limit: 1 }, message: "must NOT have fewer than 1 items" };
+                    const err29 = { instancePath: instancePath + "/intersect/" + i5 + "/categories", schemaPath: "#/definitions/RollupIntersectDoc/properties/categories/minItems", keyword: "minItems", params: { limit: 1 }, message: "must NOT have fewer than 1 items" };
                     if (vErrors === null) {
-                      vErrors = [err23];
+                      vErrors = [err29];
                     } else {
-                      vErrors.push(err23);
+                      vErrors.push(err29);
                     }
                     errors++;
                   }
                   const len6 = data15.length;
                   for (let i6 = 0; i6 < len6; i6++) {
                     if (typeof data15[i6] !== "string") {
-                      const err24 = { instancePath: instancePath + "/intersect/" + i5 + "/categories/" + i6, schemaPath: "#/definitions/RollupIntersectDoc/properties/categories/items/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+                      const err30 = { instancePath: instancePath + "/intersect/" + i5 + "/categories/" + i6, schemaPath: "#/definitions/RollupIntersectDoc/properties/categories/items/type", keyword: "type", params: { type: "string" }, message: "must be string" };
                       if (vErrors === null) {
-                        vErrors = [err24];
+                        vErrors = [err30];
                       } else {
-                        vErrors.push(err24);
+                        vErrors.push(err30);
                       }
                       errors++;
                     }
                   }
                 } else {
-                  const err25 = { instancePath: instancePath + "/intersect/" + i5 + "/categories", schemaPath: "#/definitions/RollupIntersectDoc/properties/categories/type", keyword: "type", params: { type: "array" }, message: "must be array" };
+                  const err31 = { instancePath: instancePath + "/intersect/" + i5 + "/categories", schemaPath: "#/definitions/RollupIntersectDoc/properties/categories/type", keyword: "type", params: { type: "array" }, message: "must be array" };
                   if (vErrors === null) {
-                    vErrors = [err25];
+                    vErrors = [err31];
                   } else {
-                    vErrors.push(err25);
+                    vErrors.push(err31);
                   }
                   errors++;
                 }
               }
               if (data14.category !== void 0) {
                 if (typeof data14.category !== "string") {
-                  const err26 = { instancePath: instancePath + "/intersect/" + i5 + "/category", schemaPath: "#/definitions/RollupIntersectDoc/properties/category/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+                  const err32 = { instancePath: instancePath + "/intersect/" + i5 + "/category", schemaPath: "#/definitions/RollupIntersectDoc/properties/category/type", keyword: "type", params: { type: "string" }, message: "must be string" };
                   if (vErrors === null) {
-                    vErrors = [err26];
+                    vErrors = [err32];
                   } else {
-                    vErrors.push(err26);
+                    vErrors.push(err32);
                   }
                   errors++;
                 }
               }
               if (data14.empty_fallback !== void 0) {
                 if (typeof data14.empty_fallback !== "string") {
-                  const err27 = { instancePath: instancePath + "/intersect/" + i5 + "/empty_fallback", schemaPath: "#/definitions/RollupIntersectDoc/properties/empty_fallback/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+                  const err33 = { instancePath: instancePath + "/intersect/" + i5 + "/empty_fallback", schemaPath: "#/definitions/RollupIntersectDoc/properties/empty_fallback/type", keyword: "type", params: { type: "string" }, message: "must be string" };
                   if (vErrors === null) {
-                    vErrors = [err27];
+                    vErrors = [err33];
                   } else {
-                    vErrors.push(err27);
+                    vErrors.push(err33);
                   }
                   errors++;
                 }
@@ -9228,53 +9348,53 @@ function validate106(data, { instancePath = "", parentData, parentDataProperty, 
                   const len7 = data19.length;
                   for (let i7 = 0; i7 < len7; i7++) {
                     if (typeof data19[i7] !== "string") {
-                      const err28 = { instancePath: instancePath + "/intersect/" + i5 + "/fallback_if_only/" + i7, schemaPath: "#/definitions/RollupIntersectDoc/properties/fallback_if_only/items/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+                      const err34 = { instancePath: instancePath + "/intersect/" + i5 + "/fallback_if_only/" + i7, schemaPath: "#/definitions/RollupIntersectDoc/properties/fallback_if_only/items/type", keyword: "type", params: { type: "string" }, message: "must be string" };
                       if (vErrors === null) {
-                        vErrors = [err28];
+                        vErrors = [err34];
                       } else {
-                        vErrors.push(err28);
+                        vErrors.push(err34);
                       }
                       errors++;
                     }
                   }
                 } else {
-                  const err29 = { instancePath: instancePath + "/intersect/" + i5 + "/fallback_if_only", schemaPath: "#/definitions/RollupIntersectDoc/properties/fallback_if_only/type", keyword: "type", params: { type: "array" }, message: "must be array" };
+                  const err35 = { instancePath: instancePath + "/intersect/" + i5 + "/fallback_if_only", schemaPath: "#/definitions/RollupIntersectDoc/properties/fallback_if_only/type", keyword: "type", params: { type: "array" }, message: "must be array" };
                   if (vErrors === null) {
-                    vErrors = [err29];
+                    vErrors = [err35];
                   } else {
-                    vErrors.push(err29);
+                    vErrors.push(err35);
                   }
                   errors++;
                 }
               }
             } else {
-              const err30 = { instancePath: instancePath + "/intersect/" + i5, schemaPath: "#/definitions/RollupIntersectDoc/type", keyword: "type", params: { type: "object" }, message: "must be object" };
+              const err36 = { instancePath: instancePath + "/intersect/" + i5, schemaPath: "#/definitions/RollupIntersectDoc/type", keyword: "type", params: { type: "object" }, message: "must be object" };
               if (vErrors === null) {
-                vErrors = [err30];
+                vErrors = [err36];
               } else {
-                vErrors.push(err30);
+                vErrors.push(err36);
               }
               errors++;
             }
           }
         } else {
-          const err31 = { instancePath: instancePath + "/intersect", schemaPath: "#/properties/intersect/anyOf/1/type", keyword: "type", params: { type: "array" }, message: "must be array" };
+          const err37 = { instancePath: instancePath + "/intersect", schemaPath: "#/properties/intersect/anyOf/1/type", keyword: "type", params: { type: "array" }, message: "must be array" };
           if (vErrors === null) {
-            vErrors = [err31];
+            vErrors = [err37];
           } else {
-            vErrors.push(err31);
+            vErrors.push(err37);
           }
           errors++;
         }
-        var _valid1 = _errs39 === errors;
+        var _valid1 = _errs42 === errors;
         valid9 = valid9 || _valid1;
       }
       if (!valid9) {
-        const err32 = { instancePath: instancePath + "/intersect", schemaPath: "#/properties/intersect/anyOf", keyword: "anyOf", params: {}, message: "must match a schema in anyOf" };
+        const err38 = { instancePath: instancePath + "/intersect", schemaPath: "#/properties/intersect/anyOf", keyword: "anyOf", params: {}, message: "must match a schema in anyOf" };
         if (vErrors === null) {
-          vErrors = [err32];
+          vErrors = [err38];
         } else {
-          vErrors.push(err32);
+          vErrors.push(err38);
         }
         errors++;
       } else {
@@ -9290,60 +9410,60 @@ function validate106(data, { instancePath = "", parentData, parentDataProperty, 
     }
     if (data.keep !== void 0) {
       let data21 = data.keep;
-      const _errs58 = errors;
-      let valid24 = false;
-      const _errs59 = errors;
+      const _errs64 = errors;
+      let valid26 = false;
+      const _errs65 = errors;
       if (typeof data21 !== "string") {
-        const err33 = { instancePath: instancePath + "/keep", schemaPath: "#/properties/keep/anyOf/0/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+        const err39 = { instancePath: instancePath + "/keep", schemaPath: "#/properties/keep/anyOf/0/type", keyword: "type", params: { type: "string" }, message: "must be string" };
         if (vErrors === null) {
-          vErrors = [err33];
+          vErrors = [err39];
         } else {
-          vErrors.push(err33);
+          vErrors.push(err39);
         }
         errors++;
       }
-      var _valid2 = _errs59 === errors;
-      valid24 = valid24 || _valid2;
-      if (!valid24) {
-        const _errs61 = errors;
+      var _valid4 = _errs65 === errors;
+      valid26 = valid26 || _valid4;
+      if (!valid26) {
+        const _errs67 = errors;
         if (Array.isArray(data21)) {
           const len8 = data21.length;
           for (let i8 = 0; i8 < len8; i8++) {
             if (typeof data21[i8] !== "string") {
-              const err34 = { instancePath: instancePath + "/keep/" + i8, schemaPath: "#/properties/keep/anyOf/1/items/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+              const err40 = { instancePath: instancePath + "/keep/" + i8, schemaPath: "#/properties/keep/anyOf/1/items/type", keyword: "type", params: { type: "string" }, message: "must be string" };
               if (vErrors === null) {
-                vErrors = [err34];
+                vErrors = [err40];
               } else {
-                vErrors.push(err34);
+                vErrors.push(err40);
               }
               errors++;
             }
           }
         } else {
-          const err35 = { instancePath: instancePath + "/keep", schemaPath: "#/properties/keep/anyOf/1/type", keyword: "type", params: { type: "array" }, message: "must be array" };
+          const err41 = { instancePath: instancePath + "/keep", schemaPath: "#/properties/keep/anyOf/1/type", keyword: "type", params: { type: "array" }, message: "must be array" };
           if (vErrors === null) {
-            vErrors = [err35];
+            vErrors = [err41];
           } else {
-            vErrors.push(err35);
+            vErrors.push(err41);
           }
           errors++;
         }
-        var _valid2 = _errs61 === errors;
-        valid24 = valid24 || _valid2;
+        var _valid4 = _errs67 === errors;
+        valid26 = valid26 || _valid4;
       }
-      if (!valid24) {
-        const err36 = { instancePath: instancePath + "/keep", schemaPath: "#/properties/keep/anyOf", keyword: "anyOf", params: {}, message: "must match a schema in anyOf" };
+      if (!valid26) {
+        const err42 = { instancePath: instancePath + "/keep", schemaPath: "#/properties/keep/anyOf", keyword: "anyOf", params: {}, message: "must match a schema in anyOf" };
         if (vErrors === null) {
-          vErrors = [err36];
+          vErrors = [err42];
         } else {
-          vErrors.push(err36);
+          vErrors.push(err42);
         }
         errors++;
       } else {
-        errors = _errs58;
+        errors = _errs64;
         if (vErrors !== null) {
-          if (_errs58) {
-            vErrors.length = _errs58;
+          if (_errs64) {
+            vErrors.length = _errs64;
           } else {
             vErrors = null;
           }
@@ -9354,110 +9474,26 @@ function validate106(data, { instancePath = "", parentData, parentDataProperty, 
       let data23 = data.move;
       if (data23 && typeof data23 == "object" && !Array.isArray(data23)) {
         if (data23.from === void 0) {
-          const err37 = { instancePath: instancePath + "/move", schemaPath: "#/properties/move/required", keyword: "required", params: { missingProperty: "from" }, message: "must have required property 'from'" };
+          const err43 = { instancePath: instancePath + "/move", schemaPath: "#/properties/move/required", keyword: "required", params: { missingProperty: "from" }, message: "must have required property 'from'" };
           if (vErrors === null) {
-            vErrors = [err37];
+            vErrors = [err43];
           } else {
-            vErrors.push(err37);
+            vErrors.push(err43);
           }
           errors++;
         }
         if (data23.to === void 0) {
-          const err38 = { instancePath: instancePath + "/move", schemaPath: "#/properties/move/required", keyword: "required", params: { missingProperty: "to" }, message: "must have required property 'to'" };
+          const err44 = { instancePath: instancePath + "/move", schemaPath: "#/properties/move/required", keyword: "required", params: { missingProperty: "to" }, message: "must have required property 'to'" };
           if (vErrors === null) {
-            vErrors = [err38];
+            vErrors = [err44];
           } else {
-            vErrors.push(err38);
+            vErrors.push(err44);
           }
           errors++;
         }
         for (const key4 in data23) {
           if (!(key4 === "exclude" || key4 === "from" || key4 === "keep_intersection" || key4 === "to")) {
-            const err39 = { instancePath: instancePath + "/move", schemaPath: "#/properties/move/additionalProperties", keyword: "additionalProperties", params: { additionalProperty: key4 }, message: "must NOT have additional properties" };
-            if (vErrors === null) {
-              vErrors = [err39];
-            } else {
-              vErrors.push(err39);
-            }
-            errors++;
-          }
-        }
-        if (data23.exclude !== void 0) {
-          let data24 = data23.exclude;
-          const _errs69 = errors;
-          let valid28 = false;
-          const _errs70 = errors;
-          if (typeof data24 !== "string") {
-            const err40 = { instancePath: instancePath + "/move/exclude", schemaPath: "#/properties/move/properties/exclude/anyOf/0/type", keyword: "type", params: { type: "string" }, message: "must be string" };
-            if (vErrors === null) {
-              vErrors = [err40];
-            } else {
-              vErrors.push(err40);
-            }
-            errors++;
-          }
-          var _valid3 = _errs70 === errors;
-          valid28 = valid28 || _valid3;
-          if (!valid28) {
-            const _errs72 = errors;
-            if (Array.isArray(data24)) {
-              const len9 = data24.length;
-              for (let i9 = 0; i9 < len9; i9++) {
-                if (typeof data24[i9] !== "string") {
-                  const err41 = { instancePath: instancePath + "/move/exclude/" + i9, schemaPath: "#/properties/move/properties/exclude/anyOf/1/items/type", keyword: "type", params: { type: "string" }, message: "must be string" };
-                  if (vErrors === null) {
-                    vErrors = [err41];
-                  } else {
-                    vErrors.push(err41);
-                  }
-                  errors++;
-                }
-              }
-            } else {
-              const err42 = { instancePath: instancePath + "/move/exclude", schemaPath: "#/properties/move/properties/exclude/anyOf/1/type", keyword: "type", params: { type: "array" }, message: "must be array" };
-              if (vErrors === null) {
-                vErrors = [err42];
-              } else {
-                vErrors.push(err42);
-              }
-              errors++;
-            }
-            var _valid3 = _errs72 === errors;
-            valid28 = valid28 || _valid3;
-          }
-          if (!valid28) {
-            const err43 = { instancePath: instancePath + "/move/exclude", schemaPath: "#/properties/move/properties/exclude/anyOf", keyword: "anyOf", params: {}, message: "must match a schema in anyOf" };
-            if (vErrors === null) {
-              vErrors = [err43];
-            } else {
-              vErrors.push(err43);
-            }
-            errors++;
-          } else {
-            errors = _errs69;
-            if (vErrors !== null) {
-              if (_errs69) {
-                vErrors.length = _errs69;
-              } else {
-                vErrors = null;
-              }
-            }
-          }
-        }
-        if (data23.from !== void 0) {
-          if (typeof data23.from !== "string") {
-            const err44 = { instancePath: instancePath + "/move/from", schemaPath: "#/properties/move/properties/from/type", keyword: "type", params: { type: "string" }, message: "must be string" };
-            if (vErrors === null) {
-              vErrors = [err44];
-            } else {
-              vErrors.push(err44);
-            }
-            errors++;
-          }
-        }
-        if (data23.keep_intersection !== void 0) {
-          if (typeof data23.keep_intersection !== "boolean") {
-            const err45 = { instancePath: instancePath + "/move/keep_intersection", schemaPath: "#/properties/move/properties/keep_intersection/type", keyword: "type", params: { type: "boolean" }, message: "must be boolean" };
+            const err45 = { instancePath: instancePath + "/move", schemaPath: "#/properties/move/additionalProperties", keyword: "additionalProperties", params: { additionalProperty: key4 }, message: "must NOT have additional properties" };
             if (vErrors === null) {
               vErrors = [err45];
             } else {
@@ -9466,9 +9502,13 @@ function validate106(data, { instancePath = "", parentData, parentDataProperty, 
             errors++;
           }
         }
-        if (data23.to !== void 0) {
-          if (typeof data23.to !== "string") {
-            const err46 = { instancePath: instancePath + "/move/to", schemaPath: "#/properties/move/properties/to/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+        if (data23.exclude !== void 0) {
+          let data24 = data23.exclude;
+          const _errs75 = errors;
+          let valid30 = false;
+          const _errs76 = errors;
+          if (typeof data24 !== "string") {
+            const err46 = { instancePath: instancePath + "/move/exclude", schemaPath: "#/properties/move/properties/exclude/anyOf/0/type", keyword: "type", params: { type: "string" }, message: "must be string" };
             if (vErrors === null) {
               vErrors = [err46];
             } else {
@@ -9476,13 +9516,93 @@ function validate106(data, { instancePath = "", parentData, parentDataProperty, 
             }
             errors++;
           }
+          var _valid5 = _errs76 === errors;
+          valid30 = valid30 || _valid5;
+          if (!valid30) {
+            const _errs78 = errors;
+            if (Array.isArray(data24)) {
+              const len9 = data24.length;
+              for (let i9 = 0; i9 < len9; i9++) {
+                if (typeof data24[i9] !== "string") {
+                  const err47 = { instancePath: instancePath + "/move/exclude/" + i9, schemaPath: "#/properties/move/properties/exclude/anyOf/1/items/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+                  if (vErrors === null) {
+                    vErrors = [err47];
+                  } else {
+                    vErrors.push(err47);
+                  }
+                  errors++;
+                }
+              }
+            } else {
+              const err48 = { instancePath: instancePath + "/move/exclude", schemaPath: "#/properties/move/properties/exclude/anyOf/1/type", keyword: "type", params: { type: "array" }, message: "must be array" };
+              if (vErrors === null) {
+                vErrors = [err48];
+              } else {
+                vErrors.push(err48);
+              }
+              errors++;
+            }
+            var _valid5 = _errs78 === errors;
+            valid30 = valid30 || _valid5;
+          }
+          if (!valid30) {
+            const err49 = { instancePath: instancePath + "/move/exclude", schemaPath: "#/properties/move/properties/exclude/anyOf", keyword: "anyOf", params: {}, message: "must match a schema in anyOf" };
+            if (vErrors === null) {
+              vErrors = [err49];
+            } else {
+              vErrors.push(err49);
+            }
+            errors++;
+          } else {
+            errors = _errs75;
+            if (vErrors !== null) {
+              if (_errs75) {
+                vErrors.length = _errs75;
+              } else {
+                vErrors = null;
+              }
+            }
+          }
+        }
+        if (data23.from !== void 0) {
+          if (typeof data23.from !== "string") {
+            const err50 = { instancePath: instancePath + "/move/from", schemaPath: "#/properties/move/properties/from/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+            if (vErrors === null) {
+              vErrors = [err50];
+            } else {
+              vErrors.push(err50);
+            }
+            errors++;
+          }
+        }
+        if (data23.keep_intersection !== void 0) {
+          if (typeof data23.keep_intersection !== "boolean") {
+            const err51 = { instancePath: instancePath + "/move/keep_intersection", schemaPath: "#/properties/move/properties/keep_intersection/type", keyword: "type", params: { type: "boolean" }, message: "must be boolean" };
+            if (vErrors === null) {
+              vErrors = [err51];
+            } else {
+              vErrors.push(err51);
+            }
+            errors++;
+          }
+        }
+        if (data23.to !== void 0) {
+          if (typeof data23.to !== "string") {
+            const err52 = { instancePath: instancePath + "/move/to", schemaPath: "#/properties/move/properties/to/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+            if (vErrors === null) {
+              vErrors = [err52];
+            } else {
+              vErrors.push(err52);
+            }
+            errors++;
+          }
         }
       } else {
-        const err47 = { instancePath: instancePath + "/move", schemaPath: "#/properties/move/type", keyword: "type", params: { type: "object" }, message: "must be object" };
+        const err53 = { instancePath: instancePath + "/move", schemaPath: "#/properties/move/type", keyword: "type", params: { type: "object" }, message: "must be object" };
         if (vErrors === null) {
-          vErrors = [err47];
+          vErrors = [err53];
         } else {
-          vErrors.push(err47);
+          vErrors.push(err53);
         }
         errors++;
       }
@@ -9493,42 +9613,42 @@ function validate106(data, { instancePath = "", parentData, parentDataProperty, 
         const len10 = data29.length;
         for (let i10 = 0; i10 < len10; i10++) {
           if (typeof data29[i10] !== "string") {
-            const err48 = { instancePath: instancePath + "/remove/" + i10, schemaPath: "#/properties/remove/items/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+            const err54 = { instancePath: instancePath + "/remove/" + i10, schemaPath: "#/properties/remove/items/type", keyword: "type", params: { type: "string" }, message: "must be string" };
             if (vErrors === null) {
-              vErrors = [err48];
+              vErrors = [err54];
             } else {
-              vErrors.push(err48);
+              vErrors.push(err54);
             }
             errors++;
           }
         }
       } else {
-        const err49 = { instancePath: instancePath + "/remove", schemaPath: "#/properties/remove/type", keyword: "type", params: { type: "array" }, message: "must be array" };
+        const err55 = { instancePath: instancePath + "/remove", schemaPath: "#/properties/remove/type", keyword: "type", params: { type: "array" }, message: "must be array" };
         if (vErrors === null) {
-          vErrors = [err49];
+          vErrors = [err55];
         } else {
-          vErrors.push(err49);
+          vErrors.push(err55);
         }
         errors++;
       }
     }
     if (data.union !== void 0) {
       if (typeof data.union !== "boolean") {
-        const err50 = { instancePath: instancePath + "/union", schemaPath: "#/properties/union/type", keyword: "type", params: { type: "boolean" }, message: "must be boolean" };
+        const err56 = { instancePath: instancePath + "/union", schemaPath: "#/properties/union/type", keyword: "type", params: { type: "boolean" }, message: "must be boolean" };
         if (vErrors === null) {
-          vErrors = [err50];
+          vErrors = [err56];
         } else {
-          vErrors.push(err50);
+          vErrors.push(err56);
         }
         errors++;
       }
     }
   } else {
-    const err51 = { instancePath, schemaPath: "#/type", keyword: "type", params: { type: "object" }, message: "must be object" };
+    const err57 = { instancePath, schemaPath: "#/type", keyword: "type", params: { type: "object" }, message: "must be object" };
     if (vErrors === null) {
-      vErrors = [err51];
+      vErrors = [err57];
     } else {
-      vErrors.push(err51);
+      vErrors.push(err57);
     }
     errors++;
   }
@@ -10208,7 +10328,7 @@ function validate114(data, { instancePath = "", parentData, parentDataProperty, 
       if (data0 && typeof data0 == "object" && !Array.isArray(data0)) {
         for (const key1 in data0) {
           if (!(key1 === "plural" || key1 === "singular")) {
-            const err0 = { instancePath: instancePath + "/" + key0.replace(/~/g, "~0").replace(/\//g, "~1"), schemaPath: "#/definitions/Term/additionalProperties", keyword: "additionalProperties", params: { additionalProperty: key1 }, message: "must NOT have additional properties" };
+            const err0 = { instancePath: instancePath + "/" + key0.replace(/~/g, "~0").replace(/\//g, "~1"), schemaPath: "#/definitions/TermDoc/additionalProperties", keyword: "additionalProperties", params: { additionalProperty: key1 }, message: "must NOT have additional properties" };
             if (vErrors === null) {
               vErrors = [err0];
             } else {
@@ -10219,7 +10339,7 @@ function validate114(data, { instancePath = "", parentData, parentDataProperty, 
         }
         if (data0.plural !== void 0) {
           if (typeof data0.plural !== "string") {
-            const err1 = { instancePath: instancePath + "/" + key0.replace(/~/g, "~0").replace(/\//g, "~1") + "/plural", schemaPath: "#/definitions/Term/properties/plural/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+            const err1 = { instancePath: instancePath + "/" + key0.replace(/~/g, "~0").replace(/\//g, "~1") + "/plural", schemaPath: "#/definitions/TermDoc/properties/plural/type", keyword: "type", params: { type: "string" }, message: "must be string" };
             if (vErrors === null) {
               vErrors = [err1];
             } else {
@@ -10230,7 +10350,7 @@ function validate114(data, { instancePath = "", parentData, parentDataProperty, 
         }
         if (data0.singular !== void 0) {
           if (typeof data0.singular !== "string") {
-            const err2 = { instancePath: instancePath + "/" + key0.replace(/~/g, "~0").replace(/\//g, "~1") + "/singular", schemaPath: "#/definitions/Term/properties/singular/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+            const err2 = { instancePath: instancePath + "/" + key0.replace(/~/g, "~0").replace(/\//g, "~1") + "/singular", schemaPath: "#/definitions/TermDoc/properties/singular/type", keyword: "type", params: { type: "string" }, message: "must be string" };
             if (vErrors === null) {
               vErrors = [err2];
             } else {
@@ -10240,7 +10360,7 @@ function validate114(data, { instancePath = "", parentData, parentDataProperty, 
           }
         }
       } else {
-        const err3 = { instancePath: instancePath + "/" + key0.replace(/~/g, "~0").replace(/\//g, "~1"), schemaPath: "#/definitions/Term/type", keyword: "type", params: { type: "object" }, message: "must be object" };
+        const err3 = { instancePath: instancePath + "/" + key0.replace(/~/g, "~0").replace(/\//g, "~1"), schemaPath: "#/definitions/TermDoc/type", keyword: "type", params: { type: "object" }, message: "must be object" };
         if (vErrors === null) {
           vErrors = [err3];
         } else {

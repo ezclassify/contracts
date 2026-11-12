@@ -7084,8 +7084,8 @@
             "description": "Explanation of why this outcome applies."
           },
           "when": {
-            "$ref": "#/components/schemas/RuleWhen",
-            "description": "When present, this rule auto-activates based on other rules' selection state. Uses the same when framework as scheme rules. `has` references guide rule IDs. Rules with `when` are \"computed\"; they don't appear as checkboxes."
+            "$ref": "#/components/schemas/GuideWhen",
+            "description": "When present, the rule is computed: it activates when this block holds over the rules the user selected, and it is not offered as a checkbox."
           },
           "overrides": {
             "type": "array",
@@ -7449,6 +7449,98 @@
           "uncategorized"
         ],
         "description": "Render-ready Guidebook tree for a guide: its rules grouped under the guide's categories, with every compound rule in one `_compound` category at the end."
+      },
+      "GuideWhen": {
+        "type": "object",
+        "properties": {
+          "any": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GuideWhenNode"
+            },
+            "description": "At least one of these holds."
+          },
+          "all": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GuideWhenNode"
+            },
+            "description": "Every one of these holds."
+          },
+          "none": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GuideWhenNode"
+            },
+            "description": "None of these holds."
+          }
+        },
+        "description": "A block of conditions over the rules the user selected. Every list present must hold: `any` when one of its nodes holds, `all` when each does, `none` when none does."
+      },
+      "GuideWhenHas": {
+        "type": "object",
+        "properties": {
+          "has": {
+            "type": "string",
+            "description": "The id of a selectable rule of this guide."
+          }
+        },
+        "required": [
+          "has"
+        ],
+        "description": "A guide condition that holds when the user selected one rule."
+      },
+      "GuideWhenNode": {
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/GuideWhenHas"
+          },
+          {
+            "$ref": "#/components/schemas/GuideWhenTest"
+          },
+          {
+            "$ref": "#/components/schemas/GuideWhen"
+          }
+        ],
+        "description": "One node of a guide `when` block: a condition, or a nested block."
+      },
+      "GuideWhenOperator": {
+        "type": "string",
+        "enum": [
+          "has_concept",
+          "not_has_concept",
+          "has_content",
+          "count_gt",
+          "count_gte",
+          "count_eq",
+          "count_lt",
+          "count_unique_gt",
+          "count_unique_gte",
+          "count_unique_eq",
+          "count_unique_lt",
+          "count_unique_lte"
+        ],
+        "description": "The tests a guide `when` condition can apply to the rules the user selected. `has_concept` and `not_has_concept` name a rule by id in `value`; the `count_*` tests compare the number of selected rules with the number in `value`; `has_content` holds when any rule is selected."
+      },
+      "GuideWhenTest": {
+        "type": "object",
+        "properties": {
+          "operator": {
+            "$ref": "#/components/schemas/GuideWhenOperator",
+            "description": "The test to apply."
+          },
+          "value": {
+            "type": [
+              "string",
+              "number"
+            ],
+            "description": "A rule id for `has_concept` and `not_has_concept`, a count for the `count_*` tests, absent for `has_content`."
+          }
+        },
+        "required": [
+          "operator"
+        ],
+        "description": "A guide condition that tests the user's selection with an operator."
       },
       "HealthResponse": {
         "type": "object",

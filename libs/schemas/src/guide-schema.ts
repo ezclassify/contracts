@@ -86,14 +86,14 @@ export const guideCategorySchema = {
 
 /**
  * Sub-schema for a single `target_schemes` dependency entry, resolved from
- * `$defs.guide_dependency`.
+ * `$defs.scheme_dependency`.
  *
- * Required field: `id` (scheme ID). Optional: `version` (semver constraint
- * string or `'*'` for any version). Used when validating or building the
- * target-scheme dependency list for a guide.
+ * Required field: `id` (scheme ID). Optional: `version` (a version or a
+ * semver range). Used when validating or building the target-scheme
+ * dependency list for a guide.
  */
 export const guideDependencySchema = {
-    ...reader.definition('guide_dependency'),
+    ...reader.definition('scheme_dependency'),
     /** Shared definitions that this fragment's `$ref`s point to. */
     $defs: defs,
 };
@@ -101,7 +101,7 @@ export const guideDependencySchema = {
 /**
  * All `$defs` from the guide schema: shared definitions referenced by `$ref` in
  * the sub-schemas above (includes `guide_rule`, `guide_category`,
- * `guide_dependency`).
+ * `scheme_dependency`).
  *
  * Inject into custom JSON Schema validators when resolving `$ref` pointers
  * within guide document fragments.

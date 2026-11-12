@@ -1,7 +1,10 @@
-import type { AccessPolicyTargetScheme, AccessRule } from './access';
+import type { AccessRule } from './access';
 import type { LayerBinding } from './layer';
-import type { Vocabulary } from './scheme';
-import type { MarkingSchemeRefDoc } from './scheme-definition';
+import type {
+    MarkingSchemeRefDoc,
+    SchemeDependencyDoc,
+    VocabularyDoc,
+} from './scheme-definition';
 
 /**
  * The access family's layer payload. Required when `type: 'layer'`, forbidden
@@ -184,7 +187,7 @@ export interface AccessDefinition {
          * Display words this policy advertises for UI consumers. A presentation
          * hint only.
          */
-        vocabulary?: Vocabulary;
+        vocabulary?: VocabularyDoc;
         /**
          * What kind of document this is. Absent means `'access'`.
          * `type: 'layer'` requires the `layer` block and `type: 'access'`
@@ -198,7 +201,7 @@ export interface AccessDefinition {
          */
         layer?: AccessLayer;
         /** The scheme whose markings this policy decides access to. */
-        target_scheme: AccessPolicyTargetScheme;
+        target_scheme: SchemeDependencyDoc;
         /** The policy's rules, evaluated in order. */
         rules: AccessRuleDoc[];
     };

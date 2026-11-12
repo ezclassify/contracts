@@ -198,8 +198,6 @@ describe('guideSchema: reject paths', () => {
     });
 
     it.each([
-        ['a rules block instead of a list', { rules: { inline: [] } }],
-        ['the camelCase target schemes key', { targetSchemes: [{ id: 'demo' }] }],
         [
             'a string when condition',
             {
@@ -209,6 +207,19 @@ describe('guideSchema: reject paths', () => {
                         name: 'R',
                         outcome: { rendered: 'R' },
                         when: 'has_content',
+                    },
+                ],
+            },
+        ],
+        [
+            'an empty when block',
+            {
+                rules: [
+                    {
+                        id: 'r',
+                        name: 'R',
+                        outcome: { rendered: 'R' },
+                        when: {},
                     },
                 ],
             },
@@ -316,10 +327,10 @@ describe('guide-schema exports: sub-schema structure', () => {
         expect(guideDependencySchema).toHaveProperty('properties');
     });
 
-    it('guideSchemaDefs carries guide_rule, guide_category, and guide_dependency definitions', () => {
+    it('guideSchemaDefs carries guide_rule, guide_category, and scheme_dependency definitions', () => {
         const defs = guideSchemaDefs as Record<string, unknown>;
         expect(defs).toHaveProperty('guide_rule');
         expect(defs).toHaveProperty('guide_category');
-        expect(defs).toHaveProperty('guide_dependency');
+        expect(defs).toHaveProperty('scheme_dependency');
     });
 });

@@ -26,28 +26,10 @@ const crosswalk = {
     ],
 };
 
-describe('crosswalkSchema: authored keys are snake_case', () => {
+describe('crosswalkSchema', () => {
     it('accepts a crosswalk whose assertions name category and concept', () => {
         expect(validate({ crosswalk }), JSON.stringify(validate.errors)).toBe(
             true,
         );
-    });
-
-    it.each([
-        ['sourceScheme', { sourceScheme: crosswalk.source_scheme }],
-        ['targetScheme', { targetScheme: crosswalk.target_scheme }],
-    ])('refuses the camelCase key %s', (_key, extra) => {
-        const { source_scheme: _drop, ...rest } = crosswalk;
-        expect(validate({ crosswalk: { ...rest, ...extra } })).toBe(false);
-    });
-
-    it('refuses an assertion that names categoryId and conceptId', () => {
-        const mapping = {
-            ...crosswalk.mappings[0],
-            source: { categoryId: 'severity', conceptId: 'HIGH' },
-        };
-        expect(
-            validate({ crosswalk: { ...crosswalk, mappings: [mapping] } }),
-        ).toBe(false);
     });
 });

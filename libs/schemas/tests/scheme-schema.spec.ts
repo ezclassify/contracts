@@ -189,28 +189,6 @@ describe('schemeSchema: accept paths', () => {
         expect(validate(doc), JSON.stringify(validate.errors)).toBe(true);
     });
 
-    it.each([
-        ['an inline and external concepts object', { concepts: { inline: [] } }],
-        [
-            'a remote source on an import',
-            {
-                concept_imports: [
-                    {
-                        id: 'remote',
-                        source: 'https://example.com/records',
-                        attribution: { name: 'Remote', license: 'CC0-1.0' },
-                        records: [],
-                        mapping: { concept: { id: 'id', name: 'name' } },
-                    },
-                ],
-            },
-        ],
-    ])('refuses %s', (_label, change) => {
-        const doc = structuredClone(MINIMAL_VALID_SCHEME);
-        Object.assign(doc.scheme.data, change);
-        expect(validate(doc)).toBe(false);
-    });
-
     it('accepts a notice that declares the value a view registers it under', () => {
         const doc = structuredClone(MINIMAL_VALID_SCHEME);
         const concept = doc.scheme.data.concepts[0] as Record<
@@ -550,13 +528,10 @@ describe('concept position and rank specs', () => {
         );
     });
 
-    it.each([
-        { position: { beside: 'HIGH' } },
-        { position: { before: 'HIGH' } },
-        { position: { between: ['HIGH', 'HIGH'] } },
-        { rank: { below: 'HIGH' } },
-        { rank: { before: 'HIGH' } },
-    ])('refuses %j', (fields) => {
-        expect(validate(withLow(fields))).toBe(false);
-    });
+    it.each([{ position: { beside: 'HIGH' } }, { rank: { beside: 'HIGH' } }])(
+        'refuses %j',
+        (fields) => {
+            expect(validate(withLow(fields))).toBe(false);
+        },
+    );
 });

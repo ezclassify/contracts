@@ -121,22 +121,6 @@
             "required": ["id", "source", "disposition", "reason"],
             "type": "object"
         },
-        "CrosswalkSchemeDependency": {
-            "additionalProperties": false,
-            "description": "Scheme dependency declared by a directional crosswalk.",
-            "properties": {
-                "id": {
-                    "description": "Scheme artifact identifier.",
-                    "type": "string"
-                },
-                "version": {
-                    "description": "Required scheme version or semver range.",
-                    "type": "string"
-                }
-            },
-            "required": ["id"],
-            "type": "object"
-        },
         "CrosswalkSelectionCandidateDoc": {
             "additionalProperties": false,
             "description": "A selection candidate as a crosswalk document authors it.",
@@ -280,6 +264,23 @@
             },
             "required": ["id"],
             "type": "object"
+        },
+        "SchemeDependencyDoc": {
+            "additionalProperties": false,
+            "description": "A scheme another document depends on: the scheme a guide's outcomes, an access policy's rules, or one side of a crosswalk are written in.",
+            "properties": {
+                "id": {
+                    "description": "The scheme's id.",
+                    "minLength": 1,
+                    "type": "string"
+                },
+                "version": {
+                    "description": "The scheme version, or a semver range such as `>=2.0.0`. Omitted, any version.",
+                    "type": "string"
+                }
+            },
+            "required": ["id"],
+            "type": "object"
         }
     },
     "$id": "https://ezclassify.com/schemas/v1/crosswalk.schema.json",
@@ -334,11 +335,11 @@
                     "type": "array"
                 },
                 "source_scheme": {
-                    "$ref": "#/$defs/CrosswalkSchemeDependency",
+                    "$ref": "#/$defs/SchemeDependencyDoc",
                     "description": "The scheme this crosswalk translates from."
                 },
                 "target_scheme": {
-                    "$ref": "#/$defs/CrosswalkSchemeDependency",
+                    "$ref": "#/$defs/SchemeDependencyDoc",
                     "description": "The scheme this crosswalk translates to."
                 },
                 "type": {

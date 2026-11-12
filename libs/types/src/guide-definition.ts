@@ -1,13 +1,13 @@
-import type { Vocabulary } from './scheme';
-import type { MarkingSchemeRefDoc } from './scheme-definition';
 import type {
-    GuideCategory,
-    GuideDependency,
-    GuideRuleOutcome,
+    MarkingSchemeRefDoc,
+    SchemeDependencyDoc,
+    VocabularyDoc,
+} from './scheme-definition';
+import type {
+    GuideWhenOperator,
     MatchContextSide,
     MatchNearEmit,
     MatchValidationKeep,
-    Win,
 } from './guide';
 import type { LayerBinding } from './layer';
 
@@ -55,6 +55,47 @@ export interface GuideLayer extends LayerBinding {
      */
     restores?: GuideLayerRemoval[];
 }
+
+/**
+ * Proximity measured in whitespace-delimited tokens.
+ *
+ * @public
+ */
+export interface TokenWindowDoc {
+    /**
+     * The largest distance allowed between two spans, counted in
+     * whitespace-delimited tokens between their nearest edges.
+     *
+     * @asType integer
+     * @minimum 0
+     */
+    tokens: number;
+}
+
+/**
+ * Proximity measured in characters.
+ *
+ * @public
+ */
+export interface CharacterWindowDoc {
+    /**
+     * The largest distance allowed between two spans, counted in characters
+     * (UTF-16 code units) between their nearest edges. Spans that touch or
+     * overlap are 0 apart.
+     *
+     * @asType integer
+     * @minimum 0
+     */
+    chars: number;
+}
+
+/**
+ * A bounded proximity window. Exactly one token or character bound is
+ * present, so a windowed match never widens to the whole line.
+ *
+ * @public
+ */
+export type MatchWindowDoc = TokenWindowDoc | CharacterWindowDoc;
 
 /**
  * A match leaf: a built-in matcher by name, or `regex` with its own pattern.
@@ -118,7 +159,7 @@ export interface GuideMatchAllDoc {
      */
     all: GuideMatchNodeDoc[];
     /** How close every other child's match must lie to the anchor's. */
-    within: Win;
+    within: MatchWindowDoc;
     /** Display label for this node's matches. Defaults to `all`. */
     label?: string;
 }
@@ -135,7 +176,7 @@ export interface GuideMatchNotDoc {
     /** The candidate spans to keep or drop. */
     of: GuideMatchNodeDoc;
     /** How close a `not` span must lie to a candidate to drop it. */
-    within: Win;
+    within: MatchWindowDoc;
     /** Display label for this node's matches. Defaults to `not`. */
     label?: string;
 }
@@ -153,7 +194,7 @@ export interface GuideMatchNearDoc {
         /** The second span of the pair. */
         b: GuideMatchNodeDoc;
         /** How close the `b` span must lie to the `a` span. */
-        within: Win;
+        within: MatchWindowDoc;
         /** Which span survives a match: `a` (the default), `b`, or `envelope`. */
         emit?: MatchNearEmit;
     };
@@ -175,7 +216,7 @@ export interface GuideMatchContextDoc {
         /** The span that must lie near a candidate for it to count. */
         cue: GuideMatchNodeDoc;
         /** How close the cue must lie to the candidate. */
-        within: Win;
+        within: MatchWindowDoc;
         /** Where the cue may lie: `before`, `after`, or `both` (the default). */
         side?: MatchContextSide;
     };
@@ -223,28 +264,6 @@ export type GuideMatchNodeDoc =
     | GuideMatchNearDoc
     | GuideMatchContextDoc
     | GuideMatchValidateDoc;
-
-/**
- * The tests a guide `when` condition can apply to the rules the user
- * selected. `has_concept` and `not_has_concept` name a rule by id in `value`;
- * the `count_*` tests compare the number of selected rules with the number in
- * `value`; `has_content` holds when any rule is selected.
- *
- * @public
- */
-export type GuideWhenOperator =
-    | 'has_concept'
-    | 'not_has_concept'
-    | 'has_content'
-    | 'count_gt'
-    | 'count_gte'
-    | 'count_eq'
-    | 'count_lt'
-    | 'count_unique_gt'
-    | 'count_unique_gte'
-    | 'count_unique_eq'
-    | 'count_unique_lt'
-    | 'count_unique_lte';
 
 /**
  * A condition that holds when the user selected one rule.
@@ -295,6 +314,47 @@ export interface GuideWhenDoc {
 export type GuideWhenNodeDoc = GuideWhenHasDoc | GuideWhenTestDoc | GuideWhenDoc;
 
 /**
+ * A concept in one of the guide's target schemes, as a rule's outcome names
+ * it.
+ *
+ * @public
+ */
+export interface ConceptRefDoc {
+    /** The concept id. It exists in one of the guide's target schemes. */
+    id: string;
+    /** The category id, required when the concept belongs to several. */
+    category?: string;
+    /** The value, for a text-input concept such as a country code. */
+    value?: string;
+}
+
+/**
+ * What a guide rule contributes to the marking when it is active.
+ *
+ * @public
+ */
+export interface GuideRuleOutcomeDoc {
+    /** A marking, read in the target scheme. */
+    rendered?: string;
+    /** Concepts asserted directly. */
+    concepts?: ConceptRefDoc[];
+}
+
+/**
+ * A section that groups a guide's rules in the UI.
+ *
+ * @public
+ */
+export interface GuideCategoryDoc {
+    /** Unique identifier within the guide. */
+    id: string;
+    /** Display label for the section heading. */
+    label: string;
+    /** Description shown below the heading. */
+    description?: string;
+}
+
+/**
  * A guide rule as a guide document authors it. A rule an engine answers with
  * is a `GuideRule`, which carries the same facts in the wire shape and no
  * marking.
@@ -329,7 +389,7 @@ export interface GuideRuleDoc {
      * What this rule contributes when active. At least one of `rendered` or
      * `concepts` is set.
      */
-    outcome: GuideRuleOutcome;
+    outcome: GuideRuleOutcomeDoc;
     /** Explanation of why this outcome applies. */
     rationale?: string;
     /**
@@ -380,7 +440,7 @@ export interface GuideBlock {
      * Display words this guide advertises for UI consumers. A presentation
      * hint only.
      */
-    vocabulary?: Vocabulary;
+    vocabulary?: VocabularyDoc;
     /**
      * What kind of document this is. Absent means `'guide'`. `type: 'layer'`
      * requires the `layer` block and `type: 'guide'` forbids it, both enforced
@@ -398,9 +458,9 @@ export interface GuideBlock {
      *
      * @minItems 1
      */
-    target_schemes: GuideDependency[];
+    target_schemes: SchemeDependencyDoc[];
     /** Sections for organizing rules in the UI. */
-    categories?: GuideCategory[];
+    categories?: GuideCategoryDoc[];
     /** The guide's rules, in the order they are offered. */
     rules: GuideRuleDoc[];
 }

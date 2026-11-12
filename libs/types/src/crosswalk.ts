@@ -1,18 +1,13 @@
 import type { Assertion, ValidateResult } from './scheme';
 import type { LayerBinding } from './layer';
 import type { ArtifactReference, AssertionReference } from './provenance';
-import type { MarkingSchemeRefDoc } from './scheme-definition';
+import type {
+    MarkingSchemeRefDoc,
+    SchemeDependencyDoc,
+} from './scheme-definition';
 
 /** Decision a reviewed crosswalk makes for one source assertion. */
 export type CrosswalkDisposition = 'carry' | 'review' | 'omit' | 'forbid';
-
-/** Scheme dependency declared by a directional crosswalk. */
-export interface CrosswalkSchemeDependency {
-    /** Scheme artifact identifier. */
-    id: string;
-    /** Required scheme version or semver range. */
-    version?: string;
-}
 
 /** One target assertion a crosswalk can emit or propose. */
 export interface CrosswalkTarget extends AssertionReference {
@@ -323,9 +318,9 @@ export interface CrosswalkDefinition {
          */
         layer?: CrosswalkLayer;
         /** The scheme this crosswalk translates from. */
-        source_scheme: CrosswalkSchemeDependency;
+        source_scheme: SchemeDependencyDoc;
         /** The scheme this crosswalk translates to. */
-        target_scheme: CrosswalkSchemeDependency;
+        target_scheme: SchemeDependencyDoc;
         /** How each source concept translates into the target scheme. */
         mappings: CrosswalkMappingDoc[];
         /**

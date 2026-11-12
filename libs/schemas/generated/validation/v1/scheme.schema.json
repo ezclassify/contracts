@@ -1620,8 +1620,8 @@
             },
             "type": "object"
         },
-        "Record<string,Term>": {
-            "additionalProperties": { "$ref": "#/definitions/Term" },
+        "Record<string,TermDoc>": {
+            "additionalProperties": { "$ref": "#/definitions/TermDoc" },
             "type": "object"
         },
         "Record<string,WhenDoc>": {
@@ -1681,6 +1681,10 @@
         "RollupIntersectDoc": {
             "additionalProperties": false,
             "description": "One intersection a rollup step computes: what every contributing marking holds in a category, or across several categories read together.\n\nExactly one of `category` and `categories` is declared.",
+            "oneOf": [
+                { "required": ["category"] },
+                { "required": ["categories"] }
+            ],
             "properties": {
                 "categories": {
                     "description": "Categories read together as one set and intersected across the inputs. The first names the category whose header the result carries.",
@@ -2062,7 +2066,7 @@
                     "type": "string"
                 },
                 "vocabulary": {
-                    "$ref": "#/definitions/Vocabulary",
+                    "$ref": "#/definitions/VocabularyDoc",
                     "description": "Display-term overrides consulted by runtime UI components. Same shape and chokepoint as guide's and access's own top-level `vocabulary` block: an open map from a term key to a `{ singular, plural }` pair (or a bare `singular`, auto-pluralized). Reserved scheme keys are `handbook`, which renames the scheme's reference surface, `whole` / `part`, which name the structural context roles, and `marking`, the word a document written in this scheme labels its `marking` fields with (a host shows \"Marking\" when the marking scheme declares none). For example: `{ handbook: { singular: \"Register\" }, whole: { singular: \"banner\" }, marking: { singular: \"label\" } }`."
                 }
             },
@@ -2266,9 +2270,9 @@
             ],
             "description": "How a format's text is framed: its encoding, not its layout."
         },
-        "Term": {
+        "TermDoc": {
             "additionalProperties": false,
-            "description": "A singular/plural display-word pair.",
+            "description": "A singular and plural display-word pair, as a document declares it.",
             "properties": {
                 "plural": {
                     "description": "The word for more than one, such as `rules`.",
@@ -2421,9 +2425,9 @@
             ],
             "description": "How a free-text value is spelled on the wire and how it is stored.\n\nA codec, not a validator: every encoding states both directions, so a value this contract accepts is a value the contract can write back. A bare regex declares what may be read and says nothing about how to print the stored value again, which is why no encoding takes a regex."
         },
-        "Vocabulary": {
-            "$ref": "#/definitions/Record%3Cstring%2CTerm%3E",
-            "description": "Author-facing vocabulary: an open map from a term key (e.g. \"rule\", \"concept\", \"tag\") to the display words. Term keys are not enumerated here; consumers pick the keys that matter to them.\n\nPurely a presentation hint: nothing in the engine's evaluation logic reads it. Each consumer owns its own default map and calls `resolveVocabulary(source, defaults)` to merge."
+        "VocabularyDoc": {
+            "$ref": "#/definitions/Record%3Cstring%2CTermDoc%3E",
+            "description": "Display words a document advertises for UI consumers: an open map from a term key (such as `rule` or `concept`) to its words. A presentation hint only; no engine reads it."
         },
         "WhenDoc": {
             "anyOf": [

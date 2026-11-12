@@ -19,11 +19,11 @@ export const accessSchema = schema as Record<string, unknown>;
 const reader = schemaReader(schema, 'definitions', 'access.schema.json');
 const defs = reader.defs;
 
-const envelopeProps = reader.properties(
-    reader.definition('AccessPolicyEnvelope'),
-    'AccessPolicyEnvelope',
+const blockProps = reader.properties(
+    reader.definition('AccessBlock'),
+    'AccessBlock',
 );
-const ruleEntry = reader.items(envelopeProps.rules, 'access.rules');
+const ruleEntry = reader.items(blockProps.rules, 'access.rules');
 const metadataKeys = new Set([
     'id',
     'version',
@@ -36,14 +36,14 @@ const metadataKeys = new Set([
 
 /**
  * Sub-schema for access policy root metadata (id, version, name,
- * marking_scheme, marking, description, target_scheme). Sourced from AccessPolicyEnvelope inside the
- * access.schema.json definitions.
+ * marking_scheme, marking, description, target_scheme). Sourced from
+ * `AccessBlock` inside the access.schema.json definitions.
  */
 export const accessMetaSchema: Record<string, unknown> = {
     type: 'object',
     definitions: defs,
     properties: Object.fromEntries(
-        Object.entries(envelopeProps).filter(([name]) =>
+        Object.entries(blockProps).filter(([name]) =>
             metadataKeys.has(name),
         ),
     ),
@@ -64,7 +64,7 @@ export const accessRuleSchema: Record<string, unknown> = {
 };
 
 /**
- * All `definitions` from the access schema: includes `AccessPolicyEnvelope`,
+ * All `definitions` from the access schema: includes `AccessBlock`,
  * `AccessRuleDoc`, and their sub-schemas.
  *
  * Pass to validators that resolve `$ref` pointers within access policy

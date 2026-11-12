@@ -3,6 +3,54 @@
         "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false,
         "definitions": {
+            "AccessBlock": {
+                "additionalProperties": false,
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "layer": {
+                        "$ref": "#/definitions/AccessLayer"
+                    },
+                    "marking": {
+                        "type": "string"
+                    },
+                    "marking_scheme": {
+                        "$ref": "#/definitions/MarkingSchemeRefDoc"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "rules": {
+                        "items": {
+                            "$ref": "#/definitions/AccessRuleDoc"
+                        },
+                        "type": "array"
+                    },
+                    "target_scheme": {
+                        "$ref": "#/definitions/SchemeDependencyDoc"
+                    },
+                    "type": {
+                        "enum": [
+                            "access",
+                            "layer"
+                        ],
+                        "type": "string"
+                    },
+                    "version": {
+                        "type": "string"
+                    },
+                    "vocabulary": {
+                        "$ref": "#/definitions/vocabulary"
+                    }
+                },
+                "required": [
+                    "id",
+                    "target_scheme",
+                    "rules"
+                ],
+                "type": "object"
+            },
             "AccessCheckOperator": {
                 "enum": [
                     "is_in",
@@ -40,69 +88,6 @@
                 },
                 "required": [
                     "base"
-                ],
-                "type": "object"
-            },
-            "AccessPolicyEnvelope": {
-                "additionalProperties": false,
-                "properties": {
-                    "id": {
-                        "type": "string"
-                    },
-                    "layer": {
-                        "$ref": "#/definitions/AccessLayer"
-                    },
-                    "marking": {
-                        "type": "string"
-                    },
-                    "marking_scheme": {
-                        "$ref": "#/definitions/MarkingSchemeRefDoc"
-                    },
-                    "name": {
-                        "type": "string"
-                    },
-                    "rules": {
-                        "items": {
-                            "$ref": "#/definitions/AccessRuleDoc"
-                        },
-                        "type": "array"
-                    },
-                    "target_scheme": {
-                        "$ref": "#/definitions/AccessPolicyTargetScheme"
-                    },
-                    "type": {
-                        "enum": [
-                            "access",
-                            "layer"
-                        ],
-                        "type": "string"
-                    },
-                    "version": {
-                        "type": "string"
-                    },
-                    "vocabulary": {
-                        "$ref": "#/definitions/vocabulary"
-                    }
-                },
-                "required": [
-                    "id",
-                    "target_scheme",
-                    "rules"
-                ],
-                "type": "object"
-            },
-            "AccessPolicyTargetScheme": {
-                "additionalProperties": false,
-                "properties": {
-                    "id": {
-                        "type": "string"
-                    },
-                    "version": {
-                        "type": "string"
-                    }
-                },
-                "required": [
-                    "id"
                 ],
                 "type": "object"
             },
@@ -230,6 +215,22 @@
                 },
                 "type": "object"
             },
+            "SchemeDependencyDoc": {
+                "additionalProperties": false,
+                "properties": {
+                    "id": {
+                        "minLength": 1,
+                        "type": "string"
+                    },
+                    "version": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "id"
+                ],
+                "type": "object"
+            },
             "term": {
                 "additionalProperties": false,
                 "properties": {
@@ -251,7 +252,7 @@
         },
         "properties": {
             "access": {
-                "$ref": "#/definitions/AccessPolicyEnvelope"
+                "$ref": "#/definitions/AccessBlock"
             }
         },
         "required": [
@@ -555,21 +556,6 @@
                 ],
                 "type": "object"
             },
-            "CrosswalkSchemeDependency": {
-                "additionalProperties": false,
-                "properties": {
-                    "id": {
-                        "type": "string"
-                    },
-                    "version": {
-                        "type": "string"
-                    }
-                },
-                "required": [
-                    "id"
-                ],
-                "type": "object"
-            },
             "CrosswalkSelectionCandidateDoc": {
                 "additionalProperties": false,
                 "properties": {
@@ -716,6 +702,22 @@
                     "id"
                 ],
                 "type": "object"
+            },
+            "SchemeDependencyDoc": {
+                "additionalProperties": false,
+                "properties": {
+                    "id": {
+                        "minLength": 1,
+                        "type": "string"
+                    },
+                    "version": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "id"
+                ],
+                "type": "object"
             }
         },
         "$id": "https://ezclassify.com/schemas/v1/crosswalk.schema.json",
@@ -759,10 +761,10 @@
                         "type": "array"
                     },
                     "source_scheme": {
-                        "$ref": "#/$defs/CrosswalkSchemeDependency"
+                        "$ref": "#/$defs/SchemeDependencyDoc"
                     },
                     "target_scheme": {
-                        "$ref": "#/$defs/CrosswalkSchemeDependency"
+                        "$ref": "#/$defs/SchemeDependencyDoc"
                     },
                     "type": {
                         "enum": [
@@ -841,22 +843,6 @@
                 "required": [
                     "id",
                     "label"
-                ],
-                "type": "object"
-            },
-            "guide_dependency": {
-                "additionalProperties": false,
-                "properties": {
-                    "id": {
-                        "minLength": 1,
-                        "type": "string"
-                    },
-                    "version": {
-                        "type": "string"
-                    }
-                },
-                "required": [
-                    "id"
                 ],
                 "type": "object"
             },
@@ -1207,6 +1193,7 @@
             },
             "guide_when": {
                 "additionalProperties": false,
+                "minProperties": 1,
                 "properties": {
                     "all": {
                         "items": {
@@ -1341,6 +1328,22 @@
                     }
                 ]
             },
+            "scheme_dependency": {
+                "additionalProperties": false,
+                "properties": {
+                    "id": {
+                        "minLength": 1,
+                        "type": "string"
+                    },
+                    "version": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "id"
+                ],
+                "type": "object"
+            },
             "term": {
                 "additionalProperties": false,
                 "properties": {
@@ -1413,7 +1416,7 @@
                     },
                     "target_schemes": {
                         "items": {
-                            "$ref": "#/$defs/guide_dependency"
+                            "$ref": "#/$defs/scheme_dependency"
                         },
                         "minItems": 1,
                         "type": "array"
@@ -3088,9 +3091,9 @@
                 },
                 "type": "object"
             },
-            "Record<string,Term>": {
+            "Record<string,TermDoc>": {
                 "additionalProperties": {
-                    "$ref": "#/definitions/Term"
+                    "$ref": "#/definitions/TermDoc"
                 },
                 "type": "object"
             },
@@ -3156,6 +3159,18 @@
             },
             "RollupIntersectDoc": {
                 "additionalProperties": false,
+                "oneOf": [
+                    {
+                        "required": [
+                            "category"
+                        ]
+                    },
+                    {
+                        "required": [
+                            "categories"
+                        ]
+                    }
+                ],
                 "properties": {
                     "categories": {
                         "items": {
@@ -3546,7 +3561,7 @@
                         "type": "string"
                     },
                     "vocabulary": {
-                        "$ref": "#/definitions/Vocabulary"
+                        "$ref": "#/definitions/VocabularyDoc"
                     }
                 },
                 "required": [
@@ -3763,7 +3778,7 @@
                     }
                 ]
             },
-            "Term": {
+            "TermDoc": {
                 "additionalProperties": false,
                 "properties": {
                     "plural": {
@@ -3908,8 +3923,8 @@
                     }
                 ]
             },
-            "Vocabulary": {
-                "$ref": "#/definitions/Record%3Cstring%2CTerm%3E"
+            "VocabularyDoc": {
+                "$ref": "#/definitions/Record%3Cstring%2CTermDoc%3E"
             },
             "WhenDoc": {
                 "anyOf": [

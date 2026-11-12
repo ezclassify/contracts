@@ -14,9 +14,7 @@ import schema from '../generated/validation/v1/crosswalk.schema.json';
  * interchangeable, and a reverse mapping is a separate document, because a
  * translation that is safe one way is not necessarily safe coming back.
  *
- * This generated validation view preserves the v1 dialect and definition names
- * derived from `crosswalk-definition.schema.json`. The shipped validator checks
- * crosswalk documents against this schema.
+ * The shipped validator checks crosswalk documents against this schema.
  */
 export const crosswalkSchema = schema as Record<string, unknown>;
 
@@ -40,7 +38,7 @@ export const crosswalkMappingSchema = {
  * of a scheme this crosswalk is pinned to.
  */
 export const crosswalkSchemeDependencySchema = {
-    ...reader.definition('CrosswalkSchemeDependency'),
+    ...reader.definition('SchemeDependencyDoc'),
     /** Shared definitions that this fragment's `$ref`s point to. */
     $defs: defs,
 };

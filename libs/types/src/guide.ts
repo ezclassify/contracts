@@ -1,4 +1,4 @@
-import type { RuleWhen, Vocabulary } from './scheme';
+import type { Vocabulary } from './scheme';
 import type { RuleReference } from './provenance';
 
 /** A span where a pattern matched in the scanned text. */
@@ -303,6 +303,60 @@ export interface GuideRuleOutcome {
 }
 
 /**
+ * The tests a guide `when` condition can apply to the rules the user
+ * selected. `has_concept` and `not_has_concept` name a rule by id in `value`;
+ * the `count_*` tests compare the number of selected rules with the number in
+ * `value`; `has_content` holds when any rule is selected.
+ */
+export type GuideWhenOperator =
+    | 'has_concept'
+    | 'not_has_concept'
+    | 'has_content'
+    | 'count_gt'
+    | 'count_gte'
+    | 'count_eq'
+    | 'count_lt'
+    | 'count_unique_gt'
+    | 'count_unique_gte'
+    | 'count_unique_eq'
+    | 'count_unique_lt'
+    | 'count_unique_lte';
+
+/** A guide condition that holds when the user selected one rule. */
+export interface GuideWhenHas {
+    /** The id of a selectable rule of this guide. */
+    has: string;
+}
+
+/** A guide condition that tests the user's selection with an operator. */
+export interface GuideWhenTest {
+    /** The test to apply. */
+    operator: GuideWhenOperator;
+    /**
+     * A rule id for `has_concept` and `not_has_concept`, a count for the
+     * `count_*` tests, absent for `has_content`.
+     */
+    value?: string | number;
+}
+
+/**
+ * A block of conditions over the rules the user selected. Every list present
+ * must hold: `any` when one of its nodes holds, `all` when each does, `none`
+ * when none does.
+ */
+export interface GuideWhen {
+    /** At least one of these holds. */
+    any?: GuideWhenNode[];
+    /** Every one of these holds. */
+    all?: GuideWhenNode[];
+    /** None of these holds. */
+    none?: GuideWhenNode[];
+}
+
+/** One node of a guide `when` block: a condition, or a nested block. */
+export type GuideWhenNode = GuideWhenHas | GuideWhenTest | GuideWhen;
+
+/**
  * A rule in a marking guide: a data-element description with an outcome that
  * contributes to the aggregate marking when activated.
  *
@@ -347,12 +401,10 @@ export interface GuideRule {
     /** Explanation of why this outcome applies. */
     rationale?: string;
     /**
-     * When present, this rule auto-activates based on other rules' selection
-     * state. Uses the same when framework as scheme rules. `has` references
-     * guide rule IDs. Rules with `when` are "computed"; they don't appear as
-     * checkboxes.
+     * When present, the rule is computed: it activates when this block holds
+     * over the rules the user selected, and it is not offered as a checkbox.
      */
-    when?: RuleWhen;
+    when?: GuideWhen;
     /**
      * Rule IDs whose outcomes this rule replaces when active. When omitted
      * (default), this rule's outcome is additive: it contributes alongside the

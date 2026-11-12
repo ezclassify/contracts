@@ -38,7 +38,7 @@ var require_ucs2length = __commonJS({
 // access.validator.mjs
 var validate = validate10;
 var access_validator_default = validate10;
-var schema12 = { "additionalProperties": false, "description": "Root `access:` envelope.", "properties": { "description": { "description": "Longer description of what this access policy governs.", "type": "string" }, "id": { "description": "Unique access policy identifier.", "type": "string" }, "layer": { "$ref": "#/definitions/AccessLayer", "description": "The access family's layer payload. Required when `type: 'layer'`, forbidden otherwise." }, "marking": { "description": "The whole marking of this access policy document, written in the scheme `marking_scheme` names. Every `marking` on one of its rules is a part of it.\n\nText, never interpreted: no engine parses it, checks it, or acts on it. The policy's summary reports it unchanged for display.", "type": "string" }, "marking_scheme": { "$ref": "#/definitions/MarkingSchemeRefDoc", "description": "The scheme this document's markings are written in. An access policy is not a scheme, so it always names one by reference.\n\nAuthoring data only: no engine resolves the scheme it names." }, "name": { "description": "Human-readable access policy name.", "type": "string" }, "rules": { "description": "The policy's rules, evaluated in order.", "items": { "$ref": "#/definitions/AccessRuleDoc" }, "type": "array" }, "target_scheme": { "$ref": "#/definitions/AccessPolicyTargetScheme", "description": "The scheme whose markings this policy decides access to." }, "type": { "description": "What kind of document this is. Absent means `'access'`. `type: 'layer'` requires the `layer` block and `type: 'access'` forbids it, both enforced at load. Every layerable family wears this same envelope; see `LayerBinding`.", "enum": ["access", "layer"], "type": "string" }, "version": { "description": "Semantic version of this access policy.", "type": "string" }, "vocabulary": { "$ref": "#/definitions/vocabulary", "description": "Display words this policy advertises for UI consumers. A presentation hint only." } }, "required": ["id", "target_scheme", "rules"], "type": "object" };
+var schema12 = { "additionalProperties": false, "description": "Root `access:` envelope.", "properties": { "description": { "description": "Longer description of what this access policy governs.", "type": "string" }, "id": { "description": "Unique access policy identifier.", "type": "string" }, "layer": { "$ref": "#/definitions/AccessLayer", "description": "The access family's layer payload. Required when `type: 'layer'`, forbidden otherwise." }, "marking": { "description": "The whole marking of this access policy document, written in the scheme `marking_scheme` names. Every `marking` on one of its rules is a part of it.\n\nText, never interpreted: no engine parses it, checks it, or acts on it. The policy's summary reports it unchanged for display.", "type": "string" }, "marking_scheme": { "$ref": "#/definitions/MarkingSchemeRefDoc", "description": "The scheme this document's markings are written in. An access policy is not a scheme, so it always names one by reference.\n\nAuthoring data only: no engine resolves the scheme it names." }, "name": { "description": "Human-readable access policy name.", "type": "string" }, "rules": { "description": "The policy's rules, evaluated in order.", "items": { "$ref": "#/definitions/AccessRuleDoc" }, "type": "array" }, "target_scheme": { "$ref": "#/definitions/SchemeDependencyDoc", "description": "The scheme whose markings this policy decides access to." }, "type": { "description": "What kind of document this is. Absent means `'access'`. `type: 'layer'` requires the `layer` block and `type: 'access'` forbids it, both enforced at load. Every layerable family wears this same envelope; see `LayerBinding`.", "enum": ["access", "layer"], "type": "string" }, "version": { "description": "Semantic version of this access policy.", "type": "string" }, "vocabulary": { "$ref": "#/definitions/vocabulary", "description": "Display words this policy advertises for UI consumers. A presentation hint only." } }, "required": ["id", "target_scheme", "rules"], "type": "object" };
 var func2 = Object.prototype.hasOwnProperty;
 var func3 = require_ucs2length().default;
 var schema15 = { "additionalProperties": false, "description": "One access rule as a policy authors it.\n\nA simple rule maps a subject attribute onto a category: `attribute`, `category` and `strategy`. A check rule compares operands in a `check` block instead. Either may carry a data gate in `when`.", "properties": { "attribute": { "description": "Simple rule: the subject attribute compared (a dot-path).", "type": "string" }, "category": { "description": "The category this rule evaluates.", "type": "string" }, "check": { "$ref": "#/definitions/AccessRuleCheckDoc", "description": "Check rule: the comparison it makes." }, "deny_reason": { "description": "The reason given when this rule denies access. `{variable}` names a value the decision fills in.", "type": "string" }, "id": { "description": "Unique identifier for this rule.", "type": "string" }, "marking": { "description": "This rule's part marking, written in the scheme the document's `marking_scheme` names. Text, never interpreted: no engine parses it, checks it, acts on it, or reports it.", "type": "string" }, "name": { "description": "Human-readable name for this rule, shown in access decision output.", "type": "string" }, "strategy": { "$ref": "#/definitions/AccessRule", "description": "Simple rule: how the attribute is compared with the data's concepts in `category`. Required with `attribute`; a check rule does not read it." }, "values": { "$ref": "#/definitions/Record%3Cstring%2Cstring%3E", "description": "Simple rule: maps attribute values onto concept ids." }, "view": { "description": "Simple rule: the concept view the attribute's values are written in.", "type": "string" }, "when": { "additionalProperties": false, "description": "Evaluate the rule only when the data passes this gate.", "properties": { "data": { "$ref": "#/definitions/AccessRuleGateDoc", "description": "The data gate." } }, "type": "object" } }, "required": ["id", "name"], "type": "object" };
@@ -757,7 +757,7 @@ function validate11(data, { instancePath = "", parentData, parentDataProperty, r
       let data13 = data.target_scheme;
       if (data13 && typeof data13 == "object" && !Array.isArray(data13)) {
         if (data13.id === void 0) {
-          const err23 = { instancePath: instancePath + "/target_scheme", schemaPath: "#/definitions/AccessPolicyTargetScheme/required", keyword: "required", params: { missingProperty: "id" }, message: "must have required property 'id'" };
+          const err23 = { instancePath: instancePath + "/target_scheme", schemaPath: "#/definitions/SchemeDependencyDoc/required", keyword: "required", params: { missingProperty: "id" }, message: "must have required property 'id'" };
           if (vErrors === null) {
             vErrors = [err23];
           } else {
@@ -767,7 +767,7 @@ function validate11(data, { instancePath = "", parentData, parentDataProperty, r
         }
         for (const key3 in data13) {
           if (!(key3 === "id" || key3 === "version")) {
-            const err24 = { instancePath: instancePath + "/target_scheme", schemaPath: "#/definitions/AccessPolicyTargetScheme/additionalProperties", keyword: "additionalProperties", params: { additionalProperty: key3 }, message: "must NOT have additional properties" };
+            const err24 = { instancePath: instancePath + "/target_scheme", schemaPath: "#/definitions/SchemeDependencyDoc/additionalProperties", keyword: "additionalProperties", params: { additionalProperty: key3 }, message: "must NOT have additional properties" };
             if (vErrors === null) {
               vErrors = [err24];
             } else {
@@ -777,19 +777,19 @@ function validate11(data, { instancePath = "", parentData, parentDataProperty, r
           }
         }
         if (data13.id !== void 0) {
-          if (typeof data13.id !== "string") {
-            const err25 = { instancePath: instancePath + "/target_scheme/id", schemaPath: "#/definitions/AccessPolicyTargetScheme/properties/id/type", keyword: "type", params: { type: "string" }, message: "must be string" };
-            if (vErrors === null) {
-              vErrors = [err25];
-            } else {
-              vErrors.push(err25);
+          let data14 = data13.id;
+          if (typeof data14 === "string") {
+            if (func3(data14) < 1) {
+              const err25 = { instancePath: instancePath + "/target_scheme/id", schemaPath: "#/definitions/SchemeDependencyDoc/properties/id/minLength", keyword: "minLength", params: { limit: 1 }, message: "must NOT have fewer than 1 characters" };
+              if (vErrors === null) {
+                vErrors = [err25];
+              } else {
+                vErrors.push(err25);
+              }
+              errors++;
             }
-            errors++;
-          }
-        }
-        if (data13.version !== void 0) {
-          if (typeof data13.version !== "string") {
-            const err26 = { instancePath: instancePath + "/target_scheme/version", schemaPath: "#/definitions/AccessPolicyTargetScheme/properties/version/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+          } else {
+            const err26 = { instancePath: instancePath + "/target_scheme/id", schemaPath: "#/definitions/SchemeDependencyDoc/properties/id/type", keyword: "type", params: { type: "string" }, message: "must be string" };
             if (vErrors === null) {
               vErrors = [err26];
             } else {
@@ -798,20 +798,19 @@ function validate11(data, { instancePath = "", parentData, parentDataProperty, r
             errors++;
           }
         }
-      } else {
-        const err27 = { instancePath: instancePath + "/target_scheme", schemaPath: "#/definitions/AccessPolicyTargetScheme/type", keyword: "type", params: { type: "object" }, message: "must be object" };
-        if (vErrors === null) {
-          vErrors = [err27];
-        } else {
-          vErrors.push(err27);
+        if (data13.version !== void 0) {
+          if (typeof data13.version !== "string") {
+            const err27 = { instancePath: instancePath + "/target_scheme/version", schemaPath: "#/definitions/SchemeDependencyDoc/properties/version/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+            if (vErrors === null) {
+              vErrors = [err27];
+            } else {
+              vErrors.push(err27);
+            }
+            errors++;
+          }
         }
-        errors++;
-      }
-    }
-    if (data.type !== void 0) {
-      let data16 = data.type;
-      if (typeof data16 !== "string") {
-        const err28 = { instancePath: instancePath + "/type", schemaPath: "#/properties/type/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+      } else {
+        const err28 = { instancePath: instancePath + "/target_scheme", schemaPath: "#/definitions/SchemeDependencyDoc/type", keyword: "type", params: { type: "object" }, message: "must be object" };
         if (vErrors === null) {
           vErrors = [err28];
         } else {
@@ -819,8 +818,11 @@ function validate11(data, { instancePath = "", parentData, parentDataProperty, r
         }
         errors++;
       }
-      if (!(data16 === "access" || data16 === "layer")) {
-        const err29 = { instancePath: instancePath + "/type", schemaPath: "#/properties/type/enum", keyword: "enum", params: { allowedValues: schema12.properties.type.enum }, message: "must be equal to one of the allowed values" };
+    }
+    if (data.type !== void 0) {
+      let data16 = data.type;
+      if (typeof data16 !== "string") {
+        const err29 = { instancePath: instancePath + "/type", schemaPath: "#/properties/type/type", keyword: "type", params: { type: "string" }, message: "must be string" };
         if (vErrors === null) {
           vErrors = [err29];
         } else {
@@ -828,14 +830,23 @@ function validate11(data, { instancePath = "", parentData, parentDataProperty, r
         }
         errors++;
       }
-    }
-    if (data.version !== void 0) {
-      if (typeof data.version !== "string") {
-        const err30 = { instancePath: instancePath + "/version", schemaPath: "#/properties/version/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+      if (!(data16 === "access" || data16 === "layer")) {
+        const err30 = { instancePath: instancePath + "/type", schemaPath: "#/properties/type/enum", keyword: "enum", params: { allowedValues: schema12.properties.type.enum }, message: "must be equal to one of the allowed values" };
         if (vErrors === null) {
           vErrors = [err30];
         } else {
           vErrors.push(err30);
+        }
+        errors++;
+      }
+    }
+    if (data.version !== void 0) {
+      if (typeof data.version !== "string") {
+        const err31 = { instancePath: instancePath + "/version", schemaPath: "#/properties/version/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+        if (vErrors === null) {
+          vErrors = [err31];
+        } else {
+          vErrors.push(err31);
         }
         errors++;
       }
@@ -847,11 +858,11 @@ function validate11(data, { instancePath = "", parentData, parentDataProperty, r
       }
     }
   } else {
-    const err31 = { instancePath, schemaPath: "#/type", keyword: "type", params: { type: "object" }, message: "must be object" };
+    const err32 = { instancePath, schemaPath: "#/type", keyword: "type", params: { type: "object" }, message: "must be object" };
     if (vErrors === null) {
-      vErrors = [err31];
+      vErrors = [err32];
     } else {
-      vErrors.push(err31);
+      vErrors.push(err32);
     }
     errors++;
   }

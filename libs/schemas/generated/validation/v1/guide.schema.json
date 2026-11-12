@@ -2,7 +2,7 @@
     "$defs": {
         "character_window": {
             "additionalProperties": false,
-            "description": "Proximity measured in raw characters.",
+            "description": "Proximity measured in characters.",
             "properties": {
                 "chars": {
                     "description": "The largest distance allowed between two spans, counted in characters (UTF-16 code units) between their nearest edges. Spans that touch or overlap are 0 apart.",
@@ -15,19 +15,19 @@
         },
         "concept_ref": {
             "additionalProperties": false,
-            "description": "A reference to a concept in a dependent scheme. Resolved to a full Assertion during guide evaluation.",
+            "description": "A concept in one of the guide's target schemes, as a rule's outcome names it.",
             "properties": {
                 "category": {
-                    "description": "Category ID: required when the concept belongs to multiple categories.",
+                    "description": "The category id, required when the concept belongs to several.",
                     "type": "string"
                 },
                 "id": {
-                    "description": "Concept ID: must exist in one of the guide's target schemes.",
+                    "description": "The concept id. It exists in one of the guide's target schemes.",
                     "minLength": 1,
                     "type": "string"
                 },
                 "value": {
-                    "description": "Value for text-input concepts (e.g., country codes, project names).",
+                    "description": "The value, for a text-input concept such as a country code.",
                     "type": "string"
                 }
             },
@@ -36,10 +36,10 @@
         },
         "guide_category": {
             "additionalProperties": false,
-            "description": "A section grouping guide rules for UI organization.",
+            "description": "A section that groups a guide's rules in the UI.",
             "properties": {
                 "description": {
-                    "description": "Optional description shown below the heading.",
+                    "description": "Description shown below the heading.",
                     "type": "string"
                 },
                 "id": {
@@ -48,29 +48,12 @@
                     "type": "string"
                 },
                 "label": {
-                    "description": "Display label for the category heading.",
+                    "description": "Display label for the section heading.",
                     "minLength": 1,
                     "type": "string"
                 }
             },
             "required": ["id", "label"],
-            "type": "object"
-        },
-        "guide_dependency": {
-            "additionalProperties": false,
-            "description": "A target scheme dependency declared by a guide.",
-            "properties": {
-                "id": {
-                    "description": "Scheme ID that must be loaded for this guide to evaluate.",
-                    "minLength": 1,
-                    "type": "string"
-                },
-                "version": {
-                    "description": "Optional semver constraint (e.g. \">=2.0.0\") or \"*\" for any version.",
-                    "type": "string"
-                }
-            },
-            "required": ["id"],
             "type": "object"
         },
         "guide_layer": {
@@ -396,15 +379,15 @@
                 { "required": ["rendered"] },
                 { "required": ["concepts"] }
             ],
-            "description": "The effect of a guide rule: what it contributes to the marking.",
+            "description": "What a guide rule contributes to the marking when it is active.",
             "properties": {
                 "concepts": {
-                    "description": "Direct concept references: converted to assertions, then engine.process()'d.",
+                    "description": "Concepts asserted directly.",
                     "items": { "$ref": "#/$defs/concept_ref" },
                     "type": "array"
                 },
                 "rendered": {
-                    "description": "Pre-rendered marking string: parsed by engine.process() during evaluation.",
+                    "description": "A marking, read in the target scheme.",
                     "type": "string"
                 }
             },
@@ -413,6 +396,7 @@
         "guide_when": {
             "additionalProperties": false,
             "description": "A block of conditions over the rules the user selected. Every list present must hold: `any` when one of its nodes holds, `all` when each does, `none` when none does. Each list present is non-empty.",
+            "minProperties": 1,
             "properties": {
                 "all": {
                     "description": "Every one of these holds.",
@@ -526,11 +510,28 @@
                 { "$ref": "#/$defs/token_window" },
                 { "$ref": "#/$defs/character_window" }
             ],
-            "description": "A bounded proximity window. Exactly one token or character bound is present, so a windowed operation can never widen to the whole line accidentally."
+            "description": "A bounded proximity window. Exactly one token or character bound is present, so a windowed match never widens to the whole line."
+        },
+        "scheme_dependency": {
+            "additionalProperties": false,
+            "description": "A scheme another document depends on: the scheme a guide's outcomes, an access policy's rules, or one side of a crosswalk are written in.",
+            "properties": {
+                "id": {
+                    "description": "The scheme's id.",
+                    "minLength": 1,
+                    "type": "string"
+                },
+                "version": {
+                    "description": "The scheme version, or a semver range such as `>=2.0.0`. Omitted, any version.",
+                    "type": "string"
+                }
+            },
+            "required": ["id"],
+            "type": "object"
         },
         "term": {
             "additionalProperties": false,
-            "description": "A singular/plural display-word pair.",
+            "description": "A singular and plural display-word pair, as a document declares it.",
             "properties": {
                 "plural": {
                     "description": "The word for more than one, such as `rules`.",
@@ -560,7 +561,7 @@
         },
         "vocabulary": {
             "additionalProperties": { "$ref": "#/$defs/term" },
-            "description": "Author-facing vocabulary: an open map from a term key (e.g. \"rule\", \"concept\", \"tag\") to the display words. Term keys are not enumerated here; consumers pick the keys that matter to them.\n\nPurely a presentation hint: nothing in the engine's evaluation logic reads it. Each consumer owns its own default map and calls `resolveVocabulary(source, defaults)` to merge.",
+            "description": "Display words a document advertises for UI consumers: an open map from a term key (such as `rule` or `concept`) to its words. A presentation hint only; no engine reads it.",
             "type": "object"
         }
     },
@@ -611,7 +612,7 @@
                 },
                 "target_schemes": {
                     "description": "The schemes this guide's outcomes are written in: at least one.",
-                    "items": { "$ref": "#/$defs/guide_dependency" },
+                    "items": { "$ref": "#/$defs/scheme_dependency" },
                     "minItems": 1,
                     "type": "array"
                 },

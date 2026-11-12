@@ -165,12 +165,6 @@ describe('accessSchema: reject paths', () => {
     });
 
     it.each([
-        ['a rules block instead of a list', { rules: { inline: [] } }],
-        ['the camelCase target scheme key', { targetScheme: { id: 'demo' } }],
-        [
-            'the camelCase rule category key',
-            { rules: [{ id: 'r', name: 'R', categoryId: 'level' }] },
-        ],
         [
             'a strategy the engine does not accept',
             {

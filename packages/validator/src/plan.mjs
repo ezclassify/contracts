@@ -551,7 +551,7 @@ function literalOf(node) {
     const operator =
         node.operator ??
         (typeof node.is === 'string' ? node.is.split(' ')[0] : undefined);
-    const category = node.category ?? node.category_id;
+    const category = node.category;
     if (operator === 'has_concept' && typeof node.value === 'string') {
         return { key: `concept:${node.value}`, value: true };
     }

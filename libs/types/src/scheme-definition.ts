@@ -19,7 +19,6 @@ import type {
     ProcessingRole,
     RuleConditionTarget,
     RuleContributorQuantifier,
-    Vocabulary,
 } from './scheme';
 
 /**
@@ -2140,6 +2139,39 @@ export interface MarkingSchemeRefDoc {
     version?: string;
 }
 
+/**
+ * A scheme another document depends on: the scheme a guide's outcomes, an
+ * access policy's rules, or one side of a crosswalk are written in.
+ */
+export interface SchemeDependencyDoc {
+    /**
+     * The scheme's id.
+     *
+     * @minLength 1
+     */
+    id: string;
+    /**
+     * The scheme version, or a semver range such as `>=2.0.0`. Omitted, any
+     * version.
+     */
+    version?: string;
+}
+
+/** A singular and plural display-word pair, as a document declares it. */
+export interface TermDoc {
+    /** The word for one, such as `rule`. */
+    singular?: string;
+    /** The word for more than one, such as `rules`. */
+    plural?: string;
+}
+
+/**
+ * Display words a document advertises for UI consumers: an open map from a
+ * term key (such as `rule` or `concept`) to its words. A presentation hint
+ * only; no engine reads it.
+ */
+export type VocabularyDoc = Record<string, TermDoc>;
+
 /** The body inside the top-level `scheme:` envelope. */
 export interface SchemeBlock {
     /** Unique scheme identifier (e.g. 'tlp-v2', 'cedar-valley-protection'). */
@@ -2214,7 +2246,7 @@ export interface SchemeBlock {
      * handbook: { singular: "Register" }, whole: { singular: "banner" },
      * marking: { singular: "label" } }`.
      */
-    vocabulary?: Vocabulary;
+    vocabulary?: VocabularyDoc;
     /**
      * When a marking in each role is required and, for a scheme without
      * `render.surfaces`, the formats each role is read in.

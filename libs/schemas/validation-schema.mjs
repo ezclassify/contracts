@@ -5,10 +5,9 @@
  */
 
 const GUIDE_NAMES = {
-    CharacterWindow: 'character_window',
-    ConceptRef: 'concept_ref',
-    GuideCategory: 'guide_category',
-    GuideDependency: 'guide_dependency',
+    CharacterWindowDoc: 'character_window',
+    ConceptRefDoc: 'concept_ref',
+    GuideCategoryDoc: 'guide_category',
     GuideLayer: 'guide_layer',
     GuideLayerRemoval: 'guide_layer_removal',
     GuideMatchAllDoc: 'guide_match_all',
@@ -20,7 +19,7 @@ const GUIDE_NAMES = {
     GuideMatchNotDoc: 'guide_match_not',
     GuideMatchValidateDoc: 'guide_match_validate',
     GuideRuleDoc: 'guide_rule',
-    GuideRuleOutcome: 'guide_rule_outcome',
+    GuideRuleOutcomeDoc: 'guide_rule_outcome',
     GuideWhenDoc: 'guide_when',
     GuideWhenHasDoc: 'guide_when_has',
     GuideWhenNodeDoc: 'guide_when_node',
@@ -30,10 +29,11 @@ const GUIDE_NAMES = {
     MatchContextSide: 'match_context_side',
     MatchNearEmit: 'match_near_emit',
     MatchValidationKeep: 'match_validation_keep',
-    Term: 'term',
-    TokenWindow: 'token_window',
-    Vocabulary: 'vocabulary',
-    Win: 'match_window',
+    MatchWindowDoc: 'match_window',
+    SchemeDependencyDoc: 'scheme_dependency',
+    TermDoc: 'term',
+    TokenWindowDoc: 'token_window',
+    VocabularyDoc: 'vocabulary',
 };
 
 /** Resolve one generated definition without discarding a use-site annotation. */
@@ -140,22 +140,22 @@ function guideView(schema) {
     for (const key of ['id', 'version', 'name'])
         nonempty(guide.properties[key]);
     for (const [name, fields] of [
-        ['GuideDependency', ['id']],
-        ['GuideCategory', ['id', 'label']],
+        ['GuideCategoryDoc', ['id', 'label']],
         ['GuideRuleDoc', ['id', 'name']],
-        ['ConceptRef', ['id']],
-        ['Term', ['singular', 'plural']],
+        ['ConceptRefDoc', ['id']],
+        ['TermDoc', ['singular', 'plural']],
         ['GuideLayer', ['base']],
     ]) {
         for (const field of fields) nonempty(defs[name].properties[field]);
     }
     nonempty(defs.GuideLayer.properties.requires.items);
-    defs.GuideRuleOutcome.anyOf = [
+    defs.GuideRuleOutcomeDoc.anyOf = [
         { required: ['rendered'] },
         { required: ['concepts'] },
     ];
     for (const list of ['any', 'all', 'none'])
         defs.GuideWhenDoc.properties[list].minItems = 1;
+    defs.GuideWhenDoc.minProperties = 1;
 
     const removal = defs.GuideLayerRemoval;
     removal.properties = Object.assign(
@@ -170,7 +170,7 @@ function guideView(schema) {
         minProperties: 1,
         maxProperties: 1,
     });
-    defs.Vocabulary = inline(defs.Vocabulary, defs);
+    defs.VocabularyDoc = inline(defs.VocabularyDoc, defs);
 
     schema.$id = 'https://ezclassify.com/schemas/v1/guide.schema.json';
     schema.title = 'EzClassify Guide Schema';
@@ -178,27 +178,39 @@ function guideView(schema) {
         schema,
         GUIDE_NAMES,
         '$defs',
-        new Set(['GuideBlock', 'Record<string,Term>']),
+        new Set(['GuideBlock', 'Record<string,TermDoc>']),
     );
 }
 
 function accessView(schema) {
     const defs = schema.definitions;
-    const envelope = schema.properties.access;
-    defs.AccessPolicyEnvelope = envelope;
+    const block = schema.properties.access;
+    defs.AccessBlock = block;
     schema.properties.access = {
-        $ref: '#/definitions/AccessPolicyEnvelope',
-        description: envelope.description,
+        $ref: '#/definitions/AccessBlock',
+        description: block.description,
     };
     nonempty(defs.AccessLayer.properties.base);
     nonempty(defs.AccessLayer.properties.requires.items);
-    defs.Vocabulary = inline(defs.Vocabulary, defs);
+    defs.VocabularyDoc = inline(defs.VocabularyDoc, defs);
     return publish(
         schema,
-        { Term: 'term', Vocabulary: 'vocabulary' },
+        { TermDoc: 'term', VocabularyDoc: 'vocabulary' },
         'definitions',
-        new Set(['Record<string,Term>']),
+        new Set(['Record<string,TermDoc>']),
     );
+}
+
+/**
+ * The scheme view adds what the generated types cannot say: a rollup
+ * intersection names exactly one of `category` and `categories`.
+ */
+function schemeView(schema) {
+    schema.definitions.RollupIntersectDoc.oneOf = [
+        { required: ['category'] },
+        { required: ['categories'] },
+    ];
+    return schema;
 }
 
 function publish(schema, names, key, omitted = new Set()) {
@@ -228,6 +240,7 @@ export function validationSchema(kind, generated) {
     const schema = structuredClone(generated);
     switch (kind) {
         case 'scheme':
+            return schemeView(schema);
         case 'context':
         case 'test-suite':
             return schema;

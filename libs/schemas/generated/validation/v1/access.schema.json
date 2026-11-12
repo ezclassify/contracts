@@ -2,6 +2,60 @@
     "$schema": "http://json-schema.org/draft-07/schema#",
     "additionalProperties": false,
     "definitions": {
+        "AccessBlock": {
+            "additionalProperties": false,
+            "description": "Root `access:` envelope.",
+            "properties": {
+                "description": {
+                    "description": "Longer description of what this access policy governs.",
+                    "type": "string"
+                },
+                "id": {
+                    "description": "Unique access policy identifier.",
+                    "type": "string"
+                },
+                "layer": {
+                    "$ref": "#/definitions/AccessLayer",
+                    "description": "The access family's layer payload. Required when `type: 'layer'`, forbidden otherwise."
+                },
+                "marking": {
+                    "description": "The whole marking of this access policy document, written in the scheme `marking_scheme` names. Every `marking` on one of its rules is a part of it.\n\nText, never interpreted: no engine parses it, checks it, or acts on it. The policy's summary reports it unchanged for display.",
+                    "type": "string"
+                },
+                "marking_scheme": {
+                    "$ref": "#/definitions/MarkingSchemeRefDoc",
+                    "description": "The scheme this document's markings are written in. An access policy is not a scheme, so it always names one by reference.\n\nAuthoring data only: no engine resolves the scheme it names."
+                },
+                "name": {
+                    "description": "Human-readable access policy name.",
+                    "type": "string"
+                },
+                "rules": {
+                    "description": "The policy's rules, evaluated in order.",
+                    "items": { "$ref": "#/definitions/AccessRuleDoc" },
+                    "type": "array"
+                },
+                "target_scheme": {
+                    "$ref": "#/definitions/SchemeDependencyDoc",
+                    "description": "The scheme whose markings this policy decides access to."
+                },
+                "type": {
+                    "description": "What kind of document this is. Absent means `'access'`. `type: 'layer'` requires the `layer` block and `type: 'access'` forbids it, both enforced at load. Every layerable family wears this same envelope; see `LayerBinding`.",
+                    "enum": ["access", "layer"],
+                    "type": "string"
+                },
+                "version": {
+                    "description": "Semantic version of this access policy.",
+                    "type": "string"
+                },
+                "vocabulary": {
+                    "$ref": "#/definitions/vocabulary",
+                    "description": "Display words this policy advertises for UI consumers. A presentation hint only."
+                }
+            },
+            "required": ["id", "target_scheme", "rules"],
+            "type": "object"
+        },
         "AccessCheckOperator": {
             "description": "How a check compares its operands.\n\n- `is_in`: the left value is one of the right values.\n- `contains_any`: the two sets share at least one value.\n- `superset`: the left set holds every right value.\n- `equals`: the two values are equal.\n- `gte`: the left value is at or above the right one.\n- `after`: the left value, a date and time, is later than the moment the   request is decided. It reads no right operand.",
             "enum": [
@@ -40,76 +94,6 @@
                 }
             },
             "required": ["base"],
-            "type": "object"
-        },
-        "AccessPolicyEnvelope": {
-            "additionalProperties": false,
-            "description": "Root `access:` envelope.",
-            "properties": {
-                "description": {
-                    "description": "Longer description of what this access policy governs.",
-                    "type": "string"
-                },
-                "id": {
-                    "description": "Unique access policy identifier.",
-                    "type": "string"
-                },
-                "layer": {
-                    "$ref": "#/definitions/AccessLayer",
-                    "description": "The access family's layer payload. Required when `type: 'layer'`, forbidden otherwise."
-                },
-                "marking": {
-                    "description": "The whole marking of this access policy document, written in the scheme `marking_scheme` names. Every `marking` on one of its rules is a part of it.\n\nText, never interpreted: no engine parses it, checks it, or acts on it. The policy's summary reports it unchanged for display.",
-                    "type": "string"
-                },
-                "marking_scheme": {
-                    "$ref": "#/definitions/MarkingSchemeRefDoc",
-                    "description": "The scheme this document's markings are written in. An access policy is not a scheme, so it always names one by reference.\n\nAuthoring data only: no engine resolves the scheme it names."
-                },
-                "name": {
-                    "description": "Human-readable access policy name.",
-                    "type": "string"
-                },
-                "rules": {
-                    "description": "The policy's rules, evaluated in order.",
-                    "items": { "$ref": "#/definitions/AccessRuleDoc" },
-                    "type": "array"
-                },
-                "target_scheme": {
-                    "$ref": "#/definitions/AccessPolicyTargetScheme",
-                    "description": "The scheme whose markings this policy decides access to."
-                },
-                "type": {
-                    "description": "What kind of document this is. Absent means `'access'`. `type: 'layer'` requires the `layer` block and `type: 'access'` forbids it, both enforced at load. Every layerable family wears this same envelope; see `LayerBinding`.",
-                    "enum": ["access", "layer"],
-                    "type": "string"
-                },
-                "version": {
-                    "description": "Semantic version of this access policy.",
-                    "type": "string"
-                },
-                "vocabulary": {
-                    "$ref": "#/definitions/vocabulary",
-                    "description": "Display words this policy advertises for UI consumers. A presentation hint only."
-                }
-            },
-            "required": ["id", "target_scheme", "rules"],
-            "type": "object"
-        },
-        "AccessPolicyTargetScheme": {
-            "additionalProperties": false,
-            "description": "Which scheme an access policy governs.",
-            "properties": {
-                "id": {
-                    "description": "Scheme ID this access policy applies to.",
-                    "type": "string"
-                },
-                "version": {
-                    "description": "Optional specific version or version range. Absent means any version.",
-                    "type": "string"
-                }
-            },
-            "required": ["id"],
             "type": "object"
         },
         "AccessRule": {
@@ -244,9 +228,26 @@
             "additionalProperties": { "type": "string" },
             "type": "object"
         },
+        "SchemeDependencyDoc": {
+            "additionalProperties": false,
+            "description": "A scheme another document depends on: the scheme a guide's outcomes, an access policy's rules, or one side of a crosswalk are written in.",
+            "properties": {
+                "id": {
+                    "description": "The scheme's id.",
+                    "minLength": 1,
+                    "type": "string"
+                },
+                "version": {
+                    "description": "The scheme version, or a semver range such as `>=2.0.0`. Omitted, any version.",
+                    "type": "string"
+                }
+            },
+            "required": ["id"],
+            "type": "object"
+        },
         "term": {
             "additionalProperties": false,
-            "description": "A singular/plural display-word pair.",
+            "description": "A singular and plural display-word pair, as a document declares it.",
             "properties": {
                 "plural": {
                     "description": "The word for more than one, such as `rules`.",
@@ -261,14 +262,14 @@
         },
         "vocabulary": {
             "additionalProperties": { "$ref": "#/definitions/term" },
-            "description": "Author-facing vocabulary: an open map from a term key (e.g. \"rule\", \"concept\", \"tag\") to the display words. Term keys are not enumerated here; consumers pick the keys that matter to them.\n\nPurely a presentation hint: nothing in the engine's evaluation logic reads it. Each consumer owns its own default map and calls `resolveVocabulary(source, defaults)` to merge.",
+            "description": "Display words a document advertises for UI consumers: an open map from a term key (such as `rule` or `concept`) to its words. A presentation hint only; no engine reads it.",
             "type": "object"
         }
     },
     "description": "Top-level YAML document for an access policy. This is the published 1.0 document format; the runtime `AccessPolicy` is the engine's resolved in-memory shape after loading and is not part of the published contract.",
     "properties": {
         "access": {
-            "$ref": "#/definitions/AccessPolicyEnvelope",
+            "$ref": "#/definitions/AccessBlock",
             "description": "Root `access:` envelope."
         }
     },
