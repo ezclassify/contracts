@@ -1,0 +1,60 @@
+# A scheme with a concept import.
+#
+# Read it aloud: this scheme declares two classification concepts of its own,
+# and imports ACME's handling-caveat list, where each record becomes a concept
+# in the caveats category.
+scheme:
+  id: acme-classification-primary
+  version: 1.0.0
+  name: ACME Classification Primary
+  data:
+    categories:
+      - id: classification
+        label: Classification
+        rollup: max
+        required: true
+        single: true
+      - id: caveats
+        label: Caveats
+        rollup: union
+    concepts:
+      - id: public
+        name: Public
+        views: { default: PUBLIC }
+        categories: [classification]
+        rank: 0
+      - id: internal
+        name: Internal
+        views: { default: INTERNAL }
+        categories: [classification]
+        parents: [public]
+        rank: 1
+    concept_imports:
+      - id: acme-caveats
+        attribution:
+          name: ACME Handling Caveats
+          license: proprietary
+        snapshot_id: sha256:b73c6c208ab3d7f4e53b439f49a395ab8395834e292efd34714880d407f7d933
+        records:
+          - { code: EXEC, name: Executive Only, parent: internal }
+          - { code: LEGAL, name: Legal Hold, parent: internal }
+        mapping:
+          concept:
+            id: code
+            name: name
+            parents: parent
+            categories: ["'caveats'"]
+            views:
+              default: code
+  render:
+    default: default
+    formats:
+      - id: default
+        surface: banner
+        mode: inline
+        view: default
+        separator: '//'
+        fields:
+          - category: classification
+          - category: caveats
+            separator: '/'

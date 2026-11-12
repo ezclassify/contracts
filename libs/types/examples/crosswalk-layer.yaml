@@ -10,20 +10,20 @@ crosswalk:
   type: layer
   layer:
     base: acme-to-partner@2.1.0
-  sourceScheme:
+  source_scheme:
     id: acme-classification-primary
     version: 1.0.0
-  targetScheme:
+  target_scheme:
     id: partner-classification
     version: 3.0.0
   mappings:
     - id: eastern-restricted-to-partner-limited
       source:
-        categoryId: classification
-        conceptId: eastern-restricted
+        category: classification
+        concept: eastern-restricted
       targets:
-        - categoryId: classification
-          conceptId: limited
+        - category: classification
+          concept: limited
       disposition: carry
       reason:
         Eastern Restricted and the partner's Limited carry the same handling

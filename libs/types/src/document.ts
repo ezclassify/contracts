@@ -16,7 +16,6 @@ import type {
     AssertionSupport,
     ContentEvidenceSpan,
     RuleReference,
-    SourceReference,
 } from './provenance';
 
 /**
@@ -102,8 +101,6 @@ export interface ContextResolution {
     resolvedVersion: string;
     /** Ordered artifacts participating in the composition. */
     artifacts: ArtifactReference[];
-    /** De-duplicated source observations used by the operation. */
-    sources: SourceReference[];
 }
 
 /** Concrete Context operation envelope shared by local and remote surfaces. */

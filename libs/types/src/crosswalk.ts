@@ -44,20 +44,6 @@ export interface CrosswalkMapping {
     citation?: string;
 }
 
-/**
- * A mapping as a crosswalk document authors it: the reviewed treatment, plus
- * the part marking the document gives it. A mapping a Context describes is a
- * `CrosswalkMapping` and has no marking.
- */
-export interface CrosswalkMappingDoc extends CrosswalkMapping {
-    /**
-     * This mapping's part marking, written in the scheme the document's
-     * `marking_scheme` names. Text, never interpreted: no engine parses it,
-     * checks it, acts on it, or reports it.
-     */
-    marking?: string;
-}
-
 /** Boolean test over source assertions used to choose a crosswalk candidate. */
 export interface CrosswalkSelectionCondition {
     /** At least one referenced assertion must be present. */
@@ -113,20 +99,127 @@ export interface CrosswalkSelection {
     candidates: CrosswalkSelectionCandidate[];
 }
 
-/** A selection candidate as a crosswalk document authors it. */
-export interface CrosswalkSelectionCandidateDoc extends Omit<
-    CrosswalkSelectionCandidate,
-    'mappings'
-> {
-    /** Per-assertion mappings activated when this candidate is selected. */
-    mappings?: CrosswalkMappingDoc[];
+/**
+ * A concept in a category, as a crosswalk document names it.
+ *
+ * @public
+ */
+export interface CrosswalkAssertionDoc {
+    /** The category the concept is asserted in. */
+    category: string;
+    /** The concept. */
+    concept: string;
+    /** The captured value, for a value-bearing concept. */
+    value?: string;
 }
 
-/** A cross-field decision as a crosswalk document authors it. */
-export interface CrosswalkSelectionDoc extends Omit<
-    CrosswalkSelection,
-    'candidates'
-> {
+/**
+ * A target a crosswalk document's mapping emits or proposes.
+ *
+ * @public
+ */
+export interface CrosswalkTargetDoc extends CrosswalkAssertionDoc {
+    /** Copy the source assertion's captured value onto this target. */
+    copy_value?: boolean;
+}
+
+/**
+ * A reviewed treatment of one source assertion, as a crosswalk document
+ * authors it. A mapping a Context describes is a `CrosswalkMapping`, which
+ * carries the same facts in the wire shape and no marking.
+ *
+ * @public
+ */
+export interface CrosswalkMappingDoc {
+    /** Stable identifier for audit and review. */
+    id: string;
+    /**
+     * This mapping's part marking, written in the scheme the document's
+     * `marking_scheme` names. Text, never interpreted: no engine parses it,
+     * checks it, acts on it, or reports it.
+     */
+    marking?: string;
+    /** Source assertion matched by this mapping. */
+    source: CrosswalkAssertionDoc;
+    /**
+     * Target assertions. `carry` mappings emit these automatically; `review`
+     * mappings expose them only as proposals. `omit` and `forbid` mappings have
+     * no targets.
+     */
+    targets?: CrosswalkTargetDoc[];
+    /** Whether the value is carried, reviewed, omitted, or forbids translation. */
+    disposition: CrosswalkDisposition;
+    /** Human-readable basis for the decision. */
+    reason: string;
+    /** Authority or reviewed source behind the mapping, when one exists. */
+    authority?: string;
+    /** Operator guidance for applying or reviewing this mapping. */
+    guidance?: string;
+    /** Citation supporting this mapping decision. */
+    citation?: string;
+}
+
+/**
+ * The test that chooses a selection candidate, as a crosswalk document
+ * authors it.
+ *
+ * @public
+ */
+export interface CrosswalkSelectionConditionDoc {
+    /** At least one of these must be present. */
+    any?: CrosswalkAssertionDoc[];
+    /** Every one of these must be present. */
+    all?: CrosswalkAssertionDoc[];
+    /** None of these may be present. */
+    none?: CrosswalkAssertionDoc[];
+}
+
+/**
+ * A selection candidate as a crosswalk document authors it.
+ *
+ * @public
+ */
+export interface CrosswalkSelectionCandidateDoc {
+    /** Stable candidate identifier within its selection. */
+    id: string;
+    /**
+     * Treatment applied when this candidate is selected. Omitted, the
+     * candidate carries (`carry`).
+     */
+    disposition?: CrosswalkDisposition;
+    /**
+     * Predicate used by a `first-match` selection; omission makes this the
+     * fallback.
+     */
+    when?: CrosswalkSelectionConditionDoc;
+    /** Assertions counted by a `most-matches` selection. */
+    score?: CrosswalkAssertionDoc[];
+    /** Source assertions covered when this candidate is selected. */
+    sources?: CrosswalkAssertionDoc[];
+    /** Per-assertion mappings activated when this candidate is selected. */
+    mappings?: CrosswalkMappingDoc[];
+    /** Targets emitted once when this candidate is selected. */
+    targets?: CrosswalkTargetDoc[];
+    /** Human-readable basis for selecting and applying this candidate. */
+    reason: string;
+    /** Authority behind the candidate decision, when one exists. */
+    authority?: string;
+    /** Operator guidance for the candidate decision. */
+    guidance?: string;
+    /** Citation supporting the candidate decision. */
+    citation?: string;
+}
+
+/**
+ * A cross-field decision as a crosswalk document authors it.
+ *
+ * @public
+ */
+export interface CrosswalkSelectionDoc {
+    /** Stable selection identifier for audit and review. */
+    id: string;
+    /** Deterministic candidate-selection strategy. */
+    strategy: CrosswalkSelectionStrategy;
     /** Ordered candidates; order breaks ties and places a fallback last. */
     candidates: CrosswalkSelectionCandidateDoc[];
 }
@@ -163,8 +256,8 @@ export type CrosswalkLayerRemoval =
  *
  * Binding and merge rules are the cross-family ones: see `LayerBinding`.
  * A crosswalk layer may add, override, and remove; later wins on a colliding
- * id. The layer's `sourceScheme` and `targetScheme` must name the same pair its
- * base does, since a mapping between one pair of schemes says nothing about
+ * id. The layer's `source_scheme` and `target_scheme` must name the same pair
+ * its base does, since a mapping between one pair of schemes says nothing about
  * another.
  */
 export interface CrosswalkLayer extends LayerBinding {
@@ -230,9 +323,9 @@ export interface CrosswalkDefinition {
          */
         layer?: CrosswalkLayer;
         /** The scheme this crosswalk translates from. */
-        sourceScheme: CrosswalkSchemeDependency;
+        source_scheme: CrosswalkSchemeDependency;
         /** The scheme this crosswalk translates to. */
-        targetScheme: CrosswalkSchemeDependency;
+        target_scheme: CrosswalkSchemeDependency;
         /** How each source concept translates into the target scheme. */
         mappings: CrosswalkMappingDoc[];
         /**

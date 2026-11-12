@@ -8,6 +8,8 @@ import type {
     CrosswalkMappingDoc,
     CrosswalkOutcome,
     CrosswalkSelectionOutcome,
+    CrosswalkTarget,
+    CrosswalkTargetDoc,
     GuideBlock,
     GuideMetaView,
     GuideRule,
@@ -15,6 +17,29 @@ import type {
     GuideStructuralView,
     MarkingSchemeRefDoc,
 } from '../src/index';
+
+/**
+ * Documents are written in snake_case and the wire in camelCase, so a document
+ * shape and the wire shape carrying the same facts are separate types. The wire
+ * keys stay exactly as published.
+ */
+expectTypeOf<CrosswalkMappingDoc['source']>().toEqualTypeOf<{
+    category: string;
+    concept: string;
+    value?: string;
+}>();
+expectTypeOf<CrosswalkMapping['source']>().toEqualTypeOf<{
+    categoryId: string;
+    conceptId: string;
+    value?: string;
+}>();
+expectTypeOf<CrosswalkTargetDoc>().toHaveProperty('copy_value');
+expectTypeOf<CrosswalkTarget>().toHaveProperty('copyValue');
+expectTypeOf<GuideBlock>().toHaveProperty('target_schemes');
+expectTypeOf<AccessDefinition['access']>().toHaveProperty('target_scheme');
+expectTypeOf<CrosswalkDefinition['crosswalk']>().toHaveProperty(
+    'source_scheme',
+);
 
 /**
  * A document's part markings stay in the document: the rule and mapping shapes

@@ -55,9 +55,9 @@
  *   removing nothing. An access layer has no removal vocabulary at all.
  * - In those same three families, a colliding id means the later declaration
  *   wins. The composed result shows only the winner: the resolved definition is
- *   the later one, and an assertion of a concept that a later layer's external
- *   source supplies carries that source's `provenance`. No record names the
- *   element the layer replaced, so an override is reviewed where it is
+ *   the later one, and a concept a later layer's concept import produces
+ *   replaces one an earlier document declares. No record names the element the
+ *   layer replaced, so an override is reviewed where it is
  *   written: in the layer that restates the id, against its base. In the
  *   access family a collision is a composition error the loader refuses; there
  *   is no last-wins rule to apply.

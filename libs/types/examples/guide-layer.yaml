@@ -16,12 +16,11 @@ guide:
     base: acme-quickmark-rules@1.0.0
     removes:
       - rule: handles-source-code
-  targetSchemes:
+  target_schemes:
     - id: acme-classification-primary
   rules:
-    inline:
-      - id: handles-pii
-        name: Document handles personally identifiable information
-        keywords: [pii, ssn, dob, personnel-file]
-        outcome:
-          rendered: EASTERN-RESTRICTED
+    - id: handles-pii
+      name: Document handles personally identifiable information
+      keywords: [pii, ssn, dob, personnel-file]
+      outcome:
+        rendered: EASTERN-RESTRICTED

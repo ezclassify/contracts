@@ -1,4 +1,3 @@
-import type { SourceProviderMap } from './broker-source';
 import type { ContextBlock } from './context-definition';
 import type { CrosswalkDefinition } from './crosswalk';
 
@@ -275,8 +274,6 @@ export interface ContextFromComponentsArgs {
     crosswalks?: CrosswalkDefinition[];
     /** Optional metadata identifying the spec that produced this context. */
     metadata?: ContextMetadata;
-    /** Optional broker sources keyed by source reference. */
-    sourceProviders?: SourceProviderMap;
 }
 
 /**
@@ -338,18 +335,4 @@ export interface LoadContextsFileOptions {
     watch?: boolean;
     /** Polling interval in milliseconds. Defaults to 1000. */
     watchIntervalMs?: number;
-}
-
-/**
- * Options for the client-side context helper.
- *
- * @internal
- */
-export interface LoadContextOptions {
-    /**
-     * Root directory for component files. Component files are resolved using
-     * the path convention `{componentRoot}/{type}/{id}/v{version}/{type}.json`.
-     * Defaults to `'./schemes'`.
-     */
-    componentRoot?: string;
 }

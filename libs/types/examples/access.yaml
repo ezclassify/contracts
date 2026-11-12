@@ -1,0 +1,27 @@
+# An access policy.
+#
+# Read it aloud: a reader's clearance must reach the document's classification,
+# and when the document carries a caveat the reader must hold one of them.
+access:
+  id: acme-rbac-access
+  version: 1.0.0
+  name: ACME RBAC Access Policy
+  target_scheme:
+    id: acme-classification-primary
+  rules:
+    - id: classification-floor
+      name: User clearance must dominate document classification
+      attribute: clearance
+      category: classification
+      strategy: gte
+      deny_reason: Your clearance is below {conceptName}.
+    - id: caveat-membership
+      name: User must hold a caveat the document carries
+      when:
+        data:
+          category: caveats
+          operator: has_content
+      check:
+        user: caveats
+        data_category: caveats
+        operator: contains_any

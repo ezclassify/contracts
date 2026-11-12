@@ -15,17 +15,16 @@ access:
   type: layer
   layer:
     base: acme-rbac-access@1.0.0
-  targetScheme:
+  target_scheme:
     id: acme-classification-primary
   rules:
-    inline:
-      - id: eastern-restricted-endorsement
-        name: Eastern Restricted requires the division endorsement attribute
-        attribute: easternEndorsement
-        categoryId: classification
-        strategy: includes
-        values:
-          endorsed: eastern-restricted
-        denyReason:
-          Reading {conceptName} requires the eastern division endorsement on
-          your account.
+    - id: eastern-restricted-endorsement
+      name: Eastern Restricted requires the division endorsement attribute
+      attribute: easternEndorsement
+      category: classification
+      strategy: includes
+      values:
+        endorsed: eastern-restricted
+      deny_reason:
+        Reading {conceptName} requires the eastern division endorsement on
+        your account.

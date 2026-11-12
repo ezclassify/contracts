@@ -92,52 +92,52 @@ function assertValid(
 }
 
 describe('libs/types example YAML files', () => {
-    it('scheme-with-sources.yaml validates against scheme-definition schema', () => {
+    it('scheme-with-import.yaml validates against scheme-definition schema', () => {
         // draft-07 dist schema: strip $schema so Ajv2020 doesn't try to resolve it
         const schema = readSchema(
             distSchemasDir,
             'scheme-definition.schema.json',
             true,
         );
-        const doc = loadExample('scheme-with-sources.yaml');
+        const doc = loadExample('scheme-with-import.yaml');
         expect(() =>
-            assertValid(makeAjv(), schema, doc, 'scheme-with-sources.yaml'),
+            assertValid(makeAjv(), schema, doc, 'scheme-with-import.yaml'),
         ).not.toThrow();
     });
 
-    it('guide-with-sources.yaml validates against guide-definition schema', () => {
+    it('guide.yaml validates against guide-definition schema', () => {
         const schema = readSchema(
             distSchemasDir,
             'guide-definition.schema.json',
             true,
         );
-        const doc = loadExample('guide-with-sources.yaml');
+        const doc = loadExample('guide.yaml');
         expect(() =>
-            assertValid(makeAjv(), schema, doc, 'guide-with-sources.yaml'),
+            assertValid(makeAjv(), schema, doc, 'guide.yaml'),
         ).not.toThrow();
     });
 
-    it('access-with-sources.yaml validates against access-policy schema', () => {
+    it('access.yaml validates against access-policy schema', () => {
         const schema = readSchema(
             distSchemasDir,
             'access-policy.schema.json',
             true,
         );
-        const doc = loadExample('access-with-sources.yaml');
+        const doc = loadExample('access.yaml');
         expect(() =>
-            assertValid(makeAjv(), schema, doc, 'access-with-sources.yaml'),
+            assertValid(makeAjv(), schema, doc, 'access.yaml'),
         ).not.toThrow();
     });
 
-    it('context-with-sources.yaml validates against context-definition schema', () => {
+    it('context.yaml validates against context-definition schema', () => {
         const schema = readSchema(
             distSchemasDir,
             'context-definition.schema.json',
             true,
         );
-        const doc = loadExample('context-with-sources.yaml');
+        const doc = loadExample('context.yaml');
         expect(() =>
-            assertValid(makeAjv(), schema, doc, 'context-with-sources.yaml'),
+            assertValid(makeAjv(), schema, doc, 'context.yaml'),
         ).not.toThrow();
     });
 });

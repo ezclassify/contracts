@@ -1,10 +1,5 @@
 import type { RuleWhen, Vocabulary } from './scheme';
-import type { GuideRuleSource } from './source';
-import type {
-    ArtifactReference,
-    RuleReference,
-    SourceReference,
-} from './provenance';
+import type { ArtifactReference, RuleReference } from './provenance';
 
 /** A span where a pattern matched in the scanned text. */
 export interface MatchSpan {
@@ -318,8 +313,8 @@ export interface GuideRuleOutcome {
  * auto-activate based on sibling rule selection state and do not appear as
  * user-visible checkboxes.
  *
- * This is the named runtime/read-result shape. Authoring input is carried by
- * the guide definition's `rules.inline` entries.
+ * This is the named runtime/read-result shape. A guide document authors its
+ * rules as `GuideRuleDoc` entries in `guide.rules`.
  */
 export interface GuideRule {
     /** Unique identifier within the guide. */
@@ -376,10 +371,9 @@ export interface GuideRule {
  * `GuideEngine.evaluate()`. Rules with `when` auto-activate based on other
  * rules' selection state and do not appear as user-visible checkboxes.
  *
- * @internal Runtime, post-load shape. The published wire format is
- * `GuideDefinition` (`guide.rules: GuideRulesBlock`, `{ inline, external }`).
- * Authors and tools that read/write guide YAML/JSON should target
- * `GuideDefinition`, not `Guide`.
+ * @internal Runtime, post-load shape. The published document format is
+ * `GuideDefinition`. Authors and tools that read/write guide YAML/JSON should
+ * target `GuideDefinition`, not `Guide`.
  */
 export interface Guide {
     /** Unique identifier. */
@@ -408,13 +402,7 @@ export interface Guide {
     targetSchemes: GuideDependency[];
     /** Sections for organizing rules in the UI. */
     categories?: GuideCategory[];
-    /**
-     * Resolved rule list, post-load. Each entry carries its `id` inline; this
-     * is the in-memory shape the engine evaluates against, not the wire format.
-     * The wire format (`GuideBlock.rules`) is the `{ inline: <map>,
-     * external?: [...] }` block; the loader materializes external sources and
-     * projects the `inline` map back to this flat array.
-     */
+    /** Resolved rule list, post-load, in document order. */
     rules: GuideRule[];
 }
 
@@ -496,8 +484,6 @@ export interface EvaluationResult {
      * layers stop re-filtering the full breakdown.
      */
     contributingBreakdown: GuideBreakdownEntry[];
-    /** External guide-rule source observation used by this evaluation. */
-    provenance?: SourceReference;
 }
 
 /** A guide rule matched by keyword search. */
@@ -563,20 +549,6 @@ export interface GuideScanResult {
     matchedKeywords: string[];
     /** Every place in the text where the rule fired, in the order found. */
     spans: GuideScanSpan[];
-    /**
-     * Source provenance for the guide-rule source that supplied the matched
-     * rule.
-     *
-     * Populated only when the rule came from an external `GuideRuleSource`
-     * override wired into the `GuideEngine` at load time (typically a
-     * `MappedGuideRuleSource` the server's Context loader built from a guide
-     * YAML's `rules.external` block). Inline-backed results leave this field
-     * undefined to keep payloads compact for the common single-source case.
-     *
-     * Identity fields mirror the source's `sourceIdentity()` observation at
-     * engine-construction time.
-     */
-    provenance?: SourceReference;
 }
 
 /**
@@ -642,10 +614,4 @@ export interface GuideScanOptions {
      * probability, and never enters any serialized or hashed form.
      */
     confidence?: boolean;
-    /**
-     * Optional source used instead of the guide's inline rule collection.
-     *
-     * @internal
-     */
-    source?: GuideRuleSource;
 }

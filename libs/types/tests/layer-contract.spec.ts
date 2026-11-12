@@ -198,15 +198,13 @@ describe('the composition rules say where access departs from them', () => {
 
     it('promises only what an override leaves observable', () => {
         // The runtime keeps no record of the element an override replaced;
-        // the winner's source provenance is all a result carries.
+        // the winner is all a result carries.
         const prose = docSection(layerSource, 'Composition')
             .replace(/\n\s*\*\s?/g, ' ')
             .replace(/\s+/g, ' ');
         expect(prose).not.toMatch(/override marker/i);
         expect(prose).toMatch(/The composed result shows only the winner/);
-        expect(prose).toMatch(
-            /carries that source's `provenance`\. No record names the element the layer replaced/,
-        );
+        expect(prose).toMatch(/No record names the element the layer replaced/);
     });
 
     it('still explains the departure in full further down', () => {

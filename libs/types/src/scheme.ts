@@ -1,5 +1,4 @@
-import type { SourceReference } from './provenance';
-import type { LayerRemovalDoc } from './scheme-definition';
+import type { LayerRemovalDoc, RollupStepActionDoc } from './scheme-definition';
 
 /** Structural role of a marking within a processing operation. */
 export type ProcessingRole = 'whole' | 'part';
@@ -104,14 +103,6 @@ export type PositionSpec =
     | {
           /** Place this element directly after the sibling with this id. */
           after: string;
-      }
-    | {
-          /** Place this element directly before the sibling with this id. */
-          before: string;
-      }
-    | {
-          /** Place this element between the two siblings with these ids. */
-          between: [string, string];
       };
 
 /**
@@ -127,14 +118,6 @@ export type RankSpec =
     | {
           /** Rank this concept directly above the concept with this id. */
           above: string;
-      }
-    | {
-          /** Rank this concept directly below the concept with this id. */
-          below: string;
-      }
-    | {
-          /** Rank this concept between the two concepts with these ids. */
-          between: [string, string];
       };
 
 /**
@@ -162,12 +145,7 @@ export interface Condition {
         | 'count_gt'
         | 'count_gte'
         | 'count_eq'
-        | 'count_lt'
         | 'count_unique_gt'
-        | 'count_unique_gte'
-        | 'count_unique_eq'
-        | 'count_unique_lt'
-        | 'count_unique_lte'
         | 'min_order'
         | 'subset_of' // this category's concepts are a subset of value category's concepts
         | 'shares_concept_with' // same concept asserted in BOTH this category and the one named by value
@@ -233,8 +211,8 @@ export type When =
 /**
  * Canonical rollup operator. `pipeline` requires a matching entry in the
  * scheme's `rollup_pipelines`. Most merge operators are set-algebraic over each
- * input's assertions; rank-based operators (max/min/least_upper_bound) require
- * categories whose concepts declare `rank`.
+ * input's assertions; rank-based operators (max/min) require categories whose
+ * concepts declare `rank`.
  */
 export type Rollup =
     | 'max'
@@ -242,8 +220,6 @@ export type Rollup =
     | 'union'
     | 'intersection'
     | 'first'
-    | 'last'
-    | 'least_upper_bound'
     | 'pipeline';
 
 /**
@@ -280,123 +256,7 @@ export interface RollupPipelineStep {
     /** Condition block: multi-set quantifiers for aggregation */
     when?: When;
     /** Action to take when condition matches */
-    then: {
-        /**
-         * Assert these concepts in the pipeline's primary category (replaces
-         * all other concepts in that category).
-         */
-        keep?: string | string[];
-        /** Remove these concepts from the result */
-        remove?: string[];
-        /**
-         * Intersect a category's concepts across the inputs, with an optional
-         * fallback. A group concept is expanded to its members before a
-         * single category is intersected.
-         * Single object or array: if array, ALL must produce non-empty results
-         * or the first empty_fallback fires (and remaining intersects are
-         * skipped). fallback_if_only: list of concepts; if the intersection
-         * result contains ONLY these concepts (and no others), treat it as
-         * empty and fire the fallback.
-         */
-        intersect?:
-            | {
-                  /** Id of the category to intersect. */
-                  category?: string;
-                  /** Ids of several categories to intersect together. */
-                  categories?: string[];
-                  /**
-                   * Concept asserted when the intersection is empty. Firing it
-                   * also clears the intersected categories.
-                   */
-                  empty_fallback?: string;
-                  /**
-                   * Concept assumed for an input that carries the category's
-                   * header concept but none of its concepts.
-                   */
-                  wildcard_default?: string;
-                  /**
-                   * Concepts that, if they are all the intersection holds, make
-                   * it count as empty.
-                   */
-                  fallback_if_only?: string[];
-              }
-            | Array<{
-                  /** Id of the category to intersect. */
-                  category: string;
-                  /**
-                   * Concept asserted when the intersection is empty. Firing it
-                   * also clears the intersected categories.
-                   */
-                  empty_fallback?: string;
-                  /**
-                   * Concept assumed for an input that carries the category's
-                   * header concept but none of its concepts.
-                   */
-                  wildcard_default?: string;
-                  /**
-                   * Concepts that, if they are all the intersection holds, make
-                   * it count as empty.
-                   */
-                  fallback_if_only?: string[];
-              }>;
-        /** Also clear these categories from the result */
-        clear_categories?: string[];
-        /** Union all assertions from input sets for this category */
-        union?: boolean;
-        /** Replace specific concepts with others in the result */
-        replace?: Array<{
-            /** Id of the concept to replace. */
-            from: string;
-            /** Id of the concept that takes its place. */
-            to: string;
-        }>;
-        /**
-         * Add concepts to specific categories in the result. Each entry names
-         * the concept(s) and target category. Used to re-home a concept into a
-         * scheme-defined category during merge.
-         */
-        add?: Array<{
-            /** Id of the concept or concepts to add. */
-            concept: string | string[];
-            /** Id of the category to add them to. */
-            category: string;
-        }>;
-        /**
-         * Copy concepts from one category into another in the result. `exclude`
-         * drops specific concepts during the copy.
-         */
-        copy?: {
-            /** Id of the source category. */
-            from: string;
-            /** Id of the destination category. */
-            to: string;
-            /** Ids of concepts to leave out of the copy. */
-            exclude?: string | string[];
-        };
-        /**
-         * Move concepts from one category into another in the result (copy +
-         * remove from source). Concepts named in `exclude` are not moved; they
-         * stay in the source category. `keep_intersection: true` also keeps in
-         * the source every concept that appears in the source category on
-         * every contributing part, but only when at least one concept named in
-         * `exclude` is among them. That shared excluded concept anchors the
-         * parts as one joint source. When no excluded concept is on every
-         * part, every concept not named in `exclude` moves, shared or not.
-         */
-        move?: {
-            /** Id of the source category. */
-            from: string;
-            /** Id of the destination category. */
-            to: string;
-            /** Ids of concepts that stay in the source category. */
-            exclude?: string | string[];
-            /**
-             * Also keep in the source the concepts every contributing part
-             * shares, as described above.
-             */
-            keep_intersection?: boolean;
-        };
-    };
+    then: RollupStepActionDoc;
 }
 
 /** Minimum contract for items evaluable by the `when` condition framework. */
@@ -489,28 +349,6 @@ export interface Assertion extends Selectable {
      * transported assertions can still explain the substitution.
      */
     replacedConceptId?: string;
-    /**
-     * Source provenance for the concept that backed this assertion.
-     *
-     * Populated only when the concept came from an external source whose
-     * records were loaded with the scheme (typically one a scheme's
-     * `concepts.external` block declares). Inline-backed assertions leave this
-     * field undefined to keep payloads compact for the common single-source
-     * case. A concept a scheme document declares in its `inline` list has
-     * none, even when one of that document's `external` sources also serves a
-     * record with its id. A concept read through a queryable-only source
-     * (`SourceCapabilities.queryableOnly`) has none either: that source is
-     * asked per lookup and never loaded whole, and a lookup does not say which
-     * source answered. Such a source still appears in a composed operation's
-     * `resolution.sources`. Across a layered stack the later layer decides: a
-     * concept a later layer's source supplies carries that source's provenance
-     * even when an earlier document declares it inline, and a concept a later
-     * layer declares inline carries none.
-     *
-     * Identity fields mirror the source's `sourceIdentity()` observation at
-     * engine-load time (or the immutable value the Context pinned).
-     */
-    provenance?: SourceReference;
 }
 
 /**
@@ -934,12 +772,7 @@ export interface SuggestResult {
 export type SuggestResultsByCategory = Record<string, SuggestResult>;
 
 /** What kind of notice a concept carries. */
-export type ConceptNoticeType =
-    | 'warning'
-    | 'handling'
-    | 'admonition'
-    | 'distribution'
-    | 'info';
+export type ConceptNoticeType = 'warning' | 'admonition';
 
 /**
  * Regulatory or handling notice attached to a concept: the text the marking
@@ -1027,15 +860,6 @@ export interface CollectedNotice {
  * every SDK, which is the thing a named shape is supposed to prevent.
  */
 export type ViewLabels = Record<string, string>;
-
-/**
- * Locale-specific display labels for a concept, keyed by locale code.
- *
- * Structurally the same map as `ViewLabels` and deliberately not the same
- * type: a locale key selects a language, a view key selects a presentation
- * mode, and collapsing them would let one be passed where the other is meant.
- */
-export type ConceptSynonyms = Record<string, string>;
 
 /**
  * Free-text input configuration for a concept that accepts a typed value
@@ -1308,8 +1132,6 @@ export interface Concept {
     deprecatedMessage?: string;
     /** Concept ID that should be used instead of this deprecated concept */
     deprecatedReplacement?: string;
-    /** Locale-specific display labels: locale code -> display string */
-    synonyms?: ConceptSynonyms;
     /**
      * Structured documentation block. When present,
      * definition/guidance/applicability/notices are read from here.
@@ -1330,11 +1152,6 @@ export interface Concept {
      * fixed selection. See {@link ConceptTextInput} for the field meanings.
      */
     textInput?: ConceptTextInput;
-    /**
-     * Concept IDs that this concept supersedes (replaces). When present, the
-     * scheme loader generates supersedes constraints from these references.
-     */
-    supersedes?: string[];
     /**
      * The category whose values this concept stands for: the values a whole
      * holds in it. A part holding the concept takes them when it is read
@@ -1395,7 +1212,7 @@ export type GroupConcept = Concept & {
 };
 
 /** How concepts within a category are sorted during rendering. */
-export type SortType = 'position' | 'alphabetical' | 'numeric';
+export type SortType = 'position' | 'alphabetical';
 
 /** A category default evaluated before any category defaults are added. */
 export interface ConditionalDefaultConcept {
@@ -1449,13 +1266,6 @@ export interface Category {
      * multiple concepts are allowed (e.g., tags, countries).
      */
     single: boolean;
-    /**
-     * Restrict which concept IDs are allowed in this category. When undefined,
-     * all concepts whose `categories` array includes this category ID are
-     * allowed. When set, only concepts in this list are shown in suggestions
-     * and accepted during validation.
-     */
-    allowedConcepts?: string[];
     /**
      * Rollup operator used when aggregating multiple markings. When `pipeline`,
      * the category must be referenced by exactly one entry in the scheme's
@@ -1511,12 +1321,6 @@ export interface Category {
      * empty.
      */
     defaultConcept?: string | ConditionalDefaultConcept;
-    /**
-     * When set, suppress this category from rendering if its concept set is a
-     * subset of the named category's concept set. Used to avoid redundant
-     * display.
-     */
-    suppressIfSubsetOf?: string;
     /** Suppress this category when conditions match */
     when?: When;
     /**
@@ -1890,10 +1694,8 @@ export interface Recognizer {
  *
  * Repair rules come from the scheme's `parse.normalize` list and run in the repair
  * stage, before inference and validation. `type` selects the correction
- * strategy: `'separator'` rewrites separator text, `'dedup'` removes repeated
- * tokens, and `'case'` normalizes casing. Each rewrites the input text only;
- * none adds or removes a concept. `confidence` is recorded with the repair in
- * the explanation trace.
+ * strategy: `'dedup'` removes repeated tokens, and `'case'` normalizes casing.
+ * Each rewrites the input text only; none adds or removes a concept.
  *
  * @internal
  */
@@ -1901,18 +1703,14 @@ export interface RepairRule {
     /** Rule id. */
     id: string;
     /** The correction strategy. */
-    type: 'separator' | 'dedup' | 'case';
+    type: 'dedup' | 'case';
     /** Human-readable description of the correction. */
     description: string;
-    /**
-     * Detection or match regex, read per type: for `case` it selects the input
-     * that needs correcting; for `separator` it matches the text to replace.
-     */
+    /** For `case`: the regex that selects the input that needs correcting. */
     pattern?: string;
     /**
-     * The correction to apply, read per type. For `separator` it is the
-     * replacement text. For `case` it is the canonical case of the scheme's
-     * grammar, `'upper'` (the default) or `'lower'`; other types ignore it.
+     * For `case`: the canonical case of the scheme's grammar, `'upper'` (the
+     * default) or `'lower'`. `dedup` ignores it.
      */
     correction?: string;
     /**
@@ -1925,8 +1723,6 @@ export interface RepairRule {
      * declare it, so the loader leaves it absent.
      */
     categoryId?: string;
-    /** How sure the scheme author is that the repair is right. */
-    confidence: RepairConfidence;
     /**
      * The author's reason the correction is right. The trace records
      * `description`, not this text.
@@ -2099,8 +1895,6 @@ export type RenderSyntax =
     | {
           /** Plain text. */
           type: 'text';
-          /** How a character the syntax cannot frame is escaped. */
-          escape?: 'none' | 'backslash';
       }
     | {
           /** XML attributes on one element. */
@@ -2188,16 +1982,6 @@ export interface RenderFormatCommon {
     separator?: string;
     /** Separators for particular boundaries between adjacent top-level fields. */
     joins?: FieldJoin[];
-    /** Skip empty fields. Defaults to true for `block`, false for `inline`. */
-    omitEmpty?: boolean;
-    /**
-     * Leave assertions with `source: 'default'` out of this format's printed
-     * output. A print filter only: every condition in this format still
-     * evaluates against the real, unfiltered assertion state, so a condition
-     * elsewhere in the same format can never stop firing because of how a
-     * category happened to be filled in.
-     */
-    omitDefaults?: boolean;
     /**
      * Write a part's stand-in in place of the values it took from its whole
      * (see `Concept.standsForWhole`). Applies to a part read on its own,
@@ -2209,29 +1993,8 @@ export interface RenderFormatCommon {
     fields: RenderField[];
 }
 
-/**
- * Recognition policy: how a spelling found at a boundary is compared against
- * the vocabulary.
- *
- * Not tokenization. Every boundary in a marking belongs to the field that
- * writes it, so there is no global separator here and no last-resort split to
- * be exempt from: a multi-word spelling recognizes itself from the vocabulary
- * rather than surviving a tokenizer.
- *
- * @internal
- */
-export interface ParseConfig {
-    /** Whether the vocabulary is matched case-sensitively. */
-    caseSensitive: boolean;
-    /** Whether surrounding whitespace is ignored when a spelling is compared. */
-    stripWhitespace: boolean;
-}
-
 /** When a host UI should proactively prompt for an embedded marking. */
-export type EmbeddedMarkingStyleAutoInsert =
-    | 'every-paragraph'
-    | 'first-line'
-    | 'manual';
+export type EmbeddedMarkingStyleAutoInsert = 'every-paragraph';
 
 /**
  * One way a marking can appear embedded inside free text, e.g. a parenthesized
@@ -2251,53 +2014,11 @@ export interface EmbeddedMarkingStyle {
      */
     template: string;
     /**
-     * When the host UI should proactively prompt the user to add a marking.
-     * "every-paragraph" pops the picker on each new paragraph; "first-line"
-     * only on the first line of the document; "manual" never auto-prompts.
-     * Default "manual".
+     * Whether the host UI should prompt the user to add a marking.
+     * "every-paragraph" pops the picker on each new paragraph. Absent, the
+     * host never prompts on its own.
      */
     autoInsert?: EmbeddedMarkingStyleAutoInsert;
-}
-
-/**
- * A selectable answer in a wizard question, optionally linked to a concept and
- * implied concepts.
- */
-export interface WizardAnswerOption {
-    /** Text shown for the answer. */
-    label: string;
-    /** Value recorded when the answer is chosen. */
-    value: string;
-    /** Id of the concept the answer selects. */
-    conceptId?: string;
-    /** Ids of further concepts the answer implies. */
-    implies?: string[];
-}
-
-/** A single question in a guided wizard flow, with its answer type and options. */
-export interface WizardQuestion {
-    /** Question id. */
-    id: string;
-    /** The question as shown to the user. */
-    text: string;
-    /** Help text shown with the question. */
-    hint?: string;
-    /** How many answers the user may give. */
-    type: 'single-choice' | 'multi-choice' | 'yes-no';
-    /** The answers offered. */
-    options: WizardAnswerOption[];
-}
-
-/** A page in a multi-step wizard containing one or more questions. */
-export interface WizardStep {
-    /** Step id. */
-    id: string;
-    /** Title shown for the step. */
-    title: string;
-    /** Longer explanation shown with the step. */
-    description?: string;
-    /** The questions on this step, in order. */
-    questions: WizardQuestion[];
 }
 
 /** A singular/plural display-word pair. */
@@ -2458,23 +2179,6 @@ export interface ProcessingContext {
 }
 
 /**
- * Named collection of concept IDs used for organizational grouping in UI and
- * documentation.
- *
- * @internal
- */
-export interface ConceptGroup {
-    /** Group id. */
-    id: string;
-    /** Display name of the group. */
-    name: string;
-    /** What the group collects. */
-    description: string;
-    /** Ids of the concepts in the group, in display order. */
-    conceptIds: string[];
-}
-
-/**
  * A predefined marking shortcut that users can select instead of building a
  * marking from individual concepts.
  *
@@ -2614,11 +2318,6 @@ export interface Scheme {
      */
     referenceSurfaceLabel: ReferenceSurfaceLabel;
     /**
-     * License label shown with the scheme, such as `enterprise`.
-     * Informational only: it does not grant or restrict use.
-     */
-    license?: string;
-    /**
      * Document kind. A layer is a partial scheme composed onto a base; a plain
      * scheme stands alone. Absent means `'scheme'`.
      */
@@ -2627,9 +2326,7 @@ export interface Scheme {
     layer?: LayerBlock;
     /** Named shortcut markings, from `ui.label_presets`. */
     label_presets?: LabelPreset[];
-    /** Concept groupings for display, from `data.concept_groups`. */
-    conceptGroups?: ConceptGroup[];
-    /** Every concept, inline and from external sources. */
+    /** Every concept, declared and imported. */
     concepts: Concept[];
     /** Every category, in declared order. */
     categories: Category[];
@@ -2696,8 +2393,6 @@ export interface Scheme {
      * presentation defaults.
      */
     colorRules?: MarkingColorRule[];
-    /** Recognition policy from `parse`: case sensitivity and whitespace. */
-    parse: ParseConfig;
     /**
      * Styles that describe how markings may be embedded inside free text
      * (parens, prefix tags, etc.). Used by the scanner to locate markings in
@@ -2756,12 +2451,11 @@ export interface Scheme {
      * - `'until-next'`: the marking governs from its line through to the next
      *   part marking, a section/heading style where one mark covers several
      *   paragraphs.
-     * - `'document'`: the marking governs the whole document.
      *
      * Whole markings always govern the document regardless of this setting; it
      * only affects parts.
      */
-    partScope?: 'paragraph' | 'until-next' | 'document';
+    partScope?: 'paragraph' | 'until-next';
     /**
      * When a document audit requires each role's marking, from
      * `role_detection.<role>.required_when`. A role without a condition keeps
@@ -2773,36 +2467,6 @@ export interface Scheme {
         /** Condition under which body text needs a part marking. */
         part?: When;
     };
-    /**
-     * Scheme-defined policy (D8) for how rendering treats a parse that
-     * contained an unmatched/unrecognized token. The engine stays
-     * domain-neutral; each scheme declares the safety posture appropriate to
-     * its domain.
-     *
-     * - `'preserve_unmatched'` (DEFAULT): unrecognized tokens are kept VISIBLE in
-     *   the rendered string (appended verbatim) so they can never silently
-     *   vanish. The parse still reports `_unmatched_token` and `valid: false`.
-     *   This is the safe default so a new scheme cannot accidentally
-     *   under-render.
-     * - `'refuse'`: rendering an invalid parse returns an explicit refusal marker
-     *   instead of a partial string. The strictest posture: a security scheme
-     *   can use this so a display path that ignores `valid` shows nothing
-     *   usable rather than a less-restrictive-looking marking.
-     * - `'drop_unmatched'`: unrecognized tokens are silently omitted from the
-     *   rendered string. Only appropriate for loose tagging schemes that may
-     *   ignore an unknown tag.
-     */
-    renderOfInvalid?: 'preserve_unmatched' | 'refuse' | 'drop_unmatched';
-    /**
-     * What the `refuse` policy renders in place of the marking. The optional
-     * `{tokens}` placeholder is replaced with the comma-joined unmatched
-     * tokens; leave it out for a marker that says nothing about the input.
-     * Defaults to `[INVALID MARKING: unrecognized {tokens}]`.
-     *
-     * Only consulted when `renderOfInvalid` is `'refuse'`; the other policies
-     * compose their output from the scheme's render formats.
-     */
-    refusalMarker?: string;
 }
 
 /**
@@ -3470,16 +3134,10 @@ export interface DiffResult {
  * allows, and anything else it carries is excess. A shorter list, or none, is
  * allowed and is not missing.
  *
- * In a `max`, `min` or `least_upper_bound` category the children roll up to one
- * value, ordered by rank (`max`, `min`) or by the concept hierarchy
- * (`least_upper_bound`). The parent must sit at or above that value for `max`
- * and `least_upper_bound`, and at or below it for `min`. A parent anywhere
- * else, including one the hierarchy does not order against that value, is
- * reported once, under `missing`, and never under `excess`. The value reported
- * is what the parent and children roll up to together. For `max` and `min`
- * that is the children's own value. For `least_upper_bound` it is the bound the
- * parent and children share, which can sit beyond the children's value, and it
- * is the children's own value when the hierarchy gives them no common bound.
+ * In a `max` or `min` category the children roll up to one value, ordered by
+ * rank. The parent must sit at or above that value for `max`, and at or below
+ * it for `min`. A parent anywhere else is reported once, under `missing`, and
+ * never under `excess`. The value reported is the children's own value.
  *
  * In a `pipeline` category the parent covers when rolling it up with the
  * children leaves it unchanged. This relies on the pipeline leaving a parent

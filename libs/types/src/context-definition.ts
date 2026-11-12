@@ -17,8 +17,8 @@ import type {
  * from, in the one shape that holds for all four families.
  *
  * Context is pure composition: it names which artifact versions to load and
- * operate on. Artifact-internal concerns (sources, auth, pins, mappings) live
- * on the referenced Scheme/Guide/Access versions, not here.
+ * operate on. What an artifact holds, concept imports included, lives on the
+ * referenced Scheme/Guide/Access versions, not here.
  *
  * @public
  */

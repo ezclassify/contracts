@@ -8,8 +8,10 @@
  *
  * - Authoring input (`*Definition` / `*Doc`): the on-disk YAML/JSON shape a
  *   customer writes. `SchemeDefinition`, `GuideDefinition`, `AccessDefinition`,
- *   and `ContextDefinition` are the published, `@public` wire contracts. Field
- *   names mirror the YAML (snake_case, document envelopes intact).
+ *   `CrosswalkDefinition` and `ContextDefinition` are the published, `@public`
+ *   document contracts. Field names mirror the YAML (snake_case, document
+ *   envelopes intact). The wire stays camelCase, so a document type and the
+ *   wire type that carries the same facts are separate types.
  * - Runtime (`Scheme`, `Guide`, `AccessPolicy`, ...): the resolved, flattened
  *   shape the engine holds in memory after loading. They carry post-load detail
  *   (resolved positions/ranks, expanded rules) that is not part of any external
@@ -27,10 +29,7 @@
  *   `Local` narrowing that returns values and a `Remote` narrowing that returns
  *   Promises. Every method on a base contract works in both modes, so a UI
  *   cannot tell an in-process engine from an HTTP client.
- * - External sources (`external-source.ts`, `auth.ts`): the declarative source
- *   documents an artifact references and the resolved secret shapes. The
- *   in-process seams behind them (`source.ts`, `broker-source.ts`,
- *   `local-engine.ts`: source readers, brokers, timing telemetry and marking
+ * - In-process seams (`local-engine.ts`: timing telemetry and marking
  *   processors) carry functions across the boundary and are tagged internal.
  * - Composition (`context.ts`, `context-definition.ts`, `layer.ts`): `Context`
  *   pins a scheme, guides, an access policy, and optional directional
@@ -72,12 +71,8 @@ export type * from './layer.js';
 export type * from './context.js';
 export type * from './context-definition.js';
 export type * from './crosswalk.js';
-export type * from './external-source.js';
 export type * from './views.js';
-export type * from './source.js';
-export type * from './broker-source.js';
 export type * from './provenance.js';
 export type * from './readiness.js';
 export type * from './document.js';
-export type * from './auth.js';
 export type * from './test-suite.js';

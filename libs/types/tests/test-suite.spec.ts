@@ -98,14 +98,6 @@ describe('portable test-suite contract', () => {
                     cases: [{ ...suite.cases[0], assertions }],
                 }),
             ).toBe(false);
-            expect(
-                validate({
-                    ...suite,
-                    overrides: {
-                        one: { reason: 'Changed expectation', assertions },
-                    },
-                }),
-            ).toBe(false);
         }
     });
     it('does not admit executable code or a nested assertion language', () => {
@@ -273,45 +265,8 @@ describe('portable test-suite contract', () => {
             }),
         ).toBe(false);
     });
-    it('keeps overrides separate from case inputs', () => {
-        expect(
-            validate({
-                apiVersion: suite.apiVersion,
-                id: 'child',
-                version: '1.0.0',
-                extends: { id: suite.id, version: suite.version },
-                overrides: {
-                    one: {
-                        reason: 'This policy retires the concept.',
-                        assertions: [
-                            {
-                                path: ['valid'],
-                                matcher: 'equals',
-                                value: false,
-                            },
-                        ],
-                    },
-                },
-                cases: [],
-            }),
-        ).toBe(true);
-        expect(
-            validate({
-                apiVersion: suite.apiVersion,
-                id: 'child',
-                version: '1.0.0',
-                extends: { id: suite.id, version: suite.version },
-                overrides: {
-                    one: {
-                        reason: 'Changed',
-                        input: { marking: 'rewritten' },
-                        assertions: [
-                            { path: ['valid'], matcher: 'equals', value: true },
-                        ],
-                    },
-                },
-                cases: [],
-            }),
-        ).toBe(false);
+    it('requires the composition its cases run against', () => {
+        const { composition: _, ...withoutComposition } = suite;
+        expect(validate(withoutComposition)).toBe(false);
     });
 });

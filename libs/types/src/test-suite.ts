@@ -240,7 +240,7 @@ export interface TestOptions {
 
 /** One portable input and its separately authored oracle. */
 export interface TestCase {
-    /** Case id, unique across the suite and its parents. */
+    /** Case id, unique within the suite. */
     id: string;
     /** Short human-readable case name. */
     name?: string;
@@ -259,10 +259,7 @@ export interface TestCase {
     assertions: TestAssertion[];
 }
 
-/**
- * Immutable versioned suite, with complete expectation overrides of inherited
- * cases.
- */
+/** Immutable versioned suite: the cases and the composition they run against. */
 export interface TestSuite {
     /** The suite format version. */
     apiVersion: 'schemes.ezclassify.com/v1';
@@ -274,65 +271,22 @@ export interface TestSuite {
     name?: string;
     /** What the suite covers. */
     description?: string;
-    /**
-     * The parent suite whose cases this suite inherits, at an exact version.
-     */
-    extends?: ComponentRef;
-    /** Omission inherits the parent; presence replaces the entire composition. */
-    composition?: TestComposition;
-    /** Replacement assertions for inherited cases, keyed by case id. */
-    overrides?: {
-        [caseId: string]: {
-            /** Why the inherited expectation is replaced. */
-            reason: string;
-            /**
-             * Replace the inherited case's complete assertion list.
-             * @minItems 1
-             */
-            assertions: TestAssertion[];
-        };
-    };
-    /**
-     * The cases this suite adds. Each id must be new to the inheritance chain.
-     */
+    /** The exact artifacts the cases run against. */
+    composition: TestComposition;
+    /** The cases, in the order they run. */
     cases: TestCase[];
 }
 
-/** Case origin and the exact child that supplied its effective expectation. */
-export interface EffectiveTestCase {
-    /** The case as it runs, with any override's assertions in place. */
-    test: TestCase;
-    /** The suite that declares the case. */
-    owner: ComponentRef;
-    /** The override that replaced the case's assertions, when one did. */
-    override?: {
-        /** The suite that declares the override. */
-        owner: ComponentRef;
-        /** Why the inherited expectation is replaced. */
-        reason: string;
-    };
-}
-
-/** Resolved parent chain; no parent coverage or execution results are inherited. */
+/** A suite as a run resolves it, pinned by content digest. */
 export interface EffectiveTestSuite {
     /** The suite that was resolved. */
     suite: ComponentRef;
     /** Exact selected suite document content, including its authored metadata. */
     suiteDigest: string;
-    /**
-     * The composition the cases run against: the nearest suite in the chain
-     * that declares one.
-     */
+    /** The composition the cases run against. */
     composition: TestComposition;
-    /** The parent chain, root first, each with its content digest. */
-    ancestors: Array<{
-        /** The parent suite, at an exact version. */
-        ref: ComponentRef;
-        /** Content digest of that parent suite document. */
-        digest: string;
-    }>;
-    /** Every effective case, parents' first, in declaration order. */
-    cases: EffectiveTestCase[];
+    /** Every case, in declaration order. */
+    cases: TestCase[];
     /** Content digest of this resolved suite, checked again before it runs. */
     digest: string;
 }
