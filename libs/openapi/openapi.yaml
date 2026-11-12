@@ -2134,11 +2134,6 @@ components:
           items:
             type: string
           description: Union of subject and context paths needed to evaluate the target.
-        lines:
-          type: array
-          items:
-            type: string
-          description: Line-oriented rendering of the combined description.
       required:
         - assertions
         - assertionDisplays
@@ -2148,7 +2143,6 @@ components:
         - rules
         - combinedRequirementText
         - combinedAttributesNeeded
-        - lines
       description: Aggregated immutable-policy requirements for a trusted target.
     AccessRuleActivation:
       type: object
@@ -2210,11 +2204,6 @@ components:
           items:
             $ref: "#/components/schemas/RuleReference"
           description: Qualified rules this rule overrides.
-        lines:
-          type: array
-          items:
-            type: string
-          description: Line-oriented rendering of the description.
       required:
         - rule
         - access
@@ -2224,12 +2213,11 @@ components:
         - attributesNeeded
         - dependsOn
         - overrides
-        - lines
       description: >-
         Human-readable description of a single access rule.
 
 
-        Returned by `AccessEngineAdapter.describeAccessRule`. Tooling (LLM agents, UI tooltips) can render
+        Returned by `AccessEngineAdapter.describeAllAccessRules`. Tooling (LLM agents, UI tooltips) can render
         `requirementText` directly or walk `attributesNeeded` to know which `userAttributes` values a caller has to
         provide.
     AccessRuleResult:
@@ -2413,8 +2401,7 @@ components:
           $ref: "#/components/schemas/AssertionConfidence"
           description: >-
             How the assertion was produced: `certain` when read or handed in as stated, `inferred` when an inference
-            rule added it, or `repaired` when the engine added or rewrote it while repairing the marking. The engine
-            does not assign `uncertain` itself.
+            rule added it, or `repaired` when the engine added or rewrote it while repairing the marking.
         source:
           type: string
           description: >-
@@ -2440,9 +2427,6 @@ components:
             with `_`, set when the scheme's structure, not a rule, added the assertion. The engine writes two:
             `_tier_child_requires_parent` (a tier parent required by a stated child) and `_header_of_stated_member` (a
             header filled in for a stated member). A scheme rule id never begins with `_`.
-        expiresAt:
-          type: string
-          description: Caller-supplied ISO 8601 expiry date; the engine does not evaluate it.
         value:
           type: string
           description: >-
@@ -2452,10 +2436,6 @@ components:
             A value handed in is read the way a value in text is: it settles in the spelling the concept's encoding
             stores. One the encoding cannot read is reported as the error `_invalid_assertion_value`, and a concept that
             takes a value, handed in with none, as `_missing_assertion_value`. See `ValidationError`.
-        metadata:
-          type: object
-          additionalProperties: {}
-          description: Caller-defined data attached to the assertion. The engine assigns it no meaning.
         replacedConceptId:
           type: string
           description: >-
@@ -2476,22 +2456,19 @@ components:
         - confidence
         - source
       description: >-
-        A concept asserted in a category during processing, with confidence level and provenance metadata.
+        A concept asserted in a category during processing, with how it was produced and where it came from.
 
 
         Assertions are the core data unit flowing through the engine pipeline. `confidence` records how the assertion
         was produced: `'certain'` when read or handed in as stated, `'inferred'` when an inference rule added it, and
-        `'repaired'` when the engine added or rewrote it while repairing the marking. The engine does not assign
-        `'uncertain'` itself. `source` says where the assertion came from. `expiresAt` records caller-supplied expiry
-        metadata. The engine does not evaluate that date or automatically change confidence or the marking; the host
-        applies its expiry policy.
+        `'repaired'` when the engine added or rewrote it while repairing the marking. `source` says where the assertion
+        came from.
     AssertionConfidence:
       type: string
       enum:
         - certain
         - inferred
         - repaired
-        - uncertain
       description: Confidence assigned to an assertion by the processing pipeline.
     AssertionRef:
       type: object
@@ -2876,16 +2853,16 @@ components:
         pipelines before it and the full findings for those after it.
 
 
-        In a `first` or `last` category the children roll up to one value and the rollup has no restrictive direction,
-        so the parent must state that value. A parent that states a different one is reported once, under `missing`, as
-        the value it should state, and never under `excess`. In such a category that holds several values, values the
-        parent states beyond the picked one are not reported.
+        In a `first` category the children roll up to one value and the rollup has no restrictive direction, so the
+        parent must state that value. A parent that states a different one is reported once, under `missing`, as the
+        value it should state, and never under `excess`. In such a category that holds several values, values the parent
+        states beyond the picked one are not reported.
 
 
         In a category where the scheme has an `expand_group` rule, a parent that carries every member a group declares
         in that category states the group, and the group is not missing from it. This does not apply to a category whose
-        rollup has no restrictive direction (`first`, `last`), where the parent must state what the children roll up to
-        as it is.
+        rollup has no restrictive direction (`first`), where the parent must state what the children roll up to as it
+        is.
 
 
         In a `union` or `pipeline` category the scheme marks as a hierarchy root, a parent value ranked at or above a
@@ -3261,18 +3238,12 @@ components:
         result:
           $ref: "#/components/schemas/AccessDecision"
           description: Typed operation result.
-        operationLimitations:
-          type: array
-          items:
-            $ref: "#/components/schemas/AssessmentLimitation"
-          description: Limitations applying to the operation as a whole.
         responseProjection:
           $ref: "#/components/schemas/DocumentResponseProjection"
           description: Projection metadata, present only for document operations.
       required:
         - resolution
         - result
-        - operationLimitations
       description: Context envelope returned by trusted-target access checks.
     ContextAccessRequirementsResult:
       type: object
@@ -3283,18 +3254,12 @@ components:
         result:
           $ref: "#/components/schemas/AccessRequirementsDescription"
           description: Typed operation result.
-        operationLimitations:
-          type: array
-          items:
-            $ref: "#/components/schemas/AssessmentLimitation"
-          description: Limitations applying to the operation as a whole.
         responseProjection:
           $ref: "#/components/schemas/DocumentResponseProjection"
           description: Projection metadata, present only for document operations.
       required:
         - resolution
         - result
-        - operationLimitations
       description: Context envelope returned by immutable-policy requirement description.
     ContextCrosswalkCandidate:
       type: object
@@ -3440,18 +3405,12 @@ components:
         result:
           $ref: "#/components/schemas/CrosswalkTranslationResult"
           description: Typed operation result.
-        operationLimitations:
-          type: array
-          items:
-            $ref: "#/components/schemas/AssessmentLimitation"
-          description: Limitations applying to the operation as a whole.
         responseProjection:
           $ref: "#/components/schemas/DocumentResponseProjection"
           description: Projection metadata, present only for document operations.
       required:
         - resolution
         - result
-        - operationLimitations
       description: Context envelope returned by a directional crosswalk translation.
     ContextDocumentAuditResult:
       type: object
@@ -3462,18 +3421,12 @@ components:
         result:
           $ref: "#/components/schemas/DocumentAuditReport"
           description: Typed operation result.
-        operationLimitations:
-          type: array
-          items:
-            $ref: "#/components/schemas/AssessmentLimitation"
-          description: Limitations applying to the operation as a whole.
         responseProjection:
           $ref: "#/components/schemas/DocumentResponseProjection"
           description: Projection metadata, present only for document operations.
       required:
         - resolution
         - result
-        - operationLimitations
       description: Resolved Context envelope returned by document audit operations.
     ContextGuideEvaluationResult:
       type: object
@@ -3484,18 +3437,12 @@ components:
         result:
           $ref: "#/components/schemas/EvaluationResult"
           description: Typed operation result.
-        operationLimitations:
-          type: array
-          items:
-            $ref: "#/components/schemas/AssessmentLimitation"
-          description: Limitations applying to the operation as a whole.
         responseProjection:
           $ref: "#/components/schemas/DocumentResponseProjection"
           description: Projection metadata, present only for document operations.
       required:
         - resolution
         - result
-        - operationLimitations
       description: Context envelope returned by guide evaluation.
     ContextGuideScanResult:
       type: object
@@ -3508,18 +3455,12 @@ components:
           items:
             $ref: "#/components/schemas/GuideScanResult"
           description: Typed operation result.
-        operationLimitations:
-          type: array
-          items:
-            $ref: "#/components/schemas/AssessmentLimitation"
-          description: Limitations applying to the operation as a whole.
         responseProjection:
           $ref: "#/components/schemas/DocumentResponseProjection"
           description: Projection metadata, present only for document operations.
       required:
         - resolution
         - result
-        - operationLimitations
       description: Context envelope returned by guide text scanning.
     ContextGuideViewResult:
       type: object
@@ -3530,18 +3471,12 @@ components:
         result:
           $ref: "#/components/schemas/GuideViewResponse"
           description: Typed operation result.
-        operationLimitations:
-          type: array
-          items:
-            $ref: "#/components/schemas/AssessmentLimitation"
-          description: Limitations applying to the operation as a whole.
         responseProjection:
           $ref: "#/components/schemas/DocumentResponseProjection"
           description: Projection metadata, present only for document operations.
       required:
         - resolution
         - result
-        - operationLimitations
       description: Context envelope returned by guide structural view.
     ContextResolution:
       type: object
@@ -3577,18 +3512,12 @@ components:
         result:
           $ref: "#/components/schemas/AggregateResult"
           description: Typed operation result.
-        operationLimitations:
-          type: array
-          items:
-            $ref: "#/components/schemas/AssessmentLimitation"
-          description: Limitations applying to the operation as a whole.
         responseProjection:
           $ref: "#/components/schemas/DocumentResponseProjection"
           description: Projection metadata, present only for document operations.
       required:
         - resolution
         - result
-        - operationLimitations
       description: Context envelope returned by scheme aggregation.
     ContextSchemeConceptDescriptionResult:
       type: object
@@ -3599,18 +3528,12 @@ components:
         result:
           $ref: "#/components/schemas/ConceptDescription"
           description: Typed operation result.
-        operationLimitations:
-          type: array
-          items:
-            $ref: "#/components/schemas/AssessmentLimitation"
-          description: Limitations applying to the operation as a whole.
         responseProjection:
           $ref: "#/components/schemas/DocumentResponseProjection"
           description: Projection metadata, present only for document operations.
       required:
         - resolution
         - result
-        - operationLimitations
       description: Context envelope returned by concept description.
     ContextSchemeCoverageResult:
       type: object
@@ -3621,18 +3544,12 @@ components:
         result:
           $ref: "#/components/schemas/CheckCoverageResult"
           description: Typed operation result.
-        operationLimitations:
-          type: array
-          items:
-            $ref: "#/components/schemas/AssessmentLimitation"
-          description: Limitations applying to the operation as a whole.
         responseProjection:
           $ref: "#/components/schemas/DocumentResponseProjection"
           description: Projection metadata, present only for document operations.
       required:
         - resolution
         - result
-        - operationLimitations
       description: Context envelope returned by scheme coverage checks.
     ContextSchemeDescriptor:
       type: object
@@ -3676,18 +3593,12 @@ components:
         result:
           $ref: "#/components/schemas/DiffResult"
           description: Typed operation result.
-        operationLimitations:
-          type: array
-          items:
-            $ref: "#/components/schemas/AssessmentLimitation"
-          description: Limitations applying to the operation as a whole.
         responseProjection:
           $ref: "#/components/schemas/DocumentResponseProjection"
           description: Projection metadata, present only for document operations.
       required:
         - resolution
         - result
-        - operationLimitations
       description: Context envelope returned by scheme diff.
     ContextSchemeExplainResult:
       type: object
@@ -3698,18 +3609,12 @@ components:
         result:
           $ref: "#/components/schemas/ExplanationTrace"
           description: Typed operation result.
-        operationLimitations:
-          type: array
-          items:
-            $ref: "#/components/schemas/AssessmentLimitation"
-          description: Limitations applying to the operation as a whole.
         responseProjection:
           $ref: "#/components/schemas/DocumentResponseProjection"
           description: Projection metadata, present only for document operations.
       required:
         - resolution
         - result
-        - operationLimitations
       description: Context envelope returned by a scheme explanation.
     ContextSchemeNoticesResult:
       type: object
@@ -3722,18 +3627,12 @@ components:
           items:
             $ref: "#/components/schemas/Notice"
           description: Typed operation result.
-        operationLimitations:
-          type: array
-          items:
-            $ref: "#/components/schemas/AssessmentLimitation"
-          description: Limitations applying to the operation as a whole.
         responseProjection:
           $ref: "#/components/schemas/DocumentResponseProjection"
           description: Projection metadata, present only for document operations.
       required:
         - resolution
         - result
-        - operationLimitations
       description: Context envelope returned by scheme notice collection.
     ContextSchemeProcessResult:
       type: object
@@ -3744,18 +3643,12 @@ components:
         result:
           $ref: "#/components/schemas/ProcessResult"
           description: Typed operation result.
-        operationLimitations:
-          type: array
-          items:
-            $ref: "#/components/schemas/AssessmentLimitation"
-          description: Limitations applying to the operation as a whole.
         responseProjection:
           $ref: "#/components/schemas/DocumentResponseProjection"
           description: Projection metadata, present only for document operations.
       required:
         - resolution
         - result
-        - operationLimitations
       description: Context envelope returned by scheme processing.
     ContextSchemeRenderResult:
       type: object
@@ -3766,18 +3659,12 @@ components:
         result:
           $ref: "#/components/schemas/RenderResponse"
           description: Typed operation result.
-        operationLimitations:
-          type: array
-          items:
-            $ref: "#/components/schemas/AssessmentLimitation"
-          description: Limitations applying to the operation as a whole.
         responseProjection:
           $ref: "#/components/schemas/DocumentResponseProjection"
           description: Projection metadata, present only for document operations.
       required:
         - resolution
         - result
-        - operationLimitations
       description: Context envelope returned by scheme rendering.
     ContextSchemeRole:
       type: string
@@ -3803,18 +3690,12 @@ components:
         result:
           $ref: "#/components/schemas/ScanResponseBody"
           description: Typed operation result.
-        operationLimitations:
-          type: array
-          items:
-            $ref: "#/components/schemas/AssessmentLimitation"
-          description: Limitations applying to the operation as a whole.
         responseProjection:
           $ref: "#/components/schemas/DocumentResponseProjection"
           description: Projection metadata, present only for document operations.
       required:
         - resolution
         - result
-        - operationLimitations
       description: Context envelope returned by scheme text scanning.
     ContextSchemeSuggestForCategoriesResult:
       type: object
@@ -3825,18 +3706,12 @@ components:
         result:
           $ref: "#/components/schemas/SuggestResultsByCategory"
           description: Typed operation result.
-        operationLimitations:
-          type: array
-          items:
-            $ref: "#/components/schemas/AssessmentLimitation"
-          description: Limitations applying to the operation as a whole.
         responseProjection:
           $ref: "#/components/schemas/DocumentResponseProjection"
           description: Projection metadata, present only for document operations.
       required:
         - resolution
         - result
-        - operationLimitations
       description: >-
         Context envelope returned by per-category scheme suggestions: the options keyed by category id, the same map a
         process call returns in `suggestionsFor`.
@@ -3849,18 +3724,12 @@ components:
         result:
           $ref: "#/components/schemas/SuggestResult"
           description: Typed operation result.
-        operationLimitations:
-          type: array
-          items:
-            $ref: "#/components/schemas/AssessmentLimitation"
-          description: Limitations applying to the operation as a whole.
         responseProjection:
           $ref: "#/components/schemas/DocumentResponseProjection"
           description: Projection metadata, present only for document operations.
       required:
         - resolution
         - result
-        - operationLimitations
       description: Context envelope returned by scheme suggestions.
     ContextSchemeValidateResult:
       type: object
@@ -3871,18 +3740,12 @@ components:
         result:
           $ref: "#/components/schemas/ValidateResult"
           description: Typed operation result.
-        operationLimitations:
-          type: array
-          items:
-            $ref: "#/components/schemas/AssessmentLimitation"
-          description: Limitations applying to the operation as a whole.
         responseProjection:
           $ref: "#/components/schemas/DocumentResponseProjection"
           description: Projection metadata, present only for document operations.
       required:
         - resolution
         - result
-        - operationLimitations
       description: Context envelope returned by scheme validation.
     ContextSchemeViewResult:
       type: object
@@ -3893,18 +3756,12 @@ components:
         result:
           $ref: "#/components/schemas/SchemeViewResponse"
           description: Typed operation result.
-        operationLimitations:
-          type: array
-          items:
-            $ref: "#/components/schemas/AssessmentLimitation"
-          description: Limitations applying to the operation as a whole.
         responseProjection:
           $ref: "#/components/schemas/DocumentResponseProjection"
           description: Projection metadata, present only for document operations.
       required:
         - resolution
         - result
-        - operationLimitations
       description: Context envelope returned by scheme structural view.
     CrosswalkCompletedTranslationResult:
       type: object
@@ -5200,22 +5057,10 @@ components:
         guideUnits:
           type: integer
           description: Number of evaluated guide units.
-        accessRuleResults:
-          type: integer
-          description: Access-rule results across all scenarios.
-        contentRequirements:
-          type: integer
-          description: Content requirements across all scenarios.
-        contextRequirements:
-          type: integer
-          description: Context requirements across all scenarios.
       required:
         - nominations
         - evidenceSpans
         - guideUnits
-        - accessRuleResults
-        - contentRequirements
-        - contextRequirements
       description: Counts the full, unprojected semantic result of a document operation.
     DocumentResponseProfile:
       type: string
@@ -6256,11 +6101,6 @@ components:
         end:
           type: integer
           description: Offset in the scanned text just past the end of the match, in UTF-16 code units.
-        confidence:
-          type: number
-          description: >-
-            Advisory confidence in [0, 1], present only when the scan asked for it with the `confidence` scan option. An
-            ordinal hint derived from the match's shape, not a calibrated probability.
       required:
         - keyword
         - start
@@ -6896,13 +6736,7 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/ValidationError"
-          description: >-
-            What the scheme's rules find wrong with the settled marking. An entry whose severity is `error` makes
-            `valid` false.
-
-
-            No entry here points at a fix path: `suggestedFix` is set only on a result that carries the fix it names,
-            and this result carries none.
+          description: What the scheme's rules find wrong with the settled marking. Any entry makes `valid` false.
         warnings:
           type: array
           items:
@@ -6970,24 +6804,6 @@ components:
           description: >-
             Portable scheme-derived display color for the settled marking. Embedding hosts may override this
             presentation default.
-        assertionsBeforeRepair:
-          type: array
-          items:
-            $ref: "#/components/schemas/Assertion"
-          description: >-
-            What was read before repair: the assertions the input stated, before the repair pass took anything away or
-            rewrote it. A retired concept appears under its replacement's name, as it does in `assertions` and in the
-            fixes.
-
-
-            Present only when repair rewrote something that was read. Absent, everything read came through repair. This
-            is a record of the reading; proposed fixes are computed against the resulting `assertions`, never against
-            this earlier set. Repair leaves author-stated rule conflicts in the resulting value for the author to
-            resolve.
-
-
-            Listed in print order, placed by the same rendering as `assertions`. A concept repair took away has no place
-            in it, so it follows the others of its category.
         proposedFixes:
           type: array
           items:
@@ -6995,8 +6811,7 @@ components:
           description: >-
             The ways to make the resulting value valid, computed from that value after applied changes, each a whole
             marking the engine has read back and found valid before offering it. Empty when the marking is valid, or
-            when no change the engine could prove would make it so. An error's `suggestedFix` names one of these by its
-            `message`.
+            when no change the engine could prove would make it so.
 
 
             A request's `parts` go back in with each fix, as the caller will send them, so they are read again in the
@@ -7266,23 +7081,17 @@ components:
     RecognitionLimit:
       type: string
       enum:
-        - aborted
         - input-length
         - transitions
         - lookups
         - live-states
-        - wall-clock
-        - grammar-size
-        - depth
       description: >-
         The ceilings recognition can reach.
 
 
-        Closed, because a caller distinguishing a cancelled run from an exhausted one is writing a branch, not a
-        message. `aborted` is the caller's own `AbortSignal` firing, which is a ceiling in the sense that matters here:
-        the answer is not a confident one. `wall-clock` is the operator's time limit, and it is a separate word from
-        `transitions` because the two say different things to whoever set them: one means the input was harder than the
-        work ceiling allows, the other that the host was slower than the time allowed or the input harder than both.
+        Closed, because a caller telling one exhausted ceiling from another is writing a branch, not a message.
+        `input-length` is the longest input the engine reads, `transitions` and `lookups` are the work it spends
+        reading, and `live-states` is how many readings it keeps open at once.
     RecognitionResult:
       type: object
       properties:
@@ -7572,12 +7381,6 @@ components:
         On a process result it holds exactly the outputs the request named in `outputs`. An output that was asked for
         and could not write the state says so in its assessment rather than being left out, because a missing key would
         mean nobody asked for it.
-    RepairConfidence:
-      type: string
-      enum:
-        - safe
-        - uncertain
-      description: Confidence assigned to a deterministic repair.
     Rollup:
       type: string
       enum:
@@ -8344,9 +8147,6 @@ components:
         description:
           type: string
           description: What the repair does, as the scheme describes it.
-        confidence:
-          $ref: "#/components/schemas/RepairConfidence"
-          description: The confidence the scheme declares for the repair rule.
         before:
           type: string
           description: The text before the repair.
@@ -8359,7 +8159,6 @@ components:
       required:
         - ruleId
         - description
-        - confidence
         - before
         - after
       description: Repair recorded in an explanation trace.
@@ -8562,13 +8361,7 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/ValidationError"
-          description: >-
-            What the scheme's rules find wrong with the settled marking. An entry whose severity is `error` makes
-            `valid` false.
-
-
-            No entry here points at a fix path: `suggestedFix` is set only on a result that carries the fix it names,
-            and this result carries none.
+          description: What the scheme's rules find wrong with the settled marking. Any entry makes `valid` false.
         warnings:
           type: array
           items:
@@ -8680,23 +8473,11 @@ components:
         categoryId:
           type: string
           description: Category ID this error relates to (when determinable from the constraint).
-        severity:
-          $ref: "#/components/schemas/ValidationSeverity"
-          description: "Severity: 'error' blocks validity, 'warning' is advisory. Default: 'error'."
         affectedConcepts:
           type: array
           items:
             type: string
           description: Concept IDs involved in this validation failure.
-        suggestedFix:
-          type: string
-          description: >-
-            The `message` of the proposed fix that answers this error, such as "Add CTRL-A".
-
-
-            Set only on a result that carries that fix in its own `proposedFixes`. A result with no fix paths, such as a
-            `ValidateResult` or a scan region, never sets it, so a reader never holds a pointer to a fix it was not
-            given.
         didYouMean:
           type: array
           items:
@@ -8717,8 +8498,8 @@ components:
             stands, and naming a different concept would point the author away from a word they spelled right.
 
 
-            It is not a fix: nothing here has been proven to make the marking valid, and `suggestedFix` and the result's
-            fix paths do not depend on it.
+            It is not a fix: nothing here has been proven to make the marking valid, and the result's fix paths do not
+            depend on it.
           minItems: 1
       required:
         - constraintId
@@ -8728,8 +8509,8 @@ components:
 
 
         Carried in the `errors` of every result that judges a marking. `constraintId` identifies the rule that fired;
-        `message` is human-readable. When `severity` is `'warning'`, the violation is advisory and does not set `valid`
-        to `false`. Use `categoryId` and `affectedConcepts` to highlight the specific UI elements involved.
+        `message` is human-readable. Every entry sets `valid` to `false`; advisories are warnings, not errors. Use
+        `categoryId` and `affectedConcepts` to highlight the specific UI elements involved.
 
 
         Two of the ids the engine keeps for itself are for a fact a caller hands in that cannot be settled as given:
@@ -8748,12 +8529,6 @@ components:
         And `_stand_in_requires_whole` is a part that leaves a category to a stand-in, a concept that declares
         `stands_for_whole`, with no verified whole to take the values from. `affectedConcepts` names the stand-in and
         `categoryId` its category.
-    ValidationSeverity:
-      type: string
-      enum:
-        - error
-        - warning
-      description: Severity assigned to a validation issue.
     ValueEncoding:
       anyOf:
         - $ref: "#/components/schemas/TextValueEncoding"

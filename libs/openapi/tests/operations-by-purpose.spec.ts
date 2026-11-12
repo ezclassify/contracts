@@ -123,12 +123,7 @@ const READER_FIELDS = [
     'valid',
     'warnings',
 ];
-const AUTHOR_EXTRAS = [
-    'assertionsBeforeRepair',
-    'proposedFixes',
-    'renders',
-    'suggestionsFor',
-];
+const AUTHOR_EXTRAS = ['proposedFixes', 'renders', 'suggestionsFor'];
 
 describe('validate is the reader call', () => {
     it('answers with exactly the fields a reader uses', () => {
@@ -157,16 +152,10 @@ describe('validate is the reader call', () => {
         expect(keys('RecognitionWithCorrections')).toContain('corrections');
     });
 
-    it('carries no fix path, so no error in it can point at one', () => {
+    it('carries no fix path', () => {
         expect(reaches('ValidateResult').has('Fix')).toBe(false);
         // Negative control: the author's result does carry fix paths.
         expect(reaches('ProcessResult').has('Fix')).toBe(true);
-        expect(
-            schema('ValidateResult').properties!['errors']!.description,
-        ).toMatch(/No entry here points at a fix path/);
-        expect(
-            schema('ValidationError').properties!['suggestedFix']!.description,
-        ).toMatch(/Set only on a result that carries that fix/);
     });
 
     it('takes text or facts and nothing that changes the settling', () => {

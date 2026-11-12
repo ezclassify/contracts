@@ -183,9 +183,9 @@ export interface ConceptModernization {
 /**
  * Human-readable description of a single access rule.
  *
- * Returned by `AccessEngineAdapter.describeAccessRule`. Tooling (LLM agents, UI
- * tooltips) can render `requirementText` directly or walk `attributesNeeded` to
- * know which `userAttributes` values a caller has to provide.
+ * Returned by `AccessEngineAdapter.describeAllAccessRules`. Tooling (LLM agents,
+ * UI tooltips) can render `requirementText` directly or walk `attributesNeeded`
+ * to know which `userAttributes` values a caller has to provide.
  */
 export interface AccessRuleDescription {
     /** Qualified rule being described. */
@@ -208,8 +208,6 @@ export interface AccessRuleDescription {
     dependsOn: RuleReference[];
     /** Qualified rules this rule overrides. */
     overrides: RuleReference[];
-    /** Line-oriented rendering of the description. */
-    lines: string[];
 }
 
 /** Trusted marking/assertion target accepted by access requirement description. */
@@ -251,8 +249,6 @@ export interface AccessRequirementsDescription {
     combinedRequirementText: string;
     /** Union of subject and context paths needed to evaluate the target. */
     combinedAttributesNeeded: string[];
-    /** Line-oriented rendering of the combined description. */
-    lines: string[];
 }
 
 /** Which scheme an access policy governs. */

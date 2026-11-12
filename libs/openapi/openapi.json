@@ -2802,13 +2802,6 @@
               "type": "string"
             },
             "description": "Union of subject and context paths needed to evaluate the target."
-          },
-          "lines": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "description": "Line-oriented rendering of the combined description."
           }
         },
         "required": [
@@ -2819,8 +2812,7 @@
           "appliedRules",
           "rules",
           "combinedRequirementText",
-          "combinedAttributesNeeded",
-          "lines"
+          "combinedAttributesNeeded"
         ],
         "description": "Aggregated immutable-policy requirements for a trusted target."
       },
@@ -2904,13 +2896,6 @@
               "$ref": "#/components/schemas/RuleReference"
             },
             "description": "Qualified rules this rule overrides."
-          },
-          "lines": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "description": "Line-oriented rendering of the description."
           }
         },
         "required": [
@@ -2921,10 +2906,9 @@
           "requirementText",
           "attributesNeeded",
           "dependsOn",
-          "overrides",
-          "lines"
+          "overrides"
         ],
-        "description": "Human-readable description of a single access rule.\n\nReturned by `AccessEngineAdapter.describeAccessRule`. Tooling (LLM agents, UI tooltips) can render `requirementText` directly or walk `attributesNeeded` to know which `userAttributes` values a caller has to provide."
+        "description": "Human-readable description of a single access rule.\n\nReturned by `AccessEngineAdapter.describeAllAccessRules`. Tooling (LLM agents, UI tooltips) can render `requirementText` directly or walk `attributesNeeded` to know which `userAttributes` values a caller has to provide."
       },
       "AccessRuleResult": {
         "type": "object",
@@ -3130,7 +3114,7 @@
           },
           "confidence": {
             "$ref": "#/components/schemas/AssertionConfidence",
-            "description": "How the assertion was produced: `certain` when read or handed in as stated, `inferred` when an inference rule added it, or `repaired` when the engine added or rewrote it while repairing the marking. The engine does not assign `uncertain` itself."
+            "description": "How the assertion was produced: `certain` when read or handed in as stated, `inferred` when an inference rule added it, or `repaired` when the engine added or rewrote it while repairing the marking."
           },
           "source": {
             "type": "string",
@@ -3140,18 +3124,9 @@
             "type": "string",
             "description": "The id of the scheme rule that produced this assertion, when one did. Otherwise an engine-owned id beginning with `_`, set when the scheme's structure, not a rule, added the assertion. The engine writes two: `_tier_child_requires_parent` (a tier parent required by a stated child) and `_header_of_stated_member` (a header filled in for a stated member). A scheme rule id never begins with `_`."
           },
-          "expiresAt": {
-            "type": "string",
-            "description": "Caller-supplied ISO 8601 expiry date; the engine does not evaluate it."
-          },
           "value": {
             "type": "string",
             "description": "The value of a concept that takes one (`text_input`).\n\nA value handed in is read the way a value in text is: it settles in the spelling the concept's encoding stores. One the encoding cannot read is reported as the error `_invalid_assertion_value`, and a concept that takes a value, handed in with none, as `_missing_assertion_value`. See `ValidationError`."
-          },
-          "metadata": {
-            "type": "object",
-            "additionalProperties": {},
-            "description": "Caller-defined data attached to the assertion. The engine assigns it no meaning."
           },
           "replacedConceptId": {
             "type": "string",
@@ -3164,15 +3139,14 @@
           "confidence",
           "source"
         ],
-        "description": "A concept asserted in a category during processing, with confidence level and provenance metadata.\n\nAssertions are the core data unit flowing through the engine pipeline. `confidence` records how the assertion was produced: `'certain'` when read or handed in as stated, `'inferred'` when an inference rule added it, and `'repaired'` when the engine added or rewrote it while repairing the marking. The engine does not assign `'uncertain'` itself. `source` says where the assertion came from. `expiresAt` records caller-supplied expiry metadata. The engine does not evaluate that date or automatically change confidence or the marking; the host applies its expiry policy."
+        "description": "A concept asserted in a category during processing, with how it was produced and where it came from.\n\nAssertions are the core data unit flowing through the engine pipeline. `confidence` records how the assertion was produced: `'certain'` when read or handed in as stated, `'inferred'` when an inference rule added it, and `'repaired'` when the engine added or rewrote it while repairing the marking. `source` says where the assertion came from."
       },
       "AssertionConfidence": {
         "type": "string",
         "enum": [
           "certain",
           "inferred",
-          "repaired",
-          "uncertain"
+          "repaired"
         ],
         "description": "Confidence assigned to an assertion by the processing pipeline."
       },
@@ -3564,7 +3538,7 @@
           "excessLabels",
           "rendered"
         ],
-        "description": "Result of a coverage check. The engine is given a list of child markings and a single parent marking, aggregates the children in the scheme's format, then compares the parent with the children category by category.\n\nA parent can fail to cover its children in two ways, and each has its own field. `missing` is what the children need that the parent does not carry. `excess` is what the parent carries that the children do not account for. A caller tells \"add this\" from \"remove this\" by which field a concept is in, not by reading error text.\n\nHow a category is judged comes from how the scheme rolls it up. A category that a rollup pipeline names is judged as a `pipeline` category, whatever rollup it declares. Every other category is judged by the rollup it declares.\n\nIn a `union` category the parent must carry every value the children roll up to, and anything it lacks is missing. A value no child carries is allowed on the parent and is not excess.\n\nIn an `intersection` category the parent may carry only values every child allows, and anything else it carries is excess. A shorter list, or none, is allowed and is not missing.\n\nIn a `max` or `min` category the children roll up to one value, ordered by rank. The parent must sit at or above that value for `max`, and at or below it for `min`. A parent anywhere else is reported once, under `missing`, and never under `excess`. The value reported is the children's own value.\n\nIn a `pipeline` category the parent covers when rolling it up with the children leaves it unchanged. This relies on the pipeline leaving a parent rolled up on its own unchanged, which the scheme author has to make true.\n\nThe findings in `pipeline` categories are worked out for all the categories one pipeline names together. First they are narrowed to what the children roll up to on their own: a value the rollup of parent and children adds is missing only when the children's own rollup carries it, and a parent value that rollup drops is excess only when the children's own rollup does not carry it. The narrowed findings are then tested by acting on every finding of the report: the excess is taken out of the parent and the missing is put in, replacing what a single-value category held. They are reported only when that gives a parent that is valid under the scheme's rules and covers the children in every category, judged against the children's rollup. Otherwise, and whenever narrowing would leave nothing, the findings are not narrowed: every value the rollup of parent and children adds is missing, and every parent value it drops is excess, including one the children carry. Pipelines are decided one at a time, in the order the scheme lists them. Each is judged with the findings already decided for the pipelines before it and the full findings for those after it.\n\nIn a `first` or `last` category the children roll up to one value and the rollup has no restrictive direction, so the parent must state that value. A parent that states a different one is reported once, under `missing`, as the value it should state, and never under `excess`. In such a category that holds several values, values the parent states beyond the picked one are not reported.\n\nIn a category where the scheme has an `expand_group` rule, a parent that carries every member a group declares in that category states the group, and the group is not missing from it. This does not apply to a category whose rollup has no restrictive direction (`first`, `last`), where the parent must state what the children roll up to as it is.\n\nIn a `union` or `pipeline` category the scheme marks as a hierarchy root, a parent value ranked at or above a needed value also covers it.\n\nWith no non-empty children, a valid parent is covered and both lists are empty.\n\n`rendered` is the aggregate of the children rendered in the requested format; the UI can display it directly as the computed rollup without a separate aggregate() round-trip."
+        "description": "Result of a coverage check. The engine is given a list of child markings and a single parent marking, aggregates the children in the scheme's format, then compares the parent with the children category by category.\n\nA parent can fail to cover its children in two ways, and each has its own field. `missing` is what the children need that the parent does not carry. `excess` is what the parent carries that the children do not account for. A caller tells \"add this\" from \"remove this\" by which field a concept is in, not by reading error text.\n\nHow a category is judged comes from how the scheme rolls it up. A category that a rollup pipeline names is judged as a `pipeline` category, whatever rollup it declares. Every other category is judged by the rollup it declares.\n\nIn a `union` category the parent must carry every value the children roll up to, and anything it lacks is missing. A value no child carries is allowed on the parent and is not excess.\n\nIn an `intersection` category the parent may carry only values every child allows, and anything else it carries is excess. A shorter list, or none, is allowed and is not missing.\n\nIn a `max` or `min` category the children roll up to one value, ordered by rank. The parent must sit at or above that value for `max`, and at or below it for `min`. A parent anywhere else is reported once, under `missing`, and never under `excess`. The value reported is the children's own value.\n\nIn a `pipeline` category the parent covers when rolling it up with the children leaves it unchanged. This relies on the pipeline leaving a parent rolled up on its own unchanged, which the scheme author has to make true.\n\nThe findings in `pipeline` categories are worked out for all the categories one pipeline names together. First they are narrowed to what the children roll up to on their own: a value the rollup of parent and children adds is missing only when the children's own rollup carries it, and a parent value that rollup drops is excess only when the children's own rollup does not carry it. The narrowed findings are then tested by acting on every finding of the report: the excess is taken out of the parent and the missing is put in, replacing what a single-value category held. They are reported only when that gives a parent that is valid under the scheme's rules and covers the children in every category, judged against the children's rollup. Otherwise, and whenever narrowing would leave nothing, the findings are not narrowed: every value the rollup of parent and children adds is missing, and every parent value it drops is excess, including one the children carry. Pipelines are decided one at a time, in the order the scheme lists them. Each is judged with the findings already decided for the pipelines before it and the full findings for those after it.\n\nIn a `first` category the children roll up to one value and the rollup has no restrictive direction, so the parent must state that value. A parent that states a different one is reported once, under `missing`, as the value it should state, and never under `excess`. In such a category that holds several values, values the parent states beyond the picked one are not reported.\n\nIn a category where the scheme has an `expand_group` rule, a parent that carries every member a group declares in that category states the group, and the group is not missing from it. This does not apply to a category whose rollup has no restrictive direction (`first`), where the parent must state what the children roll up to as it is.\n\nIn a `union` or `pipeline` category the scheme marks as a hierarchy root, a parent value ranked at or above a needed value also covers it.\n\nWith no non-empty children, a valid parent is covered and both lists are empty.\n\n`rendered` is the aggregate of the children rendered in the requested format; the UI can display it directly as the computed rollup without a separate aggregate() round-trip."
       },
       "CompositeEncodingField": {
         "type": "object",
@@ -3998,13 +3972,6 @@
             "$ref": "#/components/schemas/AccessDecision",
             "description": "Typed operation result."
           },
-          "operationLimitations": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/AssessmentLimitation"
-            },
-            "description": "Limitations applying to the operation as a whole."
-          },
           "responseProjection": {
             "$ref": "#/components/schemas/DocumentResponseProjection",
             "description": "Projection metadata, present only for document operations."
@@ -4012,8 +3979,7 @@
         },
         "required": [
           "resolution",
-          "result",
-          "operationLimitations"
+          "result"
         ],
         "description": "Context envelope returned by trusted-target access checks."
       },
@@ -4028,13 +3994,6 @@
             "$ref": "#/components/schemas/AccessRequirementsDescription",
             "description": "Typed operation result."
           },
-          "operationLimitations": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/AssessmentLimitation"
-            },
-            "description": "Limitations applying to the operation as a whole."
-          },
           "responseProjection": {
             "$ref": "#/components/schemas/DocumentResponseProjection",
             "description": "Projection metadata, present only for document operations."
@@ -4042,8 +4001,7 @@
         },
         "required": [
           "resolution",
-          "result",
-          "operationLimitations"
+          "result"
         ],
         "description": "Context envelope returned by immutable-policy requirement description."
       },
@@ -4212,13 +4170,6 @@
             "$ref": "#/components/schemas/CrosswalkTranslationResult",
             "description": "Typed operation result."
           },
-          "operationLimitations": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/AssessmentLimitation"
-            },
-            "description": "Limitations applying to the operation as a whole."
-          },
           "responseProjection": {
             "$ref": "#/components/schemas/DocumentResponseProjection",
             "description": "Projection metadata, present only for document operations."
@@ -4226,8 +4177,7 @@
         },
         "required": [
           "resolution",
-          "result",
-          "operationLimitations"
+          "result"
         ],
         "description": "Context envelope returned by a directional crosswalk translation."
       },
@@ -4242,13 +4192,6 @@
             "$ref": "#/components/schemas/DocumentAuditReport",
             "description": "Typed operation result."
           },
-          "operationLimitations": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/AssessmentLimitation"
-            },
-            "description": "Limitations applying to the operation as a whole."
-          },
           "responseProjection": {
             "$ref": "#/components/schemas/DocumentResponseProjection",
             "description": "Projection metadata, present only for document operations."
@@ -4256,8 +4199,7 @@
         },
         "required": [
           "resolution",
-          "result",
-          "operationLimitations"
+          "result"
         ],
         "description": "Resolved Context envelope returned by document audit operations."
       },
@@ -4272,13 +4214,6 @@
             "$ref": "#/components/schemas/EvaluationResult",
             "description": "Typed operation result."
           },
-          "operationLimitations": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/AssessmentLimitation"
-            },
-            "description": "Limitations applying to the operation as a whole."
-          },
           "responseProjection": {
             "$ref": "#/components/schemas/DocumentResponseProjection",
             "description": "Projection metadata, present only for document operations."
@@ -4286,8 +4221,7 @@
         },
         "required": [
           "resolution",
-          "result",
-          "operationLimitations"
+          "result"
         ],
         "description": "Context envelope returned by guide evaluation."
       },
@@ -4305,13 +4239,6 @@
             },
             "description": "Typed operation result."
           },
-          "operationLimitations": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/AssessmentLimitation"
-            },
-            "description": "Limitations applying to the operation as a whole."
-          },
           "responseProjection": {
             "$ref": "#/components/schemas/DocumentResponseProjection",
             "description": "Projection metadata, present only for document operations."
@@ -4319,8 +4246,7 @@
         },
         "required": [
           "resolution",
-          "result",
-          "operationLimitations"
+          "result"
         ],
         "description": "Context envelope returned by guide text scanning."
       },
@@ -4335,13 +4261,6 @@
             "$ref": "#/components/schemas/GuideViewResponse",
             "description": "Typed operation result."
           },
-          "operationLimitations": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/AssessmentLimitation"
-            },
-            "description": "Limitations applying to the operation as a whole."
-          },
           "responseProjection": {
             "$ref": "#/components/schemas/DocumentResponseProjection",
             "description": "Projection metadata, present only for document operations."
@@ -4349,8 +4268,7 @@
         },
         "required": [
           "resolution",
-          "result",
-          "operationLimitations"
+          "result"
         ],
         "description": "Context envelope returned by guide structural view."
       },
@@ -4395,13 +4313,6 @@
             "$ref": "#/components/schemas/AggregateResult",
             "description": "Typed operation result."
           },
-          "operationLimitations": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/AssessmentLimitation"
-            },
-            "description": "Limitations applying to the operation as a whole."
-          },
           "responseProjection": {
             "$ref": "#/components/schemas/DocumentResponseProjection",
             "description": "Projection metadata, present only for document operations."
@@ -4409,8 +4320,7 @@
         },
         "required": [
           "resolution",
-          "result",
-          "operationLimitations"
+          "result"
         ],
         "description": "Context envelope returned by scheme aggregation."
       },
@@ -4425,13 +4335,6 @@
             "$ref": "#/components/schemas/ConceptDescription",
             "description": "Typed operation result."
           },
-          "operationLimitations": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/AssessmentLimitation"
-            },
-            "description": "Limitations applying to the operation as a whole."
-          },
           "responseProjection": {
             "$ref": "#/components/schemas/DocumentResponseProjection",
             "description": "Projection metadata, present only for document operations."
@@ -4439,8 +4342,7 @@
         },
         "required": [
           "resolution",
-          "result",
-          "operationLimitations"
+          "result"
         ],
         "description": "Context envelope returned by concept description."
       },
@@ -4455,13 +4357,6 @@
             "$ref": "#/components/schemas/CheckCoverageResult",
             "description": "Typed operation result."
           },
-          "operationLimitations": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/AssessmentLimitation"
-            },
-            "description": "Limitations applying to the operation as a whole."
-          },
           "responseProjection": {
             "$ref": "#/components/schemas/DocumentResponseProjection",
             "description": "Projection metadata, present only for document operations."
@@ -4469,8 +4364,7 @@
         },
         "required": [
           "resolution",
-          "result",
-          "operationLimitations"
+          "result"
         ],
         "description": "Context envelope returned by scheme coverage checks."
       },
@@ -4516,13 +4410,6 @@
             "$ref": "#/components/schemas/DiffResult",
             "description": "Typed operation result."
           },
-          "operationLimitations": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/AssessmentLimitation"
-            },
-            "description": "Limitations applying to the operation as a whole."
-          },
           "responseProjection": {
             "$ref": "#/components/schemas/DocumentResponseProjection",
             "description": "Projection metadata, present only for document operations."
@@ -4530,8 +4417,7 @@
         },
         "required": [
           "resolution",
-          "result",
-          "operationLimitations"
+          "result"
         ],
         "description": "Context envelope returned by scheme diff."
       },
@@ -4546,13 +4432,6 @@
             "$ref": "#/components/schemas/ExplanationTrace",
             "description": "Typed operation result."
           },
-          "operationLimitations": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/AssessmentLimitation"
-            },
-            "description": "Limitations applying to the operation as a whole."
-          },
           "responseProjection": {
             "$ref": "#/components/schemas/DocumentResponseProjection",
             "description": "Projection metadata, present only for document operations."
@@ -4560,8 +4439,7 @@
         },
         "required": [
           "resolution",
-          "result",
-          "operationLimitations"
+          "result"
         ],
         "description": "Context envelope returned by a scheme explanation."
       },
@@ -4579,13 +4457,6 @@
             },
             "description": "Typed operation result."
           },
-          "operationLimitations": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/AssessmentLimitation"
-            },
-            "description": "Limitations applying to the operation as a whole."
-          },
           "responseProjection": {
             "$ref": "#/components/schemas/DocumentResponseProjection",
             "description": "Projection metadata, present only for document operations."
@@ -4593,8 +4464,7 @@
         },
         "required": [
           "resolution",
-          "result",
-          "operationLimitations"
+          "result"
         ],
         "description": "Context envelope returned by scheme notice collection."
       },
@@ -4609,13 +4479,6 @@
             "$ref": "#/components/schemas/ProcessResult",
             "description": "Typed operation result."
           },
-          "operationLimitations": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/AssessmentLimitation"
-            },
-            "description": "Limitations applying to the operation as a whole."
-          },
           "responseProjection": {
             "$ref": "#/components/schemas/DocumentResponseProjection",
             "description": "Projection metadata, present only for document operations."
@@ -4623,8 +4486,7 @@
         },
         "required": [
           "resolution",
-          "result",
-          "operationLimitations"
+          "result"
         ],
         "description": "Context envelope returned by scheme processing."
       },
@@ -4639,13 +4501,6 @@
             "$ref": "#/components/schemas/RenderResponse",
             "description": "Typed operation result."
           },
-          "operationLimitations": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/AssessmentLimitation"
-            },
-            "description": "Limitations applying to the operation as a whole."
-          },
           "responseProjection": {
             "$ref": "#/components/schemas/DocumentResponseProjection",
             "description": "Projection metadata, present only for document operations."
@@ -4653,8 +4508,7 @@
         },
         "required": [
           "resolution",
-          "result",
-          "operationLimitations"
+          "result"
         ],
         "description": "Context envelope returned by scheme rendering."
       },
@@ -4679,13 +4533,6 @@
             "$ref": "#/components/schemas/ScanResponseBody",
             "description": "Typed operation result."
           },
-          "operationLimitations": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/AssessmentLimitation"
-            },
-            "description": "Limitations applying to the operation as a whole."
-          },
           "responseProjection": {
             "$ref": "#/components/schemas/DocumentResponseProjection",
             "description": "Projection metadata, present only for document operations."
@@ -4693,8 +4540,7 @@
         },
         "required": [
           "resolution",
-          "result",
-          "operationLimitations"
+          "result"
         ],
         "description": "Context envelope returned by scheme text scanning."
       },
@@ -4709,13 +4555,6 @@
             "$ref": "#/components/schemas/SuggestResultsByCategory",
             "description": "Typed operation result."
           },
-          "operationLimitations": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/AssessmentLimitation"
-            },
-            "description": "Limitations applying to the operation as a whole."
-          },
           "responseProjection": {
             "$ref": "#/components/schemas/DocumentResponseProjection",
             "description": "Projection metadata, present only for document operations."
@@ -4723,8 +4562,7 @@
         },
         "required": [
           "resolution",
-          "result",
-          "operationLimitations"
+          "result"
         ],
         "description": "Context envelope returned by per-category scheme suggestions: the options keyed by category id, the same map a process call returns in `suggestionsFor`."
       },
@@ -4739,13 +4577,6 @@
             "$ref": "#/components/schemas/SuggestResult",
             "description": "Typed operation result."
           },
-          "operationLimitations": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/AssessmentLimitation"
-            },
-            "description": "Limitations applying to the operation as a whole."
-          },
           "responseProjection": {
             "$ref": "#/components/schemas/DocumentResponseProjection",
             "description": "Projection metadata, present only for document operations."
@@ -4753,8 +4584,7 @@
         },
         "required": [
           "resolution",
-          "result",
-          "operationLimitations"
+          "result"
         ],
         "description": "Context envelope returned by scheme suggestions."
       },
@@ -4769,13 +4599,6 @@
             "$ref": "#/components/schemas/ValidateResult",
             "description": "Typed operation result."
           },
-          "operationLimitations": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/AssessmentLimitation"
-            },
-            "description": "Limitations applying to the operation as a whole."
-          },
           "responseProjection": {
             "$ref": "#/components/schemas/DocumentResponseProjection",
             "description": "Projection metadata, present only for document operations."
@@ -4783,8 +4606,7 @@
         },
         "required": [
           "resolution",
-          "result",
-          "operationLimitations"
+          "result"
         ],
         "description": "Context envelope returned by scheme validation."
       },
@@ -4799,13 +4621,6 @@
             "$ref": "#/components/schemas/SchemeViewResponse",
             "description": "Typed operation result."
           },
-          "operationLimitations": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/AssessmentLimitation"
-            },
-            "description": "Limitations applying to the operation as a whole."
-          },
           "responseProjection": {
             "$ref": "#/components/schemas/DocumentResponseProjection",
             "description": "Projection metadata, present only for document operations."
@@ -4813,8 +4628,7 @@
         },
         "required": [
           "resolution",
-          "result",
-          "operationLimitations"
+          "result"
         ],
         "description": "Context envelope returned by scheme structural view."
       },
@@ -6314,27 +6128,12 @@
           "guideUnits": {
             "type": "integer",
             "description": "Number of evaluated guide units."
-          },
-          "accessRuleResults": {
-            "type": "integer",
-            "description": "Access-rule results across all scenarios."
-          },
-          "contentRequirements": {
-            "type": "integer",
-            "description": "Content requirements across all scenarios."
-          },
-          "contextRequirements": {
-            "type": "integer",
-            "description": "Context requirements across all scenarios."
           }
         },
         "required": [
           "nominations",
           "evidenceSpans",
-          "guideUnits",
-          "accessRuleResults",
-          "contentRequirements",
-          "contextRequirements"
+          "guideUnits"
         ],
         "description": "Counts the full, unprojected semantic result of a document operation."
       },
@@ -7475,10 +7274,6 @@
           "end": {
             "type": "integer",
             "description": "Offset in the scanned text just past the end of the match, in UTF-16 code units."
-          },
-          "confidence": {
-            "type": "number",
-            "description": "Advisory confidence in [0, 1], present only when the scan asked for it with the `confidence` scan option. An ordinal hint derived from the match's shape, not a calibrated probability."
           }
         },
         "required": [
@@ -8221,7 +8016,7 @@
             "items": {
               "$ref": "#/components/schemas/ValidationError"
             },
-            "description": "What the scheme's rules find wrong with the settled marking. An entry whose severity is `error` makes `valid` false.\n\nNo entry here points at a fix path: `suggestedFix` is set only on a result that carries the fix it names, and this result carries none."
+            "description": "What the scheme's rules find wrong with the settled marking. Any entry makes `valid` false."
           },
           "warnings": {
             "type": "array",
@@ -8260,19 +8055,12 @@
             "$ref": "#/components/schemas/ConceptColor",
             "description": "Portable scheme-derived display color for the settled marking. Embedding hosts may override this presentation default."
           },
-          "assertionsBeforeRepair": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Assertion"
-            },
-            "description": "What was read before repair: the assertions the input stated, before the repair pass took anything away or rewrote it. A retired concept appears under its replacement's name, as it does in `assertions` and in the fixes.\n\nPresent only when repair rewrote something that was read. Absent, everything read came through repair. This is a record of the reading; proposed fixes are computed against the resulting `assertions`, never against this earlier set. Repair leaves author-stated rule conflicts in the resulting value for the author to resolve.\n\nListed in print order, placed by the same rendering as `assertions`. A concept repair took away has no place in it, so it follows the others of its category."
-          },
           "proposedFixes": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/Fix"
             },
-            "description": "The ways to make the resulting value valid, computed from that value after applied changes, each a whole marking the engine has read back and found valid before offering it. Empty when the marking is valid, or when no change the engine could prove would make it so. An error's `suggestedFix` names one of these by its `message`.\n\nA request's `parts` go back in with each fix, as the caller will send them, so they are read again in the fix's whole and the fix is judged with them: every part that read as a valid part marking in the call still does, and the fix covers every part that does. A part that did not read as a valid part marking in the call is one no fix to the whole can mend, so it does not keep a fix from being offered, and it may still fail beside the fix.\n\nProofs spend what is left of the call's work budget. When a proof runs out of it, or the caller cancels the call, the paths not yet proven are not offered, and `warnings` carries a notice whose `ruleId` is `_fixes_unproven`, so a short list or an empty one is not taken for every fix there is."
+            "description": "The ways to make the resulting value valid, computed from that value after applied changes, each a whole marking the engine has read back and found valid before offering it. Empty when the marking is valid, or when no change the engine could prove would make it so.\n\nA request's `parts` go back in with each fix, as the caller will send them, so they are read again in the fix's whole and the fix is judged with them: every part that read as a valid part marking in the call still does, and the fix covers every part that does. A part that did not read as a valid part marking in the call is one no fix to the whole can mend, so it does not keep a fix from being offered, and it may still fail beside the fix.\n\nProofs spend what is left of the call's work budget. When a proof runs out of it, or the caller cancels the call, the paths not yet proven are not offered, and `warnings` carries a notice whose `ruleId` is `_fixes_unproven`, so a short list or an empty one is not taken for every fix there is."
           },
           "renders": {
             "$ref": "#/components/schemas/RenderResultsByFormat",
@@ -8440,16 +8228,12 @@
       "RecognitionLimit": {
         "type": "string",
         "enum": [
-          "aborted",
           "input-length",
           "transitions",
           "lookups",
-          "live-states",
-          "wall-clock",
-          "grammar-size",
-          "depth"
+          "live-states"
         ],
-        "description": "The ceilings recognition can reach.\n\nClosed, because a caller distinguishing a cancelled run from an exhausted one is writing a branch, not a message. `aborted` is the caller's own `AbortSignal` firing, which is a ceiling in the sense that matters here: the answer is not a confident one. `wall-clock` is the operator's time limit, and it is a separate word from `transitions` because the two say different things to whoever set them: one means the input was harder than the work ceiling allows, the other that the host was slower than the time allowed or the input harder than both."
+        "description": "The ceilings recognition can reach.\n\nClosed, because a caller telling one exhausted ceiling from another is writing a branch, not a message. `input-length` is the longest input the engine reads, `transitions` and `lookups` are the work it spends reading, and `live-states` is how many readings it keeps open at once."
       },
       "RecognitionResult": {
         "type": "object",
@@ -8684,14 +8468,6 @@
           "$ref": "#/components/schemas/RenderResult"
         },
         "description": "Renders of one state, one per output, keyed by output address.\n\nFor a scheme without `render.surfaces` the outputs are its formats, keyed by format id. For a scheme with them they are the views of its surfaces, keyed `surface/view` with each id percent-encoded, surfaces in declared order and each surface's views in theirs. Every view a surface's default names is one of its views, so a default has no entry of its own, and a format no view writes has none either.\n\nOn a process result it holds exactly the outputs the request named in `outputs`. An output that was asked for and could not write the state says so in its assessment rather than being left out, because a missing key would mean nobody asked for it."
-      },
-      "RepairConfidence": {
-        "type": "string",
-        "enum": [
-          "safe",
-          "uncertain"
-        ],
-        "description": "Confidence assigned to a deterministic repair."
       },
       "Rollup": {
         "type": "string",
@@ -9449,10 +9225,6 @@
             "type": "string",
             "description": "What the repair does, as the scheme describes it."
           },
-          "confidence": {
-            "$ref": "#/components/schemas/RepairConfidence",
-            "description": "The confidence the scheme declares for the repair rule."
-          },
           "before": {
             "type": "string",
             "description": "The text before the repair."
@@ -9469,7 +9241,6 @@
         "required": [
           "ruleId",
           "description",
-          "confidence",
           "before",
           "after"
         ],
@@ -9624,7 +9395,7 @@
             "items": {
               "$ref": "#/components/schemas/ValidationError"
             },
-            "description": "What the scheme's rules find wrong with the settled marking. An entry whose severity is `error` makes `valid` false.\n\nNo entry here points at a fix path: `suggestedFix` is set only on a result that carries the fix it names, and this result carries none."
+            "description": "What the scheme's rules find wrong with the settled marking. Any entry makes `valid` false."
           },
           "warnings": {
             "type": "array",
@@ -9692,10 +9463,6 @@
             "type": "string",
             "description": "Category ID this error relates to (when determinable from the constraint)."
           },
-          "severity": {
-            "$ref": "#/components/schemas/ValidationSeverity",
-            "description": "Severity: 'error' blocks validity, 'warning' is advisory. Default: 'error'."
-          },
           "affectedConcepts": {
             "type": "array",
             "items": {
@@ -9703,16 +9470,12 @@
             },
             "description": "Concept IDs involved in this validation failure."
           },
-          "suggestedFix": {
-            "type": "string",
-            "description": "The `message` of the proposed fix that answers this error, such as \"Add CTRL-A\".\n\nSet only on a result that carries that fix in its own `proposedFixes`. A result with no fix paths, such as a `ValidateResult` or a scan region, never sets it, so a reader never holds a pointer to a fix it was not given."
-          },
           "didYouMean": {
             "type": "array",
             "items": {
               "type": "string"
             },
-            "description": "The ids of the concepts the unread token was likely meant as. Never empty. They are ids for a program to act on, not spellings to show an author: `message` gives the same hint in words, naming the spellings.\n\nSet only on an `_unmatched_token` error, which is about one token the engine could not read, and only when that token reads as a misspelling of some concept's spelling. The concepts named are tied for nearest, so their order ranks none above another.\n\nIts absence is no evidence that the token is stray text. A token too short to judge carries none, and so does one equally near to too many concepts. A token that already spells a concept, apart from case, carries none even when it is also near another concept: it was left unread for another reason, such as where it stands, and naming a different concept would point the author away from a word they spelled right.\n\nIt is not a fix: nothing here has been proven to make the marking valid, and `suggestedFix` and the result's fix paths do not depend on it.",
+            "description": "The ids of the concepts the unread token was likely meant as. Never empty. They are ids for a program to act on, not spellings to show an author: `message` gives the same hint in words, naming the spellings.\n\nSet only on an `_unmatched_token` error, which is about one token the engine could not read, and only when that token reads as a misspelling of some concept's spelling. The concepts named are tied for nearest, so their order ranks none above another.\n\nIts absence is no evidence that the token is stray text. A token too short to judge carries none, and so does one equally near to too many concepts. A token that already spells a concept, apart from case, carries none even when it is also near another concept: it was left unread for another reason, such as where it stands, and naming a different concept would point the author away from a word they spelled right.\n\nIt is not a fix: nothing here has been proven to make the marking valid, and the result's fix paths do not depend on it.",
             "minItems": 1
           }
         },
@@ -9720,15 +9483,7 @@
           "constraintId",
           "message"
         ],
-        "description": "A constraint violation detected during validation, referencing the constraint ID and a human-readable message.\n\nCarried in the `errors` of every result that judges a marking. `constraintId` identifies the rule that fired; `message` is human-readable. When `severity` is `'warning'`, the violation is advisory and does not set `valid` to `false`. Use `categoryId` and `affectedConcepts` to highlight the specific UI elements involved.\n\nTwo of the ids the engine keeps for itself are for a fact a caller hands in that cannot be settled as given: `_missing_assertion_value`, a concept that takes a value handed in with none, and `_invalid_assertion_value`, a value the concept's encoding cannot read. Each is an error on the result, not a refused request: the fact is left out of the settled marking and named in `affectedConcepts`.\n\nAnother, `_exceeds_whole`, is a part that carries more than the whole it is read in: the whole does not cover a value the part holds, carries one the part does not allow, or, in a category a rollup pipeline resolves, would change if rolled up with the part. It is given only for a part that is valid on its own, read in a whole that reads and is valid. `affectedConcepts` names every finding, and no fix answers it. See `ProcessingContext.partOf`.\n\nAnd `_stand_in_requires_whole` is a part that leaves a category to a stand-in, a concept that declares `stands_for_whole`, with no verified whole to take the values from. `affectedConcepts` names the stand-in and `categoryId` its category."
-      },
-      "ValidationSeverity": {
-        "type": "string",
-        "enum": [
-          "error",
-          "warning"
-        ],
-        "description": "Severity assigned to a validation issue."
+        "description": "A constraint violation detected during validation, referencing the constraint ID and a human-readable message.\n\nCarried in the `errors` of every result that judges a marking. `constraintId` identifies the rule that fired; `message` is human-readable. Every entry sets `valid` to `false`; advisories are warnings, not errors. Use `categoryId` and `affectedConcepts` to highlight the specific UI elements involved.\n\nTwo of the ids the engine keeps for itself are for a fact a caller hands in that cannot be settled as given: `_missing_assertion_value`, a concept that takes a value handed in with none, and `_invalid_assertion_value`, a value the concept's encoding cannot read. Each is an error on the result, not a refused request: the fact is left out of the settled marking and named in `affectedConcepts`.\n\nAnother, `_exceeds_whole`, is a part that carries more than the whole it is read in: the whole does not cover a value the part holds, carries one the part does not allow, or, in a category a rollup pipeline resolves, would change if rolled up with the part. It is given only for a part that is valid on its own, read in a whole that reads and is valid. `affectedConcepts` names every finding, and no fix answers it. See `ProcessingContext.partOf`.\n\nAnd `_stand_in_requires_whole` is a part that leaves a category to a stand-in, a concept that declares `stands_for_whole`, with no verified whole to take the values from. `affectedConcepts` names the stand-in and `categoryId` its category."
       },
       "ValueEncoding": {
         "anyOf": [

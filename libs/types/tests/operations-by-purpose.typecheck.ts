@@ -82,9 +82,7 @@ void validated.explanation;
 expectTypeOf<ProcessResult>().toMatchTypeOf<ValidateResult>();
 expectTypeOf<
     Exclude<keyof ProcessResult, keyof ValidateResult>
->().toEqualTypeOf<
-    'assertionsBeforeRepair' | 'proposedFixes' | 'renders' | 'suggestionsFor'
->();
+>().toEqualTypeOf<'proposedFixes' | 'renders' | 'suggestionsFor'>();
 expectTypeOf(processed.recognition).toEqualTypeOf<
     RecognitionWithCorrections | undefined
 >();

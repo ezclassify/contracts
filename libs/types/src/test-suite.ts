@@ -230,8 +230,6 @@ export interface TestOptions {
      * scheme's rules currently gate.
      */
     includeGated?: boolean;
-    /** Whether a `guideScan` case adds advisory confidence to each span. */
-    confidence?: boolean;
     /** The outputs a process case writes into `renders`, by output address. */
     outputs?: string[];
     /** The categories a process case asks picker options for. */

@@ -237,14 +237,14 @@ describe('public spec guard', () => {
                 string,
                 any
             >;
-            delete schemas['FilterResult'].properties.total.properties.visible
-                .description;
+            delete schemas['SchemeSummary'].properties.contextFormats.properties
+                .whole.description;
             delete schemas['ScanLimits'].description;
             expect(
                 auditOf(spec).filter((f) => f.startsWith('undescribed field')),
             ).toEqual([
-                'undescribed field: $.components.schemas.FilterResult.properties.total.properties.visible has no description',
                 'undescribed field: $.components.schemas.ScanLimits has no description',
+                'undescribed field: $.components.schemas.SchemeSummary.properties.contextFormats.properties.whole has no description',
             ]);
         });
 
@@ -262,19 +262,6 @@ describe('public spec guard', () => {
             ).toEqual([
                 `undescribed field: $.paths.${route}.post.requestBody.content.application/json.schema.properties.inline has no description`,
             ]);
-        });
-
-        it('asks nothing of the property a conditional selects on', () => {
-            const spec = loadSpec();
-            const reference = (
-                spec['components']['schemas'] as Record<string, any>
-            )['SourceReference'];
-            expect(reference.if.properties.reproducibility.description).toBe(
-                undefined,
-            );
-            expect(
-                auditOf(spec).filter((f) => f.startsWith('undescribed field')),
-            ).toEqual([]);
         });
     });
 
@@ -730,16 +717,15 @@ describe('public spec guard', () => {
     });
 
     // A reachability check that reads "nothing $refs this" as "this is dead"
-    // would delete two live components. These tests pin both halves: the
-    // components ship, and they ship because the escape hatch declares them,
-    // not by accident.
+    // would delete a live component. These tests pin both halves: the
+    // component ships, and it ships because the escape hatch declares it, not
+    // by accident.
     describe('components the server emits by value', () => {
         const RESTORED: [string, string][] = [
             ['schemas', 'DocumentInputErrorDetail'],
-            ['schemas', 'Reproducibility'],
         ];
 
-        it('ships both in openapi.yaml and openapi.json', () => {
+        it('ships in openapi.yaml and openapi.json', () => {
             const fromYaml = loadSpec();
             const fromJson = JSON.parse(fs.readFileSync(JSON_FILE, 'utf8'));
             for (const [kind, name] of RESTORED) {
@@ -767,12 +753,8 @@ describe('public spec guard', () => {
             );
         });
 
-        it('still publishes the two wire enums as closed sets', () => {
+        it('still publishes the wire enum as a closed set', () => {
             const schemas = loadSpec().components.schemas;
-            expect(schemas.Reproducibility.enum).toEqual([
-                'reproducible',
-                'best-effort',
-            ]);
             expect(schemas.DocumentInputErrorDetail.enum).toContain(
                 'empty-document',
             );
@@ -796,24 +778,23 @@ describe('public spec guard', () => {
             }
         });
 
-        // Take the hatch away and the guard fails on exactly these two:
+        // Take the hatch away and the guard fails on exactly this one:
         // without the declaration, live contract reads as dead.
-        it('would report both as dead without the declaration', () => {
+        it('would report it as dead without the declaration', () => {
             const failures = auditPublicSpec(loadSpec(), {
                 frozenSurface: readFrozenSurface(SURFACE_FILE),
                 reachableByValue: new Map(),
             }).filter((f) => f.startsWith('unreachable component'));
             expect(failures.sort()).toEqual([
                 'unreachable component: components.schemas.DocumentInputErrorDetail is not reachable from any operation',
-                'unreachable component: components.schemas.Reproducibility is not reachable from any operation',
             ]);
         });
 
         it('fails loudly if an entry outlives the component it names', () => {
             const spec = loadSpec();
-            delete spec.components.schemas.Reproducibility;
+            delete spec.components.schemas.DocumentInputErrorDetail;
             expect(auditOf(spec)).toContain(
-                'dangling reference: #/components/schemas/Reproducibility',
+                'dangling reference: #/components/schemas/DocumentInputErrorDetail',
             );
         });
     });

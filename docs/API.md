@@ -70,9 +70,8 @@ a runtime model is not automatically valid input to a document loader.
 
 Schemas expose static document schemas and extracted fragments, and every
 module is browser-safe. Generated schemas under `json-schemas/` describe the
-results a REST client receives, `json-schemas-input/` the authored documents,
-and `json-schemas-test/` the scheme test runner's saved run and operation
-results.
+results a REST client receives, and `validation/v1/<kind>.schema.json` the
+authored document of each kind.
 Their maintained sources and generation commands are recorded in
 [ARCHITECTURE.md](../ARCHITECTURE.md).
 

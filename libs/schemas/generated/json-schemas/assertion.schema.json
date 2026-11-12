@@ -3,15 +3,11 @@
     "definitions": {
         "AssertionConfidence": {
             "description": "Confidence assigned to an assertion by the processing pipeline.",
-            "enum": ["certain", "inferred", "repaired", "uncertain"],
+            "enum": ["certain", "inferred", "repaired"],
             "type": "string"
-        },
-        "Record<string,unknown>": {
-            "additionalProperties": {},
-            "type": "object"
         }
     },
-    "description": "A concept asserted in a category during processing, with confidence level and provenance metadata.\n\nAssertions are the core data unit flowing through the engine pipeline. `confidence` records how the assertion was produced: `'certain'` when read or handed in as stated, `'inferred'` when an inference rule added it, and `'repaired'` when the engine added or rewrote it while repairing the marking. The engine does not assign `'uncertain'` itself. `source` says where the assertion came from. `expiresAt` records caller-supplied expiry metadata. The engine does not evaluate that date or automatically change confidence or the marking; the host applies its expiry policy.",
+    "description": "A concept asserted in a category during processing, with how it was produced and where it came from.\n\nAssertions are the core data unit flowing through the engine pipeline. `confidence` records how the assertion was produced: `'certain'` when read or handed in as stated, `'inferred'` when an inference rule added it, and `'repaired'` when the engine added or rewrote it while repairing the marking. `source` says where the assertion came from.",
     "properties": {
         "categoryId": {
             "description": "The id of the category the concept is asserted in.",
@@ -23,15 +19,7 @@
         },
         "confidence": {
             "$ref": "#/definitions/AssertionConfidence",
-            "description": "How the assertion was produced: `certain` when read or handed in as stated, `inferred` when an inference rule added it, or `repaired` when the engine added or rewrote it while repairing the marking. The engine does not assign `uncertain` itself."
-        },
-        "expiresAt": {
-            "description": "Caller-supplied ISO 8601 expiry date; the engine does not evaluate it.",
-            "type": "string"
-        },
-        "metadata": {
-            "$ref": "#/definitions/Record%3Cstring%2Cunknown%3E",
-            "description": "Caller-defined data attached to the assertion. The engine assigns it no meaning."
+            "description": "How the assertion was produced: `certain` when read or handed in as stated, `inferred` when an inference rule added it, or `repaired` when the engine added or rewrote it while repairing the marking."
         },
         "replacedConceptId": {
             "description": "The deprecated concept this assertion was modernized from.\n\nSet when processing rewrote a deprecated concept into the replacement its scheme declares. `conceptId` is the current concept every downstream stage evaluates; this field records what the data was actually marked with, so an explanation can show the substitution (\"concept A was replaced by concept B; B is what your access was compared against\") instead of silently presenting a concept the document never carried.\n\nIt travels on the assertion rather than alongside it because assertion arrays are the engine's state transport: an access check made from transported assertions can still explain the substitution.",

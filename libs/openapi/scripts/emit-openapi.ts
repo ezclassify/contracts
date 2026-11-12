@@ -20,8 +20,7 @@
  * The only hand-authored component content is the slim http-overlay file at
  * scripts/openapi-http-overlay.yaml, which carries `components.parameters`
  * (shared parameters reused across operations), `components.securitySchemes`
- * and
- * `components.responses` (shared HTTP error envelopes that wrap a generated
+ * and `components.responses` (shared HTTP error envelopes that wrap a generated
  * body schema with a description, example, and response headers). These are
  * HTTP-level concerns with no TypeScript counterpart and stay hand-edited.
  *

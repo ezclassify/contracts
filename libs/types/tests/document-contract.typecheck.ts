@@ -49,7 +49,6 @@ import type {
     ManualGuideSelectionInput,
     MarkingValidation,
     RecognitionResult,
-    RuleDescription,
     RuleReference,
     ValidateResult,
     ValidationError,
@@ -113,9 +112,6 @@ expectTypeOf<DocumentResponseCounts>().toEqualTypeOf<{
     nominations: number;
     evidenceSpans: number;
     guideUnits: number;
-    accessRuleResults: number;
-    contentRequirements: number;
-    contextRequirements: number;
 }>();
 expectTypeOf<DocumentResponseProjection>().toEqualTypeOf<{
     profile: DocumentResponseProfile;
@@ -132,7 +128,6 @@ expectTypeOf<ContextResolution>().toEqualTypeOf<{
 expectTypeOf<ContextOperationResult<string>>().toEqualTypeOf<{
     resolution: ContextResolution;
     result: string;
-    operationLimitations: AssessmentLimitation[];
     responseProjection?: DocumentResponseProjection;
 }>();
 
@@ -184,18 +179,6 @@ expectTypeOf<GuideBreakdownEntry>().toEqualTypeOf<{
     isComputed: boolean;
     wasOverridden: boolean;
     overriddenBy?: RuleReference;
-}>();
-expectTypeOf<RuleDescription>().toEqualTypeOf<{
-    rule: RuleReference;
-    guide: ArtifactReference;
-    name: string;
-    description?: string;
-    outcomeText: string;
-    whenText?: string;
-    isComputed: boolean;
-    dependsOn: RuleReference[];
-    overrides: RuleReference[];
-    lines: string[];
 }>();
 expectTypeOf<GuideCompiledResult>().toEqualTypeOf<{
     assertions: Assertion[];
@@ -321,7 +304,6 @@ expectTypeOf<AccessRuleDescription>().toEqualTypeOf<{
     attributesNeeded: string[];
     dependsOn: RuleReference[];
     overrides: RuleReference[];
-    lines: string[];
 }>();
 expectTypeOf<AccessRequirementsDescription>().toEqualTypeOf<{
     marking?: string;
@@ -333,7 +315,6 @@ expectTypeOf<AccessRequirementsDescription>().toEqualTypeOf<{
     rules: AccessRuleDescription[];
     combinedRequirementText: string;
     combinedAttributesNeeded: string[];
-    lines: string[];
 }>();
 
 // One meaning of `valid` and `inputWasValid` at every door, the audit
@@ -420,9 +401,6 @@ const projection: DocumentResponseProjection = {
         nominations: 1,
         evidenceSpans: 1,
         guideUnits: 1,
-        accessRuleResults: 0,
-        contentRequirements: 0,
-        contextRequirements: 0,
     },
 };
 void manual;

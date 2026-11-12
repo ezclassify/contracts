@@ -66,12 +66,6 @@ export interface DocumentResponseCounts {
     evidenceSpans: number;
     /** Number of evaluated guide units. @asType integer */
     guideUnits: number;
-    /** Access-rule results across all scenarios. @asType integer */
-    accessRuleResults: number;
-    /** Content requirements across all scenarios. @asType integer */
-    contentRequirements: number;
-    /** Context requirements across all scenarios. @asType integer */
-    contextRequirements: number;
 }
 
 /** Describes the explicit projection applied after full evaluation. */
@@ -109,8 +103,6 @@ export interface ContextOperationResult<T> {
     resolution: ContextResolution;
     /** Typed operation result. */
     result: T;
-    /** Limitations applying to the operation as a whole. */
-    operationLimitations: AssessmentLimitation[];
     /** Projection metadata, present only for document operations. */
     responseProjection?: DocumentResponseProjection;
 }

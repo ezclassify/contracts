@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import type { TestSuite } from '../src/test-suite.js';
 
 const root = new URL(
-    '../../schemas/generated/json-schemas-input/test-suite.schema.json',
+    '../../schemas/generated/validation/v1/test-suite.schema.json',
     import.meta.url,
 );
 const schema = JSON.parse(readFileSync(root, 'utf8'));
@@ -118,23 +118,6 @@ describe('portable test-suite contract', () => {
             ).toBe(false);
         }
     });
-    it('keeps the report composition a named object for SDK generators', () => {
-        const reportSchema = JSON.parse(
-            readFileSync(
-                new URL(
-                    '../../schemas/generated/json-schemas-test/test-suite-run.schema.json',
-                    import.meta.url,
-                ),
-                'utf8',
-            ),
-        );
-        expect(reportSchema.definitions.TestComposition.type).toBe('object');
-        expect(
-            Object.keys(
-                reportSchema.definitions.TestComposition.properties,
-            ).sort(),
-        ).toEqual(['access', 'crosswalks', 'guides', 'scheme']);
-    });
     it('generates the inline Context-shaped composition without losing policy layers', () => {
         expect(validate(suite), JSON.stringify(validate.errors)).toBe(true);
     });
@@ -210,51 +193,6 @@ describe('portable test-suite contract', () => {
                 cases: [{ ...cases[4], operation: 'notAnOperation' }],
             }),
         ).toBe(false);
-    });
-    it('keeps the native result for every operation a suite can name', () => {
-        const results = JSON.parse(
-            readFileSync(
-                new URL(
-                    '../../schemas/generated/json-schemas-test/test-operation-results.schema.json',
-                    import.meta.url,
-                ),
-                'utf8',
-            ),
-        );
-        const operations = schema.definitions.TestOperation.enum as string[];
-        expect(Object.keys(results.properties).sort()).toEqual(
-            [...operations].sort(),
-        );
-        expect(results.properties.validate.$ref).toBe(
-            '#/definitions/ValidateResult',
-        );
-        expect(results.properties.explain.$ref).toBe(
-            '#/definitions/ExplanationTrace',
-        );
-        // The fields shipped suites assert most stay on the process result.
-        const processed = results.definitions.ProcessResult;
-        expect(processed.required).toEqual(
-            expect.arrayContaining(['rendered', 'valid', 'inputWasValid']),
-        );
-        // Expectations are authored input, so the contract they are checked
-        // against stays closed while the published result schemas are open:
-        // an expectation cannot name a field no result has.
-        expect(results.definitions.ValidateResult.additionalProperties).toBe(
-            false,
-        );
-        const published = JSON.parse(
-            readFileSync(
-                new URL(
-                    '../../schemas/generated/json-schemas/validate-result.schema.json',
-                    import.meta.url,
-                ),
-                'utf8',
-            ),
-        );
-        expect(
-            published.definitions?.ValidateResult?.additionalProperties ??
-                published.additionalProperties,
-        ).toBeUndefined();
     });
     it('refuses unknown suite fields and invalid operation names', () => {
         expect(validate({ ...suite, executable: '/tmp/run' })).toBe(false);

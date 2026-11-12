@@ -4,14 +4,7 @@ import type { LayerRemovalDoc, RollupStepActionDoc } from './scheme-definition';
 export type ProcessingRole = 'whole' | 'part';
 
 /** Confidence assigned to an assertion by the processing pipeline. */
-export type AssertionConfidence =
-    | 'certain'
-    | 'inferred'
-    | 'repaired'
-    | 'uncertain';
-
-/** Severity assigned to a validation issue. */
-export type ValidationSeverity = 'error' | 'warning';
+export type AssertionConfidence = 'certain' | 'inferred' | 'repaired';
 
 /** Discrete mutation represented by an engine `Change`. */
 export type FixAction = 'add' | 'remove' | 'replace' | 'reorder';
@@ -29,9 +22,6 @@ export interface FixConceptReference {
  * `warn` rule, or a notice the engine gives about the operation itself.
  */
 export type WarningKind = 'deprecation' | 'rule' | 'notice';
-
-/** Confidence assigned to a deterministic repair. */
-export type RepairConfidence = 'safe' | 'uncertain';
 
 /**
  * Assertion set a rule condition is evaluated against.
@@ -268,24 +258,20 @@ export interface Selectable {
 }
 
 /**
- * A concept asserted in a category during processing, with confidence level and
- * provenance metadata.
+ * A concept asserted in a category during processing, with how it was produced
+ * and where it came from.
  *
  * Assertions are the core data unit flowing through the engine pipeline.
  * `confidence` records how the assertion was produced: `'certain'` when read
  * or handed in as stated, `'inferred'` when an inference rule added it, and
  * `'repaired'` when the engine added or rewrote it while repairing the
- * marking. The engine does not assign `'uncertain'` itself. `source` says
- * where the assertion came from. `expiresAt` records caller-supplied expiry
- * metadata. The engine does not evaluate that date or automatically change
- * confidence or the marking; the host applies its expiry policy.
+ * marking. `source` says where the assertion came from.
  */
 export interface Assertion extends Selectable {
     /**
      * How the assertion was produced: `certain` when read or handed in as
      * stated, `inferred` when an inference rule added it, or `repaired` when
-     * the engine added or rewrote it while repairing the marking. The engine
-     * does not assign `uncertain` itself.
+     * the engine added or rewrote it while repairing the marking.
      */
     confidence: AssertionConfidence;
     /**
@@ -317,8 +303,6 @@ export interface Assertion extends Selectable {
      * member). A scheme rule id never begins with `_`.
      */
     sourceRule?: string;
-    /** Caller-supplied ISO 8601 expiry date; the engine does not evaluate it. */
-    expiresAt?: string;
     /**
      * The value of a concept that takes one (`text_input`).
      *
@@ -329,11 +313,6 @@ export interface Assertion extends Selectable {
      * `ValidationError`.
      */
     value?: string;
-    /**
-     * Caller-defined data attached to the assertion. The engine assigns it no
-     * meaning.
-     */
-    metadata?: Record<string, unknown>;
     /**
      * The deprecated concept this assertion was modernized from.
      *
@@ -357,9 +336,9 @@ export interface Assertion extends Selectable {
  *
  * Carried in the `errors` of every result that judges a marking.
  * `constraintId` identifies the rule that fired; `message` is human-readable.
- * When `severity` is `'warning'`, the violation is advisory and does not set
- * `valid` to `false`. Use `categoryId` and `affectedConcepts` to highlight the
- * specific UI elements involved.
+ * Every entry sets `valid` to `false`; advisories are warnings, not errors.
+ * Use `categoryId` and `affectedConcepts` to highlight the specific UI
+ * elements involved.
  *
  * Two of the ids the engine keeps for itself are for a fact a caller hands in
  * that cannot be settled as given: `_missing_assertion_value`, a concept that
@@ -393,23 +372,8 @@ export interface ValidationError {
      * constraint).
      */
     categoryId?: string;
-    /**
-     * Severity: 'error' blocks validity, 'warning' is advisory. Default:
-     * 'error'.
-     */
-    severity?: ValidationSeverity;
     /** Concept IDs involved in this validation failure. */
     affectedConcepts?: string[];
-    /**
-     * The `message` of the proposed fix that answers this error, such as "Add
-     * CTRL-A".
-     *
-     * Set only on a result that carries that fix in its own `proposedFixes`. A
-     * result with no fix paths, such as a `ValidateResult` or a scan region,
-     * never sets it, so a reader never holds a pointer to a fix it was not
-     * given.
-     */
-    suggestedFix?: string;
     /**
      * The ids of the concepts the unread token was likely meant as. Never
      * empty. They are ids for a program to act on, not spellings to show an
@@ -429,8 +393,7 @@ export interface ValidationError {
      * right.
      *
      * It is not a fix: nothing here has been proven to make the marking
-     * valid, and `suggestedFix` and the result's fix paths do not depend on
-     * it.
+     * valid, and the result's fix paths do not depend on it.
      *
      * @minItems 1
      */
@@ -635,8 +598,6 @@ export interface TraceRepair {
     ruleId: string;
     /** What the repair does, as the scheme describes it. */
     description: string;
-    /** The confidence the scheme declares for the repair rule. */
-    confidence: RepairConfidence;
     /** The text before the repair. */
     before: string;
     /** The text after the repair. */
@@ -2545,11 +2506,8 @@ export interface ValidateResult {
      */
     inputWasValid: boolean;
     /**
-     * What the scheme's rules find wrong with the settled marking. An entry
-     * whose severity is `error` makes `valid` false.
-     *
-     * No entry here points at a fix path: `suggestedFix` is set only on a
-     * result that carries the fix it names, and this result carries none.
+     * What the scheme's rules find wrong with the settled marking. Any entry
+     * makes `valid` false.
      */
     errors: ValidationError[];
     /**
@@ -2657,28 +2615,10 @@ export interface ProcessResult extends ValidateResult {
      */
     recognition?: RecognitionWithCorrections;
     /**
-     * What was read before repair: the assertions the input stated, before the
-     * repair pass took anything away or rewrote it. A retired concept appears
-     * under its replacement's name, as it does in `assertions` and in the
-     * fixes.
-     *
-     * Present only when repair rewrote something that was read. Absent,
-     * everything read came through repair. This is a record of the reading;
-     * proposed fixes are computed against the resulting `assertions`, never
-     * against this earlier set. Repair leaves author-stated rule conflicts
-     * in the resulting value for the author to resolve.
-     *
-     * Listed in print order, placed by the same rendering as `assertions`. A
-     * concept repair took away has no place in it, so it follows the others
-     * of its category.
-     */
-    assertionsBeforeRepair?: Assertion[];
-    /**
      * The ways to make the resulting value valid, computed from that value
      * after applied changes, each a whole marking the engine has
      * read back and found valid before offering it. Empty when the marking is
-     * valid, or when no change the engine could prove would make it so. An
-     * error's `suggestedFix` names one of these by its `message`.
+     * valid, or when no change the engine could prove would make it so.
      *
      * A request's `parts` go back in with each fix, as the caller will send
      * them, so they are read again in the fix's whole and the fix is judged
@@ -2784,24 +2724,16 @@ export type RecognitionStatus =
 /**
  * The ceilings recognition can reach.
  *
- * Closed, because a caller distinguishing a cancelled run from an exhausted
- * one is writing a branch, not a message. `aborted` is the caller's own
- * `AbortSignal` firing, which is a ceiling in the sense that matters here: the
- * answer is not a confident one. `wall-clock` is the operator's time limit, and
- * it is a separate word from `transitions` because the two say different
- * things to whoever set them: one means the input was harder than the work
- * ceiling allows, the other that the host was slower than the time allowed or
- * the input harder than both.
+ * Closed, because a caller telling one exhausted ceiling from another is
+ * writing a branch, not a message. `input-length` is the longest input the
+ * engine reads, `transitions` and `lookups` are the work it spends reading,
+ * and `live-states` is how many readings it keeps open at once.
  */
 export type RecognitionLimit =
-    | 'aborted'
     | 'input-length'
     | 'transitions'
     | 'lookups'
-    | 'live-states'
-    | 'wall-clock'
-    | 'grammar-size'
-    | 'depth';
+    | 'live-states';
 
 /**
  * What recognition made of an input string: how far it got, what it read, and
@@ -3160,7 +3092,7 @@ export interface DiffResult {
  * Each is judged with the findings already decided for the pipelines before it
  * and the full findings for those after it.
  *
- * In a `first` or `last` category the children roll up to one value and the
+ * In a `first` category the children roll up to one value and the
  * rollup has no restrictive direction, so the parent must state that value. A
  * parent that states a different one is reported once, under `missing`, as the
  * value it should state, and never under `excess`. In such a category that
@@ -3170,7 +3102,7 @@ export interface DiffResult {
  * In a category where the scheme has an `expand_group` rule, a parent that
  * carries every member a group declares in that category states the group,
  * and the group is not missing from it. This does not apply to a category
- * whose rollup has no restrictive direction (`first`, `last`), where the
+ * whose rollup has no restrictive direction (`first`), where the
  * parent must state what the children roll up to as it is.
  *
  * In a `union` or `pipeline` category the scheme marks as a hierarchy root, a

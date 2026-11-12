@@ -4077,12 +4077,6 @@
                     "confidence": {
                         "$ref": "#/definitions/AssertionConfidence"
                     },
-                    "expiresAt": {
-                        "type": "string"
-                    },
-                    "metadata": {
-                        "$ref": "#/definitions/Record%3Cstring%2Cunknown%3E"
-                    },
                     "replacedConceptId": {
                         "type": "string"
                     },
@@ -4108,8 +4102,7 @@
                 "enum": [
                     "certain",
                     "inferred",
-                    "repaired",
-                    "uncertain"
+                    "repaired"
                 ],
                 "type": "string"
             },
@@ -4417,10 +4410,6 @@
                 ],
                 "type": "string"
             },
-            "Record<string,unknown>": {
-                "additionalProperties": {},
-                "type": "object"
-            },
             "RuleReference": {
                 "additionalProperties": false,
                 "properties": {
@@ -4639,9 +4628,6 @@
             "TestOptions": {
                 "additionalProperties": false,
                 "properties": {
-                    "confidence": {
-                        "type": "boolean"
-                    },
                     "context": {
                         "$ref": "#/definitions/ProcessingContext"
                     },

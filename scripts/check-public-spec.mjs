@@ -451,9 +451,9 @@ function securitySchemeSeeds(spec) {
  * schema at them.
  *
  * This escape hatch exists because reading "unreferenced" as "dead" would
- * delete the only documentation of the stable `INVALID_INPUT` detail values and
- * the reproducibility vocabulary. A guard that reports live contract as dead is
- * worse than the leak it was built to catch, because someone acts on it.
+ * delete the only documentation of the stable `INVALID_INPUT` detail values. A
+ * guard that reports live contract as dead is worse than the leak it was built
+ * to catch, because someone acts on it.
  *
  * Entries are `pointer -> reason`, and the reason has to say what emits the
  * value, so a later reader can re-test the claim instead of trusting the list.
@@ -475,14 +475,6 @@ export const REACHABLE_BY_VALUE = new Map([
             'vocabulary. The generator emits it deliberately: it is a codegen ' +
             'root (libs/openapi/scripts/codegen-roots.ts) and its presence is ' +
             'asserted by the SDK generation contract test.',
-    ],
-    [
-        '#/components/schemas/Reproducibility',
-        'Wire vocabulary for whether a source can be loaded again ' +
-            'byte-for-byte. Individual source schemas pin one member with ' +
-            '`const`, so nothing $refs the union, but the union is the ' +
-            'published closed set. Also a codegen root asserted by the SDK ' +
-            'generation contract test.',
     ],
 ]);
 

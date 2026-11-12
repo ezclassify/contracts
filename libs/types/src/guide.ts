@@ -1,5 +1,5 @@
 import type { RuleWhen, Vocabulary } from './scheme';
-import type { ArtifactReference, RuleReference } from './provenance';
+import type { RuleReference } from './provenance';
 
 /** A span where a pattern matched in the scanned text. */
 export interface MatchSpan {
@@ -521,12 +521,6 @@ export interface GuideScanSpan {
      * @asType integer
      */
     end: number;
-    /**
-     * Advisory confidence in [0, 1], present only when the scan asked for it
-     * with the `confidence` scan option. An ordinal hint derived from the
-     * match's shape, not a calibrated probability.
-     */
-    confidence?: number;
 }
 
 /**
@@ -549,69 +543,4 @@ export interface GuideScanResult {
     matchedKeywords: string[];
     /** Every place in the text where the rule fired, in the order found. */
     spans: GuideScanSpan[];
-}
-
-/**
- * Human-readable description of a guide rule. Parallels `ConceptDescription` on
- * the scheme side.
- */
-export interface RuleDescription {
-    /** Qualified rule being described. */
-    rule: RuleReference;
-    /** Guide artifact that owns the rule. */
-    guide: ArtifactReference;
-    /** Human-readable rule name. */
-    name: string;
-    /** Optional policy-authored description. */
-    description?: string;
-    /** Human-readable outcome expression. */
-    outcomeText: string;
-    /** Human-readable activation expression. */
-    whenText?: string;
-    /** Whether the rule is computed from other guide facts. */
-    isComputed: boolean;
-    /** Qualified rules referenced by this rule's activation block. */
-    dependsOn: RuleReference[];
-    /** Qualified rules this rule overrides when it fires. */
-    overrides: RuleReference[];
-    /** Flattened multi-line description matching `ConceptDescription.lines`. */
-    lines: string[];
-}
-
-/** Validation result for a guide document. */
-export interface GuideValidationResult {
-    /** True when the guide document has no issues. */
-    valid: boolean;
-    /** Each problem found in the guide document, in words. Empty when valid. */
-    issues: string[];
-}
-
-/**
- * Optional progress callback. Receives `(current, total)`, where `total` is the
- * length of the scanned text in UTF-16 code units and `current` is how far the
- * scan has advanced on that scale, across every guide being scanned. It is
- * invoked at least at the start and end of the scan.
- *
- * @param current - How far the scan has advanced, on the same scale as `total`.
- * @param total - Length of the scanned text, in UTF-16 code units.
- */
-export type GuideScanProgressCallback = (
-    current: number,
-    total: number,
-) => void;
-
-/** Options accepted by guide scan operations. */
-export interface GuideScanOptions {
-    /** Optional progress callback invoked as the scan advances. */
-    onProgress?: GuideScanProgressCallback;
-    /**
-     * Opt in to advisory confidence on emitted spans. Default `false`.
-     *
-     * When `false` or absent, no span carries a `confidence` field. When
-     * `true`, each emitted span gets a deterministic, advisory `confidence` in
-     * `[0, 1]` derived purely from the match's shape (see the engine's
-     * `confidenceForNode` tiers). It is an ordinal hint, not a calibrated
-     * probability, and never enters any serialized or hashed form.
-     */
-    confidence?: boolean;
 }
