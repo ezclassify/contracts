@@ -406,11 +406,6 @@ export interface TestSuiteRun {
      * identity.
      */
     executionDigest: string;
-    /**
-     * Missing artifact digests or mutable sources prevent byte-for-byte replay
-     * claims.
-     */
-    reproducibility: 'reproducible' | 'best-effort';
     /** When the run started, as an ISO 8601 timestamp. */
     startedAt: string;
     /** When the run finished, as an ISO 8601 timestamp. */
