@@ -737,14 +737,11 @@ describe('the count operators', () => {
         expect(result.ok).toBe(true);
     });
 
-    it('a scheme condition refuses count_unique_gt', () => {
-        expect(validateFile(schemeWithCount('count_unique_gt')).ok).toBe(false);
+    it('a scheme condition refuses an operator outside the five', () => {
+        expect(validateFile(schemeWithCount('count_ne')).ok).toBe(false);
     });
 
-    it.each(['count_unique_gt', 'count_unique_lte'])(
-        'a guide when refuses %s',
-        (operator) => {
-            expect(validateFile(guideWithCount(operator)).ok).toBe(false);
-        },
-    );
+    it('a guide when refuses an operator outside the five', () => {
+        expect(validateFile(guideWithCount('count_ne')).ok).toBe(false);
+    });
 });
