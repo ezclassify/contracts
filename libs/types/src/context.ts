@@ -206,6 +206,19 @@ export interface ContextAccessComponent {
 }
 
 /**
+ * A resolved crosswalk and the ordered crosswalk layers nested under its
+ * reference.
+ *
+ * @internal
+ */
+export interface ContextCrosswalkComponent {
+    /** Parsed base crosswalk document. */
+    crosswalk: unknown;
+    /** Ordered parsed crosswalk-layer documents. */
+    layers?: unknown[];
+}
+
+/**
  * Optional identity carried alongside a runtime {@link Context} instance: the
  * spec id, version, and description that produced it. The runtime class does
  * not require any of these fields, but a resolver attaches them so callers can
@@ -231,12 +244,11 @@ export interface ContextMetadata {
  * parsed). The class does not load files itself; callers are responsible
  * for resolving `ComponentRef`s to concrete documents.
  *
- * Resolved guide and access stacks use `guideComponents` and `accessComponent`.
- * Unlayered inputs use the base-only forms; specifying both forms for one
- * family is an error.
- * Scheme layers use `layers` or each keyed scheme's nested `layers`. Guide
- * layers and access layers remain grouped with their own base documents.
- * Crosswalk layers are not accepted yet; resolvers must refuse them explicitly.
+ * Resolved guide, access and crosswalk stacks use `guideComponents`,
+ * `accessComponent` and `crosswalkComponents`. Unlayered inputs use the
+ * base-only forms; specifying both forms for one family is an error.
+ * Scheme layers use `layers` or each keyed scheme's nested `layers`. Guide,
+ * access and crosswalk layers remain grouped with their own base documents.
  *
  * @internal
  */
@@ -272,6 +284,8 @@ export interface ContextFromComponentsArgs {
     accessComponent?: ContextAccessComponent;
     /** Resolved directional crosswalk documents. */
     crosswalks?: CrosswalkDefinition[];
+    /** Resolved crosswalk stacks. Mutually exclusive with `crosswalks`. */
+    crosswalkComponents?: ContextCrosswalkComponent[];
     /** Optional metadata identifying the spec that produced this context. */
     metadata?: ContextMetadata;
 }

@@ -32,8 +32,10 @@ import type {
     AccessLayer,
     ComponentRef,
     ContextAccessRef,
+    ContextCrosswalkComponent,
     ContextCrosswalkRef,
     ContextDefinition,
+    ContextFromComponentsArgs,
     ContextGuideRef,
     ContextSchemeRef,
     CrosswalkDefinition,
@@ -221,15 +223,20 @@ describe('the runtime Context contract admits which layers it takes', () => {
         'export interface ContextFromComponentsArgs',
     );
 
-    it.each(['scheme', 'guide', 'access'])(
+    it.each(['scheme', 'guide', 'access', 'crosswalk'])(
         'names the supported %s layer family',
         (family) => {
             expect(doc.toLowerCase()).toContain(family);
         },
     );
 
-    it('requires explicit refusal of unsupported crosswalk layers', () => {
-        expect(doc).toMatch(/Crosswalk layers are not accepted yet/);
-        expect(doc).toMatch(/resolvers must refuse them explicitly/);
+    it('takes crosswalk stacks beside guide and access stacks', () => {
+        expectTypeOf<
+            ContextFromComponentsArgs['crosswalkComponents']
+        >().toEqualTypeOf<ContextCrosswalkComponent[] | undefined>();
+        expectTypeOf<ContextCrosswalkComponent>().toEqualTypeOf<{
+            crosswalk: unknown;
+            layers?: unknown[];
+        }>();
     });
 });
