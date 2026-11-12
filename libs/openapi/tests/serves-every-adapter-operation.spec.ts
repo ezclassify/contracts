@@ -557,6 +557,25 @@ describe('the document lets a client name its application', () => {
         });
     });
 
+    it('states the id grammar: 1 to 128 printable ASCII characters', () => {
+        const schema = applicationId?.['schema'] as {
+            pattern?: string;
+            maxLength?: number;
+        };
+        expect(schema.maxLength).toBe(128);
+        const grammar = new RegExp(schema.pattern ?? '(?!)');
+        expect(grammar.test('case-intake-portal')).toBe(true);
+        expect(grammar.test('!')).toBe(true);
+        expect(grammar.test('~'.repeat(128))).toBe(true);
+        expect(grammar.test('')).toBe(false);
+        expect(grammar.test('has space')).toBe(false);
+        expect(grammar.test('caf\u00e9')).toBe(false);
+        expect(grammar.test('a'.repeat(129))).toBe(false);
+        expect(applicationId?.['description']).toMatch(
+            /A value that does not match is served and counted as unidentified\./,
+        );
+    });
+
     it('accepts it on every Context operation and nowhere else', () => {
         let contextOperations = 0;
         for (const [route, item] of Object.entries(spec.paths)) {
