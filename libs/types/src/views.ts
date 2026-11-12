@@ -557,9 +557,9 @@ export interface SchemePublicView {
     };
     /**
      * How much text a part marking governs in a document audit: 'paragraph'
-     * (default), 'until-next', or 'document'.
+     * (default) or 'until-next'.
      */
-    partScope?: 'paragraph' | 'until-next' | 'document';
+    partScope?: 'paragraph' | 'until-next';
     /**
      * When a document audit requires each role's marking, from
      * `role_detection.<role>.required_when`. A role without a condition keeps

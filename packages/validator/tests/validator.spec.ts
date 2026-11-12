@@ -695,3 +695,56 @@ describe('ezclassify-validate bin', () => {
         expect(status).toBe(1);
     });
 });
+
+describe('the count operators', () => {
+    const operators = [
+        'count_gt',
+        'count_gte',
+        'count_eq',
+        'count_lt',
+        'count_lte',
+    ];
+
+    function schemeWithCount(operator: string): string {
+        const document = JSON.parse(readFileSync(referenceScheme, 'utf8'));
+        document.scheme.rules = [
+            {
+                id: 'counted',
+                when: { category: 'controls', operator, value: 1 },
+                action: 'restrict',
+                category: 'controls',
+                target: ['CTRL-A'],
+            },
+        ];
+        return scratchFile('scheme-count.yaml', yaml.dump(document));
+    }
+
+    function guideWithCount(operator: string): string {
+        const document = JSON.parse(readFileSync(referenceGuide, 'utf8'));
+        document.guide.rules[0].when = { all: [{ operator, value: 1 }] };
+        return scratchFile('guide-count.yaml', yaml.dump(document));
+    }
+
+    it.each(operators)('a scheme condition accepts %s', (operator) => {
+        const result = validateFile(schemeWithCount(operator));
+        expect(result.errors).toEqual([]);
+        expect(result.ok).toBe(true);
+    });
+
+    it.each(operators)('a guide when accepts %s', (operator) => {
+        const result = validateFile(guideWithCount(operator));
+        expect(result.errors).toEqual([]);
+        expect(result.ok).toBe(true);
+    });
+
+    it('a scheme condition refuses count_unique_gt', () => {
+        expect(validateFile(schemeWithCount('count_unique_gt')).ok).toBe(false);
+    });
+
+    it.each(['count_unique_gt', 'count_unique_lte'])(
+        'a guide when refuses %s',
+        (operator) => {
+            expect(validateFile(guideWithCount(operator)).ok).toBe(false);
+        },
+    );
+});

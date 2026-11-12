@@ -7514,13 +7514,9 @@
           "count_gte",
           "count_eq",
           "count_lt",
-          "count_unique_gt",
-          "count_unique_gte",
-          "count_unique_eq",
-          "count_unique_lt",
-          "count_unique_lte"
+          "count_lte"
         ],
-        "description": "The tests a guide `when` condition can apply to the rules the user selected. `has_concept` and `not_has_concept` name a rule by id in `value`; the `count_*` tests compare the number of selected rules with the number in `value`; `has_content` holds when any rule is selected."
+        "description": "The tests a guide `when` condition can apply to the rules the user selected. `has_concept` and `not_has_concept` name a rule by id in `value`; the `count_*` tests (greater than, greater than or equal, equal, less than, less than or equal) compare the number of selected rules with the number in `value`; `has_content` holds when any rule is selected."
       },
       "GuideWhenTest": {
         "type": "object",

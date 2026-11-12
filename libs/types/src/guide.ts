@@ -305,7 +305,8 @@ export interface GuideRuleOutcome {
 /**
  * The tests a guide `when` condition can apply to the rules the user
  * selected. `has_concept` and `not_has_concept` name a rule by id in `value`;
- * the `count_*` tests compare the number of selected rules with the number in
+ * the `count_*` tests (greater than, greater than or equal, equal, less than,
+ * less than or equal) compare the number of selected rules with the number in
  * `value`; `has_content` holds when any rule is selected.
  */
 export type GuideWhenOperator =
@@ -316,11 +317,7 @@ export type GuideWhenOperator =
     | 'count_gte'
     | 'count_eq'
     | 'count_lt'
-    | 'count_unique_gt'
-    | 'count_unique_gte'
-    | 'count_unique_eq'
-    | 'count_unique_lt'
-    | 'count_unique_lte';
+    | 'count_lte';
 
 /** A guide condition that holds when the user selected one rule. */
 export interface GuideWhenHas {

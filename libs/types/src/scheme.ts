@@ -135,7 +135,8 @@ export interface Condition {
         | 'count_gt'
         | 'count_gte'
         | 'count_eq'
-        | 'count_unique_gt'
+        | 'count_lt'
+        | 'count_lte'
         | 'min_order'
         | 'subset_of' // this category's concepts are a subset of value category's concepts
         | 'shares_concept_with' // same concept asserted in BOTH this category and the one named by value

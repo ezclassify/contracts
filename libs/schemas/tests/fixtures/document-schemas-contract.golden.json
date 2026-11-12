@@ -1253,11 +1253,7 @@
                     "count_gte",
                     "count_eq",
                     "count_lt",
-                    "count_unique_gt",
-                    "count_unique_gte",
-                    "count_unique_eq",
-                    "count_unique_lt",
-                    "count_unique_lte"
+                    "count_lte"
                 ],
                 "type": "string"
             },
@@ -2248,7 +2244,8 @@
                     "count_gt",
                     "count_gte",
                     "count_eq",
-                    "count_unique_gt",
+                    "count_lt",
+                    "count_lte",
                     "min_order",
                     "min_rank",
                     "subset_of",
