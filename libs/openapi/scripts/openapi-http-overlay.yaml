@@ -64,9 +64,13 @@ components:
         Identifies the calling application for per-application usage
         reporting: the id the application is registered under. It is not a
         credential and authorizes nothing. A request without it, or with an id
-        the deployment has not registered, is served the same way.
+        the deployment has not registered, is served the same way. An id is
+        1 to 128 printable ASCII characters (0x21 to 0x7E), with no spaces.
+        A value that does not match is served and counted as unidentified.
       schema:
         type: string
+        pattern: '^[\x21-\x7e]{1,128}$'
+        maxLength: 128
       example: 'case-intake-portal'
 
   headers:

@@ -57,7 +57,8 @@ export type RuleContributorQuantifier = 'any' | 'all' | 'none';
  * `has_content` holds when the category holds anything; the `count_*` tests
  * (greater than, greater than or equal, equal, less than, less than or equal)
  * compare the number of concepts in the category with the number in `value`;
- * `min_order` holds when a concept sits at or above the order in `value`;
+ * `min_rank` holds when the category holds a concept ranked at or above the
+ * rank in `value`;
  * `subset_of` holds when this category's concepts are a subset of the
  * category named in `value`, and `shares_concept_with` when the two share a
  * concept; `every_has_concept` and `any_lacks_concept` ask whether every
@@ -72,7 +73,7 @@ export type RuleConditionOperator =
     | 'count_eq'
     | 'count_lt'
     | 'count_lte'
-    | 'min_order'
+    | 'min_rank'
     | 'subset_of'
     | 'shares_concept_with'
     | 'every_has_concept'
@@ -139,7 +140,7 @@ export type RankSpec =
 
 /**
  * A single predicate that tests one category's assertions (e.g., has_content,
- * count_gt, min_order).
+ * count_gt, min_rank).
  */
 export interface Condition {
     /**
@@ -159,7 +160,7 @@ export interface Condition {
     /**
      * Operand for the operator: a concept id for the concept tests, a category
      * id for `subset_of` and `shares_concept_with`, and a number for the
-     * `count_*` and `min_order` tests.
+     * `count_*` and `min_rank` tests.
      */
     value?: string | number;
 }

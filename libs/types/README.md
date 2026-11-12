@@ -36,7 +36,7 @@ when:
     target: contributors
     quantifier: any
     all:
-        - { category: level, operator: min_order, value: 1 }
+        - { category: level, operator: min_rank, value: 1 }
         - { category: handling, operator: not_has_concept, value: SHARE }
 ```
 

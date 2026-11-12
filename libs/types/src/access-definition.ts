@@ -34,7 +34,7 @@ export interface AccessLayer extends LayerBinding {}
  * - `has_concept`: the category holds the concept named in `value`.
  * - `has_content`: the category holds anything.
  * - `has_no_content`: the category holds nothing.
- * - `min_order`: the category holds a concept ranked at or above `value`.
+ * - `min_rank`: the category holds a concept ranked at or above `value`.
  *
  * @public
  */
@@ -42,7 +42,7 @@ export type AccessGateOperator =
     | 'has_concept'
     | 'has_content'
     | 'has_no_content'
-    | 'min_order';
+    | 'min_rank';
 
 /**
  * How a check compares its operands.
@@ -75,7 +75,7 @@ export interface AccessRuleGateDoc {
     category: string;
     /** What the gate asks of the category. */
     operator: AccessGateOperator;
-    /** A concept id for `has_concept`, a rank for `min_order`. */
+    /** A concept id for `has_concept`, a rank for `min_rank`. */
     value?: string | number;
 }
 

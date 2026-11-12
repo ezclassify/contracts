@@ -134,8 +134,8 @@ function validate13(data, { instancePath = "", parentData, parentDataProperty, r
   validate13.errors = vErrors;
   return errors === 0;
 }
-var schema20 = { "additionalProperties": false, "description": "A data gate: the rule is evaluated only when this holds of the data.", "properties": { "category": { "description": "The category tested.", "type": "string" }, "operator": { "$ref": "#/definitions/AccessGateOperator", "description": "What the gate asks of the category." }, "value": { "description": "A concept id for `has_concept`, a rank for `min_order`.", "type": ["string", "number"] } }, "required": ["category", "operator"], "type": "object" };
-var schema21 = { "description": "What a data gate asks of the data before a rule is evaluated.\n\n- `has_concept`: the category holds the concept named in `value`.\n- `has_content`: the category holds anything.\n- `has_no_content`: the category holds nothing.\n- `min_order`: the category holds a concept ranked at or above `value`.", "enum": ["has_concept", "has_content", "has_no_content", "min_order"], "type": "string" };
+var schema20 = { "additionalProperties": false, "description": "A data gate: the rule is evaluated only when this holds of the data.", "properties": { "category": { "description": "The category tested.", "type": "string" }, "operator": { "$ref": "#/definitions/AccessGateOperator", "description": "What the gate asks of the category." }, "value": { "description": "A concept id for `has_concept`, a rank for `min_rank`.", "type": ["string", "number"] } }, "required": ["category", "operator"], "type": "object" };
+var schema21 = { "description": "What a data gate asks of the data before a rule is evaluated.\n\n- `has_concept`: the category holds the concept named in `value`.\n- `has_content`: the category holds anything.\n- `has_no_content`: the category holds nothing.\n- `min_rank`: the category holds a concept ranked at or above `value`.", "enum": ["has_concept", "has_content", "has_no_content", "min_rank"], "type": "string" };
 function validate15(data, { instancePath = "", parentData, parentDataProperty, rootData = data } = {}) {
   let vErrors = null;
   let errors = 0;
@@ -191,7 +191,7 @@ function validate15(data, { instancePath = "", parentData, parentDataProperty, r
         }
         errors++;
       }
-      if (!(data1 === "has_concept" || data1 === "has_content" || data1 === "has_no_content" || data1 === "min_order")) {
+      if (!(data1 === "has_concept" || data1 === "has_content" || data1 === "has_no_content" || data1 === "min_rank")) {
         const err5 = { instancePath: instancePath + "/operator", schemaPath: "#/definitions/AccessGateOperator/enum", keyword: "enum", params: { allowedValues: schema21.enum }, message: "must be equal to one of the allowed values" };
         if (vErrors === null) {
           vErrors = [err5];

@@ -217,7 +217,6 @@ export type ConditionOperator =
     | 'count_eq'
     | 'count_lt'
     | 'count_lte'
-    | 'min_order'
     | 'min_rank'
     | 'subset_of'
     | 'shares_concept_with';
@@ -243,7 +242,7 @@ export interface ConditionDoc {
     /**
      * Operand for the operator: a concept id for the concept tests, a category
      * id for `subset_of` and `shares_concept_with`, and a number for the
-     * `count_*`, `min_order` and `min_rank` tests.
+     * `count_*` and `min_rank` tests.
      */
     value?: string | number;
     /** Processing-context role filter ('whole' or 'part'). */

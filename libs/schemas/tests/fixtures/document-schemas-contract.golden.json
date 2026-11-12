@@ -67,7 +67,7 @@
                     "has_concept",
                     "has_content",
                     "has_no_content",
-                    "min_order"
+                    "min_rank"
                 ],
                 "type": "string"
             },
@@ -2246,7 +2246,6 @@
                     "count_eq",
                     "count_lt",
                     "count_lte",
-                    "min_order",
                     "min_rank",
                     "subset_of",
                     "shares_concept_with"

@@ -804,7 +804,7 @@
                     "description": "Which assertion set to evaluate: 'self' (default), 'context' (whole marking), or 'contributors' (every set that fed an aggregate; the condition holds only when all of them satisfy it)."
                 },
                 "value": {
-                    "description": "Operand for the operator: a concept id for the concept tests, a category id for `subset_of` and `shares_concept_with`, and a number for the `count_*`, `min_order` and `min_rank` tests.",
+                    "description": "Operand for the operator: a concept id for the concept tests, a category id for `subset_of` and `shares_concept_with`, and a number for the `count_*` and `min_rank` tests.",
                     "type": ["string", "number"]
                 }
             },
@@ -823,7 +823,6 @@
                 "count_eq",
                 "count_lt",
                 "count_lte",
-                "min_order",
                 "min_rank",
                 "subset_of",
                 "shares_concept_with"

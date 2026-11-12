@@ -745,3 +745,49 @@ describe('the count operators', () => {
         expect(validateFile(guideWithCount('count_ne')).ok).toBe(false);
     });
 });
+
+describe('the minimum rank test', () => {
+    function schemeWithMinimum(operator: string): string {
+        const document = JSON.parse(readFileSync(referenceScheme, 'utf8'));
+        document.scheme.rules = [
+            {
+                id: 'ranked',
+                when: { category: 'controls', operator, value: 1 },
+                action: 'restrict',
+                category: 'controls',
+                target: ['CTRL-A'],
+            },
+        ];
+        return scratchFile('scheme-minimum.yaml', yaml.dump(document));
+    }
+
+    function accessWithMinimum(operator: string): string {
+        const document = yaml.load(readFileSync(exampleAccess, 'utf8')) as {
+            access: { rules: Array<Record<string, unknown>> };
+        };
+        document.access.rules[1]!['when'] = {
+            data: { category: 'classification', operator, value: 1 },
+        };
+        return scratchFile('access-minimum.yaml', yaml.dump(document));
+    }
+
+    it('a scheme condition accepts min_rank', () => {
+        const result = validateFile(schemeWithMinimum('min_rank'));
+        expect(result.errors).toEqual([]);
+        expect(result.ok).toBe(true);
+    });
+
+    it('an access data gate accepts min_rank', () => {
+        const result = validateFile(accessWithMinimum('min_rank'));
+        expect(result.errors).toEqual([]);
+        expect(result.ok).toBe(true);
+    });
+
+    it('a scheme condition refuses min_order', () => {
+        expect(validateFile(schemeWithMinimum('min_order')).ok).toBe(false);
+    });
+
+    it('an access data gate refuses min_order', () => {
+        expect(validateFile(accessWithMinimum('min_order')).ok).toBe(false);
+    });
+});
