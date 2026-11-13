@@ -558,6 +558,7 @@
         "vocabulary": {
             "additionalProperties": { "$ref": "#/$defs/term" },
             "description": "Display words a document advertises for UI consumers: an open map from a term key (such as `rule` or `concept`) to its words. A presentation hint only; no engine reads it.",
+            "minProperties": 1,
             "type": "object"
         }
     },

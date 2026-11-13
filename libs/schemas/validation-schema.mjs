@@ -171,6 +171,7 @@ function guideView(schema) {
         maxProperties: 1,
     });
     defs.VocabularyDoc = inline(defs.VocabularyDoc, defs);
+    defs.VocabularyDoc.minProperties = 1;
 
     schema.$id = 'https://ezclassify.com/schemas/v1/guide.schema.json';
     schema.title = 'EzClassify Guide Schema';
@@ -193,6 +194,7 @@ function accessView(schema) {
     nonempty(defs.AccessLayer.properties.base);
     nonempty(defs.AccessLayer.properties.requires.items);
     defs.VocabularyDoc = inline(defs.VocabularyDoc, defs);
+    defs.VocabularyDoc.minProperties = 1;
     return publish(
         schema,
         { TermDoc: 'term', VocabularyDoc: 'vocabulary' },

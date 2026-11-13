@@ -142,6 +142,24 @@ describe('guideSchema: reject paths', () => {
         validate = ajv.compile(guideSchema);
     });
 
+    it('rejects an empty guide vocabulary', () => {
+        const doc = (vocabulary: object) => ({
+            guide: {
+                id: 'x',
+                version: '1.0.0',
+                name: 'X',
+                description: 'Desc',
+                target_schemes: [{ id: 'demo' }],
+                rules: [],
+                vocabulary,
+            },
+        });
+        expect(validate(doc({}))).toBe(false);
+        expect(
+            validate(doc({ rule: { singular: 'rule', plural: 'rules' } })),
+        ).toBe(true);
+    });
+
     it('rejects a document missing guide.name', () => {
         const doc = {
             guide: {

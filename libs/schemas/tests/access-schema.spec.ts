@@ -131,6 +131,21 @@ describe('accessSchema: reject paths', () => {
         validate = ajv.compile(accessSchema);
     });
 
+    it('rejects an empty access vocabulary', () => {
+        const doc = (vocabulary: object) => ({
+            access: {
+                id: 'x',
+                target_scheme: { id: 'demo' },
+                rules: [],
+                vocabulary,
+            },
+        });
+        expect(validate(doc({}))).toBe(false);
+        expect(
+            validate(doc({ rule: { singular: 'rule', plural: 'rules' } })),
+        ).toBe(true);
+    });
+
     it('rejects a document missing access.id', () => {
         const doc = { access: { target_scheme: { id: 'demo' }, rules: [] } };
         expect(validate(doc)).toBe(false);

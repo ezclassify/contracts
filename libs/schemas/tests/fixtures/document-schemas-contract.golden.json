@@ -247,6 +247,7 @@
                 "additionalProperties": {
                     "$ref": "#/definitions/term"
                 },
+                "minProperties": 1,
                 "type": "object"
             }
         },
@@ -1371,6 +1372,7 @@
                 "additionalProperties": {
                     "$ref": "#/$defs/term"
                 },
+                "minProperties": 1,
                 "type": "object"
             }
         },
