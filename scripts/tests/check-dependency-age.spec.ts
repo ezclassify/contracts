@@ -159,13 +159,15 @@ describe('dependency quarantine', () => {
         // Nothing here may depend on an EzClassify package built elsewhere, so
         // a registry copy of one is refused even when it is well outside the
         // window.
-        publishTimes['@ezclassify/engine'] = { '9.9.9': isoDaysAgo(30) };
+        publishTimes['@ezclassify/sample-package'] = {
+            '9.9.9': isoDaysAgo(30),
+        };
         const result = await run(
-            lockfile(fromRegistry('@ezclassify/engine', '9.9.9')),
+            lockfile(fromRegistry('@ezclassify/sample-package', '9.9.9')),
         );
         expect(result.status).toBe(1);
         expect(result.output).toContain('depends on no EzClassify package');
-        expect(result.output).toContain('@ezclassify/engine@9.9.9');
+        expect(result.output).toContain('@ezclassify/sample-package@9.9.9');
     });
 
     it('fails when the registry reports no publish date for the version', async () => {
