@@ -66,6 +66,10 @@ const RESULT_SCHEMA: Record<string, string | null> = {
     evaluateGuide: null,
     evaluateMany: null,
     guideScan: null,
+    // An adapter answers these in process, with no wire operation behind
+    // them, so no published result schema describes them.
+    getScheme: null,
+    getFormatCoverage: null,
 };
 
 /** Semantic operations and the published envelope each one answers. */

@@ -156,6 +156,19 @@
             }
         },
         {
+            "name": "format-coverage",
+            "notes": "Adapter slice against ref-surfaces-1 and ref-scheme-1: the published profile of each scheme and the coverage of every output it publishes. A view with a case lists and covers the categories its base format writes. An adapter that answers coverage from the profile it holds must answer what the engine recorded for each output.",
+            "path": "plans/v1/format-coverage.json",
+            "slice": "adapter",
+            "support": {
+                "dotnet": "skip",
+                "go": "skip",
+                "java": "skip",
+                "node": "required",
+                "python": "skip"
+            }
+        },
+        {
             "name": "ctx-process",
             "notes": "Context-based operations (ctxProcess, ctxScan, ctxDocumentAudit). Requires a live REST API server with a contexts file. Embed SDKs resolve ctx server-side; client SDKs call /v1/ctx/* directly.",
             "path": "plans/v1/ctx-process.json",
