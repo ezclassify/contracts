@@ -54,17 +54,18 @@ parallel without agreeing on a number.
 
 ### Options
 
-| CLI                 | API            | Default            | What it does                           |
-| ------------------- | -------------- | ------------------ | -------------------------------------- |
-| `--port <n>`        | `port`         | `4010` (API: `0`)  | Port. 0 picks a free one.              |
-| `--host <addr>`     | `host`         | `127.0.0.1`        | Interface to bind.                     |
-| `--corpus <path>`   | `corpus`       | the bundled corpus | Replay a different corpus.             |
-| `--auth <mode>`     | `auth`         | `none`             | `none` or `simulated`.                 |
-| `--quiet`           | `log: null`    | reports on stderr  | Silence the unmatched-request reports. |
-| `--scenario <name>` | `scenario`     | none               | Serve a named integration profile.     |
-| `--cors-origin`     | `corsOrigin`   | none               | Permit one exact browser origin.       |
-|                     | `observe`      | none               | Collect request outcomes in process.   |
-|                     | `maxBodyBytes` | 8 MiB              | Request body ceiling.                  |
+| CLI                      | API            | Default            | What it does                           |
+| ------------------------ | -------------- | ------------------ | -------------------------------------- |
+| `--port <n>`             | `port`         | `4010` (API: `0`)  | Port. 0 picks a free one.              |
+| `--host <addr>`          | `host`         | `127.0.0.1`        | Interface to bind.                     |
+| `--corpus <path>`        | `corpus`       | the bundled corpus | Replay a different corpus.             |
+| `--auth <mode>`          | `auth`         | `none`             | `none` or `simulated`.                 |
+| `--quiet`                | `log: null`    | reports on stderr  | Silence the unmatched-request reports. |
+| `--scenario <name>`      | `scenario`     | none               | Serve a named integration profile.     |
+| `--cors-origin <origin>` | `corsOrigin`   | none               | Permit one exact browser origin.       |
+| `--list-scenarios`       |                | n/a                | Print the scenario names and exit.     |
+|                          | `observe`      | none               | Collect request outcomes in process.   |
+|                          | `maxBodyBytes` | 8 MiB              | Request body ceiling.                  |
 
 ## Replay limits
 

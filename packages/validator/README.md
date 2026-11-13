@@ -36,7 +36,8 @@ think it denies: those are questions for a runtime, and no schema can answer
 them. Nothing in this package loads a scheme, resolves a layer, evaluates a
 rule, or makes an access decision.
 
-`--quiet` prints failures only.
+`--quiet` suppresses the per-file success lines. Failures and warnings are still
+printed.
 
 ## Exit codes
 
