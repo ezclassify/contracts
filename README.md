@@ -19,9 +19,10 @@ SDK is measured against, and a schema-only validator you can run on your own
 documents. Its packages are Apache-2.0 licensed and depend only on one another and
 third-party packages.
 
-The engine that evaluates a scheme, the servers that host it, and the authoring
-platform are separate and commercially licensed. Nothing here evaluates a rule,
-resolves a layer, or makes an access decision.
+The EzClassify runtime, which evaluates schemes and hosts the REST and MCP
+servers, and the authoring platform, Studio, are separate and commercially
+licensed. Nothing here evaluates a rule, resolves a layer, or makes an access
+decision.
 
 ## Packages
 
@@ -124,7 +125,7 @@ SDK is expected to pass. An SDK author writes a runner in their own language
 against this corpus.
 
 The reference runner that produces the expected outputs is not here. It executes
-the engine, so it lives with the engine.
+the engine, so it lives in the runtime repository.
 
 [`libs/conformance/wire/v1/`](libs/conformance/wire/v1/) is the golden wire corpus: canonical request and
 response pairs for every operation the REST contract serves, recorded off the

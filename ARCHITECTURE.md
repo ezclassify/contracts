@@ -87,7 +87,7 @@ checks the launcher, refusal paths, full qualification proof and bundle inputs.
 
 - No engine semantics: nothing here parses a marking, evaluates a rule,
   resolves a layer, makes an access decision, or produces a conformance
-  recording. The reference runner that executes the engine does not live here.
+  recording. The reference runner that executes the engine lives in the runtime repository.
 - No dependency on an `@ezclassify/*` package built outside this repository, in
   any dependency field.
 - No private, licensing, debug, admin, or entitlement surface in the OpenAPI
