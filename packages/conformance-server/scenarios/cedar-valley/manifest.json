@@ -5,13 +5,13 @@
     },
     "corpusVersion": "v1",
     "coverage": {
-        "cases": 243,
+        "cases": 244,
         "operationsCovered": 26
     },
     "generation": {
-        "contentDigest": "sha256:c9f55a2152a363fcf5b9678eb2eaea4fee9f8fbad1bdde978d1fc324dba98c6c",
+        "contentDigest": "sha256:e8a50a82b94991defd733fa80c1b02b846f6a390ece02f34569fbc89b954c0b6",
         "generator": "ezclassify-integration-scenario-recorder",
-        "generatorDigest": "sha256:be2424c5da9063c06ac0434cb50c2d2cec3e38eed74ddc3a4b6e57504ce116fd"
+        "generatorDigest": "sha256:3329e2a40bf50243d9e2ca9258eae65129cdff53254e282a0593e3330da37ea1"
     },
     "recordedResponseHeaders": [
         "allow",
@@ -21,26 +21,12 @@
         "x-ezclassify-resolved-version"
     ],
     "runtime": {
-        "engineVersion": "1.0.0-dev.30",
-        "producerPackages": [
-            "@ezclassify/engine@1.0.0-dev.30",
-            "@ezclassify/engine-wasm@1.0.0-dev.30",
-            "@ezclassify/runtime-host@1.0.0-dev.30",
-            "@ezclassify/trust@1.0.0-dev.30",
-            "@ezclassify/server-auth@1.0.0-dev.30",
-            "@ezclassify/loaders@1.0.0-dev.30",
-            "@ezclassify/runtime-types@1.0.0-dev.30",
-            "@ezclassify/types@1.0.0-dev.30",
-            "@ezclassify/schemas@1.0.0-dev.30",
-            "@ezclassify/validator@1.0.0-dev.30"
-        ],
-        "producerSourceDigest": "sha256:659dbb27e8de93a1885579a6ac427e2c334229b8420b4b6a2421589fd1639098",
-        "restApiVersion": "1.0.0-dev.30"
+        "engineVersion": "1.0.0-dev.30"
     },
     "spec": {
-        "digest": "sha256:a0b675026fef78e3b25cc8361eda450c0e2986226037712d3324fecfe42e04a2",
+        "digest": "sha256:b2bca608ea6203a0110078b19a8f566f9b572e9457b1847e390ccb9667bf85ff",
         "infoVersion": "1.0.0-dev.30",
         "package": "@ezclassify/openapi",
-        "validationJsonDigest": "sha256:269bd4efd1db73b58bf6d1c2b5372d736ca11bc48ea99e22f05ced93aee5767c"
+        "validationJsonDigest": "sha256:115ff68a0f597f5a3f49bc9c7c45e6ab0b5c7881357683562eda72563fab97d0"
     }
 }

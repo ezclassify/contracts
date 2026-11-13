@@ -108,8 +108,8 @@ export interface SchemeSummaryResponseBody {
     version: string;
     /** Display name from the scheme metadata. */
     name: string;
-    /** Free-text description from the scheme metadata. */
-    description: string;
+    /** Free-text description from the scheme metadata. Omitted when the scheme has none. */
+    description?: string;
     /** Human-readable definition of the scheme, for tooltips and about panels. */
     definition?: string;
     /** Usage guidance for the scheme, shown in reference views. */

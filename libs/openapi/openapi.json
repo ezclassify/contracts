@@ -8879,7 +8879,7 @@
           },
           "description": {
             "type": "string",
-            "description": "Free-text description from the scheme metadata."
+            "description": "Free-text description from the scheme metadata. Omitted when the scheme has none."
           },
           "definition": {
             "type": "string",
@@ -8972,7 +8972,6 @@
           "id",
           "version",
           "name",
-          "description",
           "referenceSurfaceLabel"
         ],
         "description": "Context scheme summary response."

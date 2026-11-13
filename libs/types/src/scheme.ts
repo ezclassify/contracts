@@ -2263,8 +2263,8 @@ export interface Scheme {
     version: string;
     /** Human-readable display name. */
     name: string;
-    /** Longer description of what this scheme covers. */
-    description: string;
+    /** Longer description of what this scheme covers. Absent when the scheme has none. */
+    description?: string;
     /** Official description or definition of the scheme. */
     definition?: string;
     /** Usage notes, restrictions, or guidelines for the scheme. */
