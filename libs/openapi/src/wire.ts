@@ -331,10 +331,10 @@ export interface CtxSchemeProcessRequestBody {
      * narrows what may be read. For a scheme that declares `render.surfaces`,
      * an output as the scheme document's `render.surfaces` defines it.
      *
-     * Omitted or empty, the scheme's default format, or with
-     * `render.surfaces`, each written surface's default for the marking's
-     * role, by the rule `render.surfaces` states for a request that names no
-     * output.
+     * Omitted or empty, the scheme's default format, or with `render.surfaces`,
+     * the written surfaces' defaults for the marking's role, one alone when it
+     * writes the others' scopes, by the rule `render.surfaces` states for a
+     * request that names no output.
      */
     outputFormat?: string;
     /**
@@ -398,9 +398,9 @@ export interface CtxSchemeExplainRequestBody {
      * The output the trace's `rendered` is written in. For a scheme that
      * declares `render.surfaces`, an output as the scheme document's
      * `render.surfaces` defines it. Omitted or empty, the scheme's default
-     * format, or with `render.surfaces`, each written surface's default for
-     * the marking's role, by the rule `render.surfaces` states for a request
-     * that names no output.
+     * format, or with `render.surfaces`, the written surfaces' defaults for the
+     * marking's role, one alone when it writes the others' scopes, by the rule
+     * `render.surfaces` states for a request that names no output.
      */
     outputFormat?: string;
     /**
@@ -553,10 +553,10 @@ export interface CtxSchemeValidateRequestBody {
      * narrows what may be read. For a scheme that declares `render.surfaces`,
      * an output as the scheme document's `render.surfaces` defines it.
      *
-     * Omitted or empty, the scheme's default format, or with
-     * `render.surfaces`, each written surface's default for the marking's
-     * role, by the rule `render.surfaces` states for a request that names no
-     * output.
+     * Omitted or empty, the scheme's default format, or with `render.surfaces`,
+     * the written surfaces' defaults for the marking's role, one alone when it
+     * writes the others' scopes, by the rule `render.surfaces` states for a
+     * request that names no output.
      */
     outputFormat?: string;
     /** Optional ProcessingContext forwarded verbatim to the engine. */

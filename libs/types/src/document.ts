@@ -373,9 +373,9 @@ export interface MarkingValidation {
     /**
      * The settled marking, written as validate writes it when the request
      * names no output: in the scheme's default format, or for a scheme that
-     * declares `render.surfaces`, each written surface in its default for the
-     * role the marking has in this document, by the rule
-     * `RenderConfigDoc.surfaces` states.
+     * declares `render.surfaces`, in the defaults for the role the marking has
+     * in this document that the rule `RenderConfigDoc.surfaces` states for an
+     * unnamed output selects.
      */
     rendered: string;
 }

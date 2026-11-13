@@ -432,23 +432,21 @@ function validate18(data, { instancePath = "", parentData, parentDataProperty, r
   let vErrors = null;
   let errors = 0;
   if (data && typeof data == "object" && !Array.isArray(data)) {
+    if (Object.keys(data).length < 1) {
+      const err0 = { instancePath, schemaPath: "#/minProperties", keyword: "minProperties", params: { limit: 1 }, message: "must NOT have fewer than 1 properties" };
+      if (vErrors === null) {
+        vErrors = [err0];
+      } else {
+        vErrors.push(err0);
+      }
+      errors++;
+    }
     for (const key0 in data) {
       let data0 = data[key0];
       if (data0 && typeof data0 == "object" && !Array.isArray(data0)) {
         for (const key1 in data0) {
           if (!(key1 === "plural" || key1 === "singular")) {
-            const err0 = { instancePath: instancePath + "/" + key0.replace(/~/g, "~0").replace(/\//g, "~1"), schemaPath: "#/definitions/term/additionalProperties", keyword: "additionalProperties", params: { additionalProperty: key1 }, message: "must NOT have additional properties" };
-            if (vErrors === null) {
-              vErrors = [err0];
-            } else {
-              vErrors.push(err0);
-            }
-            errors++;
-          }
-        }
-        if (data0.plural !== void 0) {
-          if (typeof data0.plural !== "string") {
-            const err1 = { instancePath: instancePath + "/" + key0.replace(/~/g, "~0").replace(/\//g, "~1") + "/plural", schemaPath: "#/definitions/term/properties/plural/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+            const err1 = { instancePath: instancePath + "/" + key0.replace(/~/g, "~0").replace(/\//g, "~1"), schemaPath: "#/definitions/term/additionalProperties", keyword: "additionalProperties", params: { additionalProperty: key1 }, message: "must NOT have additional properties" };
             if (vErrors === null) {
               vErrors = [err1];
             } else {
@@ -457,9 +455,9 @@ function validate18(data, { instancePath = "", parentData, parentDataProperty, r
             errors++;
           }
         }
-        if (data0.singular !== void 0) {
-          if (typeof data0.singular !== "string") {
-            const err2 = { instancePath: instancePath + "/" + key0.replace(/~/g, "~0").replace(/\//g, "~1") + "/singular", schemaPath: "#/definitions/term/properties/singular/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+        if (data0.plural !== void 0) {
+          if (typeof data0.plural !== "string") {
+            const err2 = { instancePath: instancePath + "/" + key0.replace(/~/g, "~0").replace(/\//g, "~1") + "/plural", schemaPath: "#/definitions/term/properties/plural/type", keyword: "type", params: { type: "string" }, message: "must be string" };
             if (vErrors === null) {
               vErrors = [err2];
             } else {
@@ -468,22 +466,33 @@ function validate18(data, { instancePath = "", parentData, parentDataProperty, r
             errors++;
           }
         }
+        if (data0.singular !== void 0) {
+          if (typeof data0.singular !== "string") {
+            const err3 = { instancePath: instancePath + "/" + key0.replace(/~/g, "~0").replace(/\//g, "~1") + "/singular", schemaPath: "#/definitions/term/properties/singular/type", keyword: "type", params: { type: "string" }, message: "must be string" };
+            if (vErrors === null) {
+              vErrors = [err3];
+            } else {
+              vErrors.push(err3);
+            }
+            errors++;
+          }
+        }
       } else {
-        const err3 = { instancePath: instancePath + "/" + key0.replace(/~/g, "~0").replace(/\//g, "~1"), schemaPath: "#/definitions/term/type", keyword: "type", params: { type: "object" }, message: "must be object" };
+        const err4 = { instancePath: instancePath + "/" + key0.replace(/~/g, "~0").replace(/\//g, "~1"), schemaPath: "#/definitions/term/type", keyword: "type", params: { type: "object" }, message: "must be object" };
         if (vErrors === null) {
-          vErrors = [err3];
+          vErrors = [err4];
         } else {
-          vErrors.push(err3);
+          vErrors.push(err4);
         }
         errors++;
       }
     }
   } else {
-    const err4 = { instancePath, schemaPath: "#/type", keyword: "type", params: { type: "object" }, message: "must be object" };
+    const err5 = { instancePath, schemaPath: "#/type", keyword: "type", params: { type: "object" }, message: "must be object" };
     if (vErrors === null) {
-      vErrors = [err4];
+      vErrors = [err5];
     } else {
-      vErrors.push(err4);
+      vErrors.push(err5);
     }
     errors++;
   }

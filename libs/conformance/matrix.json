@@ -144,7 +144,7 @@
         },
         {
             "name": "surfaces",
-            "notes": "Outputs declared by surface and view against ref-surfaces-1: recognition reports the view the text is read as and its role, never the form it happened to be read in; a read-only form reads as its view and stands for it as an output; a view id names what the text is read as and reads it in the forms that view writes, its case forms included, never in its read-only form; text the engine writes on two surfaces reads back uncorrected; an unnamed output follows the role; a wrapper makes a part; text read as a view of the role the request's context does not name departs from it, unless the request names the view.",
+            "notes": "Outputs declared by surface and view against ref-surfaces-1 and ref-surfaces-2: recognition reports the view the text is read as and its role, never the form it happened to be read in; a read-only form reads as its view and stands for it as an output; a view id names what the text is read as and reads it in the forms that view writes, its case forms included, never in its read-only form; text the engine writes on two surfaces reads back uncorrected; an unnamed output follows the role; a wrapper makes a part; text read as a view of the role the request's context does not name departs from it, unless the request names the view; a named output, an address or a surface, is written alone; with none named, a default that writes every other surface's scope is written alone.",
             "path": "plans/v1/surfaces.json",
             "slice": "engine",
             "support": {

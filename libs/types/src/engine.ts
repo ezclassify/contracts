@@ -713,9 +713,10 @@ export interface SchemeEngineAdapter {
              * The output `rendered` is written in. For a scheme that declares
              * `render.surfaces`, an output as the scheme document's
              * `render.surfaces` defines it. Omitted, the scheme's default
-             * format, or with `render.surfaces`, each written surface's
-             * default for the marking's role, by the rule `render.surfaces`
-             * states for a request that names no output.
+             * format, or with `render.surfaces`, the written surfaces' defaults
+             * for the marking's role, one alone when it writes the others'
+             * scopes, by the rule `render.surfaces` states for a request that
+             * names no output.
              */
             outputFormat?: string;
             /**
@@ -779,9 +780,10 @@ export interface SchemeEngineAdapter {
              * The output `rendered` is written in. For a scheme that declares
              * `render.surfaces`, an output as the scheme document's
              * `render.surfaces` defines it. Omitted, the scheme's default
-             * format, or with `render.surfaces`, each written surface's
-             * default for the marking's role, by the rule `render.surfaces`
-             * states for a request that names no output.
+             * format, or with `render.surfaces`, the written surfaces' defaults
+             * for the marking's role, one alone when it writes the others'
+             * scopes, by the rule `render.surfaces` states for a request that
+             * names no output.
              */
             outputFormat?: string;
             /**
@@ -874,9 +876,10 @@ export interface SchemeEngineAdapter {
              * The output `rendered` is written in. For a scheme that declares
              * `render.surfaces`, an output as the scheme document's
              * `render.surfaces` defines it. Omitted, the scheme's default
-             * format, or with `render.surfaces`, each written surface's
-             * default for the marking's role, by the rule `render.surfaces`
-             * states for a request that names no output.
+             * format, or with `render.surfaces`, the written surfaces' defaults
+             * for the marking's role, one alone when it writes the others'
+             * scopes, by the rule `render.surfaces` states for a request that
+             * names no output.
              */
             outputFormat?: string;
             context?: ProcessingContext;
@@ -919,9 +922,10 @@ export interface SchemeEngineAdapter {
              * The output `rendered` is written in. For a scheme that declares
              * `render.surfaces`, an output as the scheme document's
              * `render.surfaces` defines it. Omitted, the scheme's default
-             * format, or with `render.surfaces`, each written surface's
-             * default for the marking's role, by the rule `render.surfaces`
-             * states for a request that names no output.
+             * format, or with `render.surfaces`, the written surfaces' defaults
+             * for the marking's role, one alone when it writes the others'
+             * scopes, by the rule `render.surfaces` states for a request that
+             * names no output.
              */
             outputFormat?: string;
             context?: ProcessingContext;
@@ -971,9 +975,10 @@ export interface SchemeEngineAdapter {
              * The output `rendered` is written in. For a scheme that declares
              * `render.surfaces`, an output as the scheme document's
              * `render.surfaces` defines it. Omitted, the scheme's default
-             * format, or with `render.surfaces`, each written surface's
-             * default for the marking's role, by the rule `render.surfaces`
-             * states for a request that names no output.
+             * format, or with `render.surfaces`, the written surfaces' defaults
+             * for the marking's role, one alone when it writes the others'
+             * scopes, by the rule `render.surfaces` states for a request that
+             * names no output.
              */
             outputFormat?: string;
             /**
@@ -1019,9 +1024,10 @@ export interface SchemeEngineAdapter {
              * The output `rendered` is written in. For a scheme that declares
              * `render.surfaces`, an output as the scheme document's
              * `render.surfaces` defines it. Omitted, the scheme's default
-             * format, or with `render.surfaces`, each written surface's
-             * default for the marking's role, by the rule `render.surfaces`
-             * states for a request that names no output.
+             * format, or with `render.surfaces`, the written surfaces' defaults
+             * for the marking's role, one alone when it writes the others'
+             * scopes, by the rule `render.surfaces` states for a request that
+             * names no output.
              */
             outputFormat?: string;
             /**
@@ -1589,9 +1595,10 @@ export interface LocalSchemeEngineAdapter extends SchemeEngineAdapter {
              * The output `rendered` is written in. For a scheme that declares
              * `render.surfaces`, an output as the scheme document's
              * `render.surfaces` defines it. Omitted, the scheme's default
-             * format, or with `render.surfaces`, each written surface's
-             * default for the marking's role, by the rule `render.surfaces`
-             * states for a request that names no output.
+             * format, or with `render.surfaces`, the written surfaces' defaults
+             * for the marking's role, one alone when it writes the others'
+             * scopes, by the rule `render.surfaces` states for a request that
+             * names no output.
              */
             outputFormat?: string;
             context?: ProcessingContext;
@@ -1627,9 +1634,10 @@ export interface LocalSchemeEngineAdapter extends SchemeEngineAdapter {
              * The output `rendered` is written in. For a scheme that declares
              * `render.surfaces`, an output as the scheme document's
              * `render.surfaces` defines it. Omitted, the scheme's default
-             * format, or with `render.surfaces`, each written surface's
-             * default for the marking's role, by the rule `render.surfaces`
-             * states for a request that names no output.
+             * format, or with `render.surfaces`, the written surfaces' defaults
+             * for the marking's role, one alone when it writes the others'
+             * scopes, by the rule `render.surfaces` states for a request that
+             * names no output.
              */
             outputFormat?: string;
             context?: ProcessingContext;
@@ -1665,9 +1673,10 @@ export interface LocalSchemeEngineAdapter extends SchemeEngineAdapter {
              * The output `rendered` is written in. For a scheme that declares
              * `render.surfaces`, an output as the scheme document's
              * `render.surfaces` defines it. Omitted, the scheme's default
-             * format, or with `render.surfaces`, each written surface's
-             * default for the marking's role, by the rule `render.surfaces`
-             * states for a request that names no output.
+             * format, or with `render.surfaces`, the written surfaces' defaults
+             * for the marking's role, one alone when it writes the others'
+             * scopes, by the rule `render.surfaces` states for a request that
+             * names no output.
              */
             outputFormat?: string;
             /**
@@ -1724,9 +1733,10 @@ export interface LocalSchemeEngineAdapter extends SchemeEngineAdapter {
              * The output `rendered` is written in. For a scheme that declares
              * `render.surfaces`, an output as the scheme document's
              * `render.surfaces` defines it. Omitted, the scheme's default
-             * format, or with `render.surfaces`, each written surface's
-             * default for the marking's role, by the rule `render.surfaces`
-             * states for a request that names no output.
+             * format, or with `render.surfaces`, the written surfaces' defaults
+             * for the marking's role, one alone when it writes the others'
+             * scopes, by the rule `render.surfaces` states for a request that
+             * names no output.
              */
             outputFormat?: string;
             /**
@@ -1784,9 +1794,10 @@ export interface LocalSchemeEngineAdapter extends SchemeEngineAdapter {
              * The output `rendered` is written in. For a scheme that declares
              * `render.surfaces`, an output as the scheme document's
              * `render.surfaces` defines it. Omitted, the scheme's default
-             * format, or with `render.surfaces`, each written surface's
-             * default for the marking's role, by the rule `render.surfaces`
-             * states for a request that names no output.
+             * format, or with `render.surfaces`, the written surfaces' defaults
+             * for the marking's role, one alone when it writes the others'
+             * scopes, by the rule `render.surfaces` states for a request that
+             * names no output.
              */
             outputFormat?: string;
             /**
@@ -1826,9 +1837,10 @@ export interface LocalSchemeEngineAdapter extends SchemeEngineAdapter {
              * The output `rendered` is written in. For a scheme that declares
              * `render.surfaces`, an output as the scheme document's
              * `render.surfaces` defines it. Omitted, the scheme's default
-             * format, or with `render.surfaces`, each written surface's
-             * default for the marking's role, by the rule `render.surfaces`
-             * states for a request that names no output.
+             * format, or with `render.surfaces`, the written surfaces' defaults
+             * for the marking's role, one alone when it writes the others'
+             * scopes, by the rule `render.surfaces` states for a request that
+             * names no output.
              */
             outputFormat?: string;
             /**
@@ -2076,9 +2088,10 @@ export interface RemoteSchemeEngineAdapter extends SchemeEngineAdapter {
              * The output `rendered` is written in. For a scheme that declares
              * `render.surfaces`, an output as the scheme document's
              * `render.surfaces` defines it. Omitted, the scheme's default
-             * format, or with `render.surfaces`, each written surface's
-             * default for the marking's role, by the rule `render.surfaces`
-             * states for a request that names no output.
+             * format, or with `render.surfaces`, the written surfaces' defaults
+             * for the marking's role, one alone when it writes the others'
+             * scopes, by the rule `render.surfaces` states for a request that
+             * names no output.
              */
             outputFormat?: string;
             /**
@@ -2135,9 +2148,10 @@ export interface RemoteSchemeEngineAdapter extends SchemeEngineAdapter {
              * The output `rendered` is written in. For a scheme that declares
              * `render.surfaces`, an output as the scheme document's
              * `render.surfaces` defines it. Omitted, the scheme's default
-             * format, or with `render.surfaces`, each written surface's
-             * default for the marking's role, by the rule `render.surfaces`
-             * states for a request that names no output.
+             * format, or with `render.surfaces`, the written surfaces' defaults
+             * for the marking's role, one alone when it writes the others'
+             * scopes, by the rule `render.surfaces` states for a request that
+             * names no output.
              */
             outputFormat?: string;
             /**
@@ -2195,9 +2209,10 @@ export interface RemoteSchemeEngineAdapter extends SchemeEngineAdapter {
              * The output `rendered` is written in. For a scheme that declares
              * `render.surfaces`, an output as the scheme document's
              * `render.surfaces` defines it. Omitted, the scheme's default
-             * format, or with `render.surfaces`, each written surface's
-             * default for the marking's role, by the rule `render.surfaces`
-             * states for a request that names no output.
+             * format, or with `render.surfaces`, the written surfaces' defaults
+             * for the marking's role, one alone when it writes the others'
+             * scopes, by the rule `render.surfaces` states for a request that
+             * names no output.
              */
             outputFormat?: string;
             /**
@@ -2237,9 +2252,10 @@ export interface RemoteSchemeEngineAdapter extends SchemeEngineAdapter {
              * The output `rendered` is written in. For a scheme that declares
              * `render.surfaces`, an output as the scheme document's
              * `render.surfaces` defines it. Omitted, the scheme's default
-             * format, or with `render.surfaces`, each written surface's
-             * default for the marking's role, by the rule `render.surfaces`
-             * states for a request that names no output.
+             * format, or with `render.surfaces`, the written surfaces' defaults
+             * for the marking's role, one alone when it writes the others'
+             * scopes, by the rule `render.surfaces` states for a request that
+             * names no output.
              */
             outputFormat?: string;
             /**
@@ -2287,9 +2303,10 @@ export interface RemoteSchemeEngineAdapter extends SchemeEngineAdapter {
              * The output `rendered` is written in. For a scheme that declares
              * `render.surfaces`, an output as the scheme document's
              * `render.surfaces` defines it. Omitted, the scheme's default
-             * format, or with `render.surfaces`, each written surface's
-             * default for the marking's role, by the rule `render.surfaces`
-             * states for a request that names no output.
+             * format, or with `render.surfaces`, the written surfaces' defaults
+             * for the marking's role, one alone when it writes the others'
+             * scopes, by the rule `render.surfaces` states for a request that
+             * names no output.
              */
             outputFormat?: string;
             context?: ProcessingContext;
@@ -2325,9 +2342,10 @@ export interface RemoteSchemeEngineAdapter extends SchemeEngineAdapter {
              * The output `rendered` is written in. For a scheme that declares
              * `render.surfaces`, an output as the scheme document's
              * `render.surfaces` defines it. Omitted, the scheme's default
-             * format, or with `render.surfaces`, each written surface's
-             * default for the marking's role, by the rule `render.surfaces`
-             * states for a request that names no output.
+             * format, or with `render.surfaces`, the written surfaces' defaults
+             * for the marking's role, one alone when it writes the others'
+             * scopes, by the rule `render.surfaces` states for a request that
+             * names no output.
              */
             outputFormat?: string;
             context?: ProcessingContext;
@@ -2948,9 +2966,10 @@ export interface RemoteContextSchemeEngineAdapter
              * The output `rendered` is written in. For a scheme that declares
              * `render.surfaces`, an output as the scheme document's
              * `render.surfaces` defines it. Omitted, the scheme's default
-             * format, or with `render.surfaces`, each written surface's
-             * default for the marking's role, by the rule `render.surfaces`
-             * states for a request that names no output.
+             * format, or with `render.surfaces`, the written surfaces' defaults
+             * for the marking's role, one alone when it writes the others'
+             * scopes, by the rule `render.surfaces` states for a request that
+             * names no output.
              */
             outputFormat?: string;
             /**
@@ -3016,9 +3035,10 @@ export interface RemoteContextSchemeEngineAdapter
              * The output `rendered` is written in. For a scheme that declares
              * `render.surfaces`, an output as the scheme document's
              * `render.surfaces` defines it. Omitted, the scheme's default
-             * format, or with `render.surfaces`, each written surface's
-             * default for the marking's role, by the rule `render.surfaces`
-             * states for a request that names no output.
+             * format, or with `render.surfaces`, the written surfaces' defaults
+             * for the marking's role, one alone when it writes the others'
+             * scopes, by the rule `render.surfaces` states for a request that
+             * names no output.
              */
             outputFormat?: string;
             context?: ProcessingContext;
@@ -3059,9 +3079,10 @@ export interface RemoteContextSchemeEngineAdapter
              * The output `rendered` is written in. For a scheme that declares
              * `render.surfaces`, an output as the scheme document's
              * `render.surfaces` defines it. Omitted, the scheme's default
-             * format, or with `render.surfaces`, each written surface's
-             * default for the marking's role, by the rule `render.surfaces`
-             * states for a request that names no output.
+             * format, or with `render.surfaces`, the written surfaces' defaults
+             * for the marking's role, one alone when it writes the others'
+             * scopes, by the rule `render.surfaces` states for a request that
+             * names no output.
              */
             outputFormat?: string;
             /**

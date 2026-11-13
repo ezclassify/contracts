@@ -1831,9 +1831,6 @@ export interface RenderConfigDoc {
      * or format a request names as its input format. With none of those it
      * writes the default scope's surface, so the default scope is always one
      * of the surfaces listed here. A fact inferred afterwards adds no surface.
-     * Neither does a request's output format: it only chooses how those
-     * surfaces are written, so `surface/view` for a surface the result does
-     * not write selects nothing there.
      *
      * When a request names no output, each surface the result writes is
      * written in its default for the marking's role: the view its `default`
@@ -1851,23 +1848,36 @@ export interface RenderConfigDoc {
      * says a surface writes its default, it is this default for the marking's
      * role.
      *
-     * Wherever a request takes an output format, it names one of these:
+     * Wherever a request takes an output format, it names one output, and the
+     * result is that output alone. No other surface is written beside it, and
+     * it is written whether or not the result writes its surface otherwise:
      *
-     * - A view id, such as `full`. Every surface the result writes uses that
-     * view, and a surface that does not declare it writes its default.
      * - `surface/view`. That surface writes that view, or its default when it
-     * declares no view by that id, and every other surface writes its
-     * default. A surface this list does not declare is refused, never
-     * guessed.
+     * declares no view by that id. A surface this list does not declare is
+     * refused, never guessed.
+     * - A view id, such as `full`. Every surface the result writes that
+     * declares that view writes it, and together they are the one output.
+     * When none of them declares it, it is the view by that id on the
+     * default scope's surface, else on the first surface in this list that
+     * declares it.
      * - The id of a format that exactly one view names as one of its forms,
      * written or only read. It stands for that view's `surface/view`.
+     * - A declared surface id. That surface writes its default.
+     * - The id of any other format, such as one that views on several
+     * surfaces name. That format writes the marking on its own.
      *
-     * A view id wins over a format id spelled the same way, so a bare `x` that
-     * is a view of one surface and a form of another surface's view asks every
-     * surface for view `x`. A declared surface id, or a format that views on
-     * several surfaces name, names no output: every surface writes its default,
-     * as it does when the request names no output. An undeclared id is refused;
-     * it is never answered as though the request had named none.
+     * An id is read in the order of this list, so a bare `x` that is a view
+     * of one surface and a form of another surface's view asks for view `x`,
+     * and a format one view names wins over a surface id spelled the same
+     * way. An id that is none of these is refused; it is never answered as
+     * though the request had named none.
+     *
+     * When the outputs a request writes are more than one, the first of them
+     * in surface order that writes every other one's scope beside its own is
+     * written alone, as one string: on its own surface it writes each
+     * category those scopes own, as the coverage it reports for its format
+     * says. The others would write the same facts again. When none does,
+     * each is written.
      *
      * Wherever a request takes an input format, it names what the text is
      * read as:
