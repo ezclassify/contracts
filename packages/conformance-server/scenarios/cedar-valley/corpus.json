@@ -33672,7 +33672,7 @@
                 "credential": "context-token",
                 "deployment": "open"
             },
-            "id": "document-form.focus-attachment.process",
+            "id": "document-form.focus-attachment.process.1",
             "operationId": "ctxSchemeProcess",
             "request": {
                 "body": {
@@ -33825,7 +33825,239 @@
                 "status": 200,
                 "statusDeclaredInContract": true
             },
-            "summary": "document-form: focus-attachment: process"
+            "summary": "document-form: focus-attachment: process: 1"
+        },
+        {
+            "auth": {
+                "credential": "context-token",
+                "deployment": "open"
+            },
+            "id": "document-form.focus-attachment.process.2",
+            "operationId": "ctxSchemeProcess",
+            "request": {
+                "body": {
+                    "assertions": [
+                        {
+                            "categoryId": "level",
+                            "conceptId": "INTERNAL",
+                            "confidence": "certain",
+                            "source": "parse"
+                        }
+                    ],
+                    "input": "",
+                    "outputFormat": "long",
+                    "parts": [
+                        "P",
+                        "C",
+                        "P",
+                        "I",
+                        "P"
+                    ],
+                    "suggestFor": [
+                        "level"
+                    ]
+                },
+                "headers": {
+                    "content-type": "application/json"
+                },
+                "method": "POST",
+                "path": "/v1/ctx/cedar-valley/1.0.0/scheme/process",
+                "pathTemplate": "/v1/ctx/{ctxId}/{version}/scheme/process"
+            },
+            "response": {
+                "body": {
+                    "resolution": {
+                        "artifacts": [
+                            {
+                                "id": "cedar-valley",
+                                "kind": "scheme",
+                                "version": "1.0.0"
+                            },
+                            {
+                                "id": "cedar-valley-guide",
+                                "kind": "guide",
+                                "version": "1.0.0"
+                            },
+                            {
+                                "id": "cedar-valley-access",
+                                "kind": "access",
+                                "version": "1.0.0"
+                            },
+                            {
+                                "id": "cedar-valley",
+                                "kind": "context",
+                                "version": "1.0.0"
+                            }
+                        ],
+                        "contextId": "cedar-valley",
+                        "requestedVersion": "1.0.0",
+                        "resolvedVersion": "1.0.0"
+                    },
+                    "result": {
+                        "appliedFixes": [
+                            {
+                                "action": "add",
+                                "add": [
+                                    {
+                                        "categoryId": "allow_sharing_with",
+                                        "conceptId": "CEDAR_VALLEY_DISTRICT"
+                                    }
+                                ],
+                                "message": "Rule \"nonpublic-is-internal-by-default\": added \"CEDAR_VALLEY_DISTRICT\" to category \"allow_sharing_with\"",
+                                "ruleId": "nonpublic-is-internal-by-default",
+                                "triggerConceptIds": [
+                                    "INTERNAL"
+                                ]
+                            }
+                        ],
+                        "assertions": [
+                            {
+                                "categoryId": "level",
+                                "conceptId": "INTERNAL",
+                                "confidence": "certain",
+                                "source": "parse"
+                            },
+                            {
+                                "categoryId": "allow_sharing_with",
+                                "conceptId": "CEDAR_VALLEY_DISTRICT",
+                                "confidence": "inferred",
+                                "source": "infer",
+                                "sourceRule": "nonpublic-is-internal-by-default"
+                            }
+                        ],
+                        "assessment": {
+                            "collapsed": [],
+                            "conflicts": [],
+                            "emitted": [
+                                {
+                                    "categoryId": "level",
+                                    "conceptId": "INTERNAL"
+                                }
+                            ],
+                            "omitted": [
+                                {
+                                    "categoryId": "allow_sharing_with",
+                                    "conceptId": "CEDAR_VALLEY_DISTRICT"
+                                }
+                            ],
+                            "unrepresentable": []
+                        },
+                        "displayColor": {
+                            "background": "#1565c0",
+                            "text": "#ffffff"
+                        },
+                        "errors": [
+                            {
+                                "affectedConcepts": [
+                                    "CONFIDENTIAL"
+                                ],
+                                "categoryId": "level",
+                                "constraintId": "part-coverage:level:CONFIDENTIAL",
+                                "message": "The whole does not cover CONFIDENTIAL, which a part carries."
+                            }
+                        ],
+                        "inputWasValid": false,
+                        "notices": [],
+                        "proposedFixes": [
+                            {
+                                "adds": [
+                                    {
+                                        "categoryId": "level",
+                                        "conceptId": "CONFIDENTIAL"
+                                    }
+                                ],
+                                "keeps": [],
+                                "message": "Replace INTERNAL with CONFIDENTIAL.",
+                                "removes": [
+                                    {
+                                        "categoryId": "level",
+                                        "conceptId": "INTERNAL"
+                                    }
+                                ],
+                                "rendered": "CONFIDENTIAL"
+                            }
+                        ],
+                        "rendered": "INTERNAL",
+                        "renders": {},
+                        "suggestionsFor": {
+                            "level": {
+                                "suggestions": [
+                                    {
+                                        "categoryId": "level",
+                                        "conceptId": "PUBLIC",
+                                        "description": "Public",
+                                        "group": "Protection",
+                                        "label": "PUBLIC",
+                                        "name": "Public",
+                                        "order": 0,
+                                        "selected": false,
+                                        "views": {
+                                            "default": "PUBLIC",
+                                            "long": "PUBLIC",
+                                            "short": "P"
+                                        }
+                                    },
+                                    {
+                                        "categoryId": "level",
+                                        "conceptId": "INTERNAL",
+                                        "description": "Internal",
+                                        "group": "Protection",
+                                        "label": "INTERNAL",
+                                        "name": "Internal",
+                                        "order": 0,
+                                        "selected": false,
+                                        "views": {
+                                            "default": "INTERNAL",
+                                            "long": "INTERNAL",
+                                            "short": "I"
+                                        }
+                                    },
+                                    {
+                                        "categoryId": "level",
+                                        "conceptId": "CONFIDENTIAL",
+                                        "description": "Confidential",
+                                        "group": "Protection",
+                                        "label": "CONFIDENTIAL",
+                                        "name": "Confidential",
+                                        "order": 0,
+                                        "selected": false,
+                                        "views": {
+                                            "default": "CONFIDENTIAL",
+                                            "long": "CONFIDENTIAL",
+                                            "short": "C"
+                                        }
+                                    },
+                                    {
+                                        "categoryId": "level",
+                                        "conceptId": "RESTRICTED",
+                                        "description": "Restricted",
+                                        "group": "Protection",
+                                        "label": "RESTRICTED",
+                                        "name": "Restricted",
+                                        "order": 0,
+                                        "selected": false,
+                                        "views": {
+                                            "default": "RESTRICTED",
+                                            "long": "RESTRICTED",
+                                            "short": "R"
+                                        }
+                                    }
+                                ],
+                                "warnings": []
+                            }
+                        },
+                        "valid": false,
+                        "warnings": []
+                    }
+                },
+                "headers": {
+                    "content-type": "application/json",
+                    "x-ezclassify-resolved-version": "1.0.0"
+                },
+                "status": 200,
+                "statusDeclaredInContract": true
+            },
+            "summary": "document-form: focus-attachment: process: 2"
         },
         {
             "auth": {
