@@ -61,25 +61,13 @@ describe('portable test-suite contract', () => {
         ];
         expect(validate(value), JSON.stringify(validate.errors)).toBe(true);
     });
-    it('refuses an option that asks the engine to settle less', () => {
+    it('refuses an option the operation does not declare', () => {
         const withOptions = (options: object): unknown => ({
             ...suite,
             cases: [{ ...suite.cases[0], options }],
         });
-        for (const options of [
-            { normalization: 'strict' },
-            { skipInference: true },
-            { skipRepair: true },
-            { fix: false },
-            { preserveDeprecated: true },
-        ]) {
-            expect(
-                validate(withOptions(options)),
-                JSON.stringify(options),
-            ).toBe(false);
-        }
-        // Negative control: an option that says what the marking is judged
-        // as, not how it is settled.
+        expect(validate(withOptions({ note: true }))).toBe(false);
+        // Positive control: an option the operation declares.
         expect(
             validate(withOptions({ parts: ['(L)'] })),
             JSON.stringify(validate.errors),

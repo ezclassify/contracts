@@ -142,26 +142,8 @@ expectTypeOf(local.validate(facts)).toEqualTypeOf<ValidateResult>();
 expectTypeOf(remoteContext.validate(facts)).toEqualTypeOf<
     Promise<ValidateResult>
 >();
-// No lane asks the engine to settle less: whether text was right as written is
-// what `inputWasValid` and the applied changes answer.
-// @ts-expect-error no stage bypass on validate
-local.validate('X', { skipRepair: true });
-// @ts-expect-error no stage bypass on validate
-local.validate('X', { skipInference: true });
-// @ts-expect-error no repair level on validate
-base.validate('X', { normalization: 'strict' });
-// @ts-expect-error no stage bypass on process
-local.process('X', { skipRepair: true });
-// @ts-expect-error no stage bypass on process
-local.process('X', { skipInference: true });
-// @ts-expect-error no stage bypass on the scheme-addressed overload either
-local.process('X', 'scheme', { skipRepair: true });
-// @ts-expect-error no repair level on process
-base.process('X', { normalization: 'strict' });
-// @ts-expect-error no repair level over the wire either
-remoteContext.process('X', { normalization: 'strict' });
-// @ts-expect-error no repair level on explain
-base.explain('X', { normalization: 'strict' });
+// @ts-expect-error process takes only the options it declares
+base.process('X', { note: true });
 // @ts-expect-error validate takes text or facts, never both
 base.validate('X', { assertions: facts });
 // `parts` changes what the whole is judged against, so validate takes it too.

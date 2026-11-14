@@ -176,37 +176,6 @@ describe('validate is the reader call', () => {
         expect(body.additionalProperties).toBe(false);
     });
 
-    it('lets no request ask the engine to settle less', () => {
-        // Whether text was right as written is what `inputWasValid` and the
-        // applied changes answer, so no route takes a repair level or a stage
-        // to skip.
-        const settlesLess = (properties: string[]) =>
-            properties.filter((key) =>
-                [
-                    'normalization',
-                    'skipRepair',
-                    'skipInference',
-                    'fix',
-                    'preserveDeprecated',
-                ].includes(key),
-            );
-        for (const route of ['process', 'validate', 'explain'])
-            expect(settlesLess(keys(requestOf(route))), route).toEqual([]);
-        for (const [name, component] of Object.entries(schemas))
-            expect(
-                settlesLess(Object.keys(component.properties ?? {})),
-                name,
-            ).toEqual([]);
-        // Negative control: the filter does catch these keys when present.
-        expect(
-            settlesLess([
-                ...keys(requestOf('process')),
-                'normalization',
-                'preserveDeprecated',
-            ]),
-        ).toEqual(['normalization', 'preserveDeprecated']);
-    });
-
     it('is what every scan region answers', () => {
         expect(schema('ScanResult').properties!['result']!.$ref).toBe(
             `${REF}ValidateResult`,

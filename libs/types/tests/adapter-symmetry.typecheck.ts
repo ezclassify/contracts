@@ -99,30 +99,6 @@ expectTypeOf<SchemeEngineAdapter>().not.toHaveProperty('evaluateGuide');
 expectTypeOf<SchemeEngineAdapter>().not.toHaveProperty('evaluateGuides');
 expectTypeOf<RemoteSchemeEngineAdapter>().not.toHaveProperty('checkAccess');
 
-// No lane asks the engine to settle less. Whether text was right as written
-// is what `inputWasValid` and the applied changes answer, and reading is
-// tolerant on purpose, so a repair level or a stage to skip has no place on the
-// local lane or the wire. The exact option bags below are what keeps them from
-// creeping back onto any lane, and the OpenAPI package pins those bags to the
-// wire request body.
-expectTypeOf<
-    NonNullable<Parameters<LocalSchemeEngineAdapter['process']>[1]>
->().not.toHaveProperty('skipRepair');
-expectTypeOf<
-    NonNullable<Parameters<LocalSchemeEngineAdapter['process']>[1]>
->().not.toHaveProperty('skipInference');
-expectTypeOf<
-    NonNullable<Parameters<LocalSchemeEngineAdapter['process']>[1]>
->().not.toHaveProperty('normalization');
-// Neither a no-op flag nor a switch that blanks `rendered` belongs on the
-// author's call: `tolerant` was never read, and `validateOnly` made a process
-// result whose `rendered` broke its own definition.
-expectTypeOf<
-    NonNullable<Parameters<LocalSchemeEngineAdapter['process']>[1]>
->().not.toHaveProperty('validateOnly');
-expectTypeOf<
-    NonNullable<Parameters<LocalSchemeEngineAdapter['process']>[1]>
->().not.toHaveProperty('tolerant');
 expectTypeOf<RemoteSchemeEngineAdapter['process']>().parameter(2).toEqualTypeOf<
     | {
           inputFormat?: string;

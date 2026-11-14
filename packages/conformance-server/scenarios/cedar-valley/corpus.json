@@ -21860,7 +21860,8 @@
                                     "CONFIDENTIAL",
                                     "PUBLIC"
                                 ],
-                                "constraintId": "single-category:level",
+                                "categoryId": "level",
+                                "constraintId": "_single-category:level",
                                 "message": "Protection allows one value; CONFIDENTIAL and PUBLIC were given."
                             }
                         ],
@@ -22386,7 +22387,8 @@
                                     "CONFIDENTIAL",
                                     "PUBLIC"
                                 ],
-                                "constraintId": "single-category:level",
+                                "categoryId": "level",
+                                "constraintId": "_single-category:level",
                                 "message": "Protection allows one value; CONFIDENTIAL and PUBLIC were given."
                             }
                         ],
@@ -22917,7 +22919,8 @@
                                     "CONFIDENTIAL",
                                     "PUBLIC"
                                 ],
-                                "constraintId": "single-category:level",
+                                "categoryId": "level",
+                                "constraintId": "_single-category:level",
                                 "message": "Protection allows one value; CONFIDENTIAL and PUBLIC were given."
                             }
                         ],
@@ -23457,7 +23460,8 @@
                                     "CONFIDENTIAL",
                                     "PUBLIC"
                                 ],
-                                "constraintId": "single-category:level",
+                                "categoryId": "level",
+                                "constraintId": "_single-category:level",
                                 "message": "Protection allows one value; CONFIDENTIAL and PUBLIC were given."
                             }
                         ],
@@ -32978,7 +32982,7 @@
                                     "CONFIDENTIAL"
                                 ],
                                 "categoryId": "level",
-                                "constraintId": "part-coverage:level:CONFIDENTIAL",
+                                "constraintId": "_part-coverage:level:CONFIDENTIAL",
                                 "message": "The whole does not cover CONFIDENTIAL, which a part carries."
                             }
                         ],
@@ -33781,7 +33785,7 @@
                                     "CONFIDENTIAL"
                                 ],
                                 "categoryId": "level",
-                                "constraintId": "part-coverage:level:CONFIDENTIAL",
+                                "constraintId": "_part-coverage:level:CONFIDENTIAL",
                                 "message": "The whole does not cover CONFIDENTIAL, which a part carries."
                             }
                         ],
@@ -33952,7 +33956,7 @@
                                     "CONFIDENTIAL"
                                 ],
                                 "categoryId": "level",
-                                "constraintId": "part-coverage:level:CONFIDENTIAL",
+                                "constraintId": "_part-coverage:level:CONFIDENTIAL",
                                 "message": "The whole does not cover CONFIDENTIAL, which a part carries."
                             }
                         ],
@@ -35594,7 +35598,7 @@
                                     "CONFIDENTIAL"
                                 ],
                                 "categoryId": "level",
-                                "constraintId": "part-coverage:level:CONFIDENTIAL",
+                                "constraintId": "_part-coverage:level:CONFIDENTIAL",
                                 "message": "The whole does not cover CONFIDENTIAL, which a part carries."
                             }
                         ],
@@ -36065,7 +36069,7 @@
                                     "CONFIDENTIAL"
                                 ],
                                 "categoryId": "level",
-                                "constraintId": "part-coverage:level:CONFIDENTIAL",
+                                "constraintId": "_part-coverage:level:CONFIDENTIAL",
                                 "message": "The whole does not cover CONFIDENTIAL, which a part carries."
                             }
                         ],
