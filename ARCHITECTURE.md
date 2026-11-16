@@ -57,14 +57,11 @@ open and request schemas closed; [`libs/schemas/build.mjs`](libs/schemas/build.m
 [`libs/openapi/scripts/emit-openapi.ts`](libs/openapi/scripts/emit-openapi.ts) own that decision.
 
 The published OpenAPI document, generated JSON Schemas, and conformance corpus
-are vendored by the EzClassify spec bot into every client repository. A
-successful release acceptance run of CI (a manual dispatch with `full=true` on
-the current official `main` revision) starts propagation through
-[`.github/workflows/spec-contract-dispatch.yml`](.github/workflows/spec-contract-dispatch.yml).
-Only that run, with every job green, may dispatch the verified source to the
-receiver. No source-path filter may suppress this chain.
+are vendored by the EzClassify spec bot into every client repository. Every
+push to `main` starts propagation: [`.github/workflows/spec-contract-dispatch.yml`](.github/workflows/spec-contract-dispatch.yml)
+sends the pushed commit to the receiver. No source-path filter may suppress it.
 [`scripts/tests/spec-dispatch-paths.spec.ts`](scripts/tests/spec-dispatch-paths.spec.ts)
-checks the dispatcher, its refusal paths and the bundle inputs.
+checks the trigger and the bundle inputs.
 
 ## Handwritten seams
 

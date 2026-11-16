@@ -1,15 +1,14 @@
-import { execFileSync, spawnSync } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
-import os from 'node:os';
 import { fileURLToPath } from 'node:url';
 import yaml from 'js-yaml';
 import { describe, expect, it } from 'vitest';
 
 /**
- * Canonical propagation starts only after the unfiltered official main CI. The
- * source package declarations still define the complete input set; no push path
- * filter may suppress the successful-CI dispatch for one of them.
+ * Canonical propagation starts on every push to main. The source package
+ * declarations still define the complete input set; no push path filter may
+ * suppress the dispatch for one of them.
  */
 
 const ROOT = path.resolve(
@@ -109,198 +108,24 @@ function matchesFor(pattern: string, tracked: string[]): string[] {
     );
 }
 
-describe('spec-contract-dispatch CI qualification', () => {
-    it('executes the dispatch job proof and rejects incomplete full qualification', () => {
+describe('spec-contract-dispatch trigger', () => {
+    it('dispatches on every push to main with no CI lookup or path filter', () => {
         const workflow = workflowDocument();
-        const shell = workflow.jobs.dispatch.steps.find(
-            (step: any) => step.id === 'source',
-        ).run;
-        const program = shell.match(
-            /jq -e --arg sha "\$main_sha" --argjson id "\$run_id" --argjson attempt "\$attempt" '([\s\S]*?)' <<< "\$jobs"/,
-        )[1];
-        const sha = 'a'.repeat(40);
-        const names = ['ci', 'full (22)', 'full (24)'];
-        const listing = () => ({
-            total_count: names.length,
-            jobs: names.map((name) => ({
-                name,
-                status: 'completed',
-                conclusion: 'success',
-                head_sha: sha,
-                run_id: 7,
-                run_attempt: 1,
-            })),
-        });
-        const accepts = (value: unknown) =>
-            spawnSync(
-                'jq',
-                [
-                    '-e',
-                    '--arg',
-                    'sha',
-                    sha,
-                    '--argjson',
-                    'id',
-                    '7',
-                    '--argjson',
-                    'attempt',
-                    '1',
-                    program,
-                ],
-                { input: JSON.stringify(value), encoding: 'utf8' },
-            ).status === 0;
-        expect(accepts(listing())).toBe(true);
-        for (const change of [
-            'missing',
-            'skipped',
-            'failed',
-            'attempt',
-            'head',
-            'truncated',
-        ]) {
-            const value = listing();
-            if (change === 'missing') {
-                value.jobs.pop();
-                value.total_count--;
-            }
-            if (change === 'skipped') value.jobs[1].conclusion = 'skipped';
-            if (change === 'failed') value.jobs[0].conclusion = 'failure';
-            if (change === 'attempt') value.jobs[0].run_attempt = 2;
-            if (change === 'head') value.jobs[0].head_sha = 'b'.repeat(40);
-            if (change === 'truncated') value.total_count++;
-            expect(accepts(value), change).toBe(false);
-        }
+        expect(workflow.on.push).toEqual({ branches: ['main'] });
+        expect(workflow.on.workflow_dispatch).toBeDefined();
+        expect(workflow.on.workflow_run).toBeUndefined();
+        expect(workflow.on.push.paths).toBeUndefined();
+        expect(Object.keys(workflow.jobs)).toEqual(['dispatch']);
+        const job = workflow.jobs.dispatch;
+        expect(job['timeout-minutes']).toBeGreaterThan(0);
+        expect(job.if).toContain("github.repository == 'ezclassify/contracts'");
+        expect(job.if).toContain("github.ref == 'refs/heads/main'");
+        const text = fs.readFileSync(WORKFLOW, 'utf8');
+        expect(text).not.toContain('actions/runs');
+        expect(text).not.toContain('actions: read');
     });
 
-    it.each([
-        'current',
-        'superseded',
-        'routine',
-        'failed',
-        'foreign',
-        'ref-failed',
-    ])(
-        'executes the dispatcher source proof against %s qualification',
-        (kind) => {
-            for (const step of workflowDocument().jobs.dispatch.steps.slice(
-                1,
-            )) {
-                expect(step.if).toBe(
-                    "${{ steps.source.outputs.contracts_sha != '' }}",
-                );
-            }
-            const shell = workflowDocument().jobs.dispatch.steps.find(
-                (step: any) => step.id === 'source',
-            ).run;
-            const root = fs.mkdtempSync(
-                path.join(os.tmpdir(), 'spec-dispatch-'),
-            );
-            const sha = 'a'.repeat(40);
-            const run = {
-                id: 7,
-                run_attempt: 1,
-                head_sha: kind === 'superseded' ? 'b'.repeat(40) : sha,
-                head_branch: 'main',
-                event: 'workflow_dispatch',
-                status: 'completed',
-                conclusion: kind === 'failed' ? 'failure' : 'success',
-                path: '.github/workflows/ci.yml',
-                repository: {
-                    full_name:
-                        kind === 'foreign'
-                            ? 'other/contracts'
-                            : 'ezclassify/contracts',
-                },
-                head_repository: { full_name: 'ezclassify/contracts' },
-            };
-            // A full=false dispatch reports the skipped matrix job as one
-            // unexpanded "full" entry.
-            const jobs = (
-                kind === 'routine'
-                    ? ['ci', 'full']
-                    : ['ci', 'full (22)', 'full (24)']
-            ).map((name) => ({
-                name,
-                head_sha: sha,
-                run_id: 7,
-                run_attempt: 1,
-                status: 'completed',
-                conclusion: name === 'full' ? 'skipped' : 'success',
-            }));
-            const output = path.join(root, 'output');
-            try {
-                fs.writeFileSync(
-                    path.join(root, 'gh'),
-                    `#!/usr/bin/env node
-const args = process.argv.slice(2);
-if (args[1].includes('/git/ref/')) {
-  if (process.env.REF_FAILED === 'true') process.exit(1);
-  console.log(process.env.MAIN_SHA);
-} else if (args[1].endsWith('/actions/runs/7')) console.log(process.env.RUN);
-else if (args[1].includes('/attempts/1/jobs')) console.log(process.env.JOBS);
-else process.exit(9);
-`,
-                    { mode: 0o755 },
-                );
-                const result = spawnSync(
-                    'bash',
-                    ['-e', '-o', 'pipefail', '-c', shell],
-                    {
-                        encoding: 'utf8',
-                        timeout: 5000,
-                        env: {
-                            ...process.env,
-                            PATH: `${root}:${process.env.PATH}`,
-                            EVENT_NAME: 'workflow_run',
-                            EVENT_RUN_ID: '7',
-                            GITHUB_OUTPUT: output,
-                            MAIN_SHA: sha,
-                            RUN: JSON.stringify(run),
-                            JOBS: JSON.stringify({
-                                total_count: jobs.length,
-                                jobs,
-                            }),
-                            REF_FAILED: String(kind === 'ref-failed'),
-                        },
-                    },
-                );
-                expect(result.status, result.stderr).toBe(
-                    ['current', 'superseded', 'routine'].includes(kind) ? 0 : 1,
-                );
-                if (kind === 'current')
-                    expect(fs.readFileSync(output, 'utf8')).toBe(
-                        `contracts_sha=${sha}\ncontracts_ci_run_id=7\n`,
-                    );
-                else expect(fs.existsSync(output)).toBe(false);
-                if (kind === 'superseded')
-                    expect(result.stdout).toContain(
-                        'skip the superseded qualification',
-                    );
-                if (kind === 'routine')
-                    expect(result.stdout).toContain('did not run the full job');
-            } finally {
-                fs.rmSync(root, { recursive: true, force: true });
-            }
-        },
-    );
-
-    it('waits for the full CI dispatch without a source-path suppression filter', () => {
-        const workflow = workflowDocument();
-        expect(workflow.on.workflow_run).toEqual({
-            workflows: ['CI'],
-            types: ['completed'],
-            branches: ['main'],
-        });
-        expect(workflow.on.push).toBeUndefined();
-        expect(workflow.jobs.dispatch.if).toContain(
-            "github.repository == 'ezclassify/contracts'",
-        );
-        expect(workflow.jobs.dispatch.if).toContain(
-            "github.event.workflow_run.conclusion == 'success'",
-        );
-        expect(workflow.jobs.dispatch.if).toContain(
-            "github.event.workflow_run.event == 'workflow_dispatch'",
-        );
+    it('keeps ci.yml on the lean contract with no push trigger', () => {
         const ci = yaml.load(
             fs.readFileSync(
                 path.join(ROOT, '.github/workflows/ci.yml'),
@@ -338,18 +163,10 @@ else process.exit(9);
         expect(covered.size).toBeGreaterThanOrEqual(78);
     });
 
-    it('sends the event name the release pipeline listens for', () => {
+    it('sends the pushed commit under the event name the release pipeline listens for', () => {
         const text = fs.readFileSync(WORKFLOW, 'utf8');
         expect(text).toContain('event_type=contracts-spec-changed');
         expect(text).toContain('client_payload[contracts_sha]=$CONTRACTS_SHA');
-        expect(text).toContain(
-            'client_payload[contracts_ci_run_id]=$CONTRACTS_CI_RUN_ID',
-        );
-        expect(text).toContain('.conclusion == "success"');
-        expect(text).toContain('.head_sha == $sha');
-        expect(text).toContain(
-            '.head_repository.full_name == "ezclassify/contracts"',
-        );
-        expect(text).not.toContain('provenance for a human');
+        expect(text).toContain('CONTRACTS_SHA: ${{ github.sha }}');
     });
 });
