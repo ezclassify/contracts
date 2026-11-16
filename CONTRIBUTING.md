@@ -63,14 +63,13 @@ they are stale.
 
 ### What CI runs
 
-Every push and pull request runs, on Node 22 and 24: the install above,
-the native portability and dependency-age guards before installation,
-`npm run build` (including schema regeneration), `npm test`,
-`node scripts/check-mirror-list.mjs`, `npm run check:spec`,
-`npm run docs:check`, `npm run check:openapi`, a clean-tree check,
-`npm run format:check`, the validator CLI against a shipped example, and
-`npm audit --audit-level=critical`. Run the same commands before you open a
-pull request.
+Every pull request runs, on Node 22: the native portability and
+dependency-age guards, `node scripts/check-mirror-list.mjs`, the install above,
+`npm run format:check`, `npm run build` (including schema regeneration),
+`npm test`, `npm run check:spec`, `npm run check:openapi`, the validator CLI
+against a shipped example, and a clean-tree check. A release run adds Node 24,
+regenerates the OpenAPI document and package notices, and runs
+`npm run docs:check`. Run the same commands before you open a pull request.
 
 ## Generated references
 

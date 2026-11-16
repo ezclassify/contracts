@@ -5,8 +5,6 @@ name: Prepare mirror (GitHub Packages)
 # receive read-only access. Manual dispatch prepares the current main source.
 
 on:
-  schedule:
-    - cron: '45 5 * * *' # 05:45 UTC nightly, ahead of every repo that consumes this
   workflow_dispatch:
 
 permissions:
@@ -24,33 +22,14 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     outputs:
-      ready: ${{ steps.gate.outputs.run }}
       artifact-id: ${{ steps.artifact.outputs.artifact-id }}
       artifact-digest: ${{ steps.artifact.outputs.artifact-digest }}
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
-
         with:
           persist-credentials: false
 
-      - name: Gate on a commit in the last 24h
-        id: gate
-        # The gate covers the cron only. Someone who dispatches this by hand
-        # means to publish, so a manual run always publishes and there is no
-        # `force` input to get wrong.
-        run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "manual dispatch: preparing"; echo "run=yes" >> "$GITHUB_OUTPUT"; exit 0
-          fi
-          age=$(( $(date +%s) - $(git show -s --format=%ct HEAD) ))
-          if [ "$age" -lt 86400 ]; then
-            echo "HEAD is ${age}s old (<24h): preparing"; echo "run=yes" >> "$GITHUB_OUTPUT"
-          else
-            echo "HEAD is ${age}s old (>=24h): nothing landed today, skipping"; echo "run=no" >> "$GITHUB_OUTPUT"
-          fi
-
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
-        if: steps.gate.outputs.run == 'yes'
         with:
           node-version: '24'
           package-manager-cache: false
@@ -58,7 +37,6 @@ jobs:
           scope: '@ezclassify'
 
       - name: Pin npm
-        if: steps.gate.outputs.run == 'yes'
         run: npm install -g npm@11.21.1
 
       - name: Install
@@ -73,7 +51,7 @@ jobs:
         #
         # The generate half is guarded rather than unconditional because
         # deps:relock deletes the lockfile before it re-resolves. With a
-        # committed lockfile, a preparing job that regenerated it every night
+        # committed lockfile, a preparing job that regenerated it on every run
         # would build and publish against third-party versions nobody
         # reviewed, silently. Guarded, the step honors committed bytes
         # whenever they exist.
@@ -83,7 +61,6 @@ jobs:
         # resolves to a workspace link here, so nothing should reach the
         # registry, but an unauthenticated read of GitHub Packages fails
         # outright instead of falling through to npmjs.
-        if: steps.gate.outputs.run == 'yes'
         env:
           NODE_AUTH_TOKEN: ${{ github.token }}
         run: |
@@ -92,7 +69,6 @@ jobs:
 
       - name: Resolve the package list and the mirror version
         id: plan
-        if: steps.gate.outputs.run == 'yes'
         # One source of truth. The stamp loop, the build, the pack loop and
         # the post-publish check all read scripts/mirror-packages.json, so they
         # cannot drift apart the way two hand-copied lists do.
@@ -101,14 +77,12 @@ jobs:
           echo "packages=$(node -p 'require("./scripts/mirror-packages.json").packages.join(" ")')" >> "$GITHUB_OUTPUT"
 
       - name: Stamp mirror version
-        if: steps.gate.outputs.run == 'yes'
         run: |
           for pkg in ${{ steps.plan.outputs.packages }}; do
             npm pkg set "version=${{ steps.plan.outputs.version }}" -w "$pkg"
           done
 
       - name: The list is complete and every range admits a mirror version
-        if: steps.gate.outputs.run == 'yes'
         # Runs AFTER the stamp so it checks what is about to be published, not
         # what was committed. Catches three things that otherwise ship quietly:
         # a publishable workspace nobody added to the list, a first-party
@@ -118,13 +92,11 @@ jobs:
         run: node scripts/check-mirror-list.mjs --expect-version "${{ steps.plan.outputs.version }}"
 
       - name: Build
-        if: steps.gate.outputs.run == 'yes'
         # types, schemas and openapi build the compiled outputs their manifests
         # publish. The remaining packages publish maintained sources or data.
         run: npm run build
 
       - name: Pack the native mirror without publication hooks
-        if: steps.gate.outputs.run == 'yes'
         run: |
           mkdir -p "$RUNNER_TEMP/contracts-mirror"
           for pkg in ${{ steps.plan.outputs.packages }}; do
@@ -132,7 +104,6 @@ jobs:
           done
           node scripts/development-mirror.mjs "$RUNNER_TEMP/contracts-mirror"
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        if: steps.gate.outputs.run == 'yes'
         id: artifact
         with:
           name: contracts-development-mirror-${{ github.run_attempt }}
@@ -142,7 +113,6 @@ jobs:
 
   handoff:
     needs: prepare
-    if: needs.prepare.outputs.ready == 'yes'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
