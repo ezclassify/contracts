@@ -114,6 +114,7 @@ test('read-only native preparation and a source-free handoff keep write credenti
             'utf8',
         ),
     ) as {
+        on: Record<string, unknown>;
         permissions: Record<string, string>;
         jobs: Record<
             string,
@@ -126,6 +127,11 @@ test('read-only native preparation and a source-free handoff keep write credenti
             }
         >;
     };
+    assert.deepEqual(Object.keys(workflow.on).sort(), [
+        'push',
+        'workflow_dispatch',
+    ]);
+    assert.deepEqual(workflow.on.push, { branches: ['main'] });
     assert.equal(workflow.permissions.contents, 'read');
     assert.equal(workflow.permissions.packages, 'read');
     assert.ok(workflow.jobs.prepare);

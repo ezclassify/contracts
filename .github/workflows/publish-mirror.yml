@@ -2,9 +2,13 @@ name: Prepare mirror (GitHub Packages)
 
 # Contracts owns native mirror preparation. Release Train publishes the sealed
 # files separately with its protected credential; native build and proof code
-# receive read-only access. Manual dispatch prepares the current main source.
+# receive read-only access. Every push to main prepares that commit, so Release
+# Train always finds a native preparation for the source it is asked to build.
+# Manual dispatch prepares the current main source again on demand.
 
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
