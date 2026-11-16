@@ -133,5 +133,8 @@ jobs:
         # say what a field means.
         run: npm run docs:check
 
+      - name: Validator bin runs end-to-end
+        run: node packages/validator/bin/ezclassify-validate.mjs libs/types/examples/scheme-with-import.yaml
+
       - name: Working tree is clean after generation
         run: git diff --exit-code && test -z "$(git status --porcelain)"

@@ -63,7 +63,7 @@ If a fix is available before the 90-day deadline, we disclose upon release. If a
 ## Security Scanning
 
 - **Automated updates**: Dependabot checks npm and GitHub Actions dependencies weekly and opens pull requests for minor and patch updates.
-- **Dependency auditing**: CI runs `npm audit --audit-level=critical` on every push and pull request. Run `npm audit` locally before opening a pull request that adds or bumps dependencies.
+- **Dependency auditing**: Dependabot alerts report known vulnerabilities in dependencies. Run `npm audit` locally before opening a pull request that adds or bumps dependencies.
 
 ## Contact
 

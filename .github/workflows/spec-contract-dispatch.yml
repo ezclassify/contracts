@@ -47,6 +47,13 @@ jobs:
           run_id="$(jq -r .id <<< "$run")"
           attempt="$(jq -r .run_attempt <<< "$run")"
           jobs="$(gh api "repos/ezclassify/contracts/actions/runs/$run_id/attempts/$attempt/jobs?per_page=100")"
+          # A dispatch with full=false also succeeds, with "full" skipped. It is
+          # not a release acceptance run, so it ends here quietly rather than
+          # failing the refusal check below.
+          if [ "$EVENT_NAME" = workflow_run ] && ! jq -e '[.jobs[] | select(.name | startswith("full (")) | .conclusion] | length > 0 and all(. == "success")' <<< "$jobs" >/dev/null; then
+            echo "CI run $run_id did not run the full job; nothing to propagate."
+            exit 0
+          fi
           jq -e --arg sha "$main_sha" --argjson id "$run_id" --argjson attempt "$attempt" '
             .total_count == (.jobs | length) and
             ([.jobs[].name] as $names | all(["ci","full (22)","full (24)"][]; . as $name | $names | index($name))) and

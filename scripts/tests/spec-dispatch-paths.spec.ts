@@ -172,7 +172,14 @@ describe('spec-contract-dispatch CI qualification', () => {
         }
     });
 
-    it.each(['current', 'superseded', 'failed', 'foreign', 'ref-failed'])(
+    it.each([
+        'current',
+        'superseded',
+        'routine',
+        'failed',
+        'foreign',
+        'ref-failed',
+    ])(
         'executes the dispatcher source proof against %s qualification',
         (kind) => {
             for (const step of workflowDocument().jobs.dispatch.steps.slice(
@@ -206,13 +213,19 @@ describe('spec-contract-dispatch CI qualification', () => {
                 },
                 head_repository: { full_name: 'ezclassify/contracts' },
             };
-            const jobs = ['ci', 'full (22)', 'full (24)'].map((name) => ({
+            // A full=false dispatch reports the skipped matrix job as one
+            // unexpanded "full" entry.
+            const jobs = (
+                kind === 'routine'
+                    ? ['ci', 'full']
+                    : ['ci', 'full (22)', 'full (24)']
+            ).map((name) => ({
                 name,
                 head_sha: sha,
                 run_id: 7,
                 run_attempt: 1,
                 status: 'completed',
-                conclusion: 'success',
+                conclusion: name === 'full' ? 'skipped' : 'success',
             }));
             const output = path.join(root, 'output');
             try {
@@ -252,7 +265,7 @@ else process.exit(9);
                     },
                 );
                 expect(result.status, result.stderr).toBe(
-                    ['current', 'superseded'].includes(kind) ? 0 : 1,
+                    ['current', 'superseded', 'routine'].includes(kind) ? 0 : 1,
                 );
                 if (kind === 'current')
                     expect(fs.readFileSync(output, 'utf8')).toBe(
@@ -263,6 +276,8 @@ else process.exit(9);
                     expect(result.stdout).toContain(
                         'skip the superseded qualification',
                     );
+                if (kind === 'routine')
+                    expect(result.stdout).toContain('did not run the full job');
             } finally {
                 fs.rmSync(root, { recursive: true, force: true });
             }
