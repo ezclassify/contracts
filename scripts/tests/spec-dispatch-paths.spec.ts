@@ -119,13 +119,7 @@ describe('spec-contract-dispatch CI qualification', () => {
             /jq -e --arg sha "\$main_sha" --argjson id "\$run_id" --argjson attempt "\$attempt" '([\s\S]*?)' <<< "\$jobs"/,
         )[1];
         const sha = 'a'.repeat(40);
-        const names = [
-            'policy / plan',
-            'qualification / accept',
-            'ci / accept',
-            'build-and-test (22)',
-            'build-and-test (24)',
-        ];
+        const names = ['ci', 'full (22)', 'full (24)'];
         const listing = () => ({
             total_count: names.length,
             jobs: names.map((name) => ({
@@ -212,13 +206,7 @@ describe('spec-contract-dispatch CI qualification', () => {
                 },
                 head_repository: { full_name: 'ezclassify/contracts' },
             };
-            const jobs = [
-                'policy / plan',
-                'qualification / accept',
-                'ci / accept',
-                'build-and-test (22)',
-                'build-and-test (24)',
-            ].map((name) => ({
+            const jobs = ['ci', 'full (22)', 'full (24)'].map((name) => ({
                 name,
                 head_sha: sha,
                 run_id: 7,
@@ -281,7 +269,7 @@ else process.exit(9);
         },
     );
 
-    it('waits for complete main CI without a source-path suppression filter', () => {
+    it('waits for the full CI dispatch without a source-path suppression filter', () => {
         const workflow = workflowDocument();
         expect(workflow.on.workflow_run).toEqual({
             workflows: ['CI'],
@@ -295,6 +283,9 @@ else process.exit(9);
         expect(workflow.jobs.dispatch.if).toContain(
             "github.event.workflow_run.conclusion == 'success'",
         );
+        expect(workflow.jobs.dispatch.if).toContain(
+            "github.event.workflow_run.event == 'workflow_dispatch'",
+        );
         const ci = yaml.load(
             fs.readFileSync(
                 path.join(ROOT, '.github/workflows/ci.yml'),
@@ -302,9 +293,10 @@ else process.exit(9);
             ),
         ) as Record<string, any>;
         expect(ci.name).toBe('CI');
-        expect(ci.on.push.branches).toContain('main');
-        expect(ci.on.push.paths).toBeUndefined();
-        expect(ci.on.push['paths-ignore']).toBeUndefined();
+        expect(ci.on.push).toBeUndefined();
+        expect(ci.on.pull_request.paths).toBeUndefined();
+        expect(ci.on.pull_request['paths-ignore']).toBeUndefined();
+        expect(ci.on.workflow_dispatch.inputs.full.type).toBe('boolean');
     });
 
     it('has no glob that matches nothing', () => {
@@ -344,228 +336,5 @@ else process.exit(9);
             '.head_repository.full_name == "ezclassify/contracts"',
         );
         expect(text).not.toContain('provenance for a human');
-    });
-});
-
-describe('automatic main qualification before spec propagation', () => {
-    function qualificationJob() {
-        const job = workflowDocument().jobs['qualify-main'];
-        expect(
-            job,
-            'merge CI must automatically start full main qualification',
-        ).toBeDefined();
-        return job;
-    }
-
-    it('starts qualification only for successful official-main push CI', () => {
-        const job = qualificationJob();
-        expect(job.permissions).toEqual({
-            contents: 'read',
-            actions: 'write',
-            checks: 'read',
-        });
-        expect(job['timeout-minutes']).toBe(25);
-        const accepts = (github: any) =>
-            new Function(
-                'github',
-                `return (${job.if.replace(/^\$\{\{\s*|\s*\}\}$/g, '')})`,
-            )(github);
-        const event = () => ({
-            repository: 'ezclassify/contracts',
-            ref: 'refs/heads/main',
-            event_name: 'workflow_run',
-            event: { workflow_run: { conclusion: 'success', event: 'push' } },
-        });
-        expect(accepts(event())).toBe(true);
-        for (const kind of [
-            'failed',
-            'pull-request',
-            'manual',
-            'scheduled',
-            'fork',
-            'branch',
-            'direct',
-        ]) {
-            const value = event();
-            if (kind === 'failed')
-                value.event.workflow_run.conclusion = 'failure';
-            if (kind === 'pull-request')
-                value.event.workflow_run.event = 'pull_request';
-            if (kind === 'manual')
-                value.event.workflow_run.event = 'workflow_dispatch';
-            if (kind === 'scheduled')
-                value.event.workflow_run.event = 'schedule';
-            if (kind === 'fork') value.repository = 'contributor/contracts';
-            if (kind === 'branch') value.ref = 'refs/heads/other';
-            if (kind === 'direct') value.event_name = 'workflow_dispatch';
-            expect(accepts(value), kind).toBe(false);
-        }
-        // Existing dispatch still waits for the full run: routine push cannot propagate.
-        const dispatch = workflowDocument().jobs.dispatch;
-        expect(dispatch.if).toContain(
-            "github.event.workflow_run.event == 'workflow_dispatch'",
-        );
-        expect(
-            dispatch.permissions?.actions ??
-                workflowDocument().permissions.actions,
-        ).toBe('read');
-    });
-
-    it.each([
-        'current',
-        'superseded',
-        'failed',
-        'foreign',
-        'wrong-head',
-        'wrong-workflow',
-        'wrong-attempt',
-        'pull-request',
-        'missing-run-id',
-        'string-run-id',
-        'zero-run-id',
-        'negative-run-id',
-        'fractional-run-id',
-        'unsafe-run-id',
-        'malformed-response',
-        'failed-watch',
-    ])('executes the qualification launcher against %s CI evidence', (kind) => {
-        const shell = qualificationJob().steps[0].run;
-        const root = fs.mkdtempSync(
-            path.join(os.tmpdir(), 'spec-qualification-'),
-        );
-        const sha = 'a'.repeat(40);
-        const run = {
-            id: 7,
-            head_sha: sha,
-            head_branch: 'main',
-            event: 'push',
-            status: 'completed',
-            conclusion: 'success',
-            path: '.github/workflows/ci.yml',
-            run_attempt: 1,
-            repository: { full_name: 'ezclassify/contracts' },
-            head_repository: { full_name: 'ezclassify/contracts' },
-        };
-        if (kind === 'failed') run.conclusion = 'failure';
-        if (kind === 'foreign')
-            run.head_repository.full_name = 'contributor/contracts';
-        if (kind === 'wrong-head') run.head_sha = 'b'.repeat(40);
-        if (kind === 'wrong-workflow') run.path = '.github/workflows/other.yml';
-        if (kind === 'wrong-attempt') run.run_attempt = 2;
-        if (kind === 'pull-request') run.event = 'pull_request';
-        try {
-            fs.writeFileSync(
-                path.join(root, 'gh'),
-                `#!/usr/bin/env node
-const fs = require('node:fs');
-const args = process.argv.slice(2);
-if (args[0] === 'api' && args[1].endsWith('/actions/runs/7')) console.log(process.env.FIXTURE_RUN);
-else if (args[0] === 'api' && args[1].endsWith('/git/ref/heads/main')) console.log(process.env.FIXTURE_MAIN);
-else if (args[0] === 'api' && args.includes('POST')) {
-  fs.appendFileSync(process.env.DISPATCH_LOG, JSON.stringify(args) + '\\n');
-  console.log(process.env.FIXTURE_RESPONSE);
-} else if (args[0] === 'run' && args[1] === 'watch') {
-  fs.appendFileSync(process.env.DISPATCH_LOG, JSON.stringify(args) + '\\n');
-  if (process.env.WATCH_FAILED === 'true') process.exit(1);
-} else if (args[0] === 'workflow') fs.appendFileSync(process.env.DISPATCH_LOG, JSON.stringify(args) + '\\n');
-else process.exit(9);
-`,
-                { mode: 0o755 },
-            );
-            const log = path.join(root, 'dispatch.json');
-            let response: unknown = { workflow_run_id: 11 };
-            if (kind === 'missing-run-id') response = {};
-            if (kind === 'string-run-id') response = { workflow_run_id: '11' };
-            if (kind === 'zero-run-id') response = { workflow_run_id: 0 };
-            if (kind === 'negative-run-id') response = { workflow_run_id: -1 };
-            if (kind === 'fractional-run-id')
-                response = { workflow_run_id: 1.5 };
-            if (kind === 'unsafe-run-id')
-                response = { workflow_run_id: 9007199254740992 };
-
-            const result = spawnSync(
-                'bash',
-                ['-e', '-o', 'pipefail', '-c', shell],
-                {
-                    encoding: 'utf8',
-                    timeout: 5000,
-                    env: {
-                        ...process.env,
-                        PATH: `${root}:${process.env.PATH}`,
-                        SOURCE_SHA: sha,
-                        EVENT_RUN_ID: '7',
-                        EVENT_RUN_ATTEMPT: '1',
-                        GH_TOKEN: 'fixture',
-                        FIXTURE_RESPONSE:
-                            kind === 'malformed-response'
-                                ? '{'
-                                : JSON.stringify(response),
-                        WATCH_FAILED: String(kind === 'failed-watch'),
-                        FIXTURE_RUN: JSON.stringify(run),
-                        FIXTURE_MAIN: JSON.stringify({
-                            object: {
-                                sha:
-                                    kind === 'superseded'
-                                        ? 'b'.repeat(40)
-                                        : sha,
-                            },
-                        }),
-                        DISPATCH_LOG: log,
-                    },
-                },
-            );
-            const success = ['current', 'superseded'].includes(kind);
-            if (success) expect(result.status, result.stderr).toBe(0);
-            else expect(result.status, result.stderr).toBeGreaterThan(0);
-            const calls: string[][] = fs.existsSync(log)
-                ? fs
-                      .readFileSync(log, 'utf8')
-                      .trim()
-                      .split('\n')
-                      .map((line) => JSON.parse(line))
-                : [];
-            if (kind === 'current')
-                expect(calls).toEqual([
-                    [
-                        'api',
-                        '--method',
-                        'POST',
-                        '-H',
-                        'X-GitHub-Api-Version: 2026-03-10',
-                        'repos/ezclassify/contracts/actions/workflows/ci.yml/dispatches',
-                        '-f',
-                        'ref=main',
-                    ],
-                    [
-                        'run',
-                        'watch',
-                        '11',
-                        '--repo',
-                        'ezclassify/contracts',
-                        '--exit-status',
-                        '--interval',
-                        '10',
-                    ],
-                    [
-                        'workflow',
-                        'run',
-                        'spec-contract-dispatch.yml',
-                        '--repo',
-                        'ezclassify/contracts',
-                        '--ref',
-                        'main',
-                    ],
-                ]);
-            else {
-                expect(calls.some((call) => call[0] === 'workflow')).toBe(
-                    false,
-                );
-                expect(calls.filter((call) => call[0] === 'run')).toHaveLength(
-                    kind === 'failed-watch' ? 1 : 0,
-                );
-            }
-        } finally {
-            fs.rmSync(root, { recursive: true, force: true });
-        }
     });
 });

@@ -1,6 +1,7 @@
 name: Dispatch canonical spec change
 
-# Only the exact successful official main CI revision may start propagation.
+# Only a successful full CI run (workflow_dispatch with full=true) on the exact
+# official main revision may start propagation.
 on:
   workflow_run:
     workflows: [CI]
@@ -13,49 +14,8 @@ permissions:
   actions: read
 
 jobs:
-  # Routine merge CI is intentionally smaller than full qualification. Launch
-  # the existing full CI qualification automatically; only its success may propagate.
-  qualify-main:
-    name: Qualify and propagate merged Contracts
-    if: ${{ github.repository == 'ezclassify/contracts' && github.ref == 'refs/heads/main' && github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' }}
-    permissions:
-      contents: read
-      actions: write
-      checks: read
-    runs-on: ubuntu-latest
-    timeout-minutes: 25
-    steps:
-      - name: Launch full qualification and continue after success
-        env:
-          GH_TOKEN: ${{ github.token }}
-          SOURCE_SHA: ${{ github.event.workflow_run.head_sha }}
-          EVENT_RUN_ID: ${{ github.event.workflow_run.id }}
-          EVENT_RUN_ATTEMPT: ${{ github.event.workflow_run.run_attempt }}
-        run: |
-          set -euo pipefail
-          run="$(gh api "repos/ezclassify/contracts/actions/runs/$EVENT_RUN_ID")"
-          jq -e --arg sha "$SOURCE_SHA" --argjson id "$EVENT_RUN_ID" --argjson attempt "$EVENT_RUN_ATTEMPT" '
-            .id == $id and .run_attempt == $attempt and
-            .head_sha == $sha and .head_branch == "main" and .event == "push" and
-            .status == "completed" and .conclusion == "success" and
-            .path == ".github/workflows/ci.yml" and
-            .repository.full_name == "ezclassify/contracts" and
-            .head_repository.full_name == "ezclassify/contracts"' <<< "$run" >/dev/null
-          main="$(gh api repos/ezclassify/contracts/git/ref/heads/main)"
-          main_sha="$(jq -r .object.sha <<< "$main")"
-          if [ "$main_sha" != "$SOURCE_SHA" ]; then
-            echo "A newer main revision owns qualification; skip the superseded merge."
-            exit 0
-          fi
-          started="$(gh api --method POST -H 'X-GitHub-Api-Version: 2026-03-10' repos/ezclassify/contracts/actions/workflows/ci.yml/dispatches -f ref=main)"
-          run_id="$(jq -er '.workflow_run_id | select(type == "number" and . > 0 and . <= 9007199254740991 and floor == .)' <<< "$started")"
-          gh run watch "$run_id" --repo ezclassify/contracts --exit-status --interval 10
-          # GITHUB_TOKEN starts CI but suppresses its subsequent workflow_run.
-          # Explicit continuation keeps the existing full-source proof as owner.
-          gh workflow run spec-contract-dispatch.yml --repo ezclassify/contracts --ref main
-
   dispatch:
-    if: ${{ github.repository == 'ezclassify/contracts' && github.ref == 'refs/heads/main' && (github.event_name != 'workflow_run' || (github.event.workflow_run.conclusion == 'success' && (github.event.workflow_run.event == 'workflow_dispatch' || github.event.workflow_run.event == 'schedule'))) }}
+    if: ${{ github.repository == 'ezclassify/contracts' && github.ref == 'refs/heads/main' && (github.event_name != 'workflow_run' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'workflow_dispatch')) }}
     name: Notify the release pipeline
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -76,10 +36,10 @@ jobs:
               exit 0
             fi
           else
-            run="$(gh api "repos/ezclassify/contracts/actions/workflows/ci.yml/runs?branch=main&head_sha=$main_sha&per_page=100" --jq '[.workflow_runs[] | select(.event == "workflow_dispatch" or .event == "schedule")] | sort_by([.run_number,.run_attempt]) | last' )"
+            run="$(gh api "repos/ezclassify/contracts/actions/workflows/ci.yml/runs?branch=main&head_sha=$main_sha&per_page=100" --jq '[.workflow_runs[] | select(.event == "workflow_dispatch")] | sort_by([.run_number,.run_attempt]) | last' )"
           fi
           jq -e --arg sha "$main_sha" '
-            .head_sha == $sha and .head_branch == "main" and (.event == "workflow_dispatch" or .event == "schedule") and
+            .head_sha == $sha and .head_branch == "main" and .event == "workflow_dispatch" and
             .status == "completed" and .conclusion == "success" and
             .path == ".github/workflows/ci.yml" and
             .repository.full_name == "ezclassify/contracts" and
@@ -89,7 +49,7 @@ jobs:
           jobs="$(gh api "repos/ezclassify/contracts/actions/runs/$run_id/attempts/$attempt/jobs?per_page=100")"
           jq -e --arg sha "$main_sha" --argjson id "$run_id" --argjson attempt "$attempt" '
             .total_count == (.jobs | length) and
-            ([.jobs[].name] as $names | all(["policy / plan","qualification / accept","ci / accept","build-and-test (22)","build-and-test (24)"][]; . as $name | $names | index($name))) and
+            ([.jobs[].name] as $names | all(["ci","full (22)","full (24)"][]; . as $name | $names | index($name))) and
             all(.jobs[]; .status == "completed" and .conclusion == "success" and .head_sha == $sha and .run_id == $id and .run_attempt == $attempt)
           ' <<< "$jobs" >/dev/null
           echo "contracts_sha=$main_sha" >> "$GITHUB_OUTPUT"
