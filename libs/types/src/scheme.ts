@@ -1,18 +1,10 @@
-import type { SourceReference } from './provenance';
-import type { LayerRemovalDoc } from './scheme-definition';
+import type { LayerRemovalDoc, RollupStepActionDoc } from './scheme-definition';
 
 /** Structural role of a marking within a processing operation. */
 export type ProcessingRole = 'whole' | 'part';
 
 /** Confidence assigned to an assertion by the processing pipeline. */
-export type AssertionConfidence =
-    | 'certain'
-    | 'inferred'
-    | 'repaired'
-    | 'uncertain';
-
-/** Severity assigned to a validation issue. */
-export type ValidationSeverity = 'error' | 'warning';
+export type AssertionConfidence = 'certain' | 'inferred' | 'repaired';
 
 /** Discrete mutation represented by an engine `Change`. */
 export type FixAction = 'add' | 'remove' | 'replace' | 'reorder';
@@ -31,9 +23,6 @@ export interface FixConceptReference {
  */
 export type WarningKind = 'deprecation' | 'rule' | 'notice';
 
-/** Confidence assigned to a deterministic repair. */
-export type RepairConfidence = 'safe' | 'uncertain';
-
 /**
  * Assertion set a rule condition is evaluated against.
  *
@@ -47,7 +36,9 @@ export type RepairConfidence = 'safe' | 'uncertain';
  * value, reports no error and offers no fix; a check rule (`require`,
  * `require_any`, `restrict`, `forbid`, `exclusive`, `cardinality`) that the
  * marking already meets still passes, and any other unresolved rule gives
- * the part the `_whole_unverified` notice.
+ * the part the `_whole_unverified` notice. A part's stand-in for its whole's
+ * values is not left open this way: without a verified whole it is a
+ * `_stand_in_requires_whole` error. See `ProcessingContext.partOf`.
  * - `'contributors'`: each contributing assertion set that went into an
  * aggregate, evaluated separately. The condition holds only when EVERY
  * contributor satisfies it, and it is never satisfied outside aggregation,
@@ -59,6 +50,34 @@ export type RuleConditionTarget = 'self' | 'context' | 'contributors';
 
 /** Quantifies a condition block over contributing assertion sets. */
 export type RuleContributorQuantifier = 'any' | 'all' | 'none';
+
+/**
+ * The test a scheme condition applies to one category's assertions.
+ * `has_concept` and `not_has_concept` name a concept in `value`;
+ * `has_content` holds when the category holds anything; the `count_*` tests
+ * (greater than, greater than or equal, equal, less than, less than or equal)
+ * compare the number of concepts in the category with the number in `value`;
+ * `min_rank` holds when the category holds a concept ranked at or above the
+ * rank in `value`;
+ * `subset_of` holds when this category's concepts are a subset of the
+ * category named in `value`, and `shares_concept_with` when the two share a
+ * concept; `every_has_concept` and `any_lacks_concept` ask whether every
+ * assertion set, or at least one, holds the concept named in `value`.
+ */
+export type RuleConditionOperator =
+    | 'has_content'
+    | 'has_concept'
+    | 'not_has_concept'
+    | 'count_gt'
+    | 'count_gte'
+    | 'count_eq'
+    | 'count_lt'
+    | 'count_lte'
+    | 'min_rank'
+    | 'subset_of'
+    | 'shares_concept_with'
+    | 'every_has_concept'
+    | 'any_lacks_concept';
 
 /**
  * One element a layer takes away or brings back, named by kind and id. Exactly
@@ -102,14 +121,6 @@ export type PositionSpec =
     | {
           /** Place this element directly after the sibling with this id. */
           after: string;
-      }
-    | {
-          /** Place this element directly before the sibling with this id. */
-          before: string;
-      }
-    | {
-          /** Place this element between the two siblings with these ids. */
-          between: [string, string];
       };
 
 /**
@@ -125,19 +136,11 @@ export type RankSpec =
     | {
           /** Rank this concept directly above the concept with this id. */
           above: string;
-      }
-    | {
-          /** Rank this concept directly below the concept with this id. */
-          below: string;
-      }
-    | {
-          /** Rank this concept between the two concepts with these ids. */
-          between: [string, string];
       };
 
 /**
  * A single predicate that tests one category's assertions (e.g., has_content,
- * count_gt, min_order).
+ * count_gt, min_rank).
  */
 export interface Condition {
     /**
@@ -153,28 +156,11 @@ export interface Condition {
     /** Id of the category whose assertions the operator tests. */
     category?: string;
     /** The test to apply to the category's assertions. */
-    operator?:
-        | 'has_content'
-        | 'has_concept'
-        | 'not_has_concept'
-        | 'count_gt'
-        | 'count_gte'
-        | 'count_eq'
-        | 'count_lt'
-        | 'count_unique_gt'
-        | 'count_unique_gte'
-        | 'count_unique_eq'
-        | 'count_unique_lt'
-        | 'count_unique_lte'
-        | 'min_order'
-        | 'subset_of' // this category's concepts are a subset of value category's concepts
-        | 'shares_concept_with' // same concept asserted in BOTH this category and the one named by value
-        | 'every_has_concept' // multi-set only: every assertion set contains the named concept
-        | 'any_lacks_concept'; // multi-set only: at least one assertion set is missing the named concept
+    operator?: RuleConditionOperator;
     /**
      * Operand for the operator: a concept id for the concept tests, a category
      * id for `subset_of` and `shares_concept_with`, and a number for the
-     * `count_*` and `min_order` tests.
+     * `count_*` and `min_rank` tests.
      */
     value?: string | number;
 }
@@ -231,20 +217,15 @@ export type When =
 /**
  * Canonical rollup operator. `pipeline` requires a matching entry in the
  * scheme's `rollup_pipelines`. Most merge operators are set-algebraic over each
- * input's assertions; rank-based operators (max/min/least_upper_bound) require
- * categories whose concepts declare `rank`.
+ * input's assertions; rank-based operators (max/min) require categories whose
+ * concepts declare `rank`.
  */
 export type Rollup =
     | 'max'
     | 'min'
     | 'union'
     | 'intersection'
-    | 'symmetric_difference'
-    | 'exclusive_or'
-    | 'complement'
     | 'first'
-    | 'last'
-    | 'least_upper_bound'
     | 'pipeline';
 
 /**
@@ -281,123 +262,7 @@ export interface RollupPipelineStep {
     /** Condition block: multi-set quantifiers for aggregation */
     when?: When;
     /** Action to take when condition matches */
-    then: {
-        /**
-         * Assert these concepts in the pipeline's primary category (replaces
-         * all other concepts in that category).
-         */
-        keep?: string | string[];
-        /** Remove these concepts from the result */
-        remove?: string[];
-        /**
-         * Intersect a category's concepts across the inputs, with an optional
-         * fallback. A group concept is expanded to its members before a
-         * single category is intersected.
-         * Single object or array: if array, ALL must produce non-empty results
-         * or the first empty_fallback fires (and remaining intersects are
-         * skipped). fallback_if_only: list of concepts; if the intersection
-         * result contains ONLY these concepts (and no others), treat it as
-         * empty and fire the fallback.
-         */
-        intersect?:
-            | {
-                  /** Id of the category to intersect. */
-                  category?: string;
-                  /** Ids of several categories to intersect together. */
-                  categories?: string[];
-                  /**
-                   * Concept asserted when the intersection is empty. Firing it
-                   * also clears the intersected categories.
-                   */
-                  empty_fallback?: string;
-                  /**
-                   * Concept assumed for an input that carries the category's
-                   * header concept but none of its concepts.
-                   */
-                  wildcard_default?: string;
-                  /**
-                   * Concepts that, if they are all the intersection holds, make
-                   * it count as empty.
-                   */
-                  fallback_if_only?: string[];
-              }
-            | Array<{
-                  /** Id of the category to intersect. */
-                  category: string;
-                  /**
-                   * Concept asserted when the intersection is empty. Firing it
-                   * also clears the intersected categories.
-                   */
-                  empty_fallback?: string;
-                  /**
-                   * Concept assumed for an input that carries the category's
-                   * header concept but none of its concepts.
-                   */
-                  wildcard_default?: string;
-                  /**
-                   * Concepts that, if they are all the intersection holds, make
-                   * it count as empty.
-                   */
-                  fallback_if_only?: string[];
-              }>;
-        /** Also clear these categories from the result */
-        clear_categories?: string[];
-        /** Union all assertions from input sets for this category */
-        union?: boolean;
-        /** Replace specific concepts with others in the result */
-        replace?: Array<{
-            /** Id of the concept to replace. */
-            from: string;
-            /** Id of the concept that takes its place. */
-            to: string;
-        }>;
-        /**
-         * Add concepts to specific categories in the result. Each entry names
-         * the concept(s) and target category. Used to re-home a concept into a
-         * scheme-defined category during merge.
-         */
-        add?: Array<{
-            /** Id of the concept or concepts to add. */
-            concept: string | string[];
-            /** Id of the category to add them to. */
-            category: string;
-        }>;
-        /**
-         * Copy concepts from one category into another in the result. `exclude`
-         * drops specific concepts during the copy.
-         */
-        copy?: {
-            /** Id of the source category. */
-            from: string;
-            /** Id of the destination category. */
-            to: string;
-            /** Ids of concepts to leave out of the copy. */
-            exclude?: string | string[];
-        };
-        /**
-         * Move concepts from one category into another in the result (copy +
-         * remove from source). Concepts named in `exclude` are not moved; they
-         * stay in the source category. `keep_intersection: true` also keeps in
-         * the source every concept that appears in the source category on
-         * every contributing part, but only when at least one concept named in
-         * `exclude` is among them. That shared excluded concept anchors the
-         * parts as one joint source. When no excluded concept is on every
-         * part, every concept not named in `exclude` moves, shared or not.
-         */
-        move?: {
-            /** Id of the source category. */
-            from: string;
-            /** Id of the destination category. */
-            to: string;
-            /** Ids of concepts that stay in the source category. */
-            exclude?: string | string[];
-            /**
-             * Also keep in the source the concepts every contributing part
-             * shares, as described above.
-             */
-            keep_intersection?: boolean;
-        };
-    };
+    then: RollupStepActionDoc;
 }
 
 /** Minimum contract for items evaluable by the `when` condition framework. */
@@ -409,24 +274,20 @@ export interface Selectable {
 }
 
 /**
- * A concept asserted in a category during processing, with confidence level and
- * provenance metadata.
+ * A concept asserted in a category during processing, with how it was produced
+ * and where it came from.
  *
  * Assertions are the core data unit flowing through the engine pipeline.
  * `confidence` records how the assertion was produced: `'certain'` when read
  * or handed in as stated, `'inferred'` when an inference rule added it, and
  * `'repaired'` when the engine added or rewrote it while repairing the
- * marking. The engine does not assign `'uncertain'` itself. `source` says
- * where the assertion came from. `expiresAt` records caller-supplied expiry
- * metadata. The engine does not evaluate that date or automatically change
- * confidence or the marking; the host applies its expiry policy.
+ * marking. `source` says where the assertion came from.
  */
 export interface Assertion extends Selectable {
     /**
      * How the assertion was produced: `certain` when read or handed in as
      * stated, `inferred` when an inference rule added it, or `repaired` when
-     * the engine added or rewrote it while repairing the marking. The engine
-     * does not assign `uncertain` itself.
+     * the engine added or rewrote it while repairing the marking.
      */
     confidence: AssertionConfidence;
     /**
@@ -458,8 +319,6 @@ export interface Assertion extends Selectable {
      * member). A scheme rule id never begins with `_`.
      */
     sourceRule?: string;
-    /** Caller-supplied ISO 8601 expiry date; the engine does not evaluate it. */
-    expiresAt?: string;
     /**
      * The value of a concept that takes one (`text_input`).
      *
@@ -470,11 +329,6 @@ export interface Assertion extends Selectable {
      * `ValidationError`.
      */
     value?: string;
-    /**
-     * Caller-defined data attached to the assertion. The engine assigns it no
-     * meaning.
-     */
-    metadata?: Record<string, unknown>;
     /**
      * The deprecated concept this assertion was modernized from.
      *
@@ -490,28 +344,6 @@ export interface Assertion extends Selectable {
      * transported assertions can still explain the substitution.
      */
     replacedConceptId?: string;
-    /**
-     * Source provenance for the concept that backed this assertion.
-     *
-     * Populated only when the concept came from an external source whose
-     * records were loaded with the scheme (typically one a scheme's
-     * `concepts.external` block declares). Inline-backed assertions leave this
-     * field undefined to keep payloads compact for the common single-source
-     * case. A concept a scheme document declares in its `inline` list has
-     * none, even when one of that document's `external` sources also serves a
-     * record with its id. A concept read through a queryable-only source
-     * (`SourceCapabilities.queryableOnly`) has none either: that source is
-     * asked per lookup and never loaded whole, and a lookup does not say which
-     * source answered. Such a source still appears in a composed operation's
-     * `resolution.sources`. Across a layered stack the later layer decides: a
-     * concept a later layer's source supplies carries that source's provenance
-     * even when an earlier document declares it inline, and a concept a later
-     * layer declares inline carries none.
-     *
-     * Identity fields mirror the source's `sourceIdentity()` observation at
-     * engine-load time (or the immutable value the Context pinned).
-     */
-    provenance?: SourceReference;
 }
 
 /**
@@ -520,9 +352,9 @@ export interface Assertion extends Selectable {
  *
  * Carried in the `errors` of every result that judges a marking.
  * `constraintId` identifies the rule that fired; `message` is human-readable.
- * When `severity` is `'warning'`, the violation is advisory and does not set
- * `valid` to `false`. Use `categoryId` and `affectedConcepts` to highlight the
- * specific UI elements involved.
+ * Every entry sets `valid` to `false`; advisories are warnings, not errors.
+ * Use `categoryId` and `affectedConcepts` to highlight the specific UI
+ * elements involved.
  *
  * Two of the ids the engine keeps for itself are for a fact a caller hands in
  * that cannot be settled as given: `_missing_assertion_value`, a concept that
@@ -537,6 +369,11 @@ export interface Assertion extends Selectable {
  * change if rolled up with the part. It is given only for a part that is valid
  * on its own, read in a whole that reads and is valid. `affectedConcepts`
  * names every finding, and no fix answers it. See `ProcessingContext.partOf`.
+ *
+ * And `_stand_in_requires_whole` is a part that leaves a category to a
+ * stand-in, a concept that declares `stands_for_whole`, with no verified whole
+ * to take the values from. `affectedConcepts` names the stand-in and
+ * `categoryId` its category.
  */
 export interface ValidationError {
     /**
@@ -551,23 +388,8 @@ export interface ValidationError {
      * constraint).
      */
     categoryId?: string;
-    /**
-     * Severity: 'error' blocks validity, 'warning' is advisory. Default:
-     * 'error'.
-     */
-    severity?: ValidationSeverity;
     /** Concept IDs involved in this validation failure. */
     affectedConcepts?: string[];
-    /**
-     * The `message` of the proposed fix that answers this error, such as "Add
-     * CTRL-A".
-     *
-     * Set only on a result that carries that fix in its own `proposedFixes`. A
-     * result with no fix paths, such as a `ValidateResult` or a scan region,
-     * never sets it, so a reader never holds a pointer to a fix it was not
-     * given.
-     */
-    suggestedFix?: string;
     /**
      * The ids of the concepts the unread token was likely meant as. Never
      * empty. They are ids for a program to act on, not spellings to show an
@@ -587,8 +409,7 @@ export interface ValidationError {
      * right.
      *
      * It is not a fix: nothing here has been proven to make the marking
-     * valid, and `suggestedFix` and the result's fix paths do not depend on
-     * it.
+     * valid, and the result's fix paths do not depend on it.
      *
      * @minItems 1
      */
@@ -793,8 +614,6 @@ export interface TraceRepair {
     ruleId: string;
     /** What the repair does, as the scheme describes it. */
     description: string;
-    /** The confidence the scheme declares for the repair rule. */
-    confidence: RepairConfidence;
     /** The text before the repair. */
     before: string;
     /** The text after the repair. */
@@ -930,12 +749,7 @@ export interface SuggestResult {
 export type SuggestResultsByCategory = Record<string, SuggestResult>;
 
 /** What kind of notice a concept carries. */
-export type ConceptNoticeType =
-    | 'warning'
-    | 'handling'
-    | 'admonition'
-    | 'distribution'
-    | 'info';
+export type ConceptNoticeType = 'warning' | 'admonition';
 
 /**
  * Regulatory or handling notice attached to a concept: the text the marking
@@ -1023,15 +837,6 @@ export interface CollectedNotice {
  * every SDK, which is the thing a named shape is supposed to prevent.
  */
 export type ViewLabels = Record<string, string>;
-
-/**
- * Locale-specific display labels for a concept, keyed by locale code.
- *
- * Structurally the same map as `ViewLabels` and deliberately not the same
- * type: a locale key selects a language, a view key selects a presentation
- * mode, and collapsing them would let one be passed where the other is meant.
- */
-export type ConceptSynonyms = Record<string, string>;
 
 /**
  * Free-text input configuration for a concept that accepts a typed value
@@ -1304,8 +1109,6 @@ export interface Concept {
     deprecatedMessage?: string;
     /** Concept ID that should be used instead of this deprecated concept */
     deprecatedReplacement?: string;
-    /** Locale-specific display labels: locale code -> display string */
-    synonyms?: ConceptSynonyms;
     /**
      * Structured documentation block. When present,
      * definition/guidance/applicability/notices are read from here.
@@ -1327,15 +1130,12 @@ export interface Concept {
      */
     textInput?: ConceptTextInput;
     /**
-     * Concept IDs that this concept supersedes (replaces). When present, the
-     * scheme loader generates supersedes constraints from these references.
-     */
-    supersedes?: string[];
-    /**
      * The category whose values this concept stands for: the values a whole
      * holds in it. A part holding the concept takes them when it is read
      * against a whole, and keeps the concept so a format can write it back
-     * the way it was read. Authored as `stands_for_whole`.
+     * the way it was read. A part that leaves the category to the concept and
+     * has no verified whole carries a `_stand_in_requires_whole` error.
+     * Authored as `stands_for_whole`.
      */
     standsForWhole?: string;
 }
@@ -1389,7 +1189,7 @@ export type GroupConcept = Concept & {
 };
 
 /** How concepts within a category are sorted during rendering. */
-export type SortType = 'position' | 'alphabetical' | 'numeric';
+export type SortType = 'position' | 'alphabetical';
 
 /** A category default evaluated before any category defaults are added. */
 export interface ConditionalDefaultConcept {
@@ -1443,13 +1243,6 @@ export interface Category {
      * multiple concepts are allowed (e.g., tags, countries).
      */
     single: boolean;
-    /**
-     * Restrict which concept IDs are allowed in this category. When undefined,
-     * all concepts whose `categories` array includes this category ID are
-     * allowed. When set, only concepts in this list are shown in suggestions
-     * and accepted during validation.
-     */
-    allowedConcepts?: string[];
     /**
      * Rollup operator used when aggregating multiple markings. When `pipeline`,
      * the category must be referenced by exactly one entry in the scheme's
@@ -1505,12 +1298,6 @@ export interface Category {
      * empty.
      */
     defaultConcept?: string | ConditionalDefaultConcept;
-    /**
-     * When set, suppress this category from rendering if its concept set is a
-     * subset of the named category's concept set. Used to avoid redundant
-     * display.
-     */
-    suppressIfSubsetOf?: string;
     /** Suppress this category when conditions match */
     when?: When;
     /**
@@ -1523,8 +1310,8 @@ export interface Category {
 
 /**
  * Supported action types for rules. Each action is a constraint, an inference,
- * an aggregation, or an advisory; see {@link ConstraintRule},
- * {@link InferenceRule}, {@link AggregationRule} and {@link AdvisoryRule}.
+ * or an advisory; see {@link ConstraintRule}, {@link InferenceRule} and
+ * {@link AdvisoryRule}.
  *
  * @internal
  */
@@ -1535,14 +1322,10 @@ export type RuleAction =
     | 'require_any'
     | 'restrict'
     | 'copy'
-    | 'move'
     | 'inherit_parents'
     | 'expand_group'
     | 'cardinality'
     | 'supersede'
-    | 'intersect'
-    | 'union'
-    | 'max'
     | 'warn';
 
 /**
@@ -1579,10 +1362,8 @@ export interface RuleCondition {
     category?: string;
     /** Shorthand for has_concept: check if this concept is present */
     has?: string;
-    /** Combined operator+value shorthand (e.g. "count_eq 1", "has_content") */
-    is?: string;
-    /** Explicit operator for the condition */
-    operator?: string;
+    /** The test to apply to the category's assertions. */
+    operator?: RuleConditionOperator;
     /** Explicit value for the operator */
     value?: string | number;
     /** Processing context role filter */
@@ -1724,14 +1505,14 @@ export interface Rule {
                   category: string;
               }>
           >;
+    /** For copy: the category concepts are copied from. */
+    from?: string;
     /**
-     * For copy, move, inherit_parents: source category ID. For intersect,
-     * union: source category IDs (string or array).
+     * For copy: the category concepts are copied into. For inherit_parents: the
+     * category an inherited parent goes in by preference.
      */
-    from?: string | string[];
-    /** For copy, move: destination category ID */
     to?: string;
-    /** For move/copy: concept ID(s) to exclude from the operation */
+    /** For copy: the concepts that are never copied. */
     exclude?: string | string[];
     /** For cardinality: minimum count */
     min?: number;
@@ -1776,8 +1557,8 @@ export type ConstraintRule = Rule & {
  * assertions during the infer stage.
  *
  * An `InferenceRule` runs before validation and may change `assertions` in
- * `ProcessResult`. Actions: `copy`/`move` transfers concepts between
- * categories, `inherit_parents` walks the concept hierarchy, `expand_group`
+ * `ProcessResult`. Actions: `copy` copies concepts from one category into
+ * another, `inherit_parents` walks the concept hierarchy, `expand_group`
  * replaces a group concept with its members, and `supersede` replaces
  * deprecated concepts.
  *
@@ -1787,20 +1568,9 @@ export type InferenceRule = Rule & {
     /** One of the inference actions. */
     action:
         | 'copy'
-        | 'move'
         | 'inherit_parents'
         | 'expand_group'
         | 'supersede';
-};
-
-/**
- * Narrowed rule type for aggregation actions that combine assertion sets.
- *
- * @internal
- */
-export type AggregationRule = Rule & {
-    /** One of the aggregation actions. */
-    action: 'intersect' | 'union' | 'max';
 };
 
 /**
@@ -1899,15 +1669,8 @@ export interface Recognizer {
  *
  * Repair rules come from the scheme's `parse.normalize` list and run in the repair
  * stage, before inference and validation. `type` selects the correction
- * strategy: `'alias'` resolves alternate spellings, `'reorder'` sorts concepts
- * into canonical order, `'separator'` rewrites separator text, `'dedup'`
- * removes duplicate assertions, `'case'` normalizes casing, and
- * `'infer_missing'` adds a required concept when no match was found. Every
- * required addition is applied only when it conflicts with no existing fact.
- * Repair never removes an author-stated concept to satisfy a rule; validation
- * reports the unmet requirement and process proposes choices for the author.
- * `confidence` is recorded with the repair in the
- * explanation trace.
+ * strategy: `'dedup'` removes repeated tokens, and `'case'` normalizes casing.
+ * Each rewrites the input text only; none adds or removes a concept.
  *
  * @internal
  */
@@ -1915,24 +1678,14 @@ export interface RepairRule {
     /** Rule id. */
     id: string;
     /** The correction strategy. */
-    type:
-        | 'alias'
-        | 'reorder'
-        | 'separator'
-        | 'dedup'
-        | 'case'
-        | 'infer_missing';
+    type: 'dedup' | 'case';
     /** Human-readable description of the correction. */
     description: string;
-    /**
-     * Detection or match regex, read per type: for `case` it selects the input
-     * that needs correcting; for `separator` it matches the text to replace.
-     */
+    /** For `case`: the regex that selects the input that needs correcting. */
     pattern?: string;
     /**
-     * The correction to apply, read per type. For `separator` it is the
-     * replacement text. For `case` it is the canonical case of the scheme's
-     * grammar, `'upper'` (the default) or `'lower'`; other types ignore it.
+     * For `case`: the canonical case of the scheme's grammar, `'upper'` (the
+     * default) or `'lower'`. `dedup` ignores it.
      */
     correction?: string;
     /**
@@ -1945,8 +1698,6 @@ export interface RepairRule {
      * declare it, so the loader leaves it absent.
      */
     categoryId?: string;
-    /** How sure the scheme author is that the repair is right. */
-    confidence: RepairConfidence;
     /**
      * The author's reason the correction is right. The trace records
      * `description`, not this text.
@@ -2119,8 +1870,6 @@ export type RenderSyntax =
     | {
           /** Plain text. */
           type: 'text';
-          /** How a character the syntax cannot frame is escaped. */
-          escape?: 'none' | 'backslash';
       }
     | {
           /** XML attributes on one element. */
@@ -2208,16 +1957,6 @@ export interface RenderFormatCommon {
     separator?: string;
     /** Separators for particular boundaries between adjacent top-level fields. */
     joins?: FieldJoin[];
-    /** Skip empty fields. Defaults to true for `block`, false for `inline`. */
-    omitEmpty?: boolean;
-    /**
-     * Leave assertions with `source: 'default'` out of this format's printed
-     * output. A print filter only: every condition in this format still
-     * evaluates against the real, unfiltered assertion state, so a condition
-     * elsewhere in the same format can never stop firing because of how a
-     * category happened to be filled in.
-     */
-    omitDefaults?: boolean;
     /**
      * Write a part's stand-in in place of the values it took from its whole
      * (see `Concept.standsForWhole`). Applies to a part read on its own,
@@ -2229,29 +1968,8 @@ export interface RenderFormatCommon {
     fields: RenderField[];
 }
 
-/**
- * Recognition policy: how a spelling found at a boundary is compared against
- * the vocabulary.
- *
- * Not tokenization. Every boundary in a marking belongs to the field that
- * writes it, so there is no global separator here and no last-resort split to
- * be exempt from: a multi-word spelling recognizes itself from the vocabulary
- * rather than surviving a tokenizer.
- *
- * @internal
- */
-export interface ParseConfig {
-    /** Whether the vocabulary is matched case-sensitively. */
-    caseSensitive: boolean;
-    /** Whether surrounding whitespace is ignored when a spelling is compared. */
-    stripWhitespace: boolean;
-}
-
 /** When a host UI should proactively prompt for an embedded marking. */
-export type EmbeddedMarkingStyleAutoInsert =
-    | 'every-paragraph'
-    | 'first-line'
-    | 'manual';
+export type EmbeddedMarkingStyleAutoInsert = 'every-paragraph';
 
 /**
  * One way a marking can appear embedded inside free text, e.g. a parenthesized
@@ -2261,7 +1979,7 @@ export type EmbeddedMarkingStyleAutoInsert =
 export interface EmbeddedMarkingStyle {
     /**
      * RegExp source (no flags) whose first capture group is the raw marking
-     * text. Example: `\((.+)\)` for a marking in parentheses.
+     * text. Example: `\(([^)]+)\)` for a marking in parentheses.
      */
     pattern: string;
     /**
@@ -2271,53 +1989,11 @@ export interface EmbeddedMarkingStyle {
      */
     template: string;
     /**
-     * When the host UI should proactively prompt the user to add a marking.
-     * "every-paragraph" pops the picker on each new paragraph; "first-line"
-     * only on the first line of the document; "manual" never auto-prompts.
-     * Default "manual".
+     * Whether the host UI should prompt the user to add a marking.
+     * "every-paragraph" pops the picker on each new paragraph. Absent, the
+     * host never prompts on its own.
      */
     autoInsert?: EmbeddedMarkingStyleAutoInsert;
-}
-
-/**
- * A selectable answer in a wizard question, optionally linked to a concept and
- * implied concepts.
- */
-export interface WizardAnswerOption {
-    /** Text shown for the answer. */
-    label: string;
-    /** Value recorded when the answer is chosen. */
-    value: string;
-    /** Id of the concept the answer selects. */
-    conceptId?: string;
-    /** Ids of further concepts the answer implies. */
-    implies?: string[];
-}
-
-/** A single question in a guided wizard flow, with its answer type and options. */
-export interface WizardQuestion {
-    /** Question id. */
-    id: string;
-    /** The question as shown to the user. */
-    text: string;
-    /** Help text shown with the question. */
-    hint?: string;
-    /** How many answers the user may give. */
-    type: 'single-choice' | 'multi-choice' | 'yes-no';
-    /** The answers offered. */
-    options: WizardAnswerOption[];
-}
-
-/** A page in a multi-step wizard containing one or more questions. */
-export interface WizardStep {
-    /** Step id. */
-    id: string;
-    /** Title shown for the step. */
-    title: string;
-    /** Longer explanation shown with the step. */
-    description?: string;
-    /** The questions on this step, in order. */
-    questions: WizardQuestion[];
 }
 
 /** A singular/plural display-word pair. */
@@ -2391,12 +2067,21 @@ export interface ConceptDescription {
 }
 
 /**
- * Caller-supplied context describing the role of a marking being processed. No
- * context (or role='whole') means an overall/document-level marking.
- * role='part' means a portion/paragraph that belongs to another marking.
+ * Caller-supplied context naming the role the marking being read plays. No
+ * context, or `role: 'whole'`, means a whole: a marking that stands for
+ * everything it covers. `role: 'part'` means a part that belongs to a whole,
+ * named in `partOf` when it is known.
+ *
+ * On a rollup the context names the contributors' role, never the rollup's: the
+ * rollup is always a whole. So no context rolls wholes up into an aggregate,
+ * and `{ role: 'part', partOf }` rolls a whole's parts up. See
+ * `SchemeEngineAdapter.aggregate`.
  */
 export interface ProcessingContext {
-    /** Role of this marking: 'whole' for overall markings, 'part' for portions */
+    /**
+     * Role of the marking being read: `'whole'` (the default) or `'part'`. On
+     * a rollup, the role of each contributor.
+     */
     role?: ProcessingRole;
     /**
      * The whole marking this is part of (when role='part').
@@ -2451,7 +2136,11 @@ export interface ProcessingContext {
      *
      * Without a verified whole, what needs the whole is left open instead of
      * guessed: a rule condition with `target: 'context'` is unresolved, so its
-     * rule never fires, as `RuleConditionTarget` describes.
+     * rule never fires, as `RuleConditionTarget` describes. A stand-in is the
+     * exception, because it is shorthand for the whole's values and means
+     * nothing without them: a part that leaves a category to a concept that
+     * declares `stands_for_whole` carries a `_stand_in_requires_whole` error
+     * naming it.
      */
     partOf?: {
         /** Rendered string of the whole marking */
@@ -2462,23 +2151,6 @@ export interface ProcessingContext {
          */
         assertions?: Assertion[];
     };
-}
-
-/**
- * Named collection of concept IDs used for organizational grouping in UI and
- * documentation.
- *
- * @internal
- */
-export interface ConceptGroup {
-    /** Group id. */
-    id: string;
-    /** Display name of the group. */
-    name: string;
-    /** What the group collects. */
-    description: string;
-    /** Ids of the concepts in the group, in display order. */
-    conceptIds: string[];
 }
 
 /**
@@ -2591,16 +2263,21 @@ export interface Scheme {
     version: string;
     /** Human-readable display name. */
     name: string;
-    /** Longer description of what this scheme covers. */
-    description: string;
+    /** Longer description of what this scheme covers. Absent when the scheme has none. */
+    description?: string;
     /** Official description or definition of the scheme. */
     definition?: string;
     /** Usage notes, restrictions, or guidelines for the scheme. */
     guidance?: string;
     /**
+     * The scheme document's own overall marking, from `scheme.marking`.
+     * Carried for display and never interpreted.
+     */
+    marking?: string;
+    /**
      * Optional display-term overrides consulted by runtime UI components
      * (forms, Handbook, reports). Keys are consumer-defined (e.g. "concept",
-     * "marking"); each consumer merges with its own defaults via
+     * "rule"); each consumer merges with its own defaults via
      * `resolveVocabulary`. The `"handbook"` key renames this scheme's own
      * reference-surface noun (e.g. `{ handbook: { singular: "Shelving Guide" }
      * }`); read the resolved word off {@link Scheme.referenceSurfaceLabel}
@@ -2616,11 +2293,6 @@ export interface Scheme {
      */
     referenceSurfaceLabel: ReferenceSurfaceLabel;
     /**
-     * License label shown with the scheme, such as `enterprise`.
-     * Informational only: it does not grant or restrict use.
-     */
-    license?: string;
-    /**
      * Document kind. A layer is a partial scheme composed onto a base; a plain
      * scheme stands alone. Absent means `'scheme'`.
      */
@@ -2629,9 +2301,7 @@ export interface Scheme {
     layer?: LayerBlock;
     /** Named shortcut markings, from `ui.label_presets`. */
     label_presets?: LabelPreset[];
-    /** Concept groupings for display, from `data.concept_groups`. */
-    conceptGroups?: ConceptGroup[];
-    /** Every concept, inline and from external sources. */
+    /** Every concept, declared and imported. */
     concepts: Concept[];
     /** Every category, in declared order. */
     categories: Category[];
@@ -2698,8 +2368,6 @@ export interface Scheme {
      * presentation defaults.
      */
     colorRules?: MarkingColorRule[];
-    /** Recognition policy from `parse`: case sensitivity and whitespace. */
-    parse: ParseConfig;
     /**
      * Styles that describe how markings may be embedded inside free text
      * (parens, prefix tags, etc.). Used by the scanner to locate markings in
@@ -2758,12 +2426,11 @@ export interface Scheme {
      * - `'until-next'`: the marking governs from its line through to the next
      *   part marking, a section/heading style where one mark covers several
      *   paragraphs.
-     * - `'document'`: the marking governs the whole document.
      *
      * Whole markings always govern the document regardless of this setting; it
      * only affects parts.
      */
-    partScope?: 'paragraph' | 'until-next' | 'document';
+    partScope?: 'paragraph' | 'until-next';
     /**
      * When a document audit requires each role's marking, from
      * `role_detection.<role>.required_when`. A role without a condition keeps
@@ -2775,36 +2442,6 @@ export interface Scheme {
         /** Condition under which body text needs a part marking. */
         part?: When;
     };
-    /**
-     * Scheme-defined policy (D8) for how rendering treats a parse that
-     * contained an unmatched/unrecognized token. The engine stays
-     * domain-neutral; each scheme declares the safety posture appropriate to
-     * its domain.
-     *
-     * - `'preserve_unmatched'` (DEFAULT): unrecognized tokens are kept VISIBLE in
-     *   the rendered string (appended verbatim) so they can never silently
-     *   vanish. The parse still reports `_unmatched_token` and `valid: false`.
-     *   This is the safe default so a new scheme cannot accidentally
-     *   under-render.
-     * - `'refuse'`: rendering an invalid parse returns an explicit refusal marker
-     *   instead of a partial string. The strictest posture: a security scheme
-     *   can use this so a display path that ignores `valid` shows nothing
-     *   usable rather than a less-restrictive-looking marking.
-     * - `'drop_unmatched'`: unrecognized tokens are silently omitted from the
-     *   rendered string. Only appropriate for loose tagging schemes that may
-     *   ignore an unknown tag.
-     */
-    renderOfInvalid?: 'preserve_unmatched' | 'refuse' | 'drop_unmatched';
-    /**
-     * What the `refuse` policy renders in place of the marking. The optional
-     * `{tokens}` placeholder is replaced with the comma-joined unmatched
-     * tokens; leave it out for a marker that says nothing about the input.
-     * Defaults to `[INVALID MARKING: unrecognized {tokens}]`.
-     *
-     * Only consulted when `renderOfInvalid` is `'refuse'`; the other policies
-     * compose their output from the scheme's render formats.
-     */
-    refusalMarker?: string;
 }
 
 /**
@@ -2883,11 +2520,8 @@ export interface ValidateResult {
      */
     inputWasValid: boolean;
     /**
-     * What the scheme's rules find wrong with the settled marking. An entry
-     * whose severity is `error` makes `valid` false.
-     *
-     * No entry here points at a fix path: `suggestedFix` is set only on a
-     * result that carries the fix it names, and this result carries none.
+     * What the scheme's rules find wrong with the settled marking. Any entry
+     * makes `valid` false.
      */
     errors: ValidationError[];
     /**
@@ -2921,19 +2555,21 @@ export interface ValidateResult {
     /**
      * The settled marking, in one string.
      *
-     * It is written in the output the request names. With none named, a
-     * scheme without `render.surfaces` writes its default format, and a scheme
-     * with them writes each surface in its default for the marking's role, by
-     * the rule `RenderConfigDoc.surfaces` states. Every operation that returns
-     * this shape follows that one rule.
+     * It is written in the output the request names, and in that output
+     * alone. With none named, a scheme without `render.surfaces` writes its
+     * default format, and a scheme with them writes each surface the result
+     * writes in its default for the marking's role, by the rule
+     * `RenderConfigDoc.surfaces` states. Every operation that returns this
+     * shape follows that one rule.
      *
-     * For a scheme that declares `render.surfaces`, the string is the output
-     * resolved on each surface the result writes, as `RenderConfigDoc.surfaces`
-     * describes, in declared surface order and joined by
-     * `render.surface_separator`. An output that writes nothing adds nothing,
-     * and outputs written as XML attributes in one namespace merge into one
-     * attribute list. One refused output refuses the whole string, and
-     * `assessment` says which one and why.
+     * For a scheme that declares `render.surfaces`, the string holds the
+     * outputs `RenderConfigDoc.surfaces` selects, in declared surface order
+     * and joined by `render.surface_separator`: the one output a request
+     * names, or with none named the one default that writes every other
+     * surface's scope beside its own, else each surface's default. An output
+     * that writes nothing adds nothing, and outputs written as XML attributes
+     * in one namespace merge into one attribute list. One refused output
+     * refuses the whole string, and `assessment` says which one and why.
      */
     rendered: string;
     /**
@@ -2995,28 +2631,10 @@ export interface ProcessResult extends ValidateResult {
      */
     recognition?: RecognitionWithCorrections;
     /**
-     * What was read before repair: the assertions the input stated, before the
-     * repair pass took anything away or rewrote it. A retired concept appears
-     * under its replacement's name, as it does in `assertions` and in the
-     * fixes.
-     *
-     * Present only when repair rewrote something that was read. Absent,
-     * everything read came through repair. This is a record of the reading;
-     * proposed fixes are computed against the resulting `assertions`, never
-     * against this earlier set. Repair leaves author-stated rule conflicts
-     * in the resulting value for the author to resolve.
-     *
-     * Listed in print order, placed by the same rendering as `assertions`. A
-     * concept repair took away has no place in it, so it follows the others
-     * of its category.
-     */
-    assertionsBeforeRepair?: Assertion[];
-    /**
      * The ways to make the resulting value valid, computed from that value
      * after applied changes, each a whole marking the engine has
      * read back and found valid before offering it. Empty when the marking is
-     * valid, or when no change the engine could prove would make it so. An
-     * error's `suggestedFix` names one of these by its `message`.
+     * valid, or when no change the engine could prove would make it so.
      *
      * A request's `parts` go back in with each fix, as the caller will send
      * them, so they are read again in the fix's whole and the fix is judged
@@ -3122,24 +2740,16 @@ export type RecognitionStatus =
 /**
  * The ceilings recognition can reach.
  *
- * Closed, because a caller distinguishing a cancelled run from an exhausted
- * one is writing a branch, not a message. `aborted` is the caller's own
- * `AbortSignal` firing, which is a ceiling in the sense that matters here: the
- * answer is not a confident one. `wall-clock` is the operator's time limit, and
- * it is a separate word from `transitions` because the two say different
- * things to whoever set them: one means the input was harder than the work
- * ceiling allows, the other that the host was slower than the time allowed or
- * the input harder than both.
+ * Closed, because a caller telling one exhausted ceiling from another is
+ * writing a branch, not a message. `input-length` is the longest input the
+ * engine reads, `transitions` and `lookups` are the work it spends reading,
+ * and `live-states` is how many readings it keeps open at once.
  */
 export type RecognitionLimit =
-    | 'aborted'
     | 'input-length'
     | 'transitions'
     | 'lookups'
-    | 'live-states'
-    | 'wall-clock'
-    | 'grammar-size'
-    | 'depth';
+    | 'live-states';
 
 /**
  * What recognition made of an input string: how far it got, what it read, and
@@ -3385,12 +2995,12 @@ export type RenderResultsByFormat = Record<string, RenderResult>;
 
 /**
  * Output of SchemeEngine.aggregate(): the combined marking produced from
- * multiple portion inputs. By design aggregate always produces the proper
- * aggregate: fixes are applied, never proposed. Every field it shares with
- * `ValidateResult` means what it means there, `valid` included. It differs in
- * that:
+ * several input markings, always a whole. By design aggregate always produces
+ * the proper rollup: fixes are applied, never proposed. Every field it shares
+ * with `ValidateResult` means what it means there, `valid` included. It
+ * differs in that:
  *
- * - There is no `inputWasValid` (input is N portions, not a single string)
+ * - There is no `inputWasValid` (input is N markings, not a single string)
  * - `proposedFixes` is always empty (aggregate applies what it can)
  */
 export interface AggregateResult {
@@ -3472,16 +3082,10 @@ export interface DiffResult {
  * allows, and anything else it carries is excess. A shorter list, or none, is
  * allowed and is not missing.
  *
- * In a `max`, `min` or `least_upper_bound` category the children roll up to one
- * value, ordered by rank (`max`, `min`) or by the concept hierarchy
- * (`least_upper_bound`). The parent must sit at or above that value for `max`
- * and `least_upper_bound`, and at or below it for `min`. A parent anywhere
- * else, including one the hierarchy does not order against that value, is
- * reported once, under `missing`, and never under `excess`. The value reported
- * is what the parent and children roll up to together. For `max` and `min`
- * that is the children's own value. For `least_upper_bound` it is the bound the
- * parent and children share, which can sit beyond the children's value, and it
- * is the children's own value when the hierarchy gives them no common bound.
+ * In a `max` or `min` category the children roll up to one value, ordered by
+ * rank. The parent must sit at or above that value for `max`, and at or below
+ * it for `min`. A parent anywhere else is reported once, under `missing`, and
+ * never under `excess`. The value reported is the children's own value.
  *
  * In a `pipeline` category the parent covers when rolling it up with the
  * children leaves it unchanged. This relies on the pipeline leaving a parent
@@ -3504,26 +3108,18 @@ export interface DiffResult {
  * Each is judged with the findings already decided for the pipelines before it
  * and the full findings for those after it.
  *
- * In a `first` or `last` category the children roll up to one value and the
+ * In a `first` category the children roll up to one value and the
  * rollup has no restrictive direction, so the parent must state that value. A
  * parent that states a different one is reported once, under `missing`, as the
  * value it should state, and never under `excess`. In such a category that
  * holds several values, values the parent states beyond the picked one are not
  * reported.
  *
- * In a `symmetric_difference`, `exclusive_or` or `complement` category the
- * children roll up to a set and the rollup has no restrictive direction, so
- * the parent must state exactly that set. Rolled-up values the parent does not
- * state are missing. Values the parent states beyond that set are excess:
- * stated, but not what the children roll up to. Neither side is more
- * restrictive than the other here.
- *
  * In a category where the scheme has an `expand_group` rule, a parent that
  * carries every member a group declares in that category states the group,
  * and the group is not missing from it. This does not apply to a category
- * whose rollup has no restrictive direction (`first`, `last`,
- * `symmetric_difference`, `exclusive_or`, `complement`),
- * where the parent must state what the children roll up to as it is.
+ * whose rollup has no restrictive direction (`first`), where the
+ * parent must state what the children roll up to as it is.
  *
  * In a `union` or `pipeline` category the scheme marks as a hierarchy root, a
  * parent value ranked at or above a needed value also covers it.
@@ -3560,13 +3156,11 @@ export interface CoverageReport {
     missingLabels: string[];
     /**
      * Concepts the parent carries that the children do not account for,
-     * judged per category as described on this type. In a
-     * `symmetric_difference`, `exclusive_or` or `complement` category that
-     * means values the parent states beyond the set the children roll up to.
-     * In a `pipeline` category whose findings are not narrowed it means every
-     * parent value the rollup of parent and children drops, which can include
-     * values the children carry. Everywhere else it means values the children
-     * do not allow.
+     * judged per category as described on this type. In a `pipeline`
+     * category whose findings are not narrowed it means every parent value the
+     * rollup of parent and children drops, which can include values the
+     * children carry. Everywhere else it means values the children do not
+     * allow.
      *
      * Concepts appear as the author wrote them. When a written value brought
      * others with it, such as a group that stands for its members, only the

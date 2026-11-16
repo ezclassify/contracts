@@ -179,7 +179,7 @@ jobs:
         # The validator ships a bin a community author is told to run on day
         # one, so the published entry point is exercised here and not just the
         # functions behind it.
-        run: node packages/validator/bin/ezclassify-validate.mjs libs/types/examples/context-with-sources.yaml
+        run: node packages/validator/bin/ezclassify-validate.mjs libs/types/examples/scheme-with-import.yaml
     needs:
       - policy
     if: ${{ needs.policy.result == 'success' }}

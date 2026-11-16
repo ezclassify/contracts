@@ -9,10 +9,10 @@
  * `audit-degraded`: the runtime could not write one or more audit records and
  * keeps answering requests without them until audit writes succeed again.
  *
- * `clock-rollback`: the system clock reads further behind a time this runtime
- * already accepted than the tolerated skew allows, so license evaluation holds
- * at that accepted time and update entitlement is suspended until the clock is
- * corrected.
+ * `application-allowance-exceeded`: more distinct application ids have called
+ * the runtime than its license's application allowance. Every application is
+ * still served, registered or not: the warning informs and never refuses a
+ * request.
  *
  * `generation-refused`: a managed runtime refused what its control plane last
  * offered, either the newest generation or the desired-state page as a whole,
@@ -27,6 +27,6 @@
  */
 export type ReadinessWarning =
     | 'audit-degraded'
-    | 'clock-rollback'
+    | 'application-allowance-exceeded'
     | 'generation-refused'
     | 'desired-state-stale';

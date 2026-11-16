@@ -23,16 +23,14 @@ function authoredScheme() {
             name: 'Raw validation',
             data: {
                 categories: [{ id: 'level', label: 'Level', rollup: 'max' }],
-                concepts: {
-                    inline: [
-                        {
-                            id: 'LOW',
-                            name: 'Low',
-                            categories: ['level'],
-                            views: { default: 'LOW' },
-                        },
-                    ],
-                },
+                concepts: [
+                    {
+                        id: 'LOW',
+                        name: 'Low',
+                        categories: ['level'],
+                        views: { default: 'LOW' },
+                    },
+                ],
             },
             rules: [],
             parse: {},
@@ -108,7 +106,7 @@ describe('standalone raw-document validators', () => {
         Object.assign(document.scheme, {
             ui: { host_panel: { enabled: true } },
         });
-        Object.assign(document.scheme.data.concepts.inline[0], {
+        Object.assign(document.scheme.data.concepts[0], {
             metadata: { host_record: { key: 'LOW' } },
         });
         expect(validateSchemeDocument(document).ok).toBe(true);
@@ -143,7 +141,7 @@ describe('standalone raw-document validators', () => {
 
     it('enforces deep codec discriminants and nested conditions', () => {
         const codecDocument = authoredScheme();
-        codecDocument.scheme.data.concepts.inline[0].text_input = {
+        codecDocument.scheme.data.concepts[0].text_input = {
             encoding: {
                 type: 'calendar-date',
                 canonical: 'YYYYMMDD',

@@ -20,18 +20,14 @@ import type {
     ProcessingRole,
     RecognitionLimit,
     ReferenceSurfaceLabel,
-    Suggestion,
 } from './scheme';
 import type {
     EvaluationResult,
+    GuideRuleSelection,
     GuideScanResult,
-    GuideScanOptions,
-    RuleDescription,
 } from './guide';
 import type {
     ContextOperationResult,
-    DocumentAccessAssessment,
-    DocumentAccessAssessmentInput,
     DocumentAssessmentInput,
     DocumentAuditReport,
     GuideContentEvaluation,
@@ -41,7 +37,6 @@ import type {
 } from './document';
 import type {
     SchemeStructuralView,
-    FilterResult,
     FormatView,
     SchemeMetaView,
     CategoryView,
@@ -57,6 +52,10 @@ import type {
     AccessRequirementsDescription,
 } from './access';
 import type {
+    CrosswalkDisposition,
+    CrosswalkMapping,
+    CrosswalkSelectionCandidate,
+    CrosswalkSelectionStrategy,
     CrosswalkTranslationInput,
     CrosswalkTranslationResult,
 } from './crosswalk';
@@ -113,18 +112,6 @@ export interface GuideView {
     schemeId: string;
 }
 
-/**
- * Optional progress callback. Invoked as the scanner advances through the input
- * string with `(current, total)` offsets in UTF-16 code units. Implementations
- * may use this to render a determinate progress indicator. The scanner emits a final tick where
- * `current === total` and coalesces intermediate ticks so that no input
- * produces more than ~50 calls.
- *
- * @param current - How far the scan has advanced, in UTF-16 code units.
- * @param total - Length of the scanned text, in UTF-16 code units.
- */
-export type ScanProgressCallback = (current: number, total: number) => void;
-
 /** Options accepted by scan operations. */
 export interface ScanOptions {
     /**
@@ -142,8 +129,6 @@ export interface ScanOptions {
      * `ScanResult.type` describes.
      */
     outputFormat?: string;
-    /** Optional progress callback invoked as the scanner advances. */
-    onProgress?: ScanProgressCallback;
     /**
      * Abort signal for the operation. A remote adapter cancels the in-flight
      * request; an in-process engine may ignore it.
@@ -235,6 +220,66 @@ export interface ScanResult {
 }
 
 /**
+ * A wrapped mark a scan found but could not read.
+ *
+ * The text matched the scheme's `embeddedMarking` pattern, which is how a part
+ * marking is written, but recognition read no marking in it, and it has no
+ * entry in `ScanOutcome.results`. Text that looks like a marking and carries
+ * none is reported rather than dropped, so a reader can see it and correct it.
+ * `start`/`end` are offsets in UTF-16 code units in the input text, as on
+ * `ScanResult`.
+ */
+export interface UnreadMark {
+    /** The wrapped text as found in the document, wrapper included. */
+    text: string;
+    /**
+     * Start position in the input text
+     *
+     * @asType integer
+     */
+    start: number;
+    /**
+     * End position in the input text
+     *
+     * @asType integer
+     */
+    end: number;
+    /**
+     * The text inside the wrapper: the capture group of the scheme's
+     * `embeddedMarking` pattern.
+     */
+    inner: string;
+    /**
+     * Whether the mark stands where a part mark goes: at the start of its
+     * paragraph. Both of these hold for a leading mark.
+     *
+     * Its line starts a paragraph. The line starts at the beginning of the
+     * text or just after the last line feed before `start`. It starts a
+     * paragraph when it is the first line, when the line before it is blank
+     * or ends in `.`, `!`, `?`, `:` or `;`, or when the line before it holds
+     * nothing but a marking read in the whole role, such as a banner.
+     *
+     * Only whitespace and outline labels come before it on its line: at most
+     * three labels, each followed by whitespace, in no more than 64 UTF-16 code
+     * units after the line's leading whitespace. A line feed is not
+     * whitespace here. An outline label is one or more groups of one to four
+     * letters or digits, each closed by `.` or `)` and optionally opened by `(`
+     * (`1.`, `a)`, `(1)`, `iv.`, `1.a.`, `(a)(1)`); a dotted numeral (`1.2`,
+     * `1.2.3.`); one bullet (`-`, `*`, `•`, `‣`, `⁃`, `◦`, `▪` or `–`); or one
+     * to six `#`. So the mark in `(QQ) text`, `1. (QQ) text` and
+     * `a) 2. (QQ) text` leads, and the one in `See (QQ) text` does not.
+     *
+     * A mark that follows another mark on its line does not lead, whether the
+     * earlier mark was read or not: in `(S)(QQ)` and in `(S) (QQ)` only `(S)`
+     * leads. Wrapped text before a mark is a label rather than a mark when its
+     * text is one lowercase letter, that letter two or three times, one to
+     * three digits, or a lowercase roman numeral, so the mark in
+     * `(a) (QQ) text` leads.
+     */
+    leading: boolean;
+}
+
+/**
  * How far a scan got.
  *
  * `complete` means the whole document was offered to recognition. `truncated`
@@ -278,16 +323,24 @@ export interface ScanLimits {
 }
 
 /**
- * What `scan` returns: the markings it found, and how far it got.
+ * What `scan` returns: the markings it found, the wrapped marks it could not
+ * read, and how far it got.
  *
  * An empty list is what a clean document and an abandoned one both look like,
  * so the limit report travels beside the markings on every scan instead of
  * behind a second call. A caller whose next step depends on completeness reads
- * `limits`; one that only highlights matches reads `results`.
+ * `limits`; one that only highlights matches reads `results`. A caller that
+ * shows the author what is wrong with the document reads `unread` too.
  */
 export interface ScanOutcome {
     /** The markings the scan found, in document order. */
     results: ScanResult[];
+    /**
+     * The wrapped marks the scan found but could not read, in document order.
+     * Empty when every wrapped mark it reached was read. Text past where the
+     * scan stopped was never offered to recognition, so none of it is listed.
+     */
+    unread: UnreadMark[];
     /** How far the scan got, and what stopped it. */
     limits: ScanLimits;
 }
@@ -301,45 +354,6 @@ export interface ScanOutcome {
  * implementation to wrap every return in `Promise.resolve()`.
  */
 export type MaybePromise<T> = T | Promise<T>;
-
-/**
- * One scheme's answer within a registry fan-out call (`processAll` /
- * `processMatching`).
- *
- * Each registered scheme produces one entry. Callers use `schemeId` and
- * `schemeName` to correlate entries when displaying results for multiple
- * schemes simultaneously. The fan-out asks each scheme how it reads the
- * marking, so `result` is what validate answers; a caller that goes on to
- * correct the marking in one scheme processes it there.
- *
- * @internal
- */
-export interface RegistryProcessResult {
-    /** Id of the scheme that answered. */
-    schemeId: string;
-    /** Display name of the scheme that answered. */
-    schemeName: string;
-    /** What validate answers for the marking in this scheme. */
-    result: ValidateResult;
-}
-
-/**
- * Autocomplete suggestions returned by the registry for a specific scheme.
- *
- * Produced by `SchemeRegistry.suggestAcross()`. The `schemeId`/`schemeName`
- * pair identifies which registered scheme the suggestions came from, allowing
- * UIs that show multi-scheme completions to group or label entries.
- *
- * @internal
- */
-export interface RegistrySuggestion {
-    /** Id of the scheme the suggestions came from. */
-    schemeId: string;
-    /** Display name of the scheme the suggestions came from. */
-    schemeName: string;
-    /** The scheme's suggestions for the input. */
-    suggestions: Suggestion[];
-}
 
 /**
  * Public surface of a guide engine: what consumers use to scan documents for
@@ -360,13 +374,12 @@ export interface GuideEngineAdapter {
      * @param text - Document text to scan.
      * @param guideId - Guide to scan with. Omit it to scan with every loaded
      *   guide.
-     * @param options - A progress callback, opt-in confidence, and a
-     *   cancellation signal.
+     * @param options - A cancellation signal.
      */
     scan(
         text: string,
         guideId?: string,
-        options?: GuideScanOptions & { signal?: AbortSignal },
+        options?: { signal?: AbortSignal },
     ): MaybePromise<GuideScanResult[]>;
     /**
      * Evaluate a single guide against the rules a user selected. The guide
@@ -381,42 +394,21 @@ export interface GuideEngineAdapter {
         selectedRuleIds: string[],
     ): MaybePromise<EvaluationResult>;
     /**
-     * Evaluate one selection across every loaded guide, then combine the
-     * outcomes through the context's marking processor in guide load order.
-     * A later guide owns a rule id that occurs in more than one guide.
+     * Evaluate a selection that spans guides and roll the outcomes up.
      *
-     * @param selectedRuleIds - Ids of the rules the user selected.
-     */
-    evaluateMany(selectedRuleIds: string[]): MaybePromise<EvaluationResult>;
-    /**
-     * Evaluate every loaded guide (fan-out). Returned in load order. A remote
-     * adapter fans out over the guides it already holds metadata for; the
-     * composition is settled at load time, so there is nothing to ask the
-     * server about first.
+     * Each selection names its guide, so a rule id two guides share is two
+     * rules. Each guide evaluates the rules selected from it, with its own
+     * dependencies and overrides, as {@link evaluate} would. The outcomes are
+     * then rolled up per target scheme, category by category in each
+     * category's rollup direction. One guide never overrides or depends on
+     * another: every selected rule's outcome counts, and every breakdown entry
+     * names the guide its rule came from.
      *
-     * @param selectedRuleIds - Ids of the rules the user selected.
+     * @param selections - The rules the user selected, each with its guide.
      */
-    evaluateAll(selectedRuleIds: string[]): MaybePromise<EvaluationResult[]>;
-    /**
-     * Describe one rule: its outcome and activation text, the rules it depends
-     * on, and the rules it overrides. Omit `guideId` for the primary guide.
-     *
-     * @param ruleId - Id of the rule.
-     * @param guideId - Guide that holds the rule. Omit it for the primary
-     *   guide.
-     */
-    describeRule(
-        ruleId: string,
-        guideId?: string,
-    ): MaybePromise<RuleDescription>;
-    /**
-     * Text-search the loaded guide's rules. Omit `guideId` for the primary
-     * guide.
-     *
-     * @param query - Search text.
-     * @param guideId - Guide to search. Omit it for the primary guide.
-     */
-    filterRules(query: string, guideId?: string): MaybePromise<FilterResult>;
+    evaluateMany(
+        selections: GuideRuleSelection[],
+    ): MaybePromise<EvaluationResult>;
     /** Return metadata for every loaded guide, in load order. */
     listGuideMeta(): GuideMetaView[];
     /**
@@ -428,7 +420,7 @@ export interface GuideEngineAdapter {
     /**
      * Build render-ready structural views for every loaded guide. Used by
      * Guidebook-style components to display guide rules grouped by category.
-     * Fans out per guide the same way {@link evaluateAll} does.
+     * One view per loaded guide, in load order.
      */
     buildGuideViews(): MaybePromise<GuideStructuralView[]>;
 }
@@ -442,20 +434,12 @@ export interface GuideEngineAdapter {
  * local Context supplies the processor itself, and the remote server holds both
  * halves already, so nothing a caller does is lost by their absence from the
  * published contract.
- *
- * {@link validate} is here for a different reason: it inspects the guide
- * document, and only an engine that holds the document can answer it. A remote
- * adapter holds guide metadata and rule projections, never the authored source,
- * so there is nothing on its side to derive a consistency verdict from.
- * Checking that an authored guide hangs together is an authoring-time question
- * about a document, not a runtime operation against a loaded composition, which
- * is why it stays off the base contract instead of acquiring a route.
  */
 export interface LocalGuideEngineAdapter extends GuideEngineAdapter {
     scan(
         text: string,
         guideId?: string,
-        options?: GuideScanOptions & { signal?: AbortSignal },
+        options?: { signal?: AbortSignal },
     ): GuideScanResult[];
     evaluate(guideId: string, selectedRuleIds: string[]): EvaluationResult;
     /**
@@ -472,18 +456,17 @@ export interface LocalGuideEngineAdapter extends GuideEngineAdapter {
         selection: string[] | Selectable[],
         processor: MarkingProcessorAdapter,
     ): EvaluationResult;
-    evaluateAll(selectedRuleIds: string[]): EvaluationResult[];
-    evaluateMany(selectedRuleIds: string[]): EvaluationResult;
+    evaluateMany(selections: GuideRuleSelection[]): EvaluationResult;
     /**
-     * In-process aggregate with an explicitly supplied marking processor.
+     * In-process roll-up with an explicitly supplied marking processor.
      *
      * @internal
-     * @param selection - Ids of the selected rules, or the selected rules
-     *   themselves.
-     * @param processor - Marking processor that combines the outcomes.
+     * @param selection - The selected rules, each with its guide, or the
+     *   selected rules themselves.
+     * @param processor - Marking processor that rolls up the outcomes.
      */
     evaluateMany(
-        selection: string[] | Selectable[],
+        selection: GuideRuleSelection[] | Selectable[],
         processor: MarkingProcessorAdapter,
     ): EvaluationResult;
     /**
@@ -506,23 +489,6 @@ export interface LocalGuideEngineAdapter extends GuideEngineAdapter {
             guideId?: string;
         },
     ): GuideContentEvaluation;
-    describeRule(ruleId: string, guideId?: string): RuleDescription;
-    filterRules(query: string, guideId?: string): FilterResult;
-    /**
-     * Report whether the loaded guide document is internally consistent: every
-     * dependency and override resolves, and no rule contradicts another.
-     */
-    validate(): {
-        /** Whether every loaded guide is internally consistent. */
-        valid: boolean;
-        /** One message per problem found; empty when `valid` is true. */
-        issues: string[];
-        /**
-         * Id of the first guide found inconsistent; absent when every loaded
-         * guide is valid.
-         */
-        guideId?: string;
-    };
     buildGuideViews(): GuideStructuralView[];
 }
 
@@ -531,23 +497,21 @@ export interface RemoteGuideEngineAdapter extends GuideEngineAdapter {
     scan(
         text: string,
         guideId?: string,
-        options?: GuideScanOptions & { signal?: AbortSignal },
+        options?: { signal?: AbortSignal },
     ): Promise<GuideScanResult[]>;
     evaluate(
         guideId: string,
         selectedRuleIds: string[],
     ): Promise<EvaluationResult>;
-    evaluateAll(selectedRuleIds: string[]): Promise<EvaluationResult[]>;
-    evaluateMany(selectedRuleIds: string[]): Promise<EvaluationResult>;
-    describeRule(ruleId: string, guideId?: string): Promise<RuleDescription>;
-    filterRules(query: string, guideId?: string): Promise<FilterResult>;
+    evaluateMany(selections: GuideRuleSelection[]): Promise<EvaluationResult>;
     buildGuideViews(): Promise<GuideStructuralView[]>;
 }
 
 /**
  * Public surface of an access engine: what consumers use to evaluate access
- * decisions and describe access requirements. The scheme is bound at
- * construction time; callers do not pass it at check time.
+ * decisions and describe the policy's rules. The scheme is bound at
+ * construction time; callers do not pass it at check time. What a subject needs
+ * for one marking is {@link ContextAdapter.accessRequirements}.
  *
  * Every member works in both modes: the local access engine evaluates the
  * policy in process, and the remote one reaches the context access routes. The
@@ -571,34 +535,19 @@ export interface AccessEngineAdapter {
         context?: Record<string, unknown>,
     ): MaybePromise<AccessDecision>;
     /**
-     * Describes one access rule: what it requires and when it applies.
-     *
-     * @param ruleId - Id of a rule in the loaded policy.
-     * @returns The rule's description.
-     */
-    describeAccessRule(ruleId: string): MaybePromise<AccessRuleDescription>;
-    /**
-     * Describes what a subject needs in order to access data with a given
-     * marking.
-     *
-     * @param input - The marking to describe requirements for.
-     * @returns The requirements, rule by rule.
-     */
-    describeAccessRequirements(
-        input: AccessRequirementsInput,
-    ): MaybePromise<AccessRequirementsDescription>;
-    /**
-     * Ids of every rule in the loaded access policy. A remote adapter derives
-     * these from {@link describeAllAccessRules}: one route serves both, so
-     * listing ids costs no extra round trip.
-     */
-    listAccessRuleIds(): MaybePromise<string[]>;
-    /**
      * Describes every rule in the loaded access policy, in policy order.
      *
      * @returns One description per rule.
      */
     describeAllAccessRules(): MaybePromise<AccessRuleDescription[]>;
+    /**
+     * The access policy document's own overall marking, exactly as its
+     * `access.marking` writes it. Display only: never interpreted. A remote
+     * adapter reads it from the route {@link describeAllAccessRules} uses.
+     *
+     * @returns The marking, or `undefined` when the document declares none.
+     */
+    describeAccessMarking(): MaybePromise<string | undefined>;
 }
 
 /** An {@link AccessEngineAdapter} whose operations complete synchronously. */
@@ -608,12 +557,8 @@ export interface LocalAccessEngineAdapter extends AccessEngineAdapter {
         userAttributes: Record<string, unknown>,
         context?: Record<string, unknown>,
     ): AccessDecision;
-    describeAccessRule(ruleId: string): AccessRuleDescription;
-    describeAccessRequirements(
-        input: AccessRequirementsInput,
-    ): AccessRequirementsDescription;
-    listAccessRuleIds(): string[];
     describeAllAccessRules(): AccessRuleDescription[];
+    describeAccessMarking(): string | undefined;
 }
 
 /** An {@link AccessEngineAdapter} whose operations complete asynchronously. */
@@ -623,12 +568,8 @@ export interface RemoteAccessEngineAdapter extends AccessEngineAdapter {
         userAttributes: Record<string, unknown>,
         context?: Record<string, unknown>,
     ): Promise<AccessDecision>;
-    describeAccessRule(ruleId: string): Promise<AccessRuleDescription>;
-    describeAccessRequirements(
-        input: AccessRequirementsInput,
-    ): Promise<AccessRequirementsDescription>;
-    listAccessRuleIds(): Promise<string[]>;
     describeAllAccessRules(): Promise<AccessRuleDescription[]>;
+    describeAccessMarking(): Promise<string | undefined>;
 }
 
 /**
@@ -772,9 +713,10 @@ export interface SchemeEngineAdapter {
              * The output `rendered` is written in. For a scheme that declares
              * `render.surfaces`, an output as the scheme document's
              * `render.surfaces` defines it. Omitted, the scheme's default
-             * format, or with `render.surfaces`, each written surface's
-             * default for the marking's role, by the rule `render.surfaces`
-             * states for a request that names no output.
+             * format, or with `render.surfaces`, the written surfaces' defaults
+             * for the marking's role, one alone when it writes the others'
+             * scopes, by the rule `render.surfaces` states for a request that
+             * names no output.
              */
             outputFormat?: string;
             /**
@@ -838,9 +780,10 @@ export interface SchemeEngineAdapter {
              * The output `rendered` is written in. For a scheme that declares
              * `render.surfaces`, an output as the scheme document's
              * `render.surfaces` defines it. Omitted, the scheme's default
-             * format, or with `render.surfaces`, each written surface's
-             * default for the marking's role, by the rule `render.surfaces`
-             * states for a request that names no output.
+             * format, or with `render.surfaces`, the written surfaces' defaults
+             * for the marking's role, one alone when it writes the others'
+             * scopes, by the rule `render.surfaces` states for a request that
+             * names no output.
              */
             outputFormat?: string;
             /**
@@ -933,9 +876,10 @@ export interface SchemeEngineAdapter {
              * The output `rendered` is written in. For a scheme that declares
              * `render.surfaces`, an output as the scheme document's
              * `render.surfaces` defines it. Omitted, the scheme's default
-             * format, or with `render.surfaces`, each written surface's
-             * default for the marking's role, by the rule `render.surfaces`
-             * states for a request that names no output.
+             * format, or with `render.surfaces`, the written surfaces' defaults
+             * for the marking's role, one alone when it writes the others'
+             * scopes, by the rule `render.surfaces` states for a request that
+             * names no output.
              */
             outputFormat?: string;
             context?: ProcessingContext;
@@ -978,9 +922,10 @@ export interface SchemeEngineAdapter {
              * The output `rendered` is written in. For a scheme that declares
              * `render.surfaces`, an output as the scheme document's
              * `render.surfaces` defines it. Omitted, the scheme's default
-             * format, or with `render.surfaces`, each written surface's
-             * default for the marking's role, by the rule `render.surfaces`
-             * states for a request that names no output.
+             * format, or with `render.surfaces`, the written surfaces' defaults
+             * for the marking's role, one alone when it writes the others'
+             * scopes, by the rule `render.surfaces` states for a request that
+             * names no output.
              */
             outputFormat?: string;
             context?: ProcessingContext;
@@ -1030,9 +975,10 @@ export interface SchemeEngineAdapter {
              * The output `rendered` is written in. For a scheme that declares
              * `render.surfaces`, an output as the scheme document's
              * `render.surfaces` defines it. Omitted, the scheme's default
-             * format, or with `render.surfaces`, each written surface's
-             * default for the marking's role, by the rule `render.surfaces`
-             * states for a request that names no output.
+             * format, or with `render.surfaces`, the written surfaces' defaults
+             * for the marking's role, one alone when it writes the others'
+             * scopes, by the rule `render.surfaces` states for a request that
+             * names no output.
              */
             outputFormat?: string;
             /**
@@ -1078,9 +1024,10 @@ export interface SchemeEngineAdapter {
              * The output `rendered` is written in. For a scheme that declares
              * `render.surfaces`, an output as the scheme document's
              * `render.surfaces` defines it. Omitted, the scheme's default
-             * format, or with `render.surfaces`, each written surface's
-             * default for the marking's role, by the rule `render.surfaces`
-             * states for a request that names no output.
+             * format, or with `render.surfaces`, the written surfaces' defaults
+             * for the marking's role, one alone when it writes the others'
+             * scopes, by the rule `render.surfaces` states for a request that
+             * names no output.
              */
             outputFormat?: string;
             /**
@@ -1144,37 +1091,6 @@ export interface SchemeEngineAdapter {
         schemeId?: string,
         options?: RenderOptions,
     ): MaybePromise<RenderResult>;
-
-    /**
-     * Return the canonical form of a marking string.
-     *
-     * @param input - Marking text.
-     * @param schemeId - Scheme to normalize against.
-     * @param options - Input and output formats and a cancellation signal.
-     */
-    normalize(
-        input: string,
-        schemeId: string,
-        options?: {
-            inputFormat?: string;
-            outputFormat?: string;
-            signal?: AbortSignal;
-        },
-    ): MaybePromise<string>;
-    /**
-     * Same as the overload above, against the default scheme.
-     *
-     * @param input - Marking text.
-     * @param options - Input and output formats and a cancellation signal.
-     */
-    normalize(
-        input: string,
-        options?: {
-            inputFormat?: string;
-            outputFormat?: string;
-            signal?: AbortSignal;
-        },
-    ): MaybePromise<string>;
 
     /**
      * Compare two markings and report what changed between them.
@@ -1338,26 +1254,37 @@ export interface SchemeEngineAdapter {
     ): MaybePromise<SuggestResultsByCategory>;
 
     /**
-     * Aggregate multiple markings.
+     * Roll several markings up into the one marking that covers them.
      *
-     * `valid` on the result describes the rollup, so `options.surface` names
-     * the rollup's validation surface rather than any one contributor's:
+     * `options.context` names the role the inputs are read in, never the
+     * rollup's:
      *
-     * - Omitted, the rollup is a whole marking. This is the whole-document
-     *   case: parts combine into a whole marking, and the whole-marking
-     *   required set is asked of the combined result. A part that omits a
-     *   whole-document category is not faulted for it; the rollup is faulted
-     *   only when no contributor supplied it.
+     * - Omitted, the inputs are wholes. This is the call for an aggregate,
+     *   such as the documents in a folder. Each member counts as what it
+     *   states rolled up with the rollup of its own parts, so a member whose
+     *   parts carry more than its stated marking still raises the aggregate.
+     * - `{ role: 'part', partOf }` reads each input as a part of that whole,
+     *   the whole settled as `ProcessingContext.partOf` describes, so an input
+     *   that takes a value from the whole, such as a list it stands for,
+     *   contributes that value to the rollup. This is the call for a whole's
+     *   parts rollup. `{ role: 'part' }` without `partOf` reads parts that
+     *   have no whole.
+     *
+     * An input judged in the wrong role is judged by the wrong rules: parts
+     * read as wholes face the whole's rules and skip their own.
+     * `aggregateAssertions` takes its inputs as facts and reads no text, and
+     * judges them in the role its context names in the same way.
+     *
+     * The rollup itself is a whole marking, whatever role its inputs were read
+     * in. `valid` on the result describes the rollup, so `options.surface`
+     * names the rollup's validation surface rather than any one contributor's:
+     *
+     * - Omitted, the whole-marking required set is asked of the combined
+     *   result. A contributor that omits a required category is not faulted
+     *   for it; the rollup is faulted only when no contributor supplied it.
      * - Given a scheme scope id, the inputs are fragments of that one surface
      *   and the rollup is judged as that surface's fragment: exactly the
      *   required categories the surface owns are demanded.
-     *
-     * Given a whole in `options.context.partOf`, each input is read as a part
-     * of that whole, the whole settled as `ProcessingContext.partOf`
-     * describes, so an input that takes a value from the whole, such as a
-     * list it stands for, contributes that value to the rollup. This is about
-     * reading text: `aggregateAssertions` takes its inputs as facts and reads
-     * none.
      *
      * @param inputs - Marking texts to roll up.
      * @param schemeId - Scheme to aggregate in.
@@ -1408,8 +1335,10 @@ export interface SchemeEngineAdapter {
      * values that no rendered string can carry survive. There is no lossy
      * string round-trip fallback.
      *
-     * `options.surface` names the rollup's validation surface exactly as it
-     * does on {@link SchemeEngineAdapter.aggregate}.
+     * `options.context` names the role the inputs played and
+     * `options.surface` the rollup's validation surface, exactly as they do on
+     * {@link SchemeEngineAdapter.aggregate}: no context means the inputs are
+     * wholes.
      *
      * @param assertionSets - One assertion set per marking to roll up.
      * @param schemeId - Scheme to aggregate in.
@@ -1514,8 +1443,7 @@ export interface SchemeEngineAdapter {
      *
      * @param text - Document text to scan.
      * @param schemeId - Scheme whose markings to look for.
-     * @param options - Input and output formats, a progress callback and a
-     *   cancellation signal. Only a local adapter reports progress.
+     * @param options - Input and output formats and a cancellation signal.
      */
     scan(
         text: string,
@@ -1526,8 +1454,7 @@ export interface SchemeEngineAdapter {
      * Same as the overload above, against the default scheme.
      *
      * @param text - Document text to scan.
-     * @param options - Input and output formats, a progress callback and a
-     *   cancellation signal. Only a local adapter reports progress.
+     * @param options - Input and output formats and a cancellation signal.
      */
     scan(text: string, options?: ScanOptions): MaybePromise<ScanOutcome>;
 
@@ -1563,17 +1490,6 @@ export interface SchemeEngineAdapter {
     ): MaybePromise<ConceptDescription>;
 
     /**
-     * Text-search the loaded scheme's concepts.
-     *
-     * @param query - Search text.
-     * @param schemeId - Scheme to use. Omit it for the default scheme.
-     */
-    filterConcepts(
-        query: string,
-        schemeId?: string,
-    ): MaybePromise<FilterResult>;
-
-    /**
      * Build the render-ready Handbook tree for a scheme: categories of resolved
      * concept views in declared order.
      *
@@ -1582,60 +1498,12 @@ export interface SchemeEngineAdapter {
     buildSchemeView(schemeId?: string): MaybePromise<SchemeStructuralView>;
 
     /**
-     * Compact id/label pairs for every category, for tool-use contexts.
-     *
-     * The flat wire surface serves this directly
-     * (`GET /v1/scheme/{id}/list-categories-flat`); the context surface does
-     * not, so an adapter bound to a context derives the pairs from the
-     * structural view it already fetches. Same answer either way, and no route
-     * was added for a projection of data the client holds.
-     *
-     * @param schemeId - Scheme to use. Omit it for the default scheme.
-     */
-    listCategoriesFlat(
-        schemeId?: string,
-    ): MaybePromise<
-        Array<{
-            /** Category id. */
-            id: string;
-            /** Category display label. */
-            label: string;
-        }>
-    >;
-
-    /**
      * Return concepts in a category as resolved `ConceptView` objects.
-     *
-     * When `options.nested` is true, walks the in-category parent chain and
-     * returns each concept with its depth (0 = root, 1 = child, ...) so
-     * consumers like the Handbook panel can render child concepts indented
-     * beneath their parent.
-     *
-     * Required on every adapter: `implements SchemeEngineAdapter` will fail to
-     * compile if either overload is missing.
      *
      * @param categoryId - Id of the category.
      * @param schemeId - Scheme to use. Omit it for the default scheme.
      */
     getConceptsInCategory(categoryId: string, schemeId?: string): ConceptView[];
-    /**
-     * The nested form: each concept with its depth under its in-category
-     * parents.
-     *
-     * @param categoryId - Id of the category.
-     * @param options - `{ nested: true }` selects the nested form.
-     * @param schemeId - Scheme to use. Omit it for the default scheme.
-     */
-    getConceptsInCategory(
-        categoryId: string,
-        options: { nested: true },
-        schemeId?: string,
-    ): Array<{
-        /** The concept, as a display view. */
-        concept: ConceptView;
-        /** Nesting depth: 0 for a root, 1 for its child, and so on. */
-        depth: number;
-    }>;
 
     /**
      * Return scheme identity and configuration metadata without loading
@@ -1653,25 +1521,6 @@ export interface SchemeEngineAdapter {
      *   scheme.
      */
     listCategories(schemeId?: string): CategoryView[];
-
-    /**
-     * Coverage diff: return the assertions in `candidates` that are not covered
-     * by `parent`. For `hierarchyRoot` categories a parent concept whose rank
-     * meets or exceeds a candidate's rank in the same category counts as
-     * covering it, so a whole marking at the higher rank covers a part at a
-     * lower one. Falls back to strict concept-id inclusion for non-hierarchical
-     * categories. Always synchronous: operates on already-loaded assertions and
-     * the loaded scheme.
-     *
-     * @param candidates - Assertions to check.
-     * @param parent - Assertions of the marking expected to cover them.
-     * @param schemeId - Scheme to use. Omit it for the default scheme.
-     */
-    uncoveredAssertions(
-        candidates: Assertion[],
-        parent: Assertion[],
-        schemeId?: string,
-    ): Assertion[];
 
     /**
      * Cover check for a list of child markings against one parent marking. The
@@ -1720,17 +1569,8 @@ export interface SchemeEngineAdapter {
 }
 
 /**
- * A `SchemeEngineAdapter` implemented by the in-process engine.
- *
- * For schemes backed by finite in-memory concept sets, all methods complete
- * synchronously. For schemes backed by a queryable-only source
- * (SourceCapabilities.queryableOnly: true), the parse pipeline goes async
- * through the source: process, validate, suggest, aggregate, and
- * aggregateAssertions return a resolved Promise at runtime. Callers should use
- * `await engine.process(...)` to handle both cases correctly.
- *
- * The method signatures declare synchronous return types; the implementation
- * returns MaybePromise<T>, so `await` handles both paths.
+ * A `SchemeEngineAdapter` implemented by the in-process engine. Every method
+ * completes synchronously.
  */
 export interface LocalSchemeEngineAdapter extends SchemeEngineAdapter {
     loadScheme(schemeId: string): void;
@@ -1755,9 +1595,10 @@ export interface LocalSchemeEngineAdapter extends SchemeEngineAdapter {
              * The output `rendered` is written in. For a scheme that declares
              * `render.surfaces`, an output as the scheme document's
              * `render.surfaces` defines it. Omitted, the scheme's default
-             * format, or with `render.surfaces`, each written surface's
-             * default for the marking's role, by the rule `render.surfaces`
-             * states for a request that names no output.
+             * format, or with `render.surfaces`, the written surfaces' defaults
+             * for the marking's role, one alone when it writes the others'
+             * scopes, by the rule `render.surfaces` states for a request that
+             * names no output.
              */
             outputFormat?: string;
             context?: ProcessingContext;
@@ -1793,9 +1634,10 @@ export interface LocalSchemeEngineAdapter extends SchemeEngineAdapter {
              * The output `rendered` is written in. For a scheme that declares
              * `render.surfaces`, an output as the scheme document's
              * `render.surfaces` defines it. Omitted, the scheme's default
-             * format, or with `render.surfaces`, each written surface's
-             * default for the marking's role, by the rule `render.surfaces`
-             * states for a request that names no output.
+             * format, or with `render.surfaces`, the written surfaces' defaults
+             * for the marking's role, one alone when it writes the others'
+             * scopes, by the rule `render.surfaces` states for a request that
+             * names no output.
              */
             outputFormat?: string;
             context?: ProcessingContext;
@@ -1831,9 +1673,10 @@ export interface LocalSchemeEngineAdapter extends SchemeEngineAdapter {
              * The output `rendered` is written in. For a scheme that declares
              * `render.surfaces`, an output as the scheme document's
              * `render.surfaces` defines it. Omitted, the scheme's default
-             * format, or with `render.surfaces`, each written surface's
-             * default for the marking's role, by the rule `render.surfaces`
-             * states for a request that names no output.
+             * format, or with `render.surfaces`, the written surfaces' defaults
+             * for the marking's role, one alone when it writes the others'
+             * scopes, by the rule `render.surfaces` states for a request that
+             * names no output.
              */
             outputFormat?: string;
             /**
@@ -1890,9 +1733,10 @@ export interface LocalSchemeEngineAdapter extends SchemeEngineAdapter {
              * The output `rendered` is written in. For a scheme that declares
              * `render.surfaces`, an output as the scheme document's
              * `render.surfaces` defines it. Omitted, the scheme's default
-             * format, or with `render.surfaces`, each written surface's
-             * default for the marking's role, by the rule `render.surfaces`
-             * states for a request that names no output.
+             * format, or with `render.surfaces`, the written surfaces' defaults
+             * for the marking's role, one alone when it writes the others'
+             * scopes, by the rule `render.surfaces` states for a request that
+             * names no output.
              */
             outputFormat?: string;
             /**
@@ -1950,9 +1794,10 @@ export interface LocalSchemeEngineAdapter extends SchemeEngineAdapter {
              * The output `rendered` is written in. For a scheme that declares
              * `render.surfaces`, an output as the scheme document's
              * `render.surfaces` defines it. Omitted, the scheme's default
-             * format, or with `render.surfaces`, each written surface's
-             * default for the marking's role, by the rule `render.surfaces`
-             * states for a request that names no output.
+             * format, or with `render.surfaces`, the written surfaces' defaults
+             * for the marking's role, one alone when it writes the others'
+             * scopes, by the rule `render.surfaces` states for a request that
+             * names no output.
              */
             outputFormat?: string;
             /**
@@ -1992,9 +1837,10 @@ export interface LocalSchemeEngineAdapter extends SchemeEngineAdapter {
              * The output `rendered` is written in. For a scheme that declares
              * `render.surfaces`, an output as the scheme document's
              * `render.surfaces` defines it. Omitted, the scheme's default
-             * format, or with `render.surfaces`, each written surface's
-             * default for the marking's role, by the rule `render.surfaces`
-             * states for a request that names no output.
+             * format, or with `render.surfaces`, the written surfaces' defaults
+             * for the marking's role, one alone when it writes the others'
+             * scopes, by the rule `render.surfaces` states for a request that
+             * names no output.
              */
             outputFormat?: string;
             /**
@@ -2163,24 +2009,6 @@ export interface LocalSchemeEngineAdapter extends SchemeEngineAdapter {
         options?: { view?: string },
     ): ConceptDescription;
     getConceptsInCategory(categoryId: string, schemeId?: string): ConceptView[];
-    /**
-     * The nested form: each concept with its depth under its in-category
-     * parents.
-     *
-     * @param categoryId - Id of the category.
-     * @param options - `{ nested: true }` selects the nested form.
-     * @param schemeId - Scheme to use. Omit it for the default scheme.
-     */
-    getConceptsInCategory(
-        categoryId: string,
-        options: { nested: true },
-        schemeId?: string,
-    ): Array<{
-        /** The concept, as a display view. */
-        concept: ConceptView;
-        /** Nesting depth: 0 for a root, 1 for its child, and so on. */
-        depth: number;
-    }>;
     getSchemeMeta(schemeId?: string): SchemeMetaView;
     listCategories(schemeId?: string): CategoryView[];
     checkCoverage(
@@ -2202,23 +2030,6 @@ export interface LocalSchemeEngineAdapter extends SchemeEngineAdapter {
             signal?: AbortSignal;
         },
     ): CoverageReport;
-    normalize(
-        input: string,
-        schemeId: string,
-        options?: {
-            inputFormat?: string;
-            outputFormat?: string;
-            signal?: AbortSignal;
-        },
-    ): string;
-    normalize(
-        input: string,
-        options?: {
-            inputFormat?: string;
-            outputFormat?: string;
-            signal?: AbortSignal;
-        },
-    ): string;
     diff(
         a: string,
         b: string,
@@ -2238,14 +2049,7 @@ export interface LocalSchemeEngineAdapter extends SchemeEngineAdapter {
             signal?: AbortSignal;
         },
     ): DiffResult;
-    listCategoriesFlat(schemeId?: string): Array<{
-        /** Category id. */
-        id: string;
-        /** Category display label. */
-        label: string;
-    }>;
     buildSchemeView(schemeId?: string): SchemeStructuralView;
-    filterConcepts(query: string, schemeId?: string): FilterResult;
     /**
      * Populated by the caller when a guide engine is available alongside this
      * scheme engine. Guidebook-style components call this fallback when no
@@ -2284,9 +2088,10 @@ export interface RemoteSchemeEngineAdapter extends SchemeEngineAdapter {
              * The output `rendered` is written in. For a scheme that declares
              * `render.surfaces`, an output as the scheme document's
              * `render.surfaces` defines it. Omitted, the scheme's default
-             * format, or with `render.surfaces`, each written surface's
-             * default for the marking's role, by the rule `render.surfaces`
-             * states for a request that names no output.
+             * format, or with `render.surfaces`, the written surfaces' defaults
+             * for the marking's role, one alone when it writes the others'
+             * scopes, by the rule `render.surfaces` states for a request that
+             * names no output.
              */
             outputFormat?: string;
             /**
@@ -2343,9 +2148,10 @@ export interface RemoteSchemeEngineAdapter extends SchemeEngineAdapter {
              * The output `rendered` is written in. For a scheme that declares
              * `render.surfaces`, an output as the scheme document's
              * `render.surfaces` defines it. Omitted, the scheme's default
-             * format, or with `render.surfaces`, each written surface's
-             * default for the marking's role, by the rule `render.surfaces`
-             * states for a request that names no output.
+             * format, or with `render.surfaces`, the written surfaces' defaults
+             * for the marking's role, one alone when it writes the others'
+             * scopes, by the rule `render.surfaces` states for a request that
+             * names no output.
              */
             outputFormat?: string;
             /**
@@ -2403,9 +2209,10 @@ export interface RemoteSchemeEngineAdapter extends SchemeEngineAdapter {
              * The output `rendered` is written in. For a scheme that declares
              * `render.surfaces`, an output as the scheme document's
              * `render.surfaces` defines it. Omitted, the scheme's default
-             * format, or with `render.surfaces`, each written surface's
-             * default for the marking's role, by the rule `render.surfaces`
-             * states for a request that names no output.
+             * format, or with `render.surfaces`, the written surfaces' defaults
+             * for the marking's role, one alone when it writes the others'
+             * scopes, by the rule `render.surfaces` states for a request that
+             * names no output.
              */
             outputFormat?: string;
             /**
@@ -2445,9 +2252,10 @@ export interface RemoteSchemeEngineAdapter extends SchemeEngineAdapter {
              * The output `rendered` is written in. For a scheme that declares
              * `render.surfaces`, an output as the scheme document's
              * `render.surfaces` defines it. Omitted, the scheme's default
-             * format, or with `render.surfaces`, each written surface's
-             * default for the marking's role, by the rule `render.surfaces`
-             * states for a request that names no output.
+             * format, or with `render.surfaces`, the written surfaces' defaults
+             * for the marking's role, one alone when it writes the others'
+             * scopes, by the rule `render.surfaces` states for a request that
+             * names no output.
              */
             outputFormat?: string;
             /**
@@ -2495,9 +2303,10 @@ export interface RemoteSchemeEngineAdapter extends SchemeEngineAdapter {
              * The output `rendered` is written in. For a scheme that declares
              * `render.surfaces`, an output as the scheme document's
              * `render.surfaces` defines it. Omitted, the scheme's default
-             * format, or with `render.surfaces`, each written surface's
-             * default for the marking's role, by the rule `render.surfaces`
-             * states for a request that names no output.
+             * format, or with `render.surfaces`, the written surfaces' defaults
+             * for the marking's role, one alone when it writes the others'
+             * scopes, by the rule `render.surfaces` states for a request that
+             * names no output.
              */
             outputFormat?: string;
             context?: ProcessingContext;
@@ -2533,9 +2342,10 @@ export interface RemoteSchemeEngineAdapter extends SchemeEngineAdapter {
              * The output `rendered` is written in. For a scheme that declares
              * `render.surfaces`, an output as the scheme document's
              * `render.surfaces` defines it. Omitted, the scheme's default
-             * format, or with `render.surfaces`, each written surface's
-             * default for the marking's role, by the rule `render.surfaces`
-             * states for a request that names no output.
+             * format, or with `render.surfaces`, the written surfaces' defaults
+             * for the marking's role, one alone when it writes the others'
+             * scopes, by the rule `render.surfaces` states for a request that
+             * names no output.
              */
             outputFormat?: string;
             context?: ProcessingContext;
@@ -2719,23 +2529,6 @@ export interface RemoteSchemeEngineAdapter extends SchemeEngineAdapter {
             signal?: AbortSignal;
         },
     ): Promise<CoverageReport>;
-    normalize(
-        input: string,
-        schemeId: string,
-        options?: {
-            inputFormat?: string;
-            outputFormat?: string;
-            signal?: AbortSignal;
-        },
-    ): Promise<string>;
-    normalize(
-        input: string,
-        options?: {
-            inputFormat?: string;
-            outputFormat?: string;
-            signal?: AbortSignal;
-        },
-    ): Promise<string>;
     diff(
         a: string,
         b: string,
@@ -2755,18 +2548,7 @@ export interface RemoteSchemeEngineAdapter extends SchemeEngineAdapter {
             signal?: AbortSignal;
         },
     ): Promise<DiffResult>;
-    filterConcepts(query: string, schemeId?: string): Promise<FilterResult>;
     buildSchemeView(schemeId?: string): Promise<SchemeStructuralView>;
-    listCategoriesFlat(
-        schemeId?: string,
-    ): Promise<
-        Array<{
-            /** Category id. */
-            id: string;
-            /** Category display label. */
-            label: string;
-        }>
-    >;
 }
 
 /**
@@ -2790,10 +2572,10 @@ export type ContextSchemeRole =
  * Read it as a sentence: this Context holds a scheme you select with
  * `selector`, it is `id` at `version`, and it plays these `roles`.
  *
- * `selector` is the whole point. A Context keys its schemes locally, and an
- * operation that addresses one takes that key, so a caller that cannot
- * enumerate the keys cannot reach anything but the primary. On the REST
- * surface the same value is what `?scheme=` takes.
+ * `selector` is the whole point. A Context keys its schemes locally, and a
+ * caller reaches a scheme by its key: an adapter's `schemes.get` takes it, and
+ * so does `?scheme=` on the REST surface. A caller that cannot enumerate the
+ * keys cannot reach anything but the primary.
  */
 export interface ContextSchemeDescriptor {
     /** Context-local key that selects this scheme. */
@@ -2804,6 +2586,72 @@ export interface ContextSchemeDescriptor {
     version: string;
     /** What this scheme is to the Context. Never empty. */
     roles: ContextSchemeRole[];
+}
+
+/**
+ * One crosswalk a Context holds, with the reviewed decisions it applies.
+ *
+ * Read it as a sentence: this Context translates markings from the scheme
+ * `source` selects to the scheme `target` selects with crosswalk `id` at
+ * `version`, and these are its mappings and selections.
+ *
+ * `source` and `target` are scheme selectors, the `selector` values
+ * `describeSchemes` reports, not scheme ids. A view bound to one of the
+ * Context's schemes finds the crosswalk that reads from it by comparing
+ * selectors. The mappings and selections are the effective set after any
+ * crosswalk layer the Context stacks, which is the set a translation applies.
+ */
+export interface ContextCrosswalkDescriptor {
+    /** Crosswalk id, from the crosswalk document; what `translate` takes. */
+    id: string;
+    /** Concrete crosswalk version that answers in this Context. */
+    version: string;
+    /** Human-readable crosswalk name. */
+    name: string;
+    /** Selector of the scheme this crosswalk translates from. */
+    source: string;
+    /** Selector of the scheme this crosswalk translates to. */
+    target: string;
+    /** General usage and review guidance, when the crosswalk declares it. */
+    guidance?: string;
+    /** Primary citation for the crosswalk, when it declares one. */
+    citation?: string;
+    /**
+     * The crosswalk document's own overall marking, exactly as its
+     * `crosswalk.marking` writes it. Display only: never interpreted. Absent
+     * when the document declares none.
+     */
+    marking?: string;
+    /** How each source assertion translates, in declared order. */
+    mappings: CrosswalkMapping[];
+    /** Cross-field decisions, in declared order. Empty when there are none. */
+    selections: ContextCrosswalkSelection[];
+}
+
+/**
+ * One cross-field decision a Context's crosswalk applies.
+ *
+ * The document form of a selection, with every candidate's treatment written
+ * out.
+ */
+export interface ContextCrosswalkSelection {
+    /** Selection id, as reviewed. */
+    id: string;
+    /** How one candidate is chosen. */
+    strategy: CrosswalkSelectionStrategy;
+    /** Candidates in declared order; order breaks ties, a fallback is last. */
+    candidates: ContextCrosswalkCandidate[];
+}
+
+/**
+ * One candidate of a cross-field decision a Context's crosswalk applies.
+ *
+ * A candidate document may leave its disposition out to mean `carry`. The
+ * description always states it, so a reader never applies that default itself.
+ */
+export interface ContextCrosswalkCandidate extends CrosswalkSelectionCandidate {
+    /** Treatment applied when this candidate is selected. */
+    disposition: CrosswalkDisposition;
 }
 
 /**
@@ -2824,16 +2672,101 @@ export interface ContextCompositionPresence {
 }
 
 /**
- * The marking surface exposed by a resolved Context.
+ * The marking surface exposed by a resolved Context, bound to one of its
+ * schemes.
  *
- * Local Contexts may expose the full in-process adapter because their
- * composition is already loaded. Remote Contexts expose only operations that
- * run against the Context chosen at client construction; they do not expose
- * scheme-addressed lifecycle or operation overloads.
+ * A Context owns its composition. Both local and remote views expose only
+ * operations bound to that composition, without lifecycle mutation. No
+ * operation takes a scheme selector as an argument: the selector picks the
+ * view, through {@link ContextAdapter.schemes}, and every operation on that
+ * view answers in its scheme.
  */
 export type ContextSchemeEngineAdapter =
-    | LocalSchemeEngineAdapter
+    | LocalContextSchemeEngineAdapter
     | RemoteContextSchemeEngineAdapter;
+
+/** Preserve an operation's arguments while requiring its result immediately. */
+type SynchronousContextOperations<T> = {
+    [K in keyof T]: T[K] extends (...args: infer A) => infer R
+        ? (...args: A) => Awaited<R>
+        : T[K];
+};
+
+/**
+ * Marking operations bound to one local, immutable Context.
+ *
+ * The remote Context contract owns the selector-free argument shapes. The
+ * local view answers those same operations synchronously; the Context owns
+ * composition construction and disposal, rather than the scheme view.
+ */
+export type LocalContextSchemeEngineAdapter =
+    SynchronousContextOperations<
+        Omit<RemoteContextSchemeEngineAdapter,
+            'getFormatCoverage' | 'diff' | 'destroy'>
+    > & {
+        /**
+         * Describe input and rendering coverage for a format.
+         *
+         * @param formatId - Format to report on. Omit it for the default format.
+         */
+        getFormatCoverage(formatId?: string): FormatCoverage;
+        /**
+         * Compare fact identity using the format both inputs are written in.
+         *
+         * @param a - The first marking.
+         * @param b - The second marking, compared against the first.
+         * @param options - The input format and a cancellation signal.
+         */
+        diff(
+            a: string,
+            b: string,
+            options?: Omit<
+                NonNullable<Parameters<RemoteContextSchemeEngineAdapter['diff']>[2]>,
+                'outputFormat'
+            >,
+        ): DiffResult;
+    };
+
+/**
+ * Guide queries bound to one local Context, with no caller-supplied processor.
+ *
+ * The Context supplies the marking processor for evaluation.
+ */
+export type LocalContextGuideEngineAdapter =
+    SynchronousContextOperations<GuideEngineAdapter>;
+
+/**
+ * The schemes a Context holds, reached by key.
+ *
+ * A Context has schemes, one of them is its primary, and you get one by its
+ * key. The key is the `selector` {@link ContextAdapter.describeSchemes} lists.
+ * A scheme's id is not a key.
+ */
+export interface ContextSchemes<
+    View extends ContextSchemeEngineAdapter = ContextSchemeEngineAdapter,
+> {
+    /**
+     * Return the view that marks in the scheme a key names.
+     *
+     * Every operation on the view answers in that scheme, so a host marking in
+     * a crosswalk's target gets the target's view once and then works with it
+     * as it would with {@link ContextAdapter.scheme}. The same key gives the
+     * same view each time.
+     *
+     * Whatever holds the composition decides which keys are real. A local
+     * Context holds it, so it throws for a key it does not have. A remote
+     * Context does not check: the view sends its key with each request, and
+     * the server answers a key it does not have with a 404
+     * `scheme_not_found`. Neither falls back to the primary, because a marking
+     * checked in a scheme its author did not choose can look valid and be
+     * wrong.
+     *
+     * @param key - Key of one of the Context's schemes.
+     * @returns The view bound to that scheme.
+     * @throws On a local Context, when it holds no scheme under `key`.
+     */
+    get(key: string): View;
+}
 
 /**
  * The composed surface: one resolved bundle of a scheme, its guides, and its
@@ -2844,7 +2777,7 @@ export type ContextSchemeEngineAdapter =
  * contracts, so a component that only marks text takes `ContextAdapter.scheme`
  * and never learns it came from a Context. The operations on this interface are
  * the ones no single family can answer alone: auditing a document needs the
- * scheme and the guides, an access assessment needs the audit and the policy,
+ * scheme and the guides, an access check needs the scheme and the policy,
  * and a crosswalk translation needs both ends of the mapping.
  *
  * Both modes, as everywhere else: a local Context implements it in process and
@@ -2859,18 +2792,33 @@ export interface ContextAdapter {
      * Every scheme this composition holds, primary first.
      *
      * A Context can hold more than one scheme: the primary one it marks with,
-     * plus the source and target of any crosswalk it declares. Operations that
-     * address a scheme take a selector naming one of them, and `?scheme=` on
-     * the REST surface is that selector spelled for a query string. Without
-     * this a caller has no way to learn which selectors the composition
-     * answers to, so it can only ever reach the primary.
+     * plus the source and target of any crosswalk it declares. Each one's
+     * selector is the key {@link schemes} takes, and `?scheme=` on the REST
+     * surface is that key spelled for a query string. Without this a caller
+     * has no way to learn which keys the composition answers to, so it can
+     * only ever reach the primary.
      */
     describeSchemes(): MaybePromise<ContextSchemeDescriptor[]>;
     /**
-     * Scheme-shaped view of this composition. Implementations may return
-     * themselves.
+     * Every crosswalk this composition holds, in declaration order. Empty when
+     * it declares none.
+     *
+     * Each one names its source and target by the selectors
+     * {@link describeSchemes} reports, so a translation view bound to a scheme
+     * picks the crosswalk that reads from it, and a crosswalk handbook renders
+     * the mappings and selections a translation applies.
+     */
+    describeCrosswalks(): MaybePromise<ContextCrosswalkDescriptor[]>;
+    /**
+     * The view that marks in the Context's primary scheme. Implementations may
+     * return themselves.
      */
     readonly scheme: ContextSchemeEngineAdapter;
+    /**
+     * The schemes this Context holds, each reached by its key. {@link scheme}
+     * stays the primary.
+     */
+    readonly schemes: ContextSchemes;
     /** Guide surface, absent when the composition declares no guide. */
     readonly guide?: GuideEngineAdapter;
     /** Access surface, absent when the composition declares no access policy. */
@@ -2892,14 +2840,6 @@ export interface ContextAdapter {
     audit(
         input: DocumentAssessmentInput,
     ): MaybePromise<ContextOperationResult<DocumentAuditReport>>;
-    /**
-     * Assess document access through the resolved composition.
-     *
-     * @param input - The document, the subject and how to assess access.
-     */
-    assessDocumentAccess(
-        input: DocumentAccessAssessmentInput,
-    ): MaybePromise<ContextOperationResult<DocumentAccessAssessment>>;
     /**
      * Evaluate a trusted target through the resolved composition. The distinct
      * name keeps this envelope-returning operation separate from the bare
@@ -2937,16 +2877,15 @@ export interface ContextAdapter {
 
 /** A {@link ContextAdapter} whose operations complete synchronously. */
 export interface LocalContextAdapter extends ContextAdapter {
-    readonly scheme: LocalSchemeEngineAdapter;
-    readonly guide?: LocalGuideEngineAdapter;
+    readonly scheme: LocalContextSchemeEngineAdapter;
+    readonly schemes: ContextSchemes<LocalContextSchemeEngineAdapter>;
+    readonly guide?: LocalContextGuideEngineAdapter;
     readonly access?: LocalAccessEngineAdapter;
     describeSchemes(): ContextSchemeDescriptor[];
+    describeCrosswalks(): ContextCrosswalkDescriptor[];
     audit(
         input: DocumentAssessmentInput,
     ): ContextOperationResult<DocumentAuditReport>;
-    assessDocumentAccess(
-        input: DocumentAccessAssessmentInput,
-    ): ContextOperationResult<DocumentAccessAssessment>;
     checkContextAccess(
         target: string | Assertion[],
         userAttributes: Record<string, unknown>,
@@ -2963,11 +2902,12 @@ export interface LocalContextAdapter extends ContextAdapter {
 /**
  * Context-bound remote marking operations.
  *
- * Unlike {@link RemoteSchemeEngineAdapter}, this surface never accepts a
- * scheme selector or composition lifecycle call. The Context selected when
- * the remote client was constructed owns that composition; allowing an
- * operation to address a different scheme would describe a request the
- * Context REST contract cannot serve.
+ * Unlike {@link RemoteSchemeEngineAdapter}, this surface takes no scheme
+ * selector in an operation's arguments and no composition lifecycle call. The
+ * Context selected when the remote client was constructed owns that
+ * composition, and the view is bound to one of its schemes: the primary, or
+ * the one {@link ContextAdapter.schemes} returned for a key. A view from
+ * `schemes.get` sends its key as `?scheme=` on each request.
  */
 export interface RemoteContextSchemeEngineAdapter
     extends Omit<
@@ -2984,7 +2924,6 @@ export interface RemoteContextSchemeEngineAdapter
         | 'validate'
         | 'explain'
         | 'render'
-        | 'normalize'
         | 'diff'
         | 'getFormatCoverage'
         | 'suggest'
@@ -2994,13 +2933,10 @@ export interface RemoteContextSchemeEngineAdapter
         | 'collectNotices'
         | 'scan'
         | 'describeConcept'
-        | 'filterConcepts'
         | 'buildSchemeView'
-        | 'listCategoriesFlat'
         | 'getConceptsInCategory'
         | 'getSchemeMeta'
         | 'listCategories'
-        | 'uncoveredAssertions'
         | 'checkCoverage'
     > {
     /**
@@ -3030,9 +2966,10 @@ export interface RemoteContextSchemeEngineAdapter
              * The output `rendered` is written in. For a scheme that declares
              * `render.surfaces`, an output as the scheme document's
              * `render.surfaces` defines it. Omitted, the scheme's default
-             * format, or with `render.surfaces`, each written surface's
-             * default for the marking's role, by the rule `render.surfaces`
-             * states for a request that names no output.
+             * format, or with `render.surfaces`, the written surfaces' defaults
+             * for the marking's role, one alone when it writes the others'
+             * scopes, by the rule `render.surfaces` states for a request that
+             * names no output.
              */
             outputFormat?: string;
             /**
@@ -3098,9 +3035,10 @@ export interface RemoteContextSchemeEngineAdapter
              * The output `rendered` is written in. For a scheme that declares
              * `render.surfaces`, an output as the scheme document's
              * `render.surfaces` defines it. Omitted, the scheme's default
-             * format, or with `render.surfaces`, each written surface's
-             * default for the marking's role, by the rule `render.surfaces`
-             * states for a request that names no output.
+             * format, or with `render.surfaces`, the written surfaces' defaults
+             * for the marking's role, one alone when it writes the others'
+             * scopes, by the rule `render.surfaces` states for a request that
+             * names no output.
              */
             outputFormat?: string;
             context?: ProcessingContext;
@@ -3141,9 +3079,10 @@ export interface RemoteContextSchemeEngineAdapter
              * The output `rendered` is written in. For a scheme that declares
              * `render.surfaces`, an output as the scheme document's
              * `render.surfaces` defines it. Omitted, the scheme's default
-             * format, or with `render.surfaces`, each written surface's
-             * default for the marking's role, by the rule `render.surfaces`
-             * states for a request that names no output.
+             * format, or with `render.surfaces`, the written surfaces' defaults
+             * for the marking's role, one alone when it writes the others'
+             * scopes, by the rule `render.surfaces` states for a request that
+             * names no output.
              */
             outputFormat?: string;
             /**
@@ -3180,21 +3119,6 @@ export interface RemoteContextSchemeEngineAdapter
         format?: string,
         options?: RenderOptions,
     ): Promise<RenderResult>;
-    /**
-     * Rewrites a marking in its canonical form. See {@link
-     * SchemeEngineAdapter.normalize}.
-     *
-     * @param input - Marking text.
-     * @param options - Input and output formats and a cancellation signal.
-     */
-    normalize(
-        input: string,
-        options?: {
-            inputFormat?: string;
-            outputFormat?: string;
-            signal?: AbortSignal;
-        },
-    ): Promise<string>;
     /**
      * Reports what changed between two markings. See {@link
      * SchemeEngineAdapter.diff}.
@@ -3322,8 +3246,7 @@ export interface RemoteContextSchemeEngineAdapter
      * Scans document text for markings. See {@link SchemeEngineAdapter.scan}.
      *
      * @param text - Document text to scan.
-     * @param options - Input and output formats and a cancellation signal. A
-     *   remote adapter does not report progress.
+     * @param options - Input and output formats and a cancellation signal.
      */
     scan(text: string, options?: ScanOptions): Promise<ScanOutcome>;
     /**
@@ -3340,29 +3263,10 @@ export interface RemoteContextSchemeEngineAdapter
         options?: { view?: string },
     ): Promise<ConceptDescription>;
     /**
-     * Text-searches the scheme's concepts. See {@link
-     * SchemeEngineAdapter.filterConcepts}.
-     *
-     * @param query - Search text.
-     */
-    filterConcepts(query: string): Promise<FilterResult>;
-    /**
      * Builds the Handbook tree. See {@link
      * SchemeEngineAdapter.buildSchemeView}.
      */
     buildSchemeView(): Promise<SchemeStructuralView>;
-    /**
-     * Lists category id and label pairs. See {@link
-     * SchemeEngineAdapter.listCategoriesFlat}.
-     */
-    listCategoriesFlat(): Promise<
-        Array<{
-            /** Category id. */
-            id: string;
-            /** Category display label. */
-            label: string;
-        }>
-    >;
     /**
      * Returns a category's concepts. See {@link
      * SchemeEngineAdapter.getConceptsInCategory}.
@@ -3370,22 +3274,6 @@ export interface RemoteContextSchemeEngineAdapter
      * @param categoryId - Id of the category.
      */
     getConceptsInCategory(categoryId: string): ConceptView[];
-    /**
-     * The nested form: each concept with its depth under its in-category
-     * parents.
-     *
-     * @param categoryId - Id of the category.
-     * @param options - `{ nested: true }` selects the nested form.
-     */
-    getConceptsInCategory(
-        categoryId: string,
-        options: { nested: true },
-    ): Array<{
-        /** The concept, as a display view. */
-        concept: ConceptView;
-        /** Nesting depth: 0 for a root, 1 for its child, and so on. */
-        depth: number;
-    }>;
     /**
      * Returns the scheme's metadata. See {@link
      * SchemeEngineAdapter.getSchemeMeta}.
@@ -3396,17 +3284,6 @@ export interface RemoteContextSchemeEngineAdapter
      * SchemeEngineAdapter.listCategories}.
      */
     listCategories(): CategoryView[];
-    /**
-     * Returns the candidates the parent does not cover. See {@link
-     * SchemeEngineAdapter.uncoveredAssertions}.
-     *
-     * @param candidates - Assertions to check.
-     * @param parent - Assertions of the marking expected to cover them.
-     */
-    uncoveredAssertions(
-        candidates: Assertion[],
-        parent: Assertion[],
-    ): Assertion[];
     /**
      * Checks child markings against a parent. See {@link
      * SchemeEngineAdapter.checkCoverage}.
@@ -3429,15 +3306,14 @@ export interface RemoteContextSchemeEngineAdapter
 /** A {@link ContextAdapter} whose operations complete asynchronously. */
 export interface RemoteContextAdapter extends ContextAdapter {
     readonly scheme: RemoteContextSchemeEngineAdapter;
+    readonly schemes: ContextSchemes<RemoteContextSchemeEngineAdapter>;
     readonly guide?: RemoteGuideEngineAdapter;
     readonly access?: RemoteAccessEngineAdapter;
     describeSchemes(): Promise<ContextSchemeDescriptor[]>;
+    describeCrosswalks(): Promise<ContextCrosswalkDescriptor[]>;
     audit(
         input: DocumentAssessmentInput,
     ): Promise<ContextOperationResult<DocumentAuditReport>>;
-    assessDocumentAccess(
-        input: DocumentAccessAssessmentInput,
-    ): Promise<ContextOperationResult<DocumentAccessAssessment>>;
     checkContextAccess(
         target: string | Assertion[],
         userAttributes: Record<string, unknown>,

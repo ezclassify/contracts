@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import type { TestSuite } from '../src/test-suite.js';
 
 const root = new URL(
-    '../../schemas/generated/json-schemas-input/test-suite.schema.json',
+    '../../schemas/generated/validation/v1/test-suite.schema.json',
     import.meta.url,
 );
 const schema = JSON.parse(readFileSync(root, 'utf8'));
@@ -61,25 +61,13 @@ describe('portable test-suite contract', () => {
         ];
         expect(validate(value), JSON.stringify(validate.errors)).toBe(true);
     });
-    it('refuses an option that asks the engine to settle less', () => {
+    it('refuses an option the operation does not declare', () => {
         const withOptions = (options: object): unknown => ({
             ...suite,
             cases: [{ ...suite.cases[0], options }],
         });
-        for (const options of [
-            { normalization: 'strict' },
-            { skipInference: true },
-            { skipRepair: true },
-            { fix: false },
-            { preserveDeprecated: true },
-        ]) {
-            expect(
-                validate(withOptions(options)),
-                JSON.stringify(options),
-            ).toBe(false);
-        }
-        // Negative control: an option that says what the marking is judged
-        // as, not how it is settled.
+        expect(validate(withOptions({ note: true }))).toBe(false);
+        // Positive control: an option the operation declares.
         expect(
             validate(withOptions({ parts: ['(L)'] })),
             JSON.stringify(validate.errors),
@@ -96,14 +84,6 @@ describe('portable test-suite contract', () => {
                 validate({
                     ...suite,
                     cases: [{ ...suite.cases[0], assertions }],
-                }),
-            ).toBe(false);
-            expect(
-                validate({
-                    ...suite,
-                    overrides: {
-                        one: { reason: 'Changed expectation', assertions },
-                    },
                 }),
             ).toBe(false);
         }
@@ -125,23 +105,6 @@ describe('portable test-suite contract', () => {
                 }),
             ).toBe(false);
         }
-    });
-    it('keeps the report composition a named object for SDK generators', () => {
-        const reportSchema = JSON.parse(
-            readFileSync(
-                new URL(
-                    '../../schemas/generated/json-schemas-test/test-suite-run.schema.json',
-                    import.meta.url,
-                ),
-                'utf8',
-            ),
-        );
-        expect(reportSchema.definitions.TestComposition.type).toBe('object');
-        expect(
-            Object.keys(
-                reportSchema.definitions.TestComposition.properties,
-            ).sort(),
-        ).toEqual(['access', 'crosswalks', 'guides', 'scheme']);
     });
     it('generates the inline Context-shaped composition without losing policy layers', () => {
         expect(validate(suite), JSON.stringify(validate.errors)).toBe(true);
@@ -219,51 +182,6 @@ describe('portable test-suite contract', () => {
             }),
         ).toBe(false);
     });
-    it('keeps the native result for every operation a suite can name', () => {
-        const results = JSON.parse(
-            readFileSync(
-                new URL(
-                    '../../schemas/generated/json-schemas-test/test-operation-results.schema.json',
-                    import.meta.url,
-                ),
-                'utf8',
-            ),
-        );
-        const operations = schema.definitions.TestOperation.enum as string[];
-        expect(Object.keys(results.properties).sort()).toEqual(
-            [...operations].sort(),
-        );
-        expect(results.properties.validate.$ref).toBe(
-            '#/definitions/ValidateResult',
-        );
-        expect(results.properties.explain.$ref).toBe(
-            '#/definitions/ExplanationTrace',
-        );
-        // The fields shipped suites assert most stay on the process result.
-        const processed = results.definitions.ProcessResult;
-        expect(processed.required).toEqual(
-            expect.arrayContaining(['rendered', 'valid', 'inputWasValid']),
-        );
-        // Expectations are authored input, so the contract they are checked
-        // against stays closed while the published result schemas are open:
-        // an expectation cannot name a field no result has.
-        expect(results.definitions.ValidateResult.additionalProperties).toBe(
-            false,
-        );
-        const published = JSON.parse(
-            readFileSync(
-                new URL(
-                    '../../schemas/generated/json-schemas/validate-result.schema.json',
-                    import.meta.url,
-                ),
-                'utf8',
-            ),
-        );
-        expect(
-            published.definitions?.ValidateResult?.additionalProperties ??
-                published.additionalProperties,
-        ).toBeUndefined();
-    });
     it('refuses unknown suite fields and invalid operation names', () => {
         expect(validate({ ...suite, executable: '/tmp/run' })).toBe(false);
         expect(
@@ -273,45 +191,8 @@ describe('portable test-suite contract', () => {
             }),
         ).toBe(false);
     });
-    it('keeps overrides separate from case inputs', () => {
-        expect(
-            validate({
-                apiVersion: suite.apiVersion,
-                id: 'child',
-                version: '1.0.0',
-                extends: { id: suite.id, version: suite.version },
-                overrides: {
-                    one: {
-                        reason: 'This policy retires the concept.',
-                        assertions: [
-                            {
-                                path: ['valid'],
-                                matcher: 'equals',
-                                value: false,
-                            },
-                        ],
-                    },
-                },
-                cases: [],
-            }),
-        ).toBe(true);
-        expect(
-            validate({
-                apiVersion: suite.apiVersion,
-                id: 'child',
-                version: '1.0.0',
-                extends: { id: suite.id, version: suite.version },
-                overrides: {
-                    one: {
-                        reason: 'Changed',
-                        input: { marking: 'rewritten' },
-                        assertions: [
-                            { path: ['valid'], matcher: 'equals', value: true },
-                        ],
-                    },
-                },
-                cases: [],
-            }),
-        ).toBe(false);
+    it('requires the composition its cases run against', () => {
+        const { composition: _, ...withoutComposition } = suite;
+        expect(validate(withoutComposition)).toBe(false);
     });
 });

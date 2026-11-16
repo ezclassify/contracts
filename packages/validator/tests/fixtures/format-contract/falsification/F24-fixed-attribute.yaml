@@ -28,7 +28,7 @@ scheme:
   named_conditions:
     shared-origin:
       is: count_gt 1
-      category_id: owner
+      category: owner
   data:
     categories:
       - id: level
@@ -40,10 +40,9 @@ scheme:
         label: Owner
         rollup: union
     concepts:
-      inline:
-        - { id: LEVEL_ONE, name: Level one, views: { default: ONE, structured: ONE }, categories: [level] }
-        - { id: OWNER_HOME, name: Home owner, views: { default: HOME, structured: HOME }, categories: [owner] }
-        - { id: OWNER_PARTNER, name: Partner owner, views: { default: PARTNER, structured: PARTNER }, categories: [owner] }
+      - { id: LEVEL_ONE, name: Level one, views: { default: ONE, structured: ONE }, categories: [level] }
+      - { id: OWNER_HOME, name: Home owner, views: { default: HOME, structured: HOME }, categories: [owner] }
+      - { id: OWNER_PARTNER, name: Partner owner, views: { default: PARTNER, structured: PARTNER }, categories: [owner] }
   render:
     default: structured
     formats:

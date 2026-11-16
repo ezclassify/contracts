@@ -50,15 +50,15 @@ because they participate in generated schema identities.
 
 ## Package surfaces
 
-| Package                          | Reference coverage and use                                                                                                           |
-| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| `@ezclassify/types`              | Root exports: authoring definitions, runtime model types, public views, adapter contracts, display helpers, and secret serialization |
-| `@ezclassify/schemas`            | Browser-safe root exports and `./test-suite-schema`; individual document-schema subpaths include additional fragment exports         |
-| `@ezclassify/openapi`            | `./wire` request/response declarations; the generated REST document is published as `./openapi.yaml` and `./openapi.json`            |
-| `@ezclassify/validator`          | Root document/file validation API and `./scheme`, `./guide`, `./access`, `./context`, and `./crosswalk` structural checks            |
-| `@ezclassify/conformance-server` | Root replay-server lifecycle, corpus loading, canonicalization, simulated authentication, and integration scenario API               |
-| `@ezclassify/conformance`        | Data package; see its [corpus guide](../libs/conformance/README.md) rather than a callable API                                       |
-| `@ezclassify/tsconfig`           | Shared compiler configuration; see its [package guide](../packages/tsconfig/README.md)                                               |
+| Package                          | Reference coverage and use                                                                                                   |
+| -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `@ezclassify/types`              | Root exports: authoring definitions, runtime model types, public views, adapter contracts, and display helpers               |
+| `@ezclassify/schemas`            | Browser-safe root exports and `./test-suite-schema`; individual document-schema subpaths include additional fragment exports |
+| `@ezclassify/openapi`            | `./wire` request/response declarations; the generated REST document is published as `./openapi.yaml` and `./openapi.json`    |
+| `@ezclassify/validator`          | Root document/file validation API and `./scheme`, `./guide`, `./access`, `./context`, and `./crosswalk` structural checks    |
+| `@ezclassify/conformance-server` | Root replay-server lifecycle, corpus loading, canonicalization, simulated authentication, and integration scenario API       |
+| `@ezclassify/conformance`        | Data package; see its [corpus guide](../libs/conformance/README.md) rather than a callable API                               |
+| `@ezclassify/tsconfig`           | Shared compiler configuration; see its [package guide](../packages/tsconfig/README.md)                                       |
 
 ## Choose a contract layer
 
@@ -70,9 +70,8 @@ a runtime model is not automatically valid input to a document loader.
 
 Schemas expose static document schemas and extracted fragments, and every
 module is browser-safe. Generated schemas under `json-schemas/` describe the
-results a REST client receives, `json-schemas-input/` the authored documents,
-and `json-schemas-test/` the scheme test runner's saved run and operation
-results.
+results a REST client receives, and `validation/v1/<kind>.schema.json` the
+authored document of each kind.
 Their maintained sources and generation commands are recorded in
 [ARCHITECTURE.md](../ARCHITECTURE.md).
 

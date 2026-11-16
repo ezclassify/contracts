@@ -17,7 +17,7 @@ export const decl: RouteDecl<
     path: '/v1/ctx/:ctxId/:version/access/describe-requirements',
     summary: 'Describe access requirements for a target in a context',
     description:
-        'Describes requirements imposed by immutable policy for a trusted target supplied as `marking`, structured `assertions`, or both. Both target forms are normalized through the same Context scheme path used by access check. These are policy requirements for the supplied target, not remediation instructions and not advice to change immutable `userAttributes`. Document access assessment (POST /v1/ctx/{ctxId}/{version}/document/assess-access) answers document receivability and content or context remediation questions.',
+        'Describes requirements imposed by immutable policy for a trusted target supplied as `marking`, structured `assertions`, or both. Both target forms are normalized through the same Context scheme path used by access check. These are policy requirements for the supplied target, not remediation instructions and not advice to change immutable `userAttributes`.',
     tags: ['context', 'access'],
     pathParams: ['ctxId', 'version'],
     errorResponses: [

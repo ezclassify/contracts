@@ -26,10 +26,9 @@ scheme:
         rollup: max
         single: true
     concepts:
-      inline:
-        - { id: OWNER_HOME, name: Home owner, views: { default: HOME }, categories: [owner] }
-        - { id: HANDLING_A, name: Handling A, views: { default: HA }, categories: [handling] }
-        - { id: LEVEL_ONE, name: Level one, views: { default: ONE }, categories: [level] }
+      - { id: OWNER_HOME, name: Home owner, views: { default: HOME }, categories: [owner] }
+      - { id: HANDLING_A, name: Handling A, views: { default: HA }, categories: [handling] }
+      - { id: LEVEL_ONE, name: Level one, views: { default: ONE }, categories: [level] }
   render:
     default: banner
     formats:

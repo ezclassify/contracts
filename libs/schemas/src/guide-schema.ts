@@ -4,9 +4,9 @@ import schema from '../generated/validation/v1/guide.schema.json';
 /**
  * Static guide schema JSON for validating a complete guide document.
  *
- * Root shape: `{ guide: { id, version, name, targetSchemes: [...], rules: {
- * inline?: [...], external?: [...] } } }`. Required guide fields: `id`,
- * `version`, `name`, `targetSchemes` (at least one entry), and `rules`.
+ * Root shape: `{ guide: { id, version, name, target_schemes: [...], rules:
+ * [...] } }`. Required guide fields: `id`, `version`, `name`,
+ * `target_schemes` (at least one entry), and `rules`.
  * `description` is optional.
  *
  * Used by the guide loader to validate a guide YAML/JSON file before parsing.
@@ -20,8 +20,10 @@ const guideMetadataKeys = new Set([
     'id',
     'version',
     'name',
+    'marking_scheme',
+    'marking',
     'description',
-    'targetSchemes',
+    'target_schemes',
     'vocabulary',
     'type',
     'layer',
@@ -36,7 +38,7 @@ const guideProperties = reader.properties(guideBlock, 'guide');
  * category bodies belong to the complete guide schema.
  *
  * Required identity and target-scheme fields retain their canonical validators,
- * as do optional description, vocabulary, and layer fields.
+ * as do optional marking, description, vocabulary, and layer fields.
  */
 export const guideMetaSchema = {
     ...guideBlock,
@@ -58,7 +60,7 @@ export const guideMetaSchema = {
  * Sub-schema for a single guide rule, resolved from `$defs.guide_rule`.
  *
  * Required fields: `id`, `name`, `outcome` (at least one of `rendered` or
- * `concepts`). Optional: `keywords`, `match[]`, `category`, `when`,
+ * `concepts`). Optional: `marking`, `keywords`, `match[]`, `category`, `when`,
  * `overrides[]`. Used by guide-rule validators and Studio when editing or
  * type-checking individual guide rules.
  */
@@ -83,15 +85,15 @@ export const guideCategorySchema = {
 };
 
 /**
- * Sub-schema for a single `targetSchemes` dependency entry, resolved from
- * `$defs.guide_dependency`.
+ * Sub-schema for a single `target_schemes` dependency entry, resolved from
+ * `$defs.scheme_dependency`.
  *
- * Required field: `id` (scheme ID). Optional: `version` (semver constraint
- * string or `'*'` for any version). Used when validating or building the
- * target-scheme dependency list for a guide.
+ * Required field: `id` (scheme ID). Optional: `version` (a version or a
+ * semver range). Used when validating or building the target-scheme
+ * dependency list for a guide.
  */
 export const guideDependencySchema = {
-    ...reader.definition('guide_dependency'),
+    ...reader.definition('scheme_dependency'),
     /** Shared definitions that this fragment's `$ref`s point to. */
     $defs: defs,
 };
@@ -99,7 +101,7 @@ export const guideDependencySchema = {
 /**
  * All `$defs` from the guide schema: shared definitions referenced by `$ref` in
  * the sub-schemas above (includes `guide_rule`, `guide_category`,
- * `guide_dependency`).
+ * `scheme_dependency`).
  *
  * Inject into custom JSON Schema validators when resolving `$ref` pointers
  * within guide document fragments.

@@ -23,6 +23,7 @@ import type {
     Assertion,
     CollectedNotice,
     ConceptDescription,
+    ContextCrosswalkDescriptor,
     ContextOperationResult,
     ContextSchemeDescriptor,
     CoverageReport,
@@ -33,6 +34,7 @@ import type {
     EvaluationResult,
     ExplanationTrace,
     GuideDeterminationInput,
+    GuideRuleSelection,
     GuideScanResult,
     GuideStructuralView,
     MarkingColorRule,
@@ -42,9 +44,9 @@ import type {
     ReferenceSurfaceLabel,
     RenderAssessment,
     RenderPreservation,
-    RuleDescription,
     ScanLimits,
     ScanResult,
+    UnreadMark,
     Vocabulary,
     SchemeStructuralView,
     SuggestResult,
@@ -53,15 +55,8 @@ import type {
 } from '@ezclassify/types';
 
 export type {
-    ContextDocumentAccessAssessmentResult,
     ContextDocumentAuditResult,
 } from '@ezclassify/types';
-
-/** Response body for Context normalization. */
-export interface NormalizeResponseBody {
-    /** Canonical normalized form of the marking string. */
-    result: string;
-}
 
 /** Response body for Context rendering. */
 export interface RenderResponseBody {
@@ -113,12 +108,18 @@ export interface SchemeSummaryResponseBody {
     version: string;
     /** Display name from the scheme metadata. */
     name: string;
-    /** Free-text description from the scheme metadata. */
-    description: string;
+    /** Free-text description from the scheme metadata. Omitted when the scheme has none. */
+    description?: string;
     /** Human-readable definition of the scheme, for tooltips and about panels. */
     definition?: string;
     /** Usage guidance for the scheme, shown in reference views. */
     guidance?: string;
+    /**
+     * The scheme document's own overall marking, exactly as its
+     * `scheme.marking` writes it. Display only: never interpreted. Omitted
+     * when the document declares none.
+     */
+    marking?: string;
     /** Single-category scheme-default color source, when category mode is used. */
     colorFrom?: string;
     /** Ordered rule-driven color outcomes, when rule mode is used. */
@@ -206,48 +207,6 @@ export interface SchemeSummaryResponseBody {
 }
 
 /**
- * Context scheme grammar response: the scheme's recognition policy.
- *
- * No separator. Every boundary belongs to the field that writes it, so there is
- * no global one to publish; what is left is how a spelling found at a boundary
- * is compared against the vocabulary.
- */
-export interface PublicGrammarResponseBody {
-    /** Whether the vocabulary is matched case-sensitively. */
-    caseSensitive: boolean;
-    /** Whether surrounding whitespace is ignored when a spelling is compared. */
-    stripWhitespace: boolean;
-}
-
-/**
- * JSON-safe serialization of the engine's Set/Map-based FilterResult.
- *
- * The engine returns FilterResult with Set<string> and Map<string, ...> fields;
- * this interface is what the server writes to the wire.
- */
-export interface WireFilterResult {
-    /** IDs of concepts or rules that matched the query. */
-    visibleIds: string[];
-    /** Per-category counts. */
-    categoryCounts: Record<
-        string,
-        {
-            /** Items in the category that matched the query. @asType integer */
-            visible: number;
-            /** Items in the category. @asType integer */
-            total: number;
-        }
-    >;
-    /** Aggregate counts across all categories. */
-    total: {
-        /** Items that matched the query. @asType integer */
-        visible: number;
-        /** Items in every category. @asType integer */
-        total: number;
-    };
-}
-
-/**
  * Replica readiness state reported by GET /v1/ready. `ready` once the replica
  * may receive traffic after RuntimeHost initialization and required-artifact
  * checks. License expiration never takes a mission runtime out of service.
@@ -301,8 +260,9 @@ export interface ErrorResponseBody {
      * Stable machine-readable classification of the failure, present whenever
      * the server can name one. Set to `INVALID_INPUT` when the failure
      * originated in engine input or the request carried something the
-     * operation does not declare, and to `route_not_found` on a 404 that reached routing and
-     * matched no route. A request refused before routing carries the constant
+     * operation does not declare, to `route_not_found` on a 404 that reached routing and
+     * matched no route, and to `scheme_not_found` on a 404 for a `?scheme=` key the
+     * Context does not hold. A request refused before routing carries the constant
      * refusal body instead, which has no `code` at all by design, so the
      * absence of a code on a 404 is itself uninformative.
      */
@@ -313,8 +273,8 @@ export interface ErrorResponseBody {
      * concept or a category the scheme does not declare, it is the request
      * field and the id it named, written `field: id`, such as
      * `outputFormat: nope` or `conceptId: NOPE`. For a request that carries a
-     * query parameter the operation does not declare, it is `query: ` and the
-     * parameter's name; for an undeclared body field, `body`, the JSON pointer
+     * query parameter the operation does not declare, or names a declared one twice,
+     * it is `query: ` and the parameter's name; for an undeclared body field, `body`, the JSON pointer
      * of the object that holds it, `: ` and the field, such as `body: extra`
      * or `body/context: extra`. Never a scheme's internals.
      */
@@ -345,19 +305,6 @@ export interface CtxDocumentAuditRequestBody {
     responseProfile?: DocumentResponseProfile;
 }
 
-/** POST /v1/ctx/{ctxId}/{version?}/document/assess-access */
-export interface CtxDocumentAssessAccessRequestBody {
-    /** Full document text to audit before access is assessed. */
-    text: string;
-    /** User attributes interpreted by the Context's access policy. */
-    userAttributes: Record<string, unknown>;
-    /** Optional relationship attributes used with the user attributes. */
-    context?: Record<string, unknown>;
-    /** Optional analyst decisions applied to nominations for this document. */
-    guideDeterminations?: GuideDeterminationInput;
-    /** Detail projection applied after all access scenarios are evaluated. */
-    responseProfile?: DocumentResponseProfile;
-}
 
 /**
  * POST /v1/ctx/{ctxId}/{version?}/scheme/process: the author's call.
@@ -384,10 +331,10 @@ export interface CtxSchemeProcessRequestBody {
      * narrows what may be read. For a scheme that declares `render.surfaces`,
      * an output as the scheme document's `render.surfaces` defines it.
      *
-     * Omitted or empty, the scheme's default format, or with
-     * `render.surfaces`, each written surface's default for the marking's
-     * role, by the rule `render.surfaces` states for a request that names no
-     * output.
+     * Omitted or empty, the scheme's default format, or with `render.surfaces`,
+     * the written surfaces' defaults for the marking's role, one alone when it
+     * writes the others' scopes, by the rule `render.surfaces` states for a
+     * request that names no output.
      */
     outputFormat?: string;
     /**
@@ -451,9 +398,9 @@ export interface CtxSchemeExplainRequestBody {
      * The output the trace's `rendered` is written in. For a scheme that
      * declares `render.surfaces`, an output as the scheme document's
      * `render.surfaces` defines it. Omitted or empty, the scheme's default
-     * format, or with `render.surfaces`, each written surface's default for
-     * the marking's role, by the rule `render.surfaces` states for a request
-     * that names no output.
+     * format, or with `render.surfaces`, the written surfaces' defaults for the
+     * marking's role, one alone when it writes the others' scopes, by the rule
+     * `render.surfaces` states for a request that names no output.
      */
     outputFormat?: string;
     /**
@@ -525,14 +472,19 @@ export interface CtxSchemeAggregateRequestBody {
      * `render.surfaces` defines it.
      */
     outputFormat?: string;
-    /** Optional ProcessingContext forwarded verbatim to the engine. */
+    /**
+     * The role the inputs are read in, never the rollup's. Omitted, the inputs
+     * are wholes, as in an aggregate such as the documents in a folder.
+     * `{ role: 'part', partOf }` reads each input as a part of that whole, as
+     * in a whole's parts rollup. The rollup is always a whole marking.
+     */
     context?: ProcessingContext;
     /**
      * Validation surface of the rollup, using the scheme's scope ids. Names
      * what the combined marking is, not what any one contributor was. Omitted,
      * the rollup is a whole marking and every required category belonging to
-     * the marking as a whole must be covered by the combined result, which is
-     * the whole-document case: a portion that omits one is not faulted for it.
+     * the marking as a whole must be covered by the combined result: a
+     * contributor that omits one is not faulted for it.
      * Given a scope id, the inputs are fragments of that one surface and only
      * the required categories that surface owns are demanded of the rollup.
      */
@@ -601,10 +553,10 @@ export interface CtxSchemeValidateRequestBody {
      * narrows what may be read. For a scheme that declares `render.surfaces`,
      * an output as the scheme document's `render.surfaces` defines it.
      *
-     * Omitted or empty, the scheme's default format, or with
-     * `render.surfaces`, each written surface's default for the marking's
-     * role, by the rule `render.surfaces` states for a request that names no
-     * output.
+     * Omitted or empty, the scheme's default format, or with `render.surfaces`,
+     * the written surfaces' defaults for the marking's role, one alone when it
+     * writes the others' scopes, by the rule `render.surfaces` states for a
+     * request that names no output.
      */
     outputFormat?: string;
     /** Optional ProcessingContext forwarded verbatim to the engine. */
@@ -625,29 +577,6 @@ export interface CtxSchemeValidateRequestBody {
      * stands alone.
      */
     parts?: string[];
-}
-
-/** POST /v1/ctx/{ctxId}/{version?}/scheme/normalize */
-export interface CtxSchemeNormalizeRequestBody {
-    /** Marking string to normalize. */
-    input: string;
-    /**
-     * The format `input` is written in. For a scheme that declares
-     * `render.surfaces`, the view it is read as, or one of its forms, as the
-     * scheme document's `render.surfaces` defines them. Omitted or empty,
-     * recognition works it out and reports what the text was read as on
-     * `recognition.inputFormat`.
-     */
-    inputFormat?: string;
-    /**
-     * The format the result is rendered in. Omitted or empty, the scheme's
-     * default format. It selects output only: it never narrows what may be
-     * read.
-     *
-     * For a scheme that declares `render.surfaces`, an output as the scheme
-     * document's `render.surfaces` defines it.
-     */
-    outputFormat?: string;
 }
 
 /** POST /v1/ctx/{ctxId}/{version?}/scheme/render */
@@ -701,34 +630,6 @@ export interface CtxSchemeNoticesRequestBody {
      * collected.
      */
     assertions: Assertion[];
-}
-
-/** POST /v1/ctx/{ctxId}/{version?}/scheme/filter-concepts */
-export interface CtxSchemeFilterConceptsRequestBody {
-    /** Text query to filter the concept list. */
-    query: string;
-}
-
-/** POST /v1/ctx/{ctxId}/{version?}/guide/describe-rule */
-export interface CtxGuideDescribeRuleRequestBody {
-    /** Rule id to describe. */
-    ruleId: string;
-    /**
-     * Guide id when the context has multiple guides. Defaults to the first
-     * guide.
-     */
-    guideId?: string;
-}
-
-/** POST /v1/ctx/{ctxId}/{version?}/guide/filter-rules */
-export interface CtxGuideFilterRulesRequestBody {
-    /** Text query to filter rules. */
-    query: string;
-    /**
-     * Guide id when the context has multiple guides. Defaults to the first
-     * guide.
-     */
-    guideId?: string;
 }
 
 /** POST /v1/ctx/{ctxId}/{version?}/guide/view */
@@ -879,12 +780,6 @@ export interface CtxAccessCheckRequestBody {
     context?: Record<string, unknown>;
 }
 
-/** POST /v1/ctx/{ctxId}/{version?}/access/describe-rule */
-export interface CtxAccessDescribeRuleRequestBody {
-    /** Access rule id from the loaded access policy. */
-    ruleId: string;
-}
-
 /** POST /v1/ctx/{ctxId}/{version?}/access/describe-requirements */
 export interface CtxAccessDescribeRequirementsRequestBody {
     /** Marking parsed through the Context's bound scheme. */
@@ -895,16 +790,30 @@ export interface CtxAccessDescribeRequirementsRequestBody {
 
 /**
  * Response body for GET /v1/ctx/{ctxId}/{version?}/access/rules: every rule in
- * the context's access policy.
- *
- * One route serves both halves of the adapter contract. A caller that wants the
- * descriptions has them; a caller that only wants the rule ids reads them off
- * the same response instead of spending a second round trip on a projection of
- * what it already holds.
+ * the context's access policy, with the policy's own marking.
  */
 export interface CtxAccessRulesResponseBody {
+    /**
+     * The access policy document's own overall marking, exactly as its
+     * `access.marking` writes it. Display only: never interpreted. Omitted when
+     * the document declares none.
+     */
+    marking?: string;
     /** Descriptions for every rule in the access policy, in declared order. */
     rules: AccessRuleDescription[];
+}
+
+/**
+ * Response body for GET /v1/ctx/{ctxId}/{version?}/crosswalk/describe: every
+ * crosswalk the context holds.
+ *
+ * A dedicated read rather than a member of the context description, because a
+ * crosswalk's reviewed mappings run to tens of kilobytes and every client reads
+ * the description when it connects, translating or not.
+ */
+export interface CtxCrosswalkDescribeResponseBody {
+    /** Every crosswalk in the context, in declaration order. */
+    crosswalks: ContextCrosswalkDescriptor[];
 }
 
 // Concrete Context operation envelopes. Each alias is a schema root so
@@ -919,10 +828,6 @@ export type ContextSchemeValidateResult = ContextOperationResult<ValidateResult>
 /** Context envelope returned by a scheme explanation. */
 export type ContextSchemeExplainResult =
     ContextOperationResult<ExplanationTrace>;
-
-/** Context envelope returned by scheme normalization. */
-export type ContextSchemeNormalizeResult =
-    ContextOperationResult<NormalizeResponseBody>;
 
 /** Context envelope returned by scheme rendering. */
 export type ContextSchemeRenderResult =
@@ -940,10 +845,6 @@ export type ContextSchemeNoticesResult = ContextOperationResult<
     CollectedNotice[]
 >;
 
-/** Context envelope returned by scheme concept filtering. */
-export type ContextSchemeFilterConceptsResult =
-    ContextOperationResult<WireFilterResult>;
-
 /**
  * What a scan answers on the wire.
  *
@@ -955,6 +856,12 @@ export type ContextSchemeFilterConceptsResult =
 export interface ScanResponseBody {
     /** The markings the scan found, in document order. */
     results: ScanResult[];
+    /**
+     * The wrapped marks the scan found but could not read, in document order.
+     * Empty when every wrapped mark it reached was read. Text past where the
+     * scan stopped was never offered to recognition, so none of it is listed.
+     */
+    unread: UnreadMark[];
     /** How far the scan got, and what stopped it. */
     limits: ScanLimits;
 }
@@ -993,10 +900,6 @@ export type ContextSchemeConceptDescriptionResult =
 export type ContextAccessDecisionResult =
     ContextOperationResult<AccessDecision>;
 
-/** Context envelope returned by access-rule description. */
-export type ContextAccessRuleDescriptionResult =
-    ContextOperationResult<AccessRuleDescription>;
-
 /** Context envelope returned by immutable-policy requirement description. */
 export type ContextAccessRequirementsResult =
     ContextOperationResult<AccessRequirementsDescription>;
@@ -1007,14 +910,6 @@ export type ContextGuideScanResult = ContextOperationResult<GuideScanResult[]>;
 /** Context envelope returned by guide evaluation. */
 export type ContextGuideEvaluationResult =
     ContextOperationResult<EvaluationResult>;
-
-/** Context envelope returned by guide-rule description. */
-export type ContextGuideRuleDescriptionResult =
-    ContextOperationResult<RuleDescription>;
-
-/** Context envelope returned by guide rule filtering. */
-export type ContextGuideFilterRulesResult =
-    ContextOperationResult<WireFilterResult>;
 
 /** Context envelope returned by guide structural view. */
 export type ContextGuideViewResult =
@@ -1028,14 +923,34 @@ export interface CtxGuideScanRequestBody {
     guideId?: string;
 }
 
-/** POST /v1/ctx/{ctxId}/{version?}/guide/evaluate */
+/**
+ * POST /v1/ctx/{ctxId}/{version?}/guide/evaluate
+ *
+ * Two forms, exactly one per request: `guideId` with `selectedRuleIds`
+ * evaluates one guide, and `selections` rolls up a selection that spans
+ * guides. Any other combination is a 400. The rule is stated here rather than
+ * as a root `oneOf`, which would make every generated SDK model this request
+ * as a union of two request types.
+ */
 export interface CtxGuideEvaluateRequestBody {
-    /** ID of one guide within the context. Supply this or `allGuides: true`. */
+    /**
+     * ID of the one guide to evaluate, with `selectedRuleIds`. Refused with
+     * `selections`.
+     */
     guideId?: string;
-    /** Evaluate and combine every loaded guide through the context's scheme. */
-    allGuides?: boolean;
-    /** Rule IDs the user selected (checked) in the guide wizard. */
-    selectedRuleIds: string[];
+    /**
+     * IDs of the rules selected in the guide `guideId` names. Required with
+     * `guideId`, refused with `selections`.
+     */
+    selectedRuleIds?: string[];
+    /**
+     * The selected rules, each named by its guide, rolled up across guides:
+     * each guide evaluates the rules selected from it, and the outcomes are
+     * rolled up per target scheme. No guide overrides or depends on another,
+     * so every selected rule's outcome counts. Refused with `guideId` or
+     * `selectedRuleIds`.
+     */
+    selections?: GuideRuleSelection[];
 }
 
 /** Response body for GET /v1/ctx: the context ids this caller may use. */
@@ -1094,7 +1009,8 @@ export interface CtxDescribeResponseBody {
     /**
      * Crosswalk components in declaration order, or omitted when the context
      * declares none. A crosswalk the context follows at `latest` reports here
-     * the concrete version that answered.
+     * the concrete version that answered. This is provenance; the source and
+     * target schemes and the reviewed mappings are on `crosswalk/describe`.
      */
     crosswalks?: CtxComponentDescriptor[];
 }

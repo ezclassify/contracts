@@ -30,19 +30,18 @@ scheme:
         label: Source
         rollup: union
     concepts:
-      inline:
-        - {
-              id: AUTHOR_ONE,
-              name: Author one,
-              views: { default: Author One },
-              categories: [author],
-          }
-        - {
-              id: SOURCE_MANY,
-              name: Many sources,
-              views: { default: Many Sources },
-              categories: [source],
-          }
+      - {
+            id: AUTHOR_ONE,
+            name: Author one,
+            views: { default: Author One },
+            categories: [author],
+        }
+      - {
+            id: SOURCE_MANY,
+            name: Many sources,
+            views: { default: Many Sources },
+            categories: [source],
+        }
   render:
     default: block
     formats:

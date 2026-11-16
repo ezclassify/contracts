@@ -19,24 +19,23 @@ scheme:
         label: Taxonomy
         rollup: union
     concepts:
-      inline:
-        - id: HEAD_ONE
-          name: Head one
-          views:
-            default: H1
-          categories: [program]
-        - id: HEAD_TWO
-          name: Head two
-          views:
-            default: H2
-          categories: [program, taxonomy]
-        - id: CHILD
-          name: Child
-          views:
-            default: C
-          categories: [program]
-          parents: [HEAD_ONE, HEAD_TWO]
-          tier: child
+      - id: HEAD_ONE
+        name: Head one
+        views:
+          default: H1
+        categories: [program]
+      - id: HEAD_TWO
+        name: Head two
+        views:
+          default: H2
+        categories: [program, taxonomy]
+      - id: CHILD
+        name: Child
+        views:
+          default: C
+        categories: [program]
+        parents: [HEAD_ONE, HEAD_TWO]
+        tier: child
   render:
     default: banner
     formats:

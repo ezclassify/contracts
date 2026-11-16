@@ -18,11 +18,9 @@ import { describe, expect, it } from 'vitest';
  * closes every object first and a removed field is as much a failure as a
  * missing one.
  *
- * The recordings are produced by the reference engine, which lives with the
- * runtime, and never edited here. When the contract moves ahead of them, each
- * recording file that no longer matches is named in `AWAITING_RERECORD` with
- * the reason, and the test holds that list exact: a failure anywhere else is an
- * error, and a listed file that matches again must come off the list.
+ * The recordings are produced by the reference engine and never edited here. A
+ * recording that no longer matches the contract fails the test; the fix is a
+ * re-record, not an exception list.
  */
 
 const corpusRoot = path.resolve(
@@ -63,31 +61,24 @@ const RESULT_SCHEMA: Record<string, string | null> = {
     // answer (a count, a first entry, a bare string), not the answer itself,
     // so there is no result schema to hold them to.
     render: null,
-    normalize: null,
     scan: null,
     checkAccess: null,
     evaluateGuide: null,
     evaluateMany: null,
     guideScan: null,
-    registryProcessAll: null,
-    registrySuggestAcross: null,
+    // An adapter answers these in process, with no wire operation behind
+    // them, so no published result schema describes them.
+    getScheme: null,
+    getFormatCoverage: null,
 };
 
 /** Semantic operations and the published envelope each one answers. */
 const ENVELOPE: Record<string, string | null> = {
     auditDocument: 'ContextDocumentAuditResult',
-    assessDocumentAccess: 'ContextDocumentAccessAssessmentResult',
     documentAccessRequirements: 'ContextAccessRequirementsResult',
     // The CLI case records the CLI's own JSON, which is not a wire envelope.
     cliDocument: null,
 };
-
-/**
- * Recording files made before the contract they are checked against, by file
- * name (`semantic` is the document-assessment recordings). Each entry comes off
- * this list when the runtime records that file again.
- */
-const AWAITING_RERECORD: Record<string, string> = {};
 
 const engineSchemas = new Map<string, ReturnType<Ajv['compile']>>();
 function engineValidator(file: string) {
@@ -192,13 +183,8 @@ describe('recordings hold to the result contract', () => {
         ).toEqual([]);
     });
 
-    it('matches, apart from the recordings awaiting a re-record', () => {
-        const files = new Set(
-            Object.keys(found).map((where) => where.split('#')[0]),
-        );
-        expect([...files].sort()).toEqual(
-            Object.keys(AWAITING_RERECORD).sort(),
-        );
+    it('matches the result contract with nothing awaiting a re-record', () => {
+        expect(found).toEqual({});
     });
 
     it('closes a schema so a removed field counts (negative control)', () => {

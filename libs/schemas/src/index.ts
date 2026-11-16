@@ -8,10 +8,9 @@
  * same documents.
  *
  * Pipeline (`libs/schemas/build.mjs`): `ts-json-schema-generator` reads each
- * input interface and emits a JSON Schema into `generated/json-schemas-input/`. The
- * published document-validation views in `generated/validation/v1/` add the
- * schema-only constraints and stable definition names declared in
- * `validation-schema.mjs`. Do not hand-edit generated assets: edit the source
+ * document interface and emits one JSON Schema per document kind into
+ * `generated/validation/v1/`, adding the schema-only constraints and stable
+ * definition names declared in `validation-schema.mjs`. Do not hand-edit generated assets: edit the source
  * types or those refinements and re-run the build.
  *
  * This entry point is browser-safe: it re-exports the static schema objects and

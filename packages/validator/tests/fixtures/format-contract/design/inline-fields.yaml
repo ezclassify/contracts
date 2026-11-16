@@ -28,31 +28,30 @@ scheme:
         label: Programs
         rollup: union
     concepts:
-      inline:
-        - id: LEVEL_ONE
-          name: Level one
-          views: { default: ONE, banner: ONE }
-          categories: [level]
-        - id: LEVEL_TWO
-          name: Level two
-          views: { default: TWO, banner: TWO }
-          categories: [level]
-        - id: COMPARTMENT_A
-          name: Compartment A
-          views: { default: CA, banner: CA }
-          categories: [handling]
-        - id: COMPARTMENT_B
-          name: Compartment B
-          views: { default: CB, banner: CB }
-          categories: [handling]
-        - id: PROGRAM_ONE
-          name: Program one
-          views: { default: P1, banner: P1 }
-          categories: [program]
-        - id: PROGRAM_TWO
-          name: Program two
-          views: { default: P2, banner: P2 }
-          categories: [program]
+      - id: LEVEL_ONE
+        name: Level one
+        views: { default: ONE, banner: ONE }
+        categories: [level]
+      - id: LEVEL_TWO
+        name: Level two
+        views: { default: TWO, banner: TWO }
+        categories: [level]
+      - id: COMPARTMENT_A
+        name: Compartment A
+        views: { default: CA, banner: CA }
+        categories: [handling]
+      - id: COMPARTMENT_B
+        name: Compartment B
+        views: { default: CB, banner: CB }
+        categories: [handling]
+      - id: PROGRAM_ONE
+        name: Program one
+        views: { default: P1, banner: P1 }
+        categories: [program]
+      - id: PROGRAM_TWO
+        name: Program two
+        views: { default: P2, banner: P2 }
+        categories: [program]
   render:
     default: banner
     formats:

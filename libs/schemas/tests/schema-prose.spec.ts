@@ -18,7 +18,6 @@ const packageRoot = path.resolve(
 
 const SCHEMA_DIRS = [
     'generated/json-schemas',
-    'generated/json-schemas-input',
     'generated/validation/v1',
 ];
 

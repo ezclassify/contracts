@@ -137,10 +137,10 @@ describe('wire corpus', () => {
     /**
      * The manifest travels further than the repository that records it: this
      * package is Apache-2.0 and is vendored into every SDK mirror. A field
-     * naming the private runtime repository, or the command that runs inside
-     * it, publishes internal layout to readers who can neither read nor run
-     * either. The recorder emits the neutral form; this is the public side of
-     * the same line.
+     * naming a private repository, or a command that runs inside it, publishes
+     * internal layout to readers who can neither read nor run either. The
+     * recorder emits the neutral form; this is the public side of the same
+     * line.
      */
     it('names no private repository or internal command', () => {
         expect(Object.keys(manifest.generation).sort()).toEqual([

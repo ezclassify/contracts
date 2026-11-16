@@ -1,4 +1,5 @@
 import type { RouteDecl } from './types.js';
+import { schemeSelector } from './scheme-selector.js';
 import type {
     ContextSchemeSuggestForCategoriesResult,
     CtxSchemeSuggestForCategoriesRequestBody,
@@ -21,6 +22,7 @@ export const decl: RouteDecl<
         'Returns the suggestion result for each requested category within the context\'s composed scheme, keyed by category id, each computed as if that category\'s own assertions were not present. The map is the same one a process request that names `suggestFor` returns in `suggestionsFor`. Each result carries the options only; whether the marking stands is what validate and process answer. An unknown category id is refused. The :version segment may be omitted to default to "latest".',
     tags: ['context', 'scheme'],
     pathParams: ['ctxId', 'version'],
+    queryParams: [schemeSelector],
     errorResponses: [
         {
             status: 400,

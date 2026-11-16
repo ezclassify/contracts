@@ -22,16 +22,15 @@ scheme:
         rollup: first
         single: true
     concepts:
-      inline:
-        - { id: HANDLING_A, name: Handling A, views: { default: HA }, categories: [handling] }
-        - { id: HANDLING_B, name: Handling B, views: { default: HB }, categories: [handling] }
-        - id: REFERENCE_ID
-          name: Reference identifier
-          views: { default: '{value}' }
-          categories: [reference]
-          text_input:
-            label: Reference
-            encoding: { type: text, max_length: 64 }
+      - { id: HANDLING_A, name: Handling A, views: { default: HA }, categories: [handling] }
+      - { id: HANDLING_B, name: Handling B, views: { default: HB }, categories: [handling] }
+      - id: REFERENCE_ID
+        name: Reference identifier
+        views: { default: '{value}' }
+        categories: [reference]
+        text_input:
+          label: Reference
+          encoding: { type: text, max_length: 64 }
   render:
     default: banner
     formats:

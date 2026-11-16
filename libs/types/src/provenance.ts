@@ -1,33 +1,3 @@
-import type { Attribution } from './source';
-
-/** Describes whether an observed source can be loaded again byte-for-byte. */
-export type Reproducibility = 'reproducible' | 'best-effort';
-
-/** Identifies a byte-for-byte reproducible source observation. */
-export interface ReproducibleSourceIdentity {
-    /** Whether the source observation can be reproduced byte-for-byte. */
-    reproducibility: 'reproducible';
-    /** Immutable content identity. */
-    snapshotId: string;
-    /** Location from which the content was observed. */
-    locator?: string;
-}
-
-/** Identifies a source observation that cannot promise immutable replay. */
-export interface BestEffortSourceIdentity {
-    /** Whether the source observation can be reproduced byte-for-byte. */
-    reproducibility: 'best-effort';
-    /** Snapshot identity is forbidden when reproducibility is not proven. */
-    snapshotId?: never;
-    /** Location from which the mutable content was observed. */
-    locator?: string;
-}
-
-/** Identifies a reproducible or explicitly best-effort source observation. */
-export type SourceIdentity =
-    | ReproducibleSourceIdentity
-    | BestEffortSourceIdentity;
-
 /** Closed artifact families participating in a composed operation. */
 export type ArtifactKind =
     | 'scheme'
@@ -49,52 +19,6 @@ export interface ArtifactReference {
     digest?: string;
 }
 
-/** Reproducible source identity and mandatory attribution for an operation. */
-export interface ReproducibleSourceReference extends ReproducibleSourceIdentity {
-    /** Stable identifier for the source provider. */
-    providerId: string;
-    /** Attribution and license information for the observed source. */
-    attribution: Attribution;
-}
-
-/** Best-effort source identity and mandatory attribution for an operation. */
-export interface BestEffortSourceReference extends BestEffortSourceIdentity {
-    /** Stable identifier for the source provider. */
-    providerId: string;
-    /** Attribution and license information for the observed source. */
-    attribution: Attribution;
-}
-
-/** Records source identity and mandatory attribution for an operation. */
-export type SourceReference =
-    | ReproducibleSourceReference
-    | BestEffortSourceReference;
-
-/** Compact source join carried by a qualified rule reference. */
-export interface ReproducibleRuleSourceReference {
-    /** Stable identifier for the source provider. */
-    providerId: string;
-    /** Whether the source observation can be reproduced byte-for-byte. */
-    reproducibility: 'reproducible';
-    /** Immutable snapshot containing the rule. */
-    snapshotId: string;
-}
-
-/** Best-effort external source join carried by a qualified rule reference. */
-export interface BestEffortRuleSourceReference {
-    /** Stable identifier for the source provider. */
-    providerId: string;
-    /** Whether the source observation can be reproduced byte-for-byte. */
-    reproducibility: 'best-effort';
-    /** Snapshot identity is forbidden when reproducibility is not proven. */
-    snapshotId?: never;
-}
-
-/** Compact source join carried by a qualified rule reference. */
-export type RuleSourceReference =
-    | ReproducibleRuleSourceReference
-    | BestEffortRuleSourceReference;
-
 /** Identifies the exact resolved semantics of one policy rule. */
 export interface RuleReference {
     /** Artifact that owns the rule. */
@@ -103,8 +27,6 @@ export interface RuleReference {
     ruleId: string;
     /** RFC 8785/SHA-256 digest of the canonical resolved rule content. */
     ruleDigest: string;
-    /** External source identity when the rule was not supplied inline. */
-    source?: RuleSourceReference;
 }
 
 /** Compact reference to an assertion without engine-production metadata. */

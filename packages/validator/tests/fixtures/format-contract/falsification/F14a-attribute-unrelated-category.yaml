@@ -27,21 +27,20 @@ scheme:
         rollup: union
         required: true
     concepts:
-      inline:
-        - id: REVIEW_DATE
-          name: Review date
-          views: { default: '{value}' }
-          categories: [kind, dates]
-          text_input:
-            label: Review date
-            encoding: { type: calendar-date, canonical: 'YYYY-MM-DD', accepts: ['YYYY-MM-DD'] }
-        - id: EXPIRY_DATE
-          name: Expiry date
-          views: { default: '{value}' }
-          categories: [kind, dates]
-          text_input:
-            label: Expiry date
-            encoding: { type: calendar-date, canonical: 'YYYY-MM-DD', accepts: ['YYYY-MM-DD'] }
+      - id: REVIEW_DATE
+        name: Review date
+        views: { default: '{value}' }
+        categories: [kind, dates]
+        text_input:
+          label: Review date
+          encoding: { type: calendar-date, canonical: 'YYYY-MM-DD', accepts: ['YYYY-MM-DD'] }
+      - id: EXPIRY_DATE
+        name: Expiry date
+        views: { default: '{value}' }
+        categories: [kind, dates]
+        text_input:
+          label: Expiry date
+          encoding: { type: calendar-date, canonical: 'YYYY-MM-DD', accepts: ['YYYY-MM-DD'] }
   render:
     default: structured
     formats:

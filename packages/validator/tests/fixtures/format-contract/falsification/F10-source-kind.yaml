@@ -24,24 +24,23 @@ scheme:
         rollup: first
         single: true
     concepts:
-      inline:
-        - id: SOURCE_CITATION
-          name: A named source
-          views: { default: '{value}', banner: '{value}', structured: '{value}' }
-          categories: [derivative_source_type]
-          text_input: { label: Source citation, required: true }
-        - id: MULTIPLE_SOURCES
-          name: Multiple sources
-          views: { default: Multiple Sources }
-          categories: [derivative_source_type]
-        - id: SOURCE_DOCUMENT
-          name: Source document
-          views: { default: Source document }
-          categories: [derivative_source_kind]
-        - id: CLASSIFICATION_GUIDE
-          name: Classification guide
-          views: { default: Classification guide }
-          categories: [derivative_source_kind]
+      - id: SOURCE_CITATION
+        name: A named source
+        views: { default: '{value}', banner: '{value}', structured: '{value}' }
+        categories: [derivative_source_type]
+        text_input: { label: Source citation, required: true }
+      - id: MULTIPLE_SOURCES
+        name: Multiple sources
+        views: { default: Multiple Sources }
+        categories: [derivative_source_type]
+      - id: SOURCE_DOCUMENT
+        name: Source document
+        views: { default: Source document }
+        categories: [derivative_source_kind]
+      - id: CLASSIFICATION_GUIDE
+        name: Classification guide
+        views: { default: Classification guide }
+        categories: [derivative_source_kind]
   render:
     default: authority
     formats:

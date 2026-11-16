@@ -9,23 +9,18 @@ import type {
     AccessRuleActivation,
     AccessRuleDescription,
     AccessRuleResult,
-    AccessScenarioAssessment,
     ArtifactReference,
     Assertion,
     AssertionReference,
     AssertionSupport,
     AssessmentLimitation,
-    Attribution,
     Change,
     ConceptModernization,
-    ContentChangeRequirement,
     ContentEvidenceSpan,
     ContextOperationResult,
     ContextResolution,
     CoverageReport,
     DecisionProposalOrigin,
-    DocumentAccessAssessment,
-    DocumentAccessAssessmentInput,
     DocumentAssessmentInput,
     DocumentAuditReport,
     DocumentGuideAssessment,
@@ -34,7 +29,6 @@ import type {
     DocumentResponseProfile,
     DocumentResponseProjection,
     DocumentUnmarkedSpan,
-    EffectiveDocumentTarget,
     EvaluationResult,
     Fix,
     GuideBreakdownEntry,
@@ -54,81 +48,24 @@ import type {
     ManualGuideSelection,
     ManualGuideSelectionInput,
     MarkingValidation,
-    MaybePromise,
     RecognitionResult,
-    Reproducibility,
-    RuleDescription,
     RuleReference,
-    RuleSourceReference,
-    SourceCapabilities,
-    SourceIdentity,
-    SourceMetadata,
-    SourceReference,
-    SubjectContextRequirement,
     ValidateResult,
     ValidationError,
     Vocabulary,
     Warning,
 } from '../src/index';
 
-expectTypeOf<Reproducibility>().toEqualTypeOf<'reproducible' | 'best-effort'>();
-expectTypeOf<SourceIdentity>().toEqualTypeOf<
-    | {
-          reproducibility: 'reproducible';
-          snapshotId: string;
-          locator?: string;
-      }
-    | {
-          reproducibility: 'best-effort';
-          snapshotId?: never;
-          locator?: string;
-      }
->();
 expectTypeOf<ArtifactReference>().toEqualTypeOf<{
     kind: 'scheme' | 'layer' | 'guide' | 'access' | 'crosswalk' | 'context';
     id: string;
     version: string;
     digest?: string;
 }>();
-expectTypeOf<SourceReference>().toEqualTypeOf<
-    | {
-          reproducibility: 'reproducible';
-          snapshotId: string;
-          locator?: string;
-          providerId: string;
-          attribution: Attribution;
-      }
-    | {
-          reproducibility: 'best-effort';
-          snapshotId?: never;
-          locator?: string;
-          providerId: string;
-          attribution: Attribution;
-      }
->();
-expectTypeOf<SourceMetadata>().toEqualTypeOf<{
-    readonly providerId: string;
-    readonly attribution: Attribution;
-    readonly capabilities: SourceCapabilities;
-    sourceIdentity(): MaybePromise<SourceIdentity>;
-}>();
-expectTypeOf<RuleSourceReference>().toEqualTypeOf<
-    | {
-          providerId: string;
-          reproducibility: 'reproducible';
-          snapshotId: string;
-      }
-    | {
-          providerId: string;
-          reproducibility: 'best-effort';
-          snapshotId?: never;
-      }
->();
 expectTypeOf<RuleReference>().toEqualTypeOf<{
     artifact: ArtifactReference;
     ruleId: string;
     ruleDigest: string;
-    source?: RuleSourceReference;
 }>();
 expectTypeOf<AssertionReference>().toEqualTypeOf<{
     categoryId: string;
@@ -175,9 +112,6 @@ expectTypeOf<DocumentResponseCounts>().toEqualTypeOf<{
     nominations: number;
     evidenceSpans: number;
     guideUnits: number;
-    accessRuleResults: number;
-    contentRequirements: number;
-    contextRequirements: number;
 }>();
 expectTypeOf<DocumentResponseProjection>().toEqualTypeOf<{
     profile: DocumentResponseProfile;
@@ -190,12 +124,10 @@ expectTypeOf<ContextResolution>().toEqualTypeOf<{
     requestedVersion?: string;
     resolvedVersion: string;
     artifacts: ArtifactReference[];
-    sources: SourceReference[];
 }>();
 expectTypeOf<ContextOperationResult<string>>().toEqualTypeOf<{
     resolution: ContextResolution;
     result: string;
-    operationLimitations: AssessmentLimitation[];
     responseProjection?: DocumentResponseProjection;
 }>();
 
@@ -247,18 +179,6 @@ expectTypeOf<GuideBreakdownEntry>().toEqualTypeOf<{
     isComputed: boolean;
     wasOverridden: boolean;
     overriddenBy?: RuleReference;
-}>();
-expectTypeOf<RuleDescription>().toEqualTypeOf<{
-    rule: RuleReference;
-    guide: ArtifactReference;
-    name: string;
-    description?: string;
-    outcomeText: string;
-    whenText?: string;
-    isComputed: boolean;
-    dependsOn: RuleReference[];
-    overrides: RuleReference[];
-    lines: string[];
 }>();
 expectTypeOf<GuideCompiledResult>().toEqualTypeOf<{
     assertions: Assertion[];
@@ -367,7 +287,7 @@ expectTypeOf<AccessRuleResult>().toEqualTypeOf<{
 expectTypeOf<AccessDecision>().toEqualTypeOf<{
     granted: boolean;
     rules: AccessRuleResult[];
-    provenance?: SourceReference;
+    warnings: Warning[];
 }>();
 expectTypeOf<AccessRequirementsInput>().toEqualTypeOf<{
     marking?: string;
@@ -384,7 +304,6 @@ expectTypeOf<AccessRuleDescription>().toEqualTypeOf<{
     attributesNeeded: string[];
     dependsOn: RuleReference[];
     overrides: RuleReference[];
-    lines: string[];
 }>();
 expectTypeOf<AccessRequirementsDescription>().toEqualTypeOf<{
     marking?: string;
@@ -396,7 +315,6 @@ expectTypeOf<AccessRequirementsDescription>().toEqualTypeOf<{
     rules: AccessRuleDescription[];
     combinedRequirementText: string;
     combinedAttributesNeeded: string[];
-    lines: string[];
 }>();
 
 // One meaning of `valid` and `inputWasValid` at every door, the audit
@@ -452,53 +370,6 @@ expectTypeOf<DocumentAssessmentInput>().toEqualTypeOf<{
     guideDeterminations?: GuideDeterminationInput;
     responseProfile?: DocumentResponseProfile;
 }>();
-expectTypeOf<EffectiveDocumentTarget>().toEqualTypeOf<{
-    basis: 'authored' | 'authoritative' | 'projected';
-    marking: string;
-    assertions: Assertion[];
-    authoredWhole?: string;
-    authoredParts: string[];
-    determinedGuideRequiredWhole?: string;
-    projectedGuideRequiredWhole?: string;
-}>();
-expectTypeOf<ContentChangeRequirement>().toEqualTypeOf<{
-    rule: RuleReference;
-    assertion: AssertionReference;
-    supportIds: string[];
-    instruction: string;
-    verificationRequired: true;
-}>();
-expectTypeOf<SubjectContextRequirement>().toEqualTypeOf<{
-    rule: RuleReference;
-    subjectPath: string;
-    contextPath: string;
-    operator: string;
-    acceptableValues?: unknown[];
-    instruction: string;
-}>();
-expectTypeOf<AccessScenarioAssessment>().toEqualTypeOf<{
-    basis: 'authored' | 'authoritative' | 'projected';
-    advisory: boolean;
-    status: 'granted' | 'denied' | 'not-evaluated';
-    target: EffectiveDocumentTarget | null;
-    decision?: AccessDecision;
-    contentRequirements?: ContentChangeRequirement[];
-    contextRequirements?: SubjectContextRequirement[];
-    limitations: AssessmentLimitation[];
-}>();
-expectTypeOf<DocumentAccessAssessment>().toEqualTypeOf<{
-    audit: DocumentAuditReport;
-    authored: AccessScenarioAssessment;
-    authoritative: AccessScenarioAssessment;
-    projected: AccessScenarioAssessment | null;
-}>();
-expectTypeOf<DocumentAccessAssessmentInput>().toEqualTypeOf<{
-    text: string;
-    guideDeterminations?: GuideDeterminationInput;
-    responseProfile?: DocumentResponseProfile;
-    userAttributes: Record<string, unknown>;
-    context?: Record<string, unknown>;
-}>();
 
 const artifact: ArtifactReference = {
     kind: 'guide',
@@ -509,11 +380,6 @@ const rule: RuleReference = {
     artifact,
     ruleId: 'rule',
     ruleDigest: 'sha256:rule',
-    source: {
-        providerId: 'source',
-        reproducibility: 'reproducible',
-        snapshotId: 'sha256:snapshot',
-    },
 };
 const span: ContentEvidenceSpan = {
     start: 0,
@@ -535,29 +401,11 @@ const projection: DocumentResponseProjection = {
         nominations: 1,
         evidenceSpans: 1,
         guideUnits: 1,
-        accessRuleResults: 0,
-        contentRequirements: 0,
-        contextRequirements: 0,
     },
-};
-const reproducibleWithLocator: SourceIdentity = {
-    reproducibility: 'reproducible',
-    snapshotId: 'sha256:source',
-    locator: 'https://example.test/source',
 };
 void manual;
 void projection;
-void reproducibleWithLocator;
 
-// @ts-expect-error Reproducible observations require an immutable snapshot.
-const reproducibleWithoutSnapshot: SourceIdentity = {
-    reproducibility: 'reproducible',
-};
-// @ts-expect-error Best-effort observations cannot claim a snapshot identity.
-const bestEffortWithSnapshot: SourceIdentity = {
-    reproducibility: 'best-effort',
-    snapshotId: 'mutable',
-};
 // @ts-expect-error Qualified rules require a semantic digest.
 const ruleWithoutDigest: RuleReference = { artifact, ruleId: 'rule' };
 const invalidOffset: ContentEvidenceSpan = {
@@ -582,20 +430,9 @@ const incompleteProjection: DocumentResponseProjection = {
     // @ts-expect-error Projection counts describe every normative dimension.
     counts: { nominations: 0 },
 };
-const unverifiedContentRequirement: ContentChangeRequirement = {
-    rule,
-    assertion: { categoryId: 'category', conceptId: 'concept' },
-    supportIds: [],
-    instruction: 'Revise supported content.',
-    // @ts-expect-error Content requirements always require re-evaluation.
-    verificationRequired: false,
-};
 
-void reproducibleWithoutSnapshot;
-void bestEffortWithSnapshot;
 void ruleWithoutDigest;
 void invalidOffset;
 void manualWithoutReason;
 void invalidProfile;
 void incompleteProjection;
-void unverifiedContentRequirement;

@@ -13,21 +13,18 @@
  * post-loader, resolved/flattened representation.
  */
 
-import type { ExternalSourceSpec, ConceptMappingDoc } from './external-source';
 import type { LayerBinding } from './layer';
 import type {
     ConceptColor,
     ProcessingRole,
-    RepairConfidence,
     RuleConditionTarget,
     RuleContributorQuantifier,
-    Vocabulary,
 } from './scheme';
 
 /**
  * One element a scheme layer takes away, named by kind and id. Exactly one key.
  *
- * A reference rather than a path: `data.concepts.inline.X` would bake today's
+ * A reference rather than a path: `data.concepts[3]` would bake today's
  * storage shape into every saved layer, and the collections are not uniformly
  * addressable anyway. `{ concept: 'X' }` says what it means, survives a storage
  * refactor, and validates as a closed set so a typo fails at load instead of
@@ -75,8 +72,8 @@ export type LayerRemovalDoc =
           label_preset: string;
       }
     | {
-          /** The id of the external concept source to remove. */
-          external_source: string;
+          /** The id of the concept import to remove. */
+          concept_import: string;
       };
 
 /**
@@ -96,32 +93,29 @@ export type LayerRemovalDoc =
  *
  * The element kinds, where each lives, and whether `removes` can name it:
  *
- * | Kind              | Section                  | Removable |
- * | ----------------- | ------------------------ | --------- |
- * | `category`        | `data.categories`        | yes       |
- * | `concept`         | `data.concepts.inline`   | yes       |
- * | `external_source` | `data.concepts.external` | yes       |
- * | `concept_group`   | `data.concept_groups`    | no        |
- * | `scope`           | `scopes`                 | no        |
- * | `named_condition` | `named_conditions`       | no        |
- * | `recognizer`      | `parse.recognizers`      | yes       |
- * | `repair_rule`     | `parse.normalize`        | yes       |
- * | `rollup_pipeline` | `rollup_pipelines`       | yes       |
- * | `render_format`   | `render.formats`         | yes       |
- * | `render_surface`  | `render.surfaces`        | yes       |
- * | `render_view`     | `render.surfaces.views`  | yes       |
- * | `rule`            | `rules`                  | yes       |
- * | `filter`          | `filters`                | no        |
- * | `label_preset`    | `ui.label_presets`       | yes       |
- * | `wizard_step`     | `ui.wizard_questions`    | no        |
+ * | Kind              | Section                 | Removable |
+ * | ----------------- | ----------------------- | --------- |
+ * | `category`        | `data.categories`       | yes       |
+ * | `concept`         | `data.concepts`         | yes       |
+ * | `concept_import`  | `data.concept_imports`  | yes       |
+ * | `scope`           | `scopes`                | no        |
+ * | `named_condition` | `named_conditions`      | no        |
+ * | `recognizer`      | `parse.recognizers`     | yes       |
+ * | `repair_rule`     | `parse.normalize`       | yes       |
+ * | `rollup_pipeline` | `rollup_pipelines`      | yes       |
+ * | `render_format`   | `render.formats`        | yes       |
+ * | `render_surface`  | `render.surfaces`       | yes       |
+ * | `render_view`     | `render.surfaces.views` | yes       |
+ * | `rule`            | `rules`                 | yes       |
+ * | `filter`          | `filters`               | no        |
+ * | `label_preset`    | `ui.label_presets`      | yes       |
  *
- * A named condition is addressed by its key, an external source by its `id`
- * (or `external-<n>`, its one-based position, when it has none), a render
- * surface by its `surface`, a render view as `surface/view` with each id
- * percent-encoded, and every other element by its `id`. Removing an external
- * source takes the concepts it supplied with it. A header value that is not a
- * collection (a name, a license, a parse or render setting, a `ui` setting)
- * is not an element: a layer overrides it by stating it.
+ * A named condition is addressed by its key, a render surface by its
+ * `surface`, a render view as `surface/view` with each id percent-encoded, and
+ * every other element by its `id`. Removing a concept import takes the
+ * concepts it produced with it. A header value that is not a collection (a
+ * name, a parse or render setting, a `ui` setting) is not an element: a layer
+ * overrides it by stating it.
  *
  * A render surface and each of its views are separate elements. A layer that
  * states a surface the stack below holds overrides what belongs to the
@@ -177,13 +171,10 @@ export interface LayerBlockDoc extends LayerBinding {
  * - `'first'` / `'last'`: ahead of or behind every other position.
  * - Number: absolute position; lower renders earlier.
  * - `{ after: <id> }`: renders after the named concept.
- * - `{ before: <id> }`: renders before the named concept.
- * - `{ between: [a, b] }`: renders between the two named concepts.
  *
- * `before` mirrors `after`: `A: { before: B }` orders the pair exactly as
- * `B: { after: A }` does. A relative spec names a concept of the same category.
- * A name that resolves to no concept places this one last and reports a
- * warning; relative specs that form a cycle are a load error.
+ * A relative spec names a concept of the same category. A name that resolves
+ * to no concept places this one last and reports a warning; relative specs
+ * that form a cycle are a load error.
  */
 export type PositionSpecDoc =
     | 'first'
@@ -192,31 +183,18 @@ export type PositionSpecDoc =
     | {
           /** The concept this one renders after. */
           after: string;
-      }
-    | {
-          /** The concept this one renders before. */
-          before: string;
-      }
-    | {
-          /** The two concepts this one renders between, in either order. */
-          between: [string, string];
       };
 
 /**
- * Rank spec for a concept: its severity for rank-based rollup (max, min,
- * least_upper_bound).
+ * Rank spec for a concept: its severity for rank-based rollup (max, min).
  *
  * - `'top'` / `'bottom'`: highest or lowest rank.
  * - Number: absolute rank; higher is more severe.
  * - `{ above: <id> }`: more severe than the named concept.
- * - `{ below: <id> }`: less severe than the named concept.
- * - `{ between: [a, b] }`: between the two named concepts.
  *
- * `below` mirrors `above`: `A: { below: B }` ranks the pair exactly as
- * `B: { above: A }` does. A relative spec names a ranked concept of the same
- * category. A name that resolves to no ranked concept gives this one the top
- * rank, failing closed, and reports a warning; relative specs that form a cycle
- * are a load error.
+ * A relative spec names a ranked concept of the same category. A name that
+ * resolves to no ranked concept gives this one the top rank, failing closed,
+ * and reports a warning; relative specs that form a cycle are a load error.
  */
 export type RankSpecDoc =
     | 'top'
@@ -225,20 +203,11 @@ export type RankSpecDoc =
     | {
           /** The concept this one ranks above. */
           above: string;
-      }
-    | {
-          /** The concept this one ranks below. */
-          below: string;
-      }
-    | {
-          /** The two concepts this one ranks between, in either order. */
-          between: [string, string];
       };
 
 /** Comparison operator for a structured `when:` condition. */
 export type ConditionOperator =
     | 'has_content'
-    | 'has_no_content'
     | 'has_concept'
     | 'not_has_concept'
     | 'every_has_concept'
@@ -247,30 +216,23 @@ export type ConditionOperator =
     | 'count_gte'
     | 'count_eq'
     | 'count_lt'
-    | 'count_unique_gt'
-    | 'count_unique_gte'
-    | 'count_unique_eq'
-    | 'count_unique_lt'
-    | 'count_unique_lte'
-    | 'min_order'
+    | 'count_lte'
     | 'min_rank'
     | 'subset_of'
     | 'shares_concept_with';
 
 /**
- * A single condition in a rule's `when:` block.
+ * A single condition in a `when:` block.
  *
- * Rule conditions name their category via `category`; structured `when:` blocks
- * elsewhere (categories, render formats, rollup pipelines, filters) use
- * `category_id`. The shorthand `is:` packs an operator+value into one string
- * (e.g. `'has_content'`, `'count_eq 1'`). `has:` is shorthand for `operator:
+ * Every condition names its category with `category`, wherever the `when:`
+ * sits: a rule, a category default, a render format, a rollup pipeline or a
+ * filter. The shorthand `is:` packs an operator+value into one string (e.g.
+ * `'has_content'`, `'count_eq 1'`). `has:` is shorthand for `operator:
  * has_concept, value: <id>`.
  */
 export interface ConditionDoc {
-    /** Category ID to evaluate against (rule conditions). */
+    /** Category ID to evaluate against. */
     category?: string;
-    /** Category ID to evaluate against (structured `when:` blocks). */
-    category_id?: string;
     /** Shorthand: equivalent to `operator: has_concept, value: <concept-id>`. */
     has?: string;
     /** Combined operator+value shorthand (e.g. `'has_content'`, `'count_eq 1'`). */
@@ -280,7 +242,7 @@ export interface ConditionDoc {
     /**
      * Operand for the operator: a concept id for the concept tests, a category
      * id for `subset_of` and `shares_concept_with`, and a number for the
-     * `count_*`, `min_order` and `min_rank` tests.
+     * `count_*` and `min_rank` tests.
      */
     value?: string | number;
     /** Processing-context role filter ('whole' or 'part'). */
@@ -385,14 +347,10 @@ export type RuleActionDoc =
     | 'require_any'
     | 'restrict'
     | 'copy'
-    | 'move'
     | 'inherit_parents'
     | 'expand_group'
     | 'cardinality'
     | 'supersede'
-    | 'intersect'
-    | 'union'
-    | 'max'
     | 'warn';
 
 /**
@@ -413,9 +371,8 @@ export type RuleTargetSelectorDoc = ChildrenOfSelectorDoc;
  * a child of `PROGRAM` is not one. The set is read from the scheme as composed,
  * after every layer has added and removed its concepts, so a layer that adds a
  * child needs no rule of its own, and a scheme with no children of `PROGRAM`
- * has an empty set. The children are the concepts the scheme declares, inline
- * or from a source it holds in full; a scheme whose concepts are only looked up
- * one at a time cannot list them, and refuses a selector at load.
+ * has an empty set. The children are the concepts the scheme declares in
+ * `data.concepts` or produces from a concept import.
  *
  * Where a rule needs one of its targets (`require_any`), an empty set fails
  * every marking the rule fires on: a concept that requires one of its children
@@ -447,6 +404,12 @@ export interface SchemeRuleDoc {
     id: string;
     /** Human-readable rule name for UI and audit provenance. */
     name?: string;
+    /**
+     * This rule's part marking, written in the scheme the document's
+     * `marking_scheme` names. Text, never interpreted: no engine parses it,
+     * checks it, acts on it, or reports it.
+     */
+    marking?: string;
     /** Trigger condition. See `WhenDoc`. */
     when?: WhenDoc;
     /** What to do when the rule fires. */
@@ -476,8 +439,6 @@ export interface SchemeRuleDoc {
     phases?: Array<
         'pre-merge' | 'post-merge' | 'validate' | 'render' | 'suggest'
     >;
-    /** Render formats the rule applies to, by format id. Absent means all. */
-    formats?: string[];
     /** Human-readable explanation of what this rule does. */
     explanation?: string;
     /**
@@ -511,14 +472,14 @@ export interface SchemeRuleDoc {
     category?: string;
     /** For supersede: what replaces the target. */
     with?: string | Record<string, unknown>;
+    /** For copy: the category concepts are copied from. */
+    from?: string;
     /**
-     * Source category ID(s). String for copy/move/inherit_parents, array for
-     * intersect/union.
+     * For copy: the category concepts are copied into. For inherit_parents: the
+     * category an inherited parent goes in by preference.
      */
-    from?: string | string[];
-    /** For copy/move: destination category ID. */
     to?: string;
-    /** For move: concept ID to exclude from the move. */
+    /** For copy: a concept that is never copied. */
     exclude?: string;
     /**
      * For cardinality: minimum concept count.
@@ -547,7 +508,7 @@ export interface SchemeRuleDoc {
  */
 export interface ConceptNoticeDoc {
     /** Notice category. */
-    type: 'warning' | 'handling' | 'admonition' | 'distribution' | 'info';
+    type: 'warning' | 'admonition';
     /** Whether this notice MUST be displayed (regulatory requirement). */
     required: boolean;
     /** The notice text to display. */
@@ -708,6 +669,12 @@ export interface ConceptDoc {
     /** Human-readable display name. */
     name: string;
     /**
+     * This concept's part marking, written in the scheme the document's
+     * `marking_scheme` names. Text, never interpreted: no engine parses it,
+     * checks it, acts on it, or reports it.
+     */
+    marking?: string;
+    /**
      * Display representations keyed by view name; must include 'default'. A
      * plain string expands to all view keys.
      *
@@ -762,8 +729,6 @@ export interface ConceptDoc {
     deprecated_message?: string;
     /** Concept ID that should be used instead of this deprecated concept. */
     deprecated_replacement?: string;
-    /** Locale-specific display labels: locale code → display string. */
-    synonyms?: Record<string, string>;
     /** Human-readable definition of this concept from its governing authority. */
     definition?: string;
     /** Usage guidance for when and how to apply this concept. */
@@ -784,8 +749,6 @@ export interface ConceptDoc {
     applicability?: ConceptApplicabilityDoc;
     /** Free-text input configuration. */
     text_input?: TextInputDoc;
-    /** Concept IDs that this concept supersedes. */
-    supersedes?: string[];
     /**
      * A category whose values this concept stands for: the values the whole
      * holds in it.
@@ -795,11 +758,18 @@ export interface ConceptDoc {
      * part holding it is read against a whole, the part takes the whole's
      * values in the named category, so its rules judge the list the word
      * stands for. The concept stays in the part, and a format that sets
-     * `omit_whole_values` writes the part back the way it was read. A part
-     * read without a whole, or one that writes values of its own in the
-     * category, takes nothing; whether a word with nothing behind it is an
-     * error is the scheme's call, made in its own rules. In a rollup the word
-     * goes through its own category's rollup like any other concept.
+     * `omit_whole_values` writes the part back the way it was read.
+     *
+     * A part that writes values of its own in the category takes nothing and
+     * is judged by its own facts. A part that leaves the category to the word
+     * needs a verified whole, one that reads and is valid. Without one (no
+     * whole given, a whole that does not read, or a whole that reads but is
+     * invalid) the part carries a `_stand_in_requires_whole` error naming the
+     * word, whatever format it was read in. A verified whole that holds nothing
+     * in the category leaves the part to the scheme's own rules. Only a part is
+     * judged so: a whole may hold the same concept as a value of its own. In a
+     * rollup the word goes through its own category's rollup like any other
+     * concept.
      *
      * Names a category declared in the same scheme.
      */
@@ -844,8 +814,12 @@ export interface CategoryDoc {
     id: string;
     /** Human-readable label for UI display. */
     label: CategoryLabelDoc;
-    /** Additional display views keyed by view name. */
-    views?: Record<string, string>;
+    /**
+     * This category's part marking, written in the scheme the document's
+     * `marking_scheme` names. Text, never interpreted: no engine parses it,
+     * checks it, acts on it, or reports it.
+     */
+    marking?: string;
     /**
      * Advisory shape of this category's free-text values, for a host that wants
      * to hint at the expected form in an input box. Provenance and UI only:
@@ -858,34 +832,17 @@ export interface CategoryDoc {
     /** When true, only one concept can be selected. */
     single?: boolean;
     /**
-     * If set, only these concept IDs are valid (overrides categories[]
-     * membership).
-     */
-    allowed_concepts?: string[];
-    /**
      * Rollup operator used when aggregating multiple markings.
      *
      * `pipeline` means the category is resolved by an entry in
      * `scheme.rollup_pipelines[]`.
      */
-    rollup:
-        | 'max'
-        | 'min'
-        | 'union'
-        | 'intersection'
-        | 'symmetric_difference'
-        | 'exclusive_or'
-        | 'complement'
-        | 'first'
-        | 'last'
-        | 'least_upper_bound'
-        | 'pipeline';
+    rollup: 'max' | 'min' | 'union' | 'intersection' | 'first' | 'pipeline';
     /** Sort order for concepts within this category during rendering. */
     sort?:
         | 'position'
         | 'alphabetical'
-        | 'numeric'
-        | Array<'position' | 'alphabetical' | 'numeric'>;
+        | Array<'position' | 'alphabetical'>;
     /**
      * Numeric positions keyed by concept ID, used by this category's `position`
      * sort instead of the concept's resolved position. Other concepts retain
@@ -905,11 +862,6 @@ export interface CategoryDoc {
     collapse_groups?: boolean;
     /** Concept ID excluded from the "all members present" check for collapse. */
     group_exclude?: string;
-    /**
-     * Suppress this category if its concept set is a subset of another
-     * category's set.
-     */
-    suppress_if_subset_of?: string;
     /**
      * When true, the category grades its concepts by severity `rank`: every
      * concept it grades must declare one or the scheme fails to load, and a
@@ -935,14 +887,95 @@ export interface CategoryDoc {
     citation?: string;
 }
 
-/** A rollup-pipeline step: conditional then/else block evaluated in order. */
+/**
+ * One intersection a rollup step computes: what every contributing marking
+ * holds in a category, or across several categories read together.
+ *
+ * Exactly one of `category` and `categories` is declared.
+ */
+export interface RollupIntersectDoc {
+    /** The category intersected. */
+    category?: string;
+    /**
+     * Categories read together as one set and intersected across the inputs.
+     * The first names the category whose header the result carries.
+     *
+     * @minItems 1
+     */
+    categories?: string[];
+    /**
+     * Concept asserted when the intersection is empty. Firing it also clears
+     * the intersected categories.
+     */
+    empty_fallback?: string;
+    /**
+     * Concepts that, if they are all the intersection holds, make it count as
+     * empty.
+     */
+    fallback_if_only?: string[];
+}
+
+/** What a rollup step does to the merged result when it fires. */
+export interface RollupStepActionDoc {
+    /**
+     * Assert these concepts in the pipeline's primary category, replacing
+     * every other concept in that category.
+     */
+    keep?: string | string[];
+    /** Remove these concepts from the result. */
+    remove?: string[];
+    /**
+     * Intersect a category's concepts across the inputs, with an optional
+     * fallback. A group concept is expanded to its members before a single
+     * category is intersected. A list runs in order until one intersection
+     * falls back; the intersections after it are skipped.
+     */
+    intersect?: RollupIntersectDoc | RollupIntersectDoc[];
+    /** Also clear these categories from the result. */
+    clear_categories?: string[];
+    /** Union all assertions from the inputs for the primary category. */
+    union?: boolean;
+    /**
+     * Add concepts to specific categories in the result, to re-home a concept
+     * into a scheme-defined category during merge.
+     */
+    add?: Array<{
+        /** Id of the concept or concepts to add. */
+        concept: string | string[];
+        /** Id of the category to add them to. */
+        category: string;
+    }>;
+    /**
+     * Move concepts from one category into another in the result (copy, then
+     * remove from the source). Concepts named in `exclude` are not moved; they
+     * stay in the source category. `keep_intersection: true` also keeps in the
+     * source every concept that appears in the source category on every
+     * contributing part, but only when at least one concept named in `exclude`
+     * is among them. That shared excluded concept anchors the parts as one
+     * joint source. When no excluded concept is on every part, every concept
+     * not named in `exclude` moves, shared or not.
+     */
+    move?: {
+        /** Id of the source category. */
+        from: string;
+        /** Id of the destination category. */
+        to: string;
+        /** Ids of concepts that stay in the source category. */
+        exclude?: string | string[];
+        /**
+         * Also keep in the source the concepts every contributing part
+         * shares, as described above.
+         */
+        keep_intersection?: boolean;
+    };
+}
+
+/** A rollup-pipeline step: a condition and what happens when it holds. */
 export interface RollupPipelineStepDoc {
     /** Trigger condition for this step. Omit for unconditional fallback step. */
     when?: WhenDoc;
-    /** Then-block: how to combine and remove concepts when this step fires. */
-    then?: Record<string, unknown>;
-    /** Else-block: applied when `when` does not match. */
-    else?: Record<string, unknown>;
+    /** How to combine and remove concepts when this step fires. */
+    then?: RollupStepActionDoc;
 }
 
 /** A rollup pipeline: resolves one or more pipeline-rolled categories. */
@@ -969,8 +1002,11 @@ export interface EmbeddedMarkingStyleDoc {
      * `pattern`, so the engine cannot supply a wrapper syntax of its own.
      */
     template: string;
-    /** When the host UI should auto-prompt for a marking. */
-    auto_insert?: 'every-paragraph' | 'first-line' | 'manual';
+    /**
+     * Set to `every-paragraph` to have the host UI prompt for a marking on
+     * each new paragraph. Absent, the host never prompts on its own.
+     */
+    auto_insert?: 'every-paragraph';
 }
 
 /**
@@ -1008,78 +1044,41 @@ export interface RecognizerDoc {
     }>;
     /** Human-readable explanation surfaced with the recognition. */
     message?: string;
-    /**
-     * Whether this pattern reads case as a difference.
-     *
-     * Absent, the pattern follows `parse.case_sensitive`, which is the policy
-     * the vocabulary beside it is compared under: one scheme, one answer to the
-     * question of whether a spelling in the wrong case is the same spelling.
-     * Present, it overrides that policy for this pattern alone, for the
-     * declaration whose shape genuinely is case-bearing when the rest of the
-     * scheme's is not. There is no flags string: a pattern carrying its own
-     * flag could read case one way while the vocabulary it feeds read it the
-     * other, and nothing said which was meant.
-     */
-    case_sensitive?: boolean;
 }
 
 /** A single normalize/repair rule: input rewrite during parse. */
 export interface NormalizeRuleDoc {
     /** Rule identifier. */
     id: string;
-    /** Repair type. */
-    type:
-        | 'alias'
-        | 'reorder'
-        | 'separator'
-        | 'dedup'
-        | 'case'
-        | 'infer_missing';
-    /** Confidence level. */
-    confidence: RepairConfidence;
+    /**
+     * Repair type: `dedup` removes repeated tokens, and `case` corrects letter
+     * case.
+     */
+    type: 'dedup' | 'case';
     /** Human-readable explanation. */
     explanation: string;
     /** Brief description (used by tooling alongside `explanation`). */
     description?: string;
     /**
-     * Detection or match regex, read per type: for `case` it selects the input
-     * that needs correcting; for `separator` it matches the text to replace.
+     * For `case`: the regex that selects the input that needs correcting.
      */
     pattern?: string;
     /**
-     * The correction to apply, read per type: replacement text for `separator`,
-     * and for `case` the grammar's canonical case, `'upper'` (the default) or
+     * For `case`: the grammar's canonical case, `'upper'` (the default) or
      * `'lower'`.
      */
     correction?: string;
 }
 
-
 /**
- * Parse configuration: recognition policy, exceptional recognizers, and the
- * repair rules applied before recognition.
+ * Parse configuration: exceptional recognizers, and the repair rules applied
+ * before recognition.
  *
- * No tokenizer settings. Every boundary in a marking belongs to the field that
- * writes it, so there is no global separator to declare here and nothing for a
- * split exception to be an exception to.
+ * No tokenizer settings and no comparison policy. Every boundary in a marking
+ * belongs to the field that writes it, and a spelling is compared against the
+ * vocabulary without regard to case or the whitespace around it.
  */
 export interface ParseConfigDoc {
-    /**
-     * Whether the vocabulary is matched case-sensitively.
-     *
-     * Recognition policy, not lexing: every boundary in a marking belongs to
-     * the field that writes it, and this says how a spelling found at one of
-     * those boundaries is compared against the vocabulary. Default false.
-     */
-    case_sensitive?: boolean;
-    /**
-     * Whether surrounding whitespace is ignored when a spelling is compared.
-     *
-     * Recognition policy, like `case_sensitive`. It does not split anything;
-     * it decides whether the space an author left around a value keeps that
-     * value from being recognized. Default true.
-     */
-    strip_whitespace?: boolean;
     /** Declarations for input no field tree can describe. */
     recognizers?: RecognizerDoc[];
     /** Normalize/repair rules applied during parse. */
@@ -1091,8 +1090,6 @@ export type SyntaxDoc =
     | {
           /** Plain text. */
           type: 'text';
-          /** How a character the syntax cannot frame is escaped. */
-          escape?: 'none' | 'backslash';
       }
     | {
           /** XML attributes on one element. */
@@ -1538,6 +1535,12 @@ export interface FormatCommonDoc {
      * `RenderConfigDoc.surfaces`.
      */
     id: string;
+    /**
+     * This format's part marking, written in the scheme the document's
+     * `marking_scheme` names. Text, never interpreted: no engine parses it,
+     * checks it, acts on it, or reports it.
+     */
+    marking?: string;
     /** Layout: `inline` runs the fields together, `block` puts each on its own line. */
     mode: 'inline' | 'block';
     /** Encoding. Absent means plain text. */
@@ -1562,14 +1565,6 @@ export interface FormatCommonDoc {
      * here may be another field's separator or another field's prefix.
      */
     separator_aliases?: string[];
-    /** Skip empty fields. Defaults to true for `block`, false for `inline`. */
-    omit_empty?: boolean;
-    /**
-     * Leave assertions with `source: 'default'` out of the printed output. A
-     * print filter only: every condition in this format still sees the real,
-     * unfiltered state.
-     */
-    omit_defaults?: boolean;
     /**
      * Write a part's stand-in in place of the values it took from its whole.
      *
@@ -1578,8 +1573,8 @@ export interface FormatCommonDoc {
      * values in the category the stand-in names. This format leaves those
      * values out, so the part is written back with the word it was read
      * with. It applies only to a part read on its own: a rollup is a whole,
-     * and is always written with its values. A print filter only, like
-     * `omit_defaults`: every condition in this format still sees the values.
+     * and is always written with its values. A print filter only: every
+     * condition in this format still sees the values.
      */
     omit_whole_values?: boolean;
     /** The fields, in the order they are written. */
@@ -1836,9 +1831,6 @@ export interface RenderConfigDoc {
      * or format a request names as its input format. With none of those it
      * writes the default scope's surface, so the default scope is always one
      * of the surfaces listed here. A fact inferred afterwards adds no surface.
-     * Neither does a request's output format: it only chooses how those
-     * surfaces are written, so `surface/view` for a surface the result does
-     * not write selects nothing there.
      *
      * When a request names no output, each surface the result writes is
      * written in its default for the marking's role: the view its `default`
@@ -1856,23 +1848,36 @@ export interface RenderConfigDoc {
      * says a surface writes its default, it is this default for the marking's
      * role.
      *
-     * Wherever a request takes an output format, it names one of these:
+     * Wherever a request takes an output format, it names one output, and the
+     * result is that output alone. No other surface is written beside it, and
+     * it is written whether or not the result writes its surface otherwise:
      *
-     * - A view id, such as `full`. Every surface the result writes uses that
-     * view, and a surface that does not declare it writes its default.
      * - `surface/view`. That surface writes that view, or its default when it
-     * declares no view by that id, and every other surface writes its
-     * default. A surface this list does not declare is refused, never
-     * guessed.
+     * declares no view by that id. A surface this list does not declare is
+     * refused, never guessed.
+     * - A view id, such as `full`. Every surface the result writes that
+     * declares that view writes it, and together they are the one output.
+     * When none of them declares it, it is the view by that id on the
+     * default scope's surface, else on the first surface in this list that
+     * declares it.
      * - The id of a format that exactly one view names as one of its forms,
      * written or only read. It stands for that view's `surface/view`.
+     * - A declared surface id. That surface writes its default.
+     * - The id of any other format, such as one that views on several
+     * surfaces name. That format writes the marking on its own.
      *
-     * A view id wins over a format id spelled the same way, so a bare `x` that
-     * is a view of one surface and a form of another surface's view asks every
-     * surface for view `x`. A declared surface id, or a format that views on
-     * several surfaces name, names no output: every surface writes its default,
-     * as it does when the request names no output. An undeclared id is refused;
-     * it is never answered as though the request had named none.
+     * An id is read in the order of this list, so a bare `x` that is a view
+     * of one surface and a form of another surface's view asks for view `x`,
+     * and a format one view names wins over a surface id spelled the same
+     * way. An id that is none of these is refused; it is never answered as
+     * though the request had named none.
+     *
+     * When the outputs a request writes are more than one, the first of them
+     * in surface order that writes every other one's scope beside its own is
+     * written alone, as one string: on its own surface it writes each
+     * category those scopes own, as the coverage it reports for its format
+     * says. The others would write the same facts again. When none does,
+     * each is written.
      *
      * Wherever a request takes an input format, it names what the text is
      * read as:
@@ -1931,20 +1936,6 @@ export interface RenderConfigDoc {
      * exclusive.
      */
     color_from?: string | MarkingColorRuleDoc[];
-    /**
-     * Render-of-invalid policy: how the renderer treats input tokens that match
-     * no concept. `preserve_unmatched` (the default) echoes them through to the
-     * output; `drop_unmatched` discards them; `refuse` renders nothing for an
-     * invalid marking. Consumed by the engine's scheme-mapper (D8).
-     */
-    of_invalid?: 'preserve_unmatched' | 'drop_unmatched' | 'refuse';
-    /**
-     * What the `refuse` policy renders in place of the marking. The optional
-     * `{tokens}` placeholder is replaced with the comma-joined unmatched
-     * tokens. Defaults to `[INVALID MARKING: unrecognized {tokens}]`. Only
-     * consulted when `of_invalid` is `refuse`.
-     */
-    refusal_marker?: string;
 }
 
 /** A view filter: view-time concept filter consulted by render and suggest. */
@@ -1965,78 +1956,231 @@ export interface FilterDoc {
     formats?: string[];
     /** Concept or category IDs to remove when the filter fires. */
     remove?: string[];
-    /** Concept or category IDs to keep (whitelist) when the filter fires. */
-    keep?: string[];
     /** Human-readable explanation. */
     explanation?: string;
 }
 
 /**
- * Inline-or-external concepts block: the canonical 1.0 wire shape for a
- * scheme's concept set, per the Context-with-sources schema.
- *
- * When a concept in `inline` and a record from one of this block's `external`
- * sources have the same id, the inline concept is the one used, for reading,
- * writing, suggesting, describing, validating and judging coverage. The
- * source's record for that id is not used, and assertions of the concept carry
- * no `provenance`. This is how an author overrides one record of a source they
- * do not control. Among external sources, the first source that supplies an id
- * is the one used.
- *
- * Those two rules settle a collision inside one scheme document. Across the
- * documents of a layered stack, layer precedence decides first: a colliding id
- * means the later declaration wins (see `LayerBinding`), and a concept an
- * `external` source supplies counts as declared by the document that declares
- * the source. So when a later layer's source supplies a concept that an earlier
- * document in the stack declares `inline`, the later layer's record is the one
- * used. Inline-over-external never reaches back across layers. The same holds
- * the other way round, and between two sources declared in different layers.
+ * Where a concept import's records come from, as the people who publish them
+ * want to be credited.
  *
  * @public
  */
-export interface SchemeConceptsBlock {
-    /**
-     * Inline concepts: a flat array of `ConceptDoc`, each carrying its own
-     * `id`. Matches the `rules.inline` shape on guides and access docs.
-     */
-    inline?: ConceptDoc[];
-    /**
-     * Live external sources. An array allows a scheme to draw concepts from
-     * multiple upstream endpoints; the loader rejects a bare (non-array) source
-     * spec.
-     */
-    external?: ExternalSourceSpec<ConceptMappingDoc>[];
+export interface AttributionDoc {
+    /** Display name of the list, such as `GENC Standard Edition 3.0`. */
+    name: string;
+    /** SPDX identifier or short license token, such as `CC-BY-4.0`. */
+    license: string;
+    /** Canonical URL where the license terms can be inspected. */
+    license_url?: string;
+    /** Suggested citation for the list. */
+    citation?: string;
 }
 
 /**
- * The `data` block: categories and concepts.
+ * One category membership a concept import gives, applied only to the records
+ * that satisfy its condition.
  *
- * `concepts` is the `SchemeConceptsBlock` with `inline` and `external`
- * peers; the loader rejects any other shape.
+ * A bare string entry in `categories` gives every record the same membership.
+ * That is right for a category every record belongs to and wrong for one that
+ * holds for most of them, which is why this form exists: the membership is
+ * still declared once, and the condition says which records it reaches.
+ *
+ * `when` and `unless` are conditions over the record. A bare field holds when
+ * it is present and not empty; `field == 'X'`, `field != 'X'` and
+ * `field in ['X', 'Y']` compare record values as strings. Declare one or the
+ * other, whichever reads as the plainer sentence.
+ *
+ * @public
  */
+export interface ConceptImportCategoryDoc {
+    /** Expression for the category id this entry gives. */
+    id: string;
+    /** Give the membership only to records this condition holds for. */
+    when?: string;
+    /** Give the membership to every record except those this condition holds for. */
+    unless?: string;
+}
+
+/**
+ * How each record of a concept import becomes a concept.
+ *
+ * Every value is an expression evaluated against one record, in a small
+ * JMESPath subset: field paths, literal and wildcard indexes, quoted literals,
+ * `@`, `+` concatenation, and `??` for the first present operand. A mapping
+ * produces concepts and nothing else. The categories it names are declared in
+ * `data.categories`, and the rules, formats and views that use the concepts
+ * are declared where they always are.
+ *
+ * @public
+ */
+export interface ConceptImportMappingDoc {
+    /**
+     * Condition evaluated against each record. A record it holds for produces
+     * no concept.
+     *
+     * Use it when the list is the right source of truth and a few of its
+     * records have no place in this scheme. Every field the condition names
+     * must exist on the records, or the scheme fails to load.
+     */
+    omit?: string;
+    /** How each record's fields become a concept. */
+    concept: {
+        /** Expression for the concept id. A record that yields none is refused. */
+        id: string;
+        /** Expression for the display name. Falls back to the id. */
+        name?: string;
+        /** Expressions for the concept's aliases, one per entry. */
+        aliases?: string[];
+        /**
+         * Expression for the concept's parent concept ids: one id or a list of
+         * them.
+         */
+        parents?: string;
+        /**
+         * The categories each concept belongs to: an expression or list of
+         * expressions for category ids, or conditional memberships.
+         */
+        categories?: (string | ConceptImportCategoryDoc)[] | string;
+        /**
+         * Expressions for the concept's display representations, keyed by view
+         * name. The `default` view falls back to the name.
+         */
+        views?: Record<string, string>;
+        /**
+         * Expression for the concept's numeric rank. A value that does not
+         * convert to a number leaves the concept unranked.
+         */
+        rank?: string;
+        /**
+         * Expression for the concept's numeric render position. A value that
+         * does not convert to a number gives position 0.
+         */
+        position?: string;
+        /**
+         * Expression that marks the concept deprecated when it yields a truthy
+         * value.
+         */
+        deprecated?: string;
+        /** Expression for the concept's `definition`. */
+        definition?: string;
+        /** Expression for the concept's `guidance`. */
+        guidance?: string;
+        /**
+         * Expression for the concept's `citation`. A list whose citation is
+         * the same for every record supplies a quoted literal.
+         */
+        citation?: string;
+    };
+}
+
+/**
+ * A list of records pasted into the scheme, and how each record becomes a
+ * concept.
+ *
+ * It is how a scheme carries a list someone else publishes, such as a country
+ * code standard, without retyping every entry as a concept. The records are
+ * kept exactly as published; the mapping says what each one means here. To
+ * take a newer edition of the list, paste its records and publish a new
+ * version of the scheme.
+ *
+ * The concepts it produces sit beside `data.concepts`. A concept declared in
+ * `data.concepts` with the same id as an imported one is the one used, which
+ * is how an author corrects one record of a list they do not control. Between
+ * two imports, the first that produces an id is the one used. Across a layered
+ * stack, layer precedence decides first: an imported concept counts as
+ * declared by the document that declares the import, and the later
+ * declaration wins (see `LayerBinding`).
+ *
+ * @public
+ */
+export interface ConceptImportDoc {
+    /**
+     * Identifier of this import within the scheme. A layer names it to remove
+     * the import and every concept it produced.
+     *
+     * @minLength 1
+     */
+    id: string;
+    /** Who publishes the records, and how to credit them. */
+    attribution: AttributionDoc;
+    /**
+     * The records, as the publisher wrote them: one object per entry.
+     *
+     * @minItems 1
+     */
+    records: Array<Record<string, unknown>>;
+    /**
+     * Optional pin on the records: the sha256 digest of their RFC 8785
+     * canonical JSON, written `sha256:` followed by 64 lowercase hex digits.
+     * When it is set, the scheme loads only if the records still hash to it,
+     * so a pasted list cannot change without the pin changing with it.
+     *
+     * @pattern ^sha256:[0-9a-f]{64}$
+     */
+    snapshot_id?: string;
+    /** How each record becomes a concept. */
+    mapping: ConceptImportMappingDoc;
+}
+
+/** The `data` block: categories and concepts. */
 export interface SchemeDataDoc {
     /** Categories: dimensions of the marking. */
     categories?: CategoryDoc[];
-    /** Concepts: `{ inline, external }` block. */
-    concepts?: SchemeConceptsBlock;
-    /** Named groupings of concepts, for organizing them in a UI or in docs. */
-    concept_groups?: ConceptGroupDoc[];
+    /** Concepts, each carrying its own `id`. */
+    concepts?: ConceptDoc[];
+    /** Lists of records pasted into the scheme, each producing concepts. */
+    concept_imports?: ConceptImportDoc[];
 }
 
 /**
- * A named collection of concepts. It groups concepts for people reading or
- * browsing the scheme; it has no effect on parsing, rules or rendering.
+ * The scheme a document's markings are written in, named by id and,
+ * optionally, version. Every document that can be marked names one this way;
+ * a scheme document may also write `self`. See `SchemeBlock.marking_scheme`.
  */
-export interface ConceptGroupDoc {
-    /** Unique group id within the scheme. */
+export interface MarkingSchemeRefDoc {
+    /**
+     * The marking scheme's id.
+     *
+     * @minLength 1
+     */
     id: string;
-    /** Display name. Defaults to the id. */
-    name?: string;
-    /** What the group collects. */
-    description?: string;
-    /** The concepts in the group, by id. */
-    concept_ids: string[];
+    /** The marking scheme's version. Omitted, any version. */
+    version?: string;
 }
+
+/**
+ * A scheme another document depends on: the scheme a guide's outcomes, an
+ * access policy's rules, or one side of a crosswalk are written in.
+ */
+export interface SchemeDependencyDoc {
+    /**
+     * The scheme's id.
+     *
+     * @minLength 1
+     */
+    id: string;
+    /**
+     * The scheme version, or a semver range such as `>=2.0.0`. Omitted, any
+     * version.
+     */
+    version?: string;
+}
+
+/** A singular and plural display-word pair, as a document declares it. */
+export interface TermDoc {
+    /** The word for one, such as `rule`. */
+    singular?: string;
+    /** The word for more than one, such as `rules`. */
+    plural?: string;
+}
+
+/**
+ * Display words a document advertises for UI consumers: an open map from a
+ * term key (such as `rule` or `concept`) to its words. A presentation hint
+ * only; no engine reads it.
+ */
+export type VocabularyDoc = Record<string, TermDoc>;
 
 /** The body inside the top-level `scheme:` envelope. */
 export interface SchemeBlock {
@@ -2046,6 +2190,27 @@ export interface SchemeBlock {
     version: string;
     /** Human-readable scheme name. */
     name: string;
+    /**
+     * The scheme this document's markings are written in: a reference to
+     * another scheme, or `self` when this scheme marks itself.
+     *
+     * With `self`, the markings are read against this scheme at this
+     * document's own version, so the id and version are not repeated and a
+     * version bump needs no edit here.
+     *
+     * Authoring data only. Loading and compiling the scheme never read it, and
+     * no engine resolves the scheme it names.
+     */
+    marking_scheme?: MarkingSchemeRefDoc | 'self';
+    /**
+     * The whole marking of this scheme document, written in the scheme
+     * `marking_scheme` names. Every `marking` on an element of this document
+     * is a part of it.
+     *
+     * Text, never interpreted: no engine parses it, checks it, or acts on it.
+     * A scheme summary reports it unchanged for display.
+     */
+    marking?: string;
     /** Longer description of what this scheme covers. */
     description?: string;
     /** Official description or definition of this scheme. */
@@ -2053,21 +2218,10 @@ export interface SchemeBlock {
     /** Usage notes, restrictions, or guidelines for this scheme. */
     guidance?: string;
     /**
-     * License label shown with the scheme, such as `enterprise`.
-     * Informational only: it does not grant or restrict use.
-     */
-    license?: string;
-    /**
      * Distribution tier this document belongs to. Names which catalog carries
      * it; it grants nothing and is read by packaging, not by the engine.
      */
     tier?: string;
-    /** Whether this scheme as a whole is deprecated. */
-    deprecated?: boolean;
-    /** Date the scheme was deprecated, as `YYYY-MM-DD`. */
-    deprecated_since?: string;
-    /** Scheme id that supersedes this one. */
-    replaced_by?: string;
     /**
      * What kind of document this is. Absent means `'scheme'`.
      *
@@ -2095,11 +2249,14 @@ export interface SchemeBlock {
      * chokepoint as guide's and access's own top-level `vocabulary` block: an
      * open map from a term key to a `{ singular, plural }` pair (or a bare
      * `singular`, auto-pluralized). Reserved scheme keys are `handbook`, which
-     * renames the scheme's reference surface, and `whole` / `part`, which name
-     * the structural context roles. For example: `{ handbook: { singular:
-     * "Register" }, whole: { singular: "banner" } }`.
+     * renames the scheme's reference surface, `whole` / `part`, which name
+     * the structural context roles, and `marking`, the word a document
+     * written in this scheme labels its `marking` fields with (a host shows
+     * "Marking" when the marking scheme declares none). For example: `{
+     * handbook: { singular: "Register" }, whole: { singular: "banner" },
+     * marking: { singular: "label" } }`.
      */
-    vocabulary?: Vocabulary;
+    vocabulary?: VocabularyDoc;
     /**
      * When a marking in each role is required and, for a scheme without
      * `render.surfaces`, the formats each role is read in.
@@ -2148,12 +2305,12 @@ export interface SchemeBlock {
     };
     /**
      * How much text a part marking governs in a document audit:
-     * `'paragraph'` (default, the mark's own line(s)), `'until-next'` (through
-     * to the next part marking, a section style), or `'document'`. Lets schemes
-     * that place/scope markings differently audit correctly. Maps to runtime
+     * `'paragraph'` (default, the mark's own line(s)) or `'until-next'`
+     * (through to the next part marking, a section style). Lets schemes that
+     * place/scope markings differently audit correctly. Maps to runtime
      * `Scheme.partScope`.
      */
-    part_scope?: 'paragraph' | 'until-next' | 'document';
+    part_scope?: 'paragraph' | 'until-next';
     /**
      * The scope a marking is in when nothing names one: one of `scopes`, by
      * id.
@@ -2174,7 +2331,7 @@ export interface SchemeBlock {
         /** The scope's display label. */
         label: string;
     }>;
-    /** Categories, concepts, and bulk-concept groups. */
+    /** Categories, concepts, and concept imports. */
     data: SchemeDataDoc;
     /** Scheme rules: conditions and the actions they trigger. */
     rules?: SchemeRuleDoc[];
@@ -2195,9 +2352,9 @@ export interface SchemeBlock {
     /** View filters. */
     filters?: FilterDoc[];
     /**
-     * UI metadata: engine knows `label_presets` and `wizard_questions`; other
-     * keys opaque. `vocabulary` is a top-level SchemeBlock field, not a `ui`
-     * sub-key, so it is schema-validated the same way as guide's and access's.
+     * UI metadata: the engine knows `label_presets`; other keys are opaque.
+     * `vocabulary` is a top-level SchemeBlock field, not a `ui` sub-key, so it
+     * is schema-validated the same way as guide's and access's.
      */
     ui?: Record<string, unknown>;
 }

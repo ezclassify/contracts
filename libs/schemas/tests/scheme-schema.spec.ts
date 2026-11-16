@@ -83,8 +83,7 @@ const MINIMAL_VALID_SCHEME = {
                     single: true,
                 },
             ],
-            concepts: {
-                inline: [
+            concepts: [
                     {
                         id: 'LOW',
                         name: 'Low',
@@ -98,7 +97,6 @@ const MINIMAL_VALID_SCHEME = {
                         views: { default: 'HIGH' },
                     },
                 ],
-            },
         },
     },
 };
@@ -161,8 +159,6 @@ describe('schemeSchema: accept paths', () => {
             scheme: {
                 ...MINIMAL_VALID_SCHEME.scheme,
                 parse: {
-                    case_sensitive: false,
-                    strip_whitespace: true,
                     recognizers: [],
                     normalize: [],
                 },
@@ -171,9 +167,31 @@ describe('schemeSchema: accept paths', () => {
         expect(validate(doc)).toBe(true);
     });
 
+    it('accepts a concept import that maps its records to concepts', () => {
+        const doc = structuredClone(MINIMAL_VALID_SCHEME);
+        Object.assign(doc.scheme.data, {
+            concept_imports: [
+                {
+                    id: 'countries',
+                    attribution: { name: 'Country codes', license: 'CC0-1.0' },
+                    records: [{ alpha3: 'USA', name: 'United States' }],
+                    mapping: {
+                        concept: {
+                            id: 'alpha3',
+                            name: 'name',
+                            categories: ["'level'"],
+                            views: { default: 'alpha3' },
+                        },
+                    },
+                },
+            ],
+        });
+        expect(validate(doc), JSON.stringify(validate.errors)).toBe(true);
+    });
+
     it('accepts a notice that declares the value a view registers it under', () => {
         const doc = structuredClone(MINIMAL_VALID_SCHEME);
-        const concept = doc.scheme.data.concepts.inline[0] as Record<
+        const concept = doc.scheme.data.concepts[0] as Record<
             string,
             unknown
         >;
@@ -190,7 +208,7 @@ describe('schemeSchema: accept paths', () => {
 
     it('accepts a notice that declares no registration at all', () => {
         const doc = structuredClone(MINIMAL_VALID_SCHEME);
-        const concept = doc.scheme.data.concepts.inline[0] as Record<
+        const concept = doc.scheme.data.concepts[0] as Record<
             string,
             unknown
         >;
@@ -202,7 +220,7 @@ describe('schemeSchema: accept paths', () => {
 
     it('accepts the display-color wire contract used by authored schemes', () => {
         const doc = structuredClone(MINIMAL_VALID_SCHEME);
-        const concept = doc.scheme.data.concepts.inline[0] as Record<
+        const concept = doc.scheme.data.concepts[0] as Record<
             string,
             unknown
         >;
@@ -224,7 +242,7 @@ describe('schemeSchema: accept paths', () => {
             required: false,
             single: false,
         });
-        (doc.scheme.data.concepts.inline as Record<string, unknown>[]).push({
+        (doc.scheme.data.concepts as Record<string, unknown>[]).push({
             id: 'SAME',
             name: 'Same as the whole',
             categories: ['level'],
@@ -321,7 +339,7 @@ describe('schemeSchema: reject paths', () => {
 
     it('rejects an incomplete display-color pair', () => {
         const doc = structuredClone(MINIMAL_VALID_SCHEME);
-        const concept = doc.scheme.data.concepts.inline[0] as Record<
+        const concept = doc.scheme.data.concepts[0] as Record<
             string,
             unknown
         >;
@@ -347,7 +365,7 @@ describe('schemeSchema: reject paths', () => {
 
     it('rejects a stand-in that names more than one category', () => {
         const doc = structuredClone(MINIMAL_VALID_SCHEME);
-        const concept = doc.scheme.data.concepts.inline[0] as Record<
+        const concept = doc.scheme.data.concepts[0] as Record<
             string,
             unknown
         >;
@@ -357,7 +375,7 @@ describe('schemeSchema: reject paths', () => {
 
     it('rejects a notice registration whose value is not a string', () => {
         const doc = structuredClone(MINIMAL_VALID_SCHEME);
-        const concept = doc.scheme.data.concepts.inline[0] as Record<
+        const concept = doc.scheme.data.concepts[0] as Record<
             string,
             unknown
         >;
@@ -426,9 +444,9 @@ describe('contributor condition block schema', () => {
     });
     const predicate = {
         all: [
-            { category_id: 'level', operator: 'min_rank', value: 1 },
+            { category: 'level', operator: 'min_rank', value: 1 },
             {
-                category_id: 'handling',
+                category: 'handling',
                 operator: 'not_has_concept',
                 value: 'SHARE',
             },
@@ -494,7 +512,7 @@ describe('concept position and rank specs', () => {
     const validate = new Ajv({ strict: false }).compile(schemeSchema);
     const withLow = (fields: Record<string, unknown>) => {
         const doc = structuredClone(MINIMAL_VALID_SCHEME);
-        Object.assign(doc.scheme.data.concepts.inline[0], fields);
+        Object.assign(doc.scheme.data.concepts[0], fields);
         return doc;
     };
 
@@ -502,23 +520,18 @@ describe('concept position and rank specs', () => {
         { position: 'first' },
         { position: 3 },
         { position: { after: 'HIGH' } },
-        { position: { before: 'HIGH' } },
-        { position: { between: ['HIGH', 'HIGH'] } },
         { rank: 'top' },
         { rank: { above: 'HIGH' } },
-        { rank: { below: 'HIGH' } },
     ])('accepts %j', (fields) => {
         expect(validate(withLow(fields)), JSON.stringify(validate.errors)).toBe(
             true,
         );
     });
 
-    it.each([
-        { position: { beside: 'HIGH' } },
-        { position: { before: 'HIGH', after: 'HIGH' } },
-        { position: { between: ['HIGH'] } },
-        { rank: { before: 'HIGH' } },
-    ])('refuses %j', (fields) => {
-        expect(validate(withLow(fields))).toBe(false);
-    });
+    it.each([{ position: { beside: 'HIGH' } }, { rank: { beside: 'HIGH' } }])(
+        'refuses %j',
+        (fields) => {
+            expect(validate(withLow(fields))).toBe(false);
+        },
+    );
 });

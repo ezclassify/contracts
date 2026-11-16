@@ -14,7 +14,6 @@ import type {
     ProcessResult,
     RecognitionResult,
     RecognitionWithCorrections,
-    RegistryProcessResult,
     RemoteContextSchemeEngineAdapter,
     RemoteSchemeEngineAdapter,
     ScanResult,
@@ -83,9 +82,7 @@ void validated.explanation;
 expectTypeOf<ProcessResult>().toMatchTypeOf<ValidateResult>();
 expectTypeOf<
     Exclude<keyof ProcessResult, keyof ValidateResult>
->().toEqualTypeOf<
-    'assertionsBeforeRepair' | 'proposedFixes' | 'renders' | 'suggestionsFor'
->();
+>().toEqualTypeOf<'proposedFixes' | 'renders' | 'suggestionsFor'>();
 expectTypeOf(processed.recognition).toEqualTypeOf<
     RecognitionWithCorrections | undefined
 >();
@@ -145,26 +142,8 @@ expectTypeOf(local.validate(facts)).toEqualTypeOf<ValidateResult>();
 expectTypeOf(remoteContext.validate(facts)).toEqualTypeOf<
     Promise<ValidateResult>
 >();
-// No lane asks the engine to settle less: whether text was right as written is
-// what `inputWasValid` and the applied changes answer.
-// @ts-expect-error no stage bypass on validate
-local.validate('X', { skipRepair: true });
-// @ts-expect-error no stage bypass on validate
-local.validate('X', { skipInference: true });
-// @ts-expect-error no repair level on validate
-base.validate('X', { normalization: 'strict' });
-// @ts-expect-error no stage bypass on process
-local.process('X', { skipRepair: true });
-// @ts-expect-error no stage bypass on process
-local.process('X', { skipInference: true });
-// @ts-expect-error no stage bypass on the scheme-addressed overload either
-local.process('X', 'scheme', { skipRepair: true });
-// @ts-expect-error no repair level on process
-base.process('X', { normalization: 'strict' });
-// @ts-expect-error no repair level over the wire either
-remoteContext.process('X', { normalization: 'strict' });
-// @ts-expect-error no repair level on explain
-base.explain('X', { normalization: 'strict' });
+// @ts-expect-error process takes only the options it declares
+base.process('X', { note: true });
 // @ts-expect-error validate takes text or facts, never both
 base.validate('X', { assertions: facts });
 // `parts` changes what the whole is judged against, so validate takes it too.
@@ -226,7 +205,6 @@ expectTypeOf<
 expectTypeOf<
     CrosswalkCompletedTranslationResult['target']
 >().toEqualTypeOf<ValidateResult>();
-expectTypeOf<RegistryProcessResult['result']>().toEqualTypeOf<ValidateResult>();
 
 // ── The document audit hands back every marking's facts and recognition. ───
 // Whole and parts alike, on the per-marking answer both use.

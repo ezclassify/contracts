@@ -1,49 +1,39 @@
 /**
- * Derive the published document-validation view from generated input types. The
- * input-schema exports retain their type-derived shape. This view adds the
- * document validator's constraints and stable definition names.
+ * Derive the published document schema from the generated document types: the
+ * type-derived shape plus the document validator's constraints and stable
+ * definition names.
  */
 
 const GUIDE_NAMES = {
-    'AttributionDoc': 'attribution',
-    'CharacterWindow': 'character_window',
-    'ConceptRef': 'concept_ref',
-    'ExternalSourceAuth': 'external_source_auth',
-    'ExternalSourceCapabilities': 'external_source_capabilities',
-    'ExternalSourcePagination': 'external_source_pagination',
-    'ExternalSourceQueryParams': 'external_source_query_params',
-    'ExternalSourceSpec<RuleMappingDoc>': 'external_source',
-    'ExternalSourceTls': 'external_source_tls',
-    'ExternalSourceTransport': 'external_source_transport',
-    'GuideCategory': 'guide_category',
-    'GuideDependency': 'guide_dependency',
-    'GuideLayer': 'guide_layer',
-    'GuideLayerRemoval': 'guide_layer_removal',
-    'GuideMatchSpec': 'guide_match_spec',
-    'GuideRule': 'guide_rule',
-    'GuideRuleOutcome': 'guide_rule_outcome',
-    'MatchAllNode': 'match_all_node',
-    'MatchAnyNode': 'match_any_node',
-    'MatchContextExpression': 'match_context_expression',
-    'MatchContextNode': 'match_context_node',
-    'MatchContextSide': 'match_context_side',
-    'MatchNearEmit': 'match_near_emit',
-    'MatchNearExpression': 'match_near_expression',
-    'MatchNearNode': 'match_near_node',
-    'MatchNode': 'match_node',
-    'MatchNotNode': 'match_not_node',
-    'MatchValidateNode': 'match_validate_node',
-    'MatchValidationExpression': 'match_validation_expression',
-    'MatchValidationKeep': 'match_validation_keep',
-    'Record<string,string>': 'string_map',
-    'RuleMappingDoc': 'rule_mapping',
-    'RuleWhen': 'rule_when',
-    'RuleWhenNode': 'when_node',
-    'SecretRefDoc': 'secret_ref',
-    'Term': 'term',
-    'TokenWindow': 'token_window',
-    'Vocabulary': 'vocabulary',
-    'Win': 'match_window',
+    CharacterWindowDoc: 'character_window',
+    ConceptRefDoc: 'concept_ref',
+    GuideCategoryDoc: 'guide_category',
+    GuideLayer: 'guide_layer',
+    GuideLayerRemoval: 'guide_layer_removal',
+    GuideMatchAllDoc: 'guide_match_all',
+    GuideMatchAnyDoc: 'guide_match_any',
+    GuideMatchContextDoc: 'guide_match_context',
+    GuideMatchLeafDoc: 'guide_match_leaf',
+    GuideMatchNearDoc: 'guide_match_near',
+    GuideMatchNodeDoc: 'guide_match_node',
+    GuideMatchNotDoc: 'guide_match_not',
+    GuideMatchValidateDoc: 'guide_match_validate',
+    GuideRuleDoc: 'guide_rule',
+    GuideRuleOutcomeDoc: 'guide_rule_outcome',
+    GuideWhenDoc: 'guide_when',
+    GuideWhenHasDoc: 'guide_when_has',
+    GuideWhenNodeDoc: 'guide_when_node',
+    GuideWhenOperator: 'guide_when_operator',
+    GuideWhenTestDoc: 'guide_when_test',
+    MarkingSchemeRefDoc: 'marking_scheme_ref',
+    MatchContextSide: 'match_context_side',
+    MatchNearEmit: 'match_near_emit',
+    MatchValidationKeep: 'match_validation_keep',
+    MatchWindowDoc: 'match_window',
+    SchemeDependencyDoc: 'scheme_dependency',
+    TermDoc: 'term',
+    TokenWindowDoc: 'token_window',
+    VocabularyDoc: 'vocabulary',
 };
 
 /** Resolve one generated definition without discarding a use-site annotation. */
@@ -145,49 +135,27 @@ function nonempty(node) {
 function guideView(schema) {
     const defs = schema.definitions;
     const guide = inline(schema.properties.guide, defs);
-    guide.properties.rules = inline(guide.properties.rules, defs);
     schema.properties.guide = guide;
 
     for (const key of ['id', 'version', 'name'])
         nonempty(guide.properties[key]);
-    guide.properties.targetSchemes.minItems = 1;
     for (const [name, fields] of [
-        ['GuideDependency', ['id']],
-        ['GuideCategory', ['id', 'label']],
-        ['GuideRule', ['id', 'name']],
-        ['ConceptRef', ['id']],
-        ['Term', ['singular', 'plural']],
+        ['GuideCategoryDoc', ['id', 'label']],
+        ['GuideRuleDoc', ['id', 'name']],
+        ['ConceptRefDoc', ['id']],
+        ['TermDoc', ['singular', 'plural']],
         ['GuideLayer', ['base']],
     ]) {
         for (const field of fields) nonempty(defs[name].properties[field]);
     }
     nonempty(defs.GuideLayer.properties.requires.items);
-    defs.GuideRuleOutcome.anyOf = [
+    defs.GuideRuleOutcomeDoc.anyOf = [
         { required: ['rendered'] },
         { required: ['concepts'] },
     ];
-
-    // A guide's trigger view exposes leaf tests and boolean nesting. Context
-    // and contributor selectors remain part of the shared type-derived view.
-    const condition = structuredClone(defs.RuleCondition);
-    delete condition.properties.role;
-    delete condition.properties.target;
-    delete condition.properties.value.type;
-    const quantifier = structuredClone(defs.RuleWhenQuantifier);
-    delete quantifier.properties.target;
-    delete quantifier.properties.quantifier;
-    defs.RuleWhenNode.oneOf = [condition, quantifier];
-    delete defs.RuleWhenNode.anyOf;
-    defs.RuleWhen.oneOf = defs.RuleWhen.anyOf.map((branch) => {
-        if (!branch.$ref) return branch;
-        if (branch.$ref !== '#/definitions/RuleWhenQuantifier') {
-            throw new Error(
-                `Unexpected guide condition branch: ${branch.$ref}`,
-            );
-        }
-        return structuredClone(quantifier);
-    });
-    delete defs.RuleWhen.anyOf;
+    for (const list of ['any', 'all', 'none'])
+        defs.GuideWhenDoc.properties[list].minItems = 1;
+    defs.GuideWhenDoc.minProperties = 1;
 
     const removal = defs.GuideLayerRemoval;
     removal.properties = Object.assign(
@@ -202,7 +170,8 @@ function guideView(schema) {
         minProperties: 1,
         maxProperties: 1,
     });
-    defs.Vocabulary = inline(defs.Vocabulary, defs);
+    defs.VocabularyDoc = inline(defs.VocabularyDoc, defs);
+    defs.VocabularyDoc.minProperties = 1;
 
     schema.$id = 'https://ezclassify.com/schemas/v1/guide.schema.json';
     schema.title = 'EzClassify Guide Schema';
@@ -210,45 +179,40 @@ function guideView(schema) {
         schema,
         GUIDE_NAMES,
         '$defs',
-        new Set([
-            'GuideBlock',
-            'GuideRulesBlock',
-            'RuleCondition',
-            'RuleWhenQuantifier',
-            'ProcessingRole',
-            'RuleConditionTarget',
-            'RuleContributorQuantifier',
-            'Record<string,Term>',
-        ]),
+        new Set(['GuideBlock', 'Record<string,TermDoc>']),
     );
 }
 
 function accessView(schema) {
     const defs = schema.definitions;
-    const envelope = schema.properties.access;
-    envelope.properties.rules = inline(envelope.properties.rules, defs);
-    envelope.properties.targetScheme = inline(
-        envelope.properties.targetScheme,
-        defs,
-    );
-    defs.AccessPolicyEnvelope = envelope;
+    const block = schema.properties.access;
+    defs.AccessBlock = block;
     schema.properties.access = {
-        $ref: '#/definitions/AccessPolicyEnvelope',
-        description: envelope.description,
+        $ref: '#/definitions/AccessBlock',
+        description: block.description,
     };
     nonempty(defs.AccessLayer.properties.base);
     nonempty(defs.AccessLayer.properties.requires.items);
-    defs.Vocabulary = inline(defs.Vocabulary, defs);
+    defs.VocabularyDoc = inline(defs.VocabularyDoc, defs);
+    defs.VocabularyDoc.minProperties = 1;
     return publish(
         schema,
-        { Term: 'term', Vocabulary: 'vocabulary' },
+        { TermDoc: 'term', VocabularyDoc: 'vocabulary' },
         'definitions',
-        new Set([
-            'AccessRulesBlock',
-            'AccessPolicyTargetScheme',
-            'Record<string,Term>',
-        ]),
+        new Set(['Record<string,TermDoc>']),
     );
+}
+
+/**
+ * The scheme view adds what the generated types cannot say: a rollup
+ * intersection names exactly one of `category` and `categories`.
+ */
+function schemeView(schema) {
+    schema.definitions.RollupIntersectDoc.oneOf = [
+        { required: ['category'] },
+        { required: ['categories'] },
+    ];
+    return schema;
 }
 
 function publish(schema, names, key, omitted = new Set()) {
@@ -267,10 +231,10 @@ function publish(schema, names, key, omitted = new Set()) {
 }
 
 /**
- * Build a static validation schema without changing the raw input-schema
- * export.
+ * Build the published validation schema for one document kind.
  *
- * @param {'scheme' | 'guide' | 'access' | 'crosswalk'} kind Document family.
+ * @param {'scheme' | 'guide' | 'access' | 'crosswalk' | 'context' | 'test-suite'} kind
+ *   Document family.
  * @param {Record<string, unknown>} generated Type-derived schema.
  * @returns {Record<string, unknown>} Detached published validation view.
  */
@@ -278,6 +242,9 @@ export function validationSchema(kind, generated) {
     const schema = structuredClone(generated);
     switch (kind) {
         case 'scheme':
+            return schemeView(schema);
+        case 'context':
+        case 'test-suite':
             return schema;
         case 'guide':
             return guideView(schema);

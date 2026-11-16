@@ -19,7 +19,6 @@ import type {
     ContextResolution,
     ContextOperationResult,
     DocumentAuditReport,
-    DocumentAccessAssessment,
     DocumentResponseProfile,
     GuideDeterminationInput,
 } from './document.js';
@@ -75,7 +74,6 @@ export type TestOperation =
     | 'guideEvaluate'
     | 'checkAccess'
     | 'auditDocument'
-    | 'assessDocumentAccess'
     | 'translate';
 
 /** Native operation result shapes used to validate typed expectations. */
@@ -95,10 +93,11 @@ export interface TestOperationResults {
     /** The result of a `suggestForCategories` case. */
     suggestForCategories: SuggestResultsByCategory;
     /**
-     * The result of a `schemeScan` case: the markings found and how far the
-     * scan got. A case passes only when the scan read the whole text, unless
-     * one of its assertions is on `limits.status`, which is how a case says
-     * it expects the scan to stop early.
+     * The result of a `schemeScan` case: the markings found, the wrapped
+     * marks it could not read, and how far the scan got. A case passes only
+     * when the scan read the whole text, unless one of its assertions is on
+     * `limits.status`, which is how a case says it expects the scan to stop
+     * early.
      */
     schemeScan: ScanOutcome;
     /** The result of a `guideScan` case. */
@@ -109,8 +108,6 @@ export interface TestOperationResults {
     checkAccess: ContextOperationResult<AccessDecision>;
     /** The result of an `auditDocument` case. */
     auditDocument: ContextOperationResult<DocumentAuditReport>;
-    /** The result of an `assessDocumentAccess` case. */
-    assessDocumentAccess: ContextOperationResult<DocumentAccessAssessment>;
     /** The result of a `translate` case. */
     translate: ContextOperationResult<CrosswalkTranslationResult>;
 }
@@ -233,8 +230,6 @@ export interface TestOptions {
      * scheme's rules currently gate.
      */
     includeGated?: boolean;
-    /** Whether a `guideScan` case adds advisory confidence to each span. */
-    confidence?: boolean;
     /** The outputs a process case writes into `renders`, by output address. */
     outputs?: string[];
     /** The categories a process case asks picker options for. */
@@ -243,7 +238,7 @@ export interface TestOptions {
 
 /** One portable input and its separately authored oracle. */
 export interface TestCase {
-    /** Case id, unique across the suite and its parents. */
+    /** Case id, unique within the suite. */
     id: string;
     /** Short human-readable case name. */
     name?: string;
@@ -262,10 +257,7 @@ export interface TestCase {
     assertions: TestAssertion[];
 }
 
-/**
- * Immutable versioned suite, with complete expectation overrides of inherited
- * cases.
- */
+/** Immutable versioned suite: the cases and the composition they run against. */
 export interface TestSuite {
     /** The suite format version. */
     apiVersion: 'schemes.ezclassify.com/v1';
@@ -277,65 +269,22 @@ export interface TestSuite {
     name?: string;
     /** What the suite covers. */
     description?: string;
-    /**
-     * The parent suite whose cases this suite inherits, at an exact version.
-     */
-    extends?: ComponentRef;
-    /** Omission inherits the parent; presence replaces the entire composition. */
-    composition?: TestComposition;
-    /** Replacement assertions for inherited cases, keyed by case id. */
-    overrides?: {
-        [caseId: string]: {
-            /** Why the inherited expectation is replaced. */
-            reason: string;
-            /**
-             * Replace the inherited case's complete assertion list.
-             * @minItems 1
-             */
-            assertions: TestAssertion[];
-        };
-    };
-    /**
-     * The cases this suite adds. Each id must be new to the inheritance chain.
-     */
+    /** The exact artifacts the cases run against. */
+    composition: TestComposition;
+    /** The cases, in the order they run. */
     cases: TestCase[];
 }
 
-/** Case origin and the exact child that supplied its effective expectation. */
-export interface EffectiveTestCase {
-    /** The case as it runs, with any override's assertions in place. */
-    test: TestCase;
-    /** The suite that declares the case. */
-    owner: ComponentRef;
-    /** The override that replaced the case's assertions, when one did. */
-    override?: {
-        /** The suite that declares the override. */
-        owner: ComponentRef;
-        /** Why the inherited expectation is replaced. */
-        reason: string;
-    };
-}
-
-/** Resolved parent chain; no parent coverage or execution results are inherited. */
+/** A suite as a run resolves it, pinned by content digest. */
 export interface EffectiveTestSuite {
     /** The suite that was resolved. */
     suite: ComponentRef;
     /** Exact selected suite document content, including its authored metadata. */
     suiteDigest: string;
-    /**
-     * The composition the cases run against: the nearest suite in the chain
-     * that declares one.
-     */
+    /** The composition the cases run against. */
     composition: TestComposition;
-    /** The parent chain, root first, each with its content digest. */
-    ancestors: Array<{
-        /** The parent suite, at an exact version. */
-        ref: ComponentRef;
-        /** Content digest of that parent suite document. */
-        digest: string;
-    }>;
-    /** Every effective case, parents' first, in declaration order. */
-    cases: EffectiveTestCase[];
+    /** Every case, in declaration order. */
+    cases: TestCase[];
     /** Content digest of this resolved suite, checked again before it runs. */
     digest: string;
 }
@@ -457,11 +406,6 @@ export interface TestSuiteRun {
      * identity.
      */
     executionDigest: string;
-    /**
-     * Missing artifact digests or mutable sources prevent byte-for-byte replay
-     * claims.
-     */
-    reproducibility: 'reproducible' | 'best-effort';
     /** When the run started, as an ISO 8601 timestamp. */
     startedAt: string;
     /** When the run finished, as an ISO 8601 timestamp. */

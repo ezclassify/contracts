@@ -14,10 +14,9 @@ scheme:
       - concept: internal
   data:
     concepts:
-      inline:
-        - id: eastern-restricted
-          name: Eastern Restricted
-          views: { default: EASTERN-RESTRICTED }
-          categories: [classification]
-          parents: [public]
-          rank: 2
+      - id: eastern-restricted
+        name: Eastern Restricted
+        views: { default: EASTERN-RESTRICTED }
+        categories: [classification]
+        parents: [public]
+        rank: 2

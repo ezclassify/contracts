@@ -26,37 +26,6 @@ import type {
 import type { SyntaxDoc } from './scheme-definition';
 
 /**
- * Filter result shared by filterConcepts (Handbook) and filterGuideRules
- * (Guidebook). Components toggle a hidden CSS class on rows whose id is not in
- * visibleIds, update category headings from categoryCounts, and show a "no
- * results" notice when total.visible === 0.
- */
-export interface FilterResult {
-    /** Ids of the items that matched the query. */
-    visibleIds: Set<string>;
-    /**
-     * Per-category counts keyed by category id. Guide's compound bucket is
-     * keyed `_compound`.
-     */
-    categoryCounts: Map<
-        string,
-        {
-            /** Items in the category that matched the query. */
-            visible: number;
-            /** Items in the category. */
-            total: number;
-        }
-    >;
-    /** Global visible / total. Drives the "no results" indicator. */
-    total: {
-        /** Items that matched the query. */
-        visible: number;
-        /** Items in every category. */
-        total: number;
-    };
-}
-
-/**
  * One section of a structural view: a labeled bucket of Handbook concepts or
  * Guidebook rules.
  */
@@ -86,6 +55,11 @@ export interface StructuralView<Item> {
     name: string;
     /** The scheme's or guide's description. Empty when it declares none. */
     description: string;
+    /**
+     * The document's own overall marking, exactly as it writes it. Display
+     * only: never interpreted. Absent when the document declares none.
+     */
+    marking?: string;
     /** Categories in their declared scheme / guide order. */
     categories: Array<{
         /** The category id. */
@@ -309,6 +283,12 @@ export interface SchemeMetaView {
     /** Usage guidance for the scheme (detailed, shown in reference views). */
     guidance?: string;
     /**
+     * The scheme document's own overall marking, exactly as its
+     * `scheme.marking` writes it. Display only: never interpreted. Absent when
+     * the document declares none.
+     */
+    marking?: string;
+    /**
      * ID of the category that drives the marking's display color (from
      * `render.color_from`). Undefined when the scheme does not use category
      * color mode. A host pairs this with the resolved marking's assertion in
@@ -320,13 +300,6 @@ export interface SchemeMetaView {
      * consuming hosts retain final presentation precedence.
      */
     colorRules?: MarkingColorRule[];
-    /**
-     * License label shown with the scheme, such as `enterprise`.
-     * Informational only: it does not grant or restrict use.
-     */
-    license?: string;
-    /** Document kind. Absent means `'scheme'`. */
-    type?: 'scheme' | 'layer';
     /**
      * Default scope ID applied when none is selected. Present exactly when the
      * scheme declares at least one scope.
@@ -481,14 +454,12 @@ export interface SchemePublicView {
     definition?: string;
     /** Detailed usage guidance shown in scheme reference surfaces. */
     guidance?: string;
+    /** See {@link SchemeMetaView.marking}. */
+    marking?: string;
     /** Category whose selected concept supplies the marking color. */
     colorFrom?: string;
     /** Ordered compound color rules; first matching rule wins. */
     colorRules?: MarkingColorRule[];
-    /** See {@link SchemeMetaView.license}. */
-    license?: string;
-    /** Document kind. Absent means `'scheme'`. */
-    type?: 'scheme' | 'layer';
     /** See {@link SchemeMetaView.defaultScope}. */
     defaultScope?: string;
     /** Display label for the scope selector. */
@@ -586,9 +557,9 @@ export interface SchemePublicView {
     };
     /**
      * How much text a part marking governs in a document audit: 'paragraph'
-     * (default), 'until-next', or 'document'.
+     * (default) or 'until-next'.
      */
-    partScope?: 'paragraph' | 'until-next' | 'document';
+    partScope?: 'paragraph' | 'until-next';
     /**
      * When a document audit requires each role's marking, from
      * `role_detection.<role>.required_when`. A role without a condition keeps
@@ -794,6 +765,12 @@ export interface GuideMetaView {
     name: string;
     /** Long description of what the guide covers. */
     description?: string;
+    /**
+     * The guide document's own overall marking, exactly as its `guide.marking`
+     * writes it. Display only: never interpreted. Absent when the document
+     * declares none.
+     */
+    marking?: string;
     /** Total number of rules in the guide (including computed rules). */
     ruleCount: number;
     /**
@@ -817,6 +794,12 @@ export interface SchemeStructuralView {
     name: string;
     /** The scheme's description. Empty when the scheme declares none. */
     description: string;
+    /**
+     * The scheme document's own overall marking, exactly as its `scheme.marking`
+     * writes it. Display only: never interpreted. Absent when the document
+     * declares none.
+     */
+    marking?: string;
     /**
      * The scheme's categories in declared order, each with the concepts that
      * belong to it. A category with no concepts is left out.
@@ -849,6 +832,12 @@ export interface GuideStructuralView {
     name: string;
     /** The guide's description. Empty when the guide declares none. */
     description: string;
+    /**
+     * The guide document's own overall marking, exactly as its `guide.marking`
+     * writes it. Display only: never interpreted. Absent when the document
+     * declares none.
+     */
+    marking?: string;
     /**
      * The guide's categories in declared order, each with its checkable rules,
      * followed by the `_compound` category that holds every rule with a `when`

@@ -1,4 +1,5 @@
 import type { RouteDecl } from './types.js';
+import { schemeSelector } from './scheme-selector.js';
 import type {
     ContextSchemeScanResult,
     CtxSchemeScanRequestBody,
@@ -20,6 +21,7 @@ export const decl: RouteDecl<
         'Scans the provided text for marking occurrences against the context\'s composed scheme and returns the results in a resolved Context envelope. The :version segment may be omitted to default to "latest".',
     tags: ['context', 'scheme'],
     pathParams: ['ctxId', 'version'],
+    queryParams: [schemeSelector],
     errorResponses: [
         {
             status: 400,

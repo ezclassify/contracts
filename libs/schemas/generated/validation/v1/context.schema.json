@@ -31,9 +31,7 @@
                 },
                 "layers": {
                     "description": "Optional layer references applied left-to-right after the base access policy.",
-                    "items": {
-                        "$ref": "#/definitions/ComponentRef"
-                    },
+                    "items": { "$ref": "#/definitions/ComponentRef" },
                     "type": "array"
                 },
                 "version": {
@@ -47,7 +45,7 @@
         },
         "ContextBlock": {
             "additionalProperties": false,
-            "description": "The body inside the top-level `context:` envelope. References a scheme plus optional guides, a single optional access policy and optional crosswalks by `(id, version)`; resolution to concrete content happens server-side. The crosswalk references make reviewed translations between the referenced scheme and another scheme available to the Context; the resolver loads those scheme dependencies from the crosswalk artifacts.\n\nEvery reference may carry layers, nested inside the reference they derive from, in the one shape that holds for all four families.\n\nContext is pure composition: it names which artifact versions to load and operate on. Artifact-internal concerns (sources, auth, pins, mappings) live on the referenced Scheme/Guide/Access versions, not here.",
+            "description": "The body inside the top-level `context:` envelope. References a scheme plus optional guides, a single optional access policy and optional crosswalks by `(id, version)`; resolution to concrete content happens server-side. The crosswalk references make reviewed translations between the referenced scheme and another scheme available to the Context; the resolver loads those scheme dependencies from the crosswalk artifacts.\n\nEvery reference may carry layers, nested inside the reference they derive from, in the one shape that holds for all four families.\n\nContext is pure composition: it names which artifact versions to load and operate on. What an artifact holds, concept imports included, lives on the referenced Scheme/Guide/Access versions, not here.",
             "properties": {
                 "access": {
                     "$ref": "#/definitions/ContextAccessRef",
@@ -55,9 +53,7 @@
                 },
                 "crosswalks": {
                     "description": "Optional directional crosswalk artifact references. Layers stack on a base crosswalk and are nested under it because a layer is a derivative of _that_ crosswalk; it cannot be paired with a different base.",
-                    "items": {
-                        "$ref": "#/definitions/ContextCrosswalkRef"
-                    },
+                    "items": { "$ref": "#/definitions/ContextCrosswalkRef" },
                     "type": "array"
                 },
                 "description": {
@@ -65,10 +61,8 @@
                     "type": "string"
                 },
                 "guides": {
-                    "description": "Optional guide references; later guides take precedence on rule-id conflicts. Layers stack on a base guide and are nested under it because a layer is a derivative of _that_ guide; it cannot be paired with a different base.",
-                    "items": {
-                        "$ref": "#/definitions/ContextGuideRef"
-                    },
+                    "description": "Optional guide references. Each guide is independent: its rules, their dependencies and its overrides stay within that guide and its layers, and two guides may use the same rule id. Layers stack on a base guide and are nested under it because a layer is a derivative of _that_ guide; it cannot be paired with a different base.",
+                    "items": { "$ref": "#/definitions/ContextGuideRef" },
                     "type": "array"
                 },
                 "id": {
@@ -100,9 +94,7 @@
                 },
                 "layers": {
                     "description": "Optional layer references applied left-to-right after the base crosswalk.",
-                    "items": {
-                        "$ref": "#/definitions/ComponentRef"
-                    },
+                    "items": { "$ref": "#/definitions/ComponentRef" },
                     "type": "array"
                 },
                 "version": {
@@ -125,9 +117,7 @@
                 },
                 "layers": {
                     "description": "Optional layer references applied left-to-right after the base guide.",
-                    "items": {
-                        "$ref": "#/definitions/ComponentRef"
-                    },
+                    "items": { "$ref": "#/definitions/ComponentRef" },
                     "type": "array"
                 },
                 "version": {
@@ -150,9 +140,7 @@
                 },
                 "layers": {
                     "description": "Optional layer references applied left-to-right after the base scheme.",
-                    "items": {
-                        "$ref": "#/definitions/ComponentRef"
-                    },
+                    "items": { "$ref": "#/definitions/ComponentRef" },
                     "type": "array"
                 },
                 "version": {

@@ -19,21 +19,20 @@ scheme:
         rollup: union
         required: true
     concepts:
-      inline:
-        - id: RETIRED_NO_REPLACEMENT
-          name: Retired instruction
-          views: { default: RETIRED }
-          categories: [handling]
-          deprecated: true
-          deprecated_message: This instruction was withdrawn and has no replacement.
-        - id: RETIRED_WITH_REPLACEMENT
-          name: Superseded instruction
-          views: { default: SUPERSEDED }
-          categories: [handling]
-          deprecated: true
-          deprecated_message: Use the current instruction instead.
-          deprecated_replacement: CURRENT_INSTRUCTION
-        - { id: CURRENT_INSTRUCTION, name: Current instruction, views: { default: CURRENT }, categories: [handling] }
+      - id: RETIRED_NO_REPLACEMENT
+        name: Retired instruction
+        views: { default: RETIRED }
+        categories: [handling]
+        deprecated: true
+        deprecated_message: This instruction was withdrawn and has no replacement.
+      - id: RETIRED_WITH_REPLACEMENT
+        name: Superseded instruction
+        views: { default: SUPERSEDED }
+        categories: [handling]
+        deprecated: true
+        deprecated_message: Use the current instruction instead.
+        deprecated_replacement: CURRENT_INSTRUCTION
+      - { id: CURRENT_INSTRUCTION, name: Current instruction, views: { default: CURRENT }, categories: [handling] }
   render:
     default: banner
     formats:

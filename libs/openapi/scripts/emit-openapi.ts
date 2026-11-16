@@ -19,8 +19,8 @@
  *
  * The only hand-authored component content is the slim http-overlay file at
  * scripts/openapi-http-overlay.yaml, which carries `components.parameters`
- * (shared path/query parameters reused across routes) and
- * `components.responses` (shared HTTP error envelopes that wrap a generated
+ * (shared parameters reused across operations), `components.securitySchemes`
+ * and `components.responses` (shared HTTP error envelopes that wrap a generated
  * body schema with a description, example, and response headers). These are
  * HTTP-level concerns with no TypeScript counterpart and stay hand-edited.
  *
@@ -90,6 +90,9 @@ export const ERROR_REF_TARGETS: Record<ErrorRef, string> = {
 
 /** The 429 envelope every operation declares; see {@link buildOperation}. */
 export const TOO_MANY_REQUESTS = '#/components/responses/TooManyRequests';
+
+/** The application id header every Context operation accepts. */
+export const APPLICATION_ID_PARAMETER = '#/components/parameters/ApplicationId';
 
 async function loadRouteDecls(): Promise<readonly RouteDecl[]> {
     const indexUrl = pathToFileURL(
@@ -437,15 +440,13 @@ export async function buildOpenApiSpec(): Promise<Record<string, unknown>> {
         const oapiPath = expressPathToOpenApi(decl.path);
         if (!paths[oapiPath]) paths[oapiPath] = {};
         const operation = buildOperation(decl);
-        // Application credentials authorize only the Context data path. Other
-        // routes retain the default independent caller and Context credentials.
-        if (
-            (oapiPath === '/v1/ctx' || oapiPath.startsWith('/v1/ctx/')) &&
-            operation['security'] === undefined
-        ) {
-            operation['security'] = [
-                { bearerAuth: [], contextToken: [] },
-                { applicationCredential: [] },
+        // Every Context data-path operation accepts the calling application's
+        // id. The emitter declares it, as it does the 429, so no route can
+        // leave it out.
+        if (oapiPath === '/v1/ctx' || oapiPath.startsWith('/v1/ctx/')) {
+            operation['parameters'] = [
+                ...((operation['parameters'] as unknown[] | undefined) ?? []),
+                { $ref: APPLICATION_ID_PARAMETER },
             ];
         }
         paths[oapiPath][methodKey(decl.method)] = operation;
@@ -513,8 +514,8 @@ export async function buildOpenApiSpec(): Promise<Record<string, unknown>> {
         ],
         // Operations inherit both independent credentials by default: bearer
         // identifies the caller and the Context token authorizes its Context.
-        // Anonymous probes opt out; Context paths also accept an application
-        // credential. The default keeps new routes closed by omission.
+        // Anonymous probes opt out. The default keeps new routes closed by
+        // omission.
         security: [{ bearerAuth: [], contextToken: [] }],
         paths,
         components,

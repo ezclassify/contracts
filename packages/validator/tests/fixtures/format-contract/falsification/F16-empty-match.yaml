@@ -28,10 +28,9 @@ scheme:
         label: Release list
         rollup: union
     concepts:
-      inline:
-        - { id: LEVEL_ONE, name: Level one, views: { default: ONE }, categories: [level] }
-        - { id: HANDLING_A, name: Handling A, views: { default: HA }, categories: [handling] }
-        - { id: PARTNER_A, name: Partner A, views: { default: PA }, categories: [release] }
+      - { id: LEVEL_ONE, name: Level one, views: { default: ONE }, categories: [level] }
+      - { id: HANDLING_A, name: Handling A, views: { default: HA }, categories: [handling] }
+      - { id: PARTNER_A, name: Partner A, views: { default: PA }, categories: [release] }
   render:
     default: banner
     formats:

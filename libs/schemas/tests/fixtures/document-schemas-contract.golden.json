@@ -1,16 +1,86 @@
 {
-    "access-policy.schema.json": {
+    "access.schema.json": {
         "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false,
         "definitions": {
+            "AccessBlock": {
+                "additionalProperties": false,
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "layer": {
+                        "$ref": "#/definitions/AccessLayer"
+                    },
+                    "marking": {
+                        "type": "string"
+                    },
+                    "marking_scheme": {
+                        "$ref": "#/definitions/MarkingSchemeRefDoc"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "rules": {
+                        "items": {
+                            "$ref": "#/definitions/AccessRuleDoc"
+                        },
+                        "type": "array"
+                    },
+                    "target_scheme": {
+                        "$ref": "#/definitions/SchemeDependencyDoc"
+                    },
+                    "type": {
+                        "enum": [
+                            "access",
+                            "layer"
+                        ],
+                        "type": "string"
+                    },
+                    "version": {
+                        "type": "string"
+                    },
+                    "vocabulary": {
+                        "$ref": "#/definitions/vocabulary"
+                    }
+                },
+                "required": [
+                    "id",
+                    "target_scheme",
+                    "rules"
+                ],
+                "type": "object"
+            },
+            "AccessCheckOperator": {
+                "enum": [
+                    "is_in",
+                    "contains_any",
+                    "superset",
+                    "equals",
+                    "gte",
+                    "after"
+                ],
+                "type": "string"
+            },
+            "AccessGateOperator": {
+                "enum": [
+                    "has_concept",
+                    "has_content",
+                    "has_no_content",
+                    "min_rank"
+                ],
+                "type": "string"
+            },
             "AccessLayer": {
                 "additionalProperties": false,
                 "properties": {
                     "base": {
+                        "minLength": 1,
                         "type": "string"
                     },
                     "requires": {
                         "items": {
+                            "minLength": 1,
                             "type": "string"
                         },
                         "type": "array"
@@ -21,68 +91,16 @@
                 ],
                 "type": "object"
             },
-            "AccessMappingDoc": {
-                "additionalProperties": false,
-                "properties": {
-                    "access": {
-                        "additionalProperties": false,
-                        "properties": {
-                            "attribute": {
-                                "type": "string"
-                            },
-                            "categoryId": {
-                                "type": "string"
-                            },
-                            "id": {
-                                "type": "string"
-                            },
-                            "name": {
-                                "type": "string"
-                            },
-                            "strategy": {
-                                "type": "string"
-                            }
-                        },
-                        "required": [
-                            "id"
-                        ],
-                        "type": "object"
-                    },
-                    "record": {
-                        "type": "string"
-                    }
-                },
-                "required": [
-                    "access"
-                ],
-                "type": "object"
-            },
-            "AccessPolicyTargetScheme": {
-                "additionalProperties": false,
-                "properties": {
-                    "id": {
-                        "type": "string"
-                    },
-                    "version": {
-                        "type": "string"
-                    }
-                },
-                "required": [
-                    "id"
-                ],
-                "type": "object"
-            },
             "AccessRule": {
                 "enum": [
                     "gte",
                     "superset",
                     "includes",
-                    "exact",
-                    "any"
+                    "exact"
                 ],
                 "type": "string"
             },
-            "AccessRuleCheck": {
+            "AccessRuleCheckDoc": {
                 "additionalProperties": false,
                 "properties": {
                     "context": {
@@ -92,7 +110,7 @@
                         "type": "string"
                     },
                     "operator": {
-                        "type": "string"
+                        "$ref": "#/definitions/AccessCheckOperator"
                     },
                     "user": {
                         "type": "string"
@@ -104,22 +122,25 @@
                 ],
                 "type": "object"
             },
-            "AccessRuleEntry": {
+            "AccessRuleDoc": {
                 "additionalProperties": false,
                 "properties": {
                     "attribute": {
                         "type": "string"
                     },
-                    "categoryId": {
+                    "category": {
                         "type": "string"
                     },
                     "check": {
-                        "$ref": "#/definitions/AccessRuleCheck"
+                        "$ref": "#/definitions/AccessRuleCheckDoc"
                     },
-                    "denyReason": {
+                    "deny_reason": {
                         "type": "string"
                     },
                     "id": {
+                        "type": "string"
+                    },
+                    "marking": {
                         "type": "string"
                     },
                     "name": {
@@ -138,7 +159,7 @@
                         "additionalProperties": false,
                         "properties": {
                             "data": {
-                                "$ref": "#/definitions/AccessRuleWhenData"
+                                "$ref": "#/definitions/AccessRuleGateDoc"
                             }
                         },
                         "type": "object"
@@ -150,14 +171,14 @@
                 ],
                 "type": "object"
             },
-            "AccessRuleWhenData": {
+            "AccessRuleGateDoc": {
                 "additionalProperties": false,
                 "properties": {
-                    "categoryId": {
+                    "category": {
                         "type": "string"
                     },
                     "operator": {
-                        "type": "string"
+                        "$ref": "#/definitions/AccessGateOperator"
                     },
                     "value": {
                         "type": [
@@ -167,350 +188,25 @@
                     }
                 },
                 "required": [
-                    "categoryId",
+                    "category",
                     "operator"
                 ],
                 "type": "object"
             },
-            "AccessRulesBlock": {
+            "MarkingSchemeRefDoc": {
                 "additionalProperties": false,
                 "properties": {
-                    "external": {
-                        "items": {
-                            "$ref": "#/definitions/ExternalSourceSpec%3CAccessMappingDoc%3E"
-                        },
-                        "type": "array"
-                    },
-                    "inline": {
-                        "items": {
-                            "$ref": "#/definitions/AccessRuleEntry"
-                        },
-                        "type": "array"
-                    }
-                },
-                "type": "object"
-            },
-            "AttributionDoc": {
-                "additionalProperties": false,
-                "properties": {
-                    "citation": {
-                        "type": "string"
-                    },
-                    "license": {
-                        "type": "string"
-                    },
-                    "licenseUrl": {
-                        "type": "string"
-                    },
-                    "name": {
-                        "type": "string"
-                    }
-                },
-                "required": [
-                    "name",
-                    "license"
-                ],
-                "type": "object"
-            },
-            "ExternalSourceAuth": {
-                "additionalProperties": false,
-                "properties": {
-                    "accessKeyRef": {
-                        "$ref": "#/definitions/SecretRefDoc"
-                    },
-                    "clientCredentialRef": {
-                        "$ref": "#/definitions/SecretRefDoc"
-                    },
-                    "credentialRef": {
-                        "$ref": "#/definitions/SecretRefDoc"
-                    },
-                    "flow": {
-                        "enum": [
-                            "none",
-                            "basic",
-                            "bearer",
-                            "header",
-                            "aws-sigv4",
-                            "oauth2-cc"
-                        ],
-                        "type": "string"
-                    },
-                    "params": {
-                        "$ref": "#/definitions/Record%3Cstring%2Cstring%3E"
-                    },
-                    "secretKeyRef": {
-                        "$ref": "#/definitions/SecretRefDoc"
-                    }
-                },
-                "required": [
-                    "flow"
-                ],
-                "type": "object"
-            },
-            "ExternalSourceCapabilities": {
-                "additionalProperties": false,
-                "properties": {
-                    "ancestorsOf": {
-                        "type": "boolean"
-                    },
-                    "childrenOf": {
-                        "type": "boolean"
-                    },
-                    "count": {
-                        "type": "boolean"
-                    },
-                    "enumerate": {
-                        "type": "boolean"
-                    },
-                    "prefixMatch": {
-                        "type": "boolean"
-                    },
-                    "resolveAliases": {
-                        "enum": [
-                            "exact",
-                            "fuzzy",
-                            "none"
-                        ],
-                        "type": "string"
-                    },
-                    "search": {
-                        "type": "boolean"
-                    }
-                },
-                "type": "object"
-            },
-            "ExternalSourcePagination": {
-                "anyOf": [
-                    {
-                        "additionalProperties": false,
-                        "properties": {
-                            "style": {
-                                "const": "none",
-                                "type": "string"
-                            }
-                        },
-                        "required": [
-                            "style"
-                        ],
-                        "type": "object"
-                    },
-                    {
-                        "additionalProperties": false,
-                        "properties": {
-                            "pageParam": {
-                                "type": "string"
-                            },
-                            "start": {
-                                "type": "integer"
-                            },
-                            "style": {
-                                "const": "page",
-                                "type": "string"
-                            }
-                        },
-                        "required": [
-                            "style",
-                            "pageParam",
-                            "start"
-                        ],
-                        "type": "object"
-                    },
-                    {
-                        "additionalProperties": false,
-                        "properties": {
-                            "offsetParam": {
-                                "type": "string"
-                            },
-                            "style": {
-                                "const": "offset",
-                                "type": "string"
-                            }
-                        },
-                        "required": [
-                            "style",
-                            "offsetParam"
-                        ],
-                        "type": "object"
-                    },
-                    {
-                        "additionalProperties": false,
-                        "properties": {
-                            "cursorParam": {
-                                "type": "string"
-                            },
-                            "nextField": {
-                                "type": "string"
-                            },
-                            "style": {
-                                "const": "cursor",
-                                "type": "string"
-                            }
-                        },
-                        "required": [
-                            "style",
-                            "cursorParam",
-                            "nextField"
-                        ],
-                        "type": "object"
-                    },
-                    {
-                        "additionalProperties": false,
-                        "properties": {
-                            "style": {
-                                "const": "link-header",
-                                "type": "string"
-                            }
-                        },
-                        "required": [
-                            "style"
-                        ],
-                        "type": "object"
-                    }
-                ]
-            },
-            "ExternalSourceQueryParams": {
-                "additionalProperties": false,
-                "properties": {
-                    "pageSize": {
-                        "type": "string"
-                    },
-                    "prefix": {
-                        "type": "string"
-                    },
-                    "scope": {
-                        "type": "string"
-                    },
-                    "search": {
-                        "type": "string"
-                    }
-                },
-                "type": "object"
-            },
-            "ExternalSourceSpec<AccessMappingDoc>": {
-                "additionalProperties": false,
-                "properties": {
-                    "attribution": {
-                        "$ref": "#/definitions/AttributionDoc"
-                    },
-                    "auth": {
-                        "$ref": "#/definitions/ExternalSourceAuth"
-                    },
-                    "capabilities": {
-                        "$ref": "#/definitions/ExternalSourceCapabilities"
-                    },
-                    "grantId": {
-                        "type": "string"
-                    },
-                    "headers": {
-                        "$ref": "#/definitions/Record%3Cstring%2Cstring%3E"
-                    },
                     "id": {
+                        "minLength": 1,
                         "type": "string"
                     },
-                    "liveFetch": {
-                        "type": "boolean"
-                    },
-                    "mapping": {
-                        "$ref": "#/definitions/AccessMappingDoc"
-                    },
-                    "mappingHash": {
+                    "version": {
                         "type": "string"
-                    },
-                    "pagination": {
-                        "$ref": "#/definitions/ExternalSourcePagination"
-                    },
-                    "query": {
-                        "$ref": "#/definitions/Record%3Cstring%2Cstring%3E"
-                    },
-                    "queryParams": {
-                        "$ref": "#/definitions/ExternalSourceQueryParams"
-                    },
-                    "rateLimit": {
-                        "additionalProperties": false,
-                        "properties": {
-                            "burst": {
-                                "type": "integer"
-                            },
-                            "windowMs": {
-                                "type": "number"
-                            }
-                        },
-                        "required": [
-                            "burst",
-                            "windowMs"
-                        ],
-                        "type": "object"
-                    },
-                    "recordsPath": {
-                        "type": "string"
-                    },
-                    "snapshotId": {
-                        "pattern": "^sha256:[0-9a-f]{64}$",
-                        "type": "string"
-                    },
-                    "snapshotRef": {
-                        "type": "string"
-                    },
-                    "source": {
-                        "type": "string"
-                    },
-                    "srcref": {
-                        "type": "string"
-                    },
-                    "timeoutMs": {
-                        "type": "number"
-                    },
-                    "tls": {
-                        "$ref": "#/definitions/ExternalSourceTls"
-                    },
-                    "transport": {
-                        "$ref": "#/definitions/ExternalSourceTransport"
                     }
                 },
                 "required": [
-                    "source",
-                    "mapping"
+                    "id"
                 ],
-                "type": "object"
-            },
-            "ExternalSourceTls": {
-                "additionalProperties": false,
-                "if": {
-                    "required": [
-                        "keyPassphraseRef"
-                    ]
-                },
-                "minProperties": 1,
-                "properties": {
-                    "caBundleRef": {
-                        "$ref": "#/definitions/SecretRefDoc"
-                    },
-                    "clientCertAndKeyRef": {
-                        "$ref": "#/definitions/SecretRefDoc"
-                    },
-                    "keyPassphraseRef": {
-                        "$ref": "#/definitions/SecretRefDoc"
-                    }
-                },
-                "then": {
-                    "required": [
-                        "clientCertAndKeyRef"
-                    ]
-                },
-                "type": "object"
-            },
-            "ExternalSourceTransport": {
-                "enum": [
-                    "http",
-                    "file",
-                    "inline-data"
-                ],
-                "type": "string"
-            },
-            "Record<string,Term>": {
-                "additionalProperties": {
-                    "$ref": "#/definitions/Term"
-                },
                 "type": "object"
             },
             "Record<string,string>": {
@@ -519,104 +215,23 @@
                 },
                 "type": "object"
             },
-            "SecretRefDoc": {
-                "anyOf": [
-                    {
-                        "additionalProperties": false,
-                        "properties": {
-                            "envVar": {
-                                "type": "string"
-                            },
-                            "provider": {
-                                "const": "env",
-                                "type": "string"
-                            }
-                        },
-                        "required": [
-                            "provider",
-                            "envVar"
-                        ],
-                        "type": "object"
+            "SchemeDependencyDoc": {
+                "additionalProperties": false,
+                "properties": {
+                    "id": {
+                        "minLength": 1,
+                        "type": "string"
                     },
-                    {
-                        "additionalProperties": false,
-                        "properties": {
-                            "certVar": {
-                                "type": "string"
-                            },
-                            "keyVar": {
-                                "type": "string"
-                            },
-                            "provider": {
-                                "const": "env",
-                                "type": "string"
-                            }
-                        },
-                        "required": [
-                            "provider",
-                            "certVar",
-                            "keyVar"
-                        ],
-                        "type": "object"
-                    },
-                    {
-                        "additionalProperties": false,
-                        "properties": {
-                            "path": {
-                                "type": "string"
-                            },
-                            "provider": {
-                                "const": "file",
-                                "type": "string"
-                            }
-                        },
-                        "required": [
-                            "provider",
-                            "path"
-                        ],
-                        "type": "object"
-                    },
-                    {
-                        "additionalProperties": false,
-                        "properties": {
-                            "certPath": {
-                                "type": "string"
-                            },
-                            "keyPath": {
-                                "type": "string"
-                            },
-                            "provider": {
-                                "const": "file",
-                                "type": "string"
-                            }
-                        },
-                        "required": [
-                            "provider",
-                            "certPath",
-                            "keyPath"
-                        ],
-                        "type": "object"
-                    },
-                    {
-                        "additionalProperties": false,
-                        "properties": {
-                            "provider": {
-                                "const": "secret-store",
-                                "type": "string"
-                            },
-                            "secretId": {
-                                "type": "string"
-                            }
-                        },
-                        "required": [
-                            "provider",
-                            "secretId"
-                        ],
-                        "type": "object"
+                    "version": {
+                        "type": "string"
                     }
-                ]
+                },
+                "required": [
+                    "id"
+                ],
+                "type": "object"
             },
-            "Term": {
+            "term": {
                 "additionalProperties": false,
                 "properties": {
                     "plural": {
@@ -628,49 +243,17 @@
                 },
                 "type": "object"
             },
-            "Vocabulary": {
-                "$ref": "#/definitions/Record%3Cstring%2CTerm%3E"
+            "vocabulary": {
+                "additionalProperties": {
+                    "$ref": "#/definitions/term"
+                },
+                "minProperties": 1,
+                "type": "object"
             }
         },
         "properties": {
             "access": {
-                "additionalProperties": false,
-                "properties": {
-                    "id": {
-                        "type": "string"
-                    },
-                    "layer": {
-                        "$ref": "#/definitions/AccessLayer"
-                    },
-                    "name": {
-                        "type": "string"
-                    },
-                    "rules": {
-                        "$ref": "#/definitions/AccessRulesBlock"
-                    },
-                    "targetScheme": {
-                        "$ref": "#/definitions/AccessPolicyTargetScheme"
-                    },
-                    "type": {
-                        "enum": [
-                            "access",
-                            "layer"
-                        ],
-                        "type": "string"
-                    },
-                    "version": {
-                        "type": "string"
-                    },
-                    "vocabulary": {
-                        "$ref": "#/definitions/Vocabulary"
-                    }
-                },
-                "required": [
-                    "id",
-                    "targetScheme",
-                    "rules"
-                ],
-                "type": "object"
+                "$ref": "#/definitions/AccessBlock"
             }
         },
         "required": [
@@ -678,7 +261,7 @@
         ],
         "type": "object"
     },
-    "context-definition.schema.json": {
+    "context.schema.json": {
         "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false,
         "definitions": {
@@ -844,17 +427,15 @@
         ],
         "type": "object"
     },
-    "crosswalk-definition.schema.json": {
-        "$schema": "http://json-schema.org/draft-07/schema#",
-        "additionalProperties": false,
-        "definitions": {
-            "AssertionReference": {
+    "crosswalk.schema.json": {
+        "$defs": {
+            "CrosswalkAssertionDoc": {
                 "additionalProperties": false,
                 "properties": {
-                    "categoryId": {
+                    "category": {
                         "type": "string"
                     },
-                    "conceptId": {
+                    "concept": {
                         "type": "string"
                     },
                     "value": {
@@ -862,8 +443,8 @@
                     }
                 },
                 "required": [
-                    "categoryId",
-                    "conceptId"
+                    "category",
+                    "concept"
                 ],
                 "type": "object"
             },
@@ -884,7 +465,7 @@
                     },
                     "removes": {
                         "items": {
-                            "$ref": "#/definitions/CrosswalkLayerRemoval"
+                            "$ref": "#/$defs/CrosswalkLayerRemoval"
                         },
                         "type": "array"
                     },
@@ -896,7 +477,7 @@
                     },
                     "restores": {
                         "items": {
-                            "$ref": "#/definitions/CrosswalkLayerRemoval"
+                            "$ref": "#/$defs/CrosswalkLayerRemoval"
                         },
                         "type": "array"
                     }
@@ -934,7 +515,7 @@
                     }
                 ]
             },
-            "CrosswalkMapping": {
+            "CrosswalkMappingDoc": {
                 "additionalProperties": false,
                 "properties": {
                     "authority": {
@@ -944,7 +525,7 @@
                         "type": "string"
                     },
                     "disposition": {
-                        "$ref": "#/definitions/CrosswalkDisposition"
+                        "$ref": "#/$defs/CrosswalkDisposition"
                     },
                     "guidance": {
                         "type": "string"
@@ -952,15 +533,18 @@
                     "id": {
                         "type": "string"
                     },
+                    "marking": {
+                        "type": "string"
+                    },
                     "reason": {
                         "type": "string"
                     },
                     "source": {
-                        "$ref": "#/definitions/AssertionReference"
+                        "$ref": "#/$defs/CrosswalkAssertionDoc"
                     },
                     "targets": {
                         "items": {
-                            "$ref": "#/definitions/CrosswalkTarget"
+                            "$ref": "#/$defs/CrosswalkTargetDoc"
                         },
                         "type": "array"
                     }
@@ -973,10 +557,142 @@
                 ],
                 "type": "object"
             },
-            "CrosswalkSchemeDependency": {
+            "CrosswalkSelectionCandidateDoc": {
+                "additionalProperties": false,
+                "properties": {
+                    "authority": {
+                        "type": "string"
+                    },
+                    "citation": {
+                        "type": "string"
+                    },
+                    "disposition": {
+                        "$ref": "#/$defs/CrosswalkDisposition"
+                    },
+                    "guidance": {
+                        "type": "string"
+                    },
+                    "id": {
+                        "type": "string"
+                    },
+                    "mappings": {
+                        "items": {
+                            "$ref": "#/$defs/CrosswalkMappingDoc"
+                        },
+                        "type": "array"
+                    },
+                    "reason": {
+                        "type": "string"
+                    },
+                    "score": {
+                        "items": {
+                            "$ref": "#/$defs/CrosswalkAssertionDoc"
+                        },
+                        "type": "array"
+                    },
+                    "sources": {
+                        "items": {
+                            "$ref": "#/$defs/CrosswalkAssertionDoc"
+                        },
+                        "type": "array"
+                    },
+                    "targets": {
+                        "items": {
+                            "$ref": "#/$defs/CrosswalkTargetDoc"
+                        },
+                        "type": "array"
+                    },
+                    "when": {
+                        "$ref": "#/$defs/CrosswalkSelectionConditionDoc"
+                    }
+                },
+                "required": [
+                    "id",
+                    "reason"
+                ],
+                "type": "object"
+            },
+            "CrosswalkSelectionConditionDoc": {
+                "additionalProperties": false,
+                "properties": {
+                    "all": {
+                        "items": {
+                            "$ref": "#/$defs/CrosswalkAssertionDoc"
+                        },
+                        "type": "array"
+                    },
+                    "any": {
+                        "items": {
+                            "$ref": "#/$defs/CrosswalkAssertionDoc"
+                        },
+                        "type": "array"
+                    },
+                    "none": {
+                        "items": {
+                            "$ref": "#/$defs/CrosswalkAssertionDoc"
+                        },
+                        "type": "array"
+                    }
+                },
+                "type": "object"
+            },
+            "CrosswalkSelectionDoc": {
+                "additionalProperties": false,
+                "properties": {
+                    "candidates": {
+                        "items": {
+                            "$ref": "#/$defs/CrosswalkSelectionCandidateDoc"
+                        },
+                        "type": "array"
+                    },
+                    "id": {
+                        "type": "string"
+                    },
+                    "strategy": {
+                        "$ref": "#/$defs/CrosswalkSelectionStrategy"
+                    }
+                },
+                "required": [
+                    "id",
+                    "strategy",
+                    "candidates"
+                ],
+                "type": "object"
+            },
+            "CrosswalkSelectionStrategy": {
+                "enum": [
+                    "first-match",
+                    "most-matches"
+                ],
+                "type": "string"
+            },
+            "CrosswalkTargetDoc": {
+                "additionalProperties": false,
+                "properties": {
+                    "category": {
+                        "type": "string"
+                    },
+                    "concept": {
+                        "type": "string"
+                    },
+                    "copy_value": {
+                        "type": "boolean"
+                    },
+                    "value": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "category",
+                    "concept"
+                ],
+                "type": "object"
+            },
+            "MarkingSchemeRefDoc": {
                 "additionalProperties": false,
                 "properties": {
                     "id": {
+                        "minLength": 1,
                         "type": "string"
                     },
                     "version": {
@@ -988,138 +704,26 @@
                 ],
                 "type": "object"
             },
-            "CrosswalkSelection": {
+            "SchemeDependencyDoc": {
                 "additionalProperties": false,
                 "properties": {
-                    "candidates": {
-                        "items": {
-                            "$ref": "#/definitions/CrosswalkSelectionCandidate"
-                        },
-                        "type": "array"
-                    },
                     "id": {
+                        "minLength": 1,
                         "type": "string"
                     },
-                    "strategy": {
-                        "$ref": "#/definitions/CrosswalkSelectionStrategy"
-                    }
-                },
-                "required": [
-                    "id",
-                    "strategy",
-                    "candidates"
-                ],
-                "type": "object"
-            },
-            "CrosswalkSelectionCandidate": {
-                "additionalProperties": false,
-                "properties": {
-                    "authority": {
-                        "type": "string"
-                    },
-                    "citation": {
-                        "type": "string"
-                    },
-                    "disposition": {
-                        "$ref": "#/definitions/CrosswalkDisposition"
-                    },
-                    "guidance": {
-                        "type": "string"
-                    },
-                    "id": {
-                        "type": "string"
-                    },
-                    "mappings": {
-                        "items": {
-                            "$ref": "#/definitions/CrosswalkMapping"
-                        },
-                        "type": "array"
-                    },
-                    "reason": {
-                        "type": "string"
-                    },
-                    "score": {
-                        "items": {
-                            "$ref": "#/definitions/AssertionReference"
-                        },
-                        "type": "array"
-                    },
-                    "sources": {
-                        "items": {
-                            "$ref": "#/definitions/AssertionReference"
-                        },
-                        "type": "array"
-                    },
-                    "targets": {
-                        "items": {
-                            "$ref": "#/definitions/CrosswalkTarget"
-                        },
-                        "type": "array"
-                    },
-                    "when": {
-                        "$ref": "#/definitions/CrosswalkSelectionCondition"
-                    }
-                },
-                "required": [
-                    "id",
-                    "reason"
-                ],
-                "type": "object"
-            },
-            "CrosswalkSelectionCondition": {
-                "additionalProperties": false,
-                "properties": {
-                    "all": {
-                        "items": {
-                            "$ref": "#/definitions/AssertionReference"
-                        },
-                        "type": "array"
-                    },
-                    "any": {
-                        "items": {
-                            "$ref": "#/definitions/AssertionReference"
-                        },
-                        "type": "array"
-                    },
-                    "none": {
-                        "items": {
-                            "$ref": "#/definitions/AssertionReference"
-                        },
-                        "type": "array"
-                    }
-                },
-                "type": "object"
-            },
-            "CrosswalkSelectionStrategy": {
-                "enum": [
-                    "first-match",
-                    "most-matches"
-                ],
-                "type": "string"
-            },
-            "CrosswalkTarget": {
-                "additionalProperties": false,
-                "properties": {
-                    "categoryId": {
-                        "type": "string"
-                    },
-                    "conceptId": {
-                        "type": "string"
-                    },
-                    "copyValue": {
-                        "type": "boolean"
-                    },
-                    "value": {
+                    "version": {
                         "type": "string"
                     }
                 },
                 "required": [
-                    "categoryId",
-                    "conceptId"
+                    "id"
                 ],
                 "type": "object"
             }
         },
+        "$id": "https://ezclassify.com/schemas/v1/crosswalk.schema.json",
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
         "properties": {
             "crosswalk": {
                 "additionalProperties": false,
@@ -1134,28 +738,34 @@
                         "type": "string"
                     },
                     "layer": {
-                        "$ref": "#/definitions/CrosswalkLayer"
+                        "$ref": "#/$defs/CrosswalkLayer"
                     },
                     "mappings": {
                         "items": {
-                            "$ref": "#/definitions/CrosswalkMapping"
+                            "$ref": "#/$defs/CrosswalkMappingDoc"
                         },
                         "type": "array"
+                    },
+                    "marking": {
+                        "type": "string"
+                    },
+                    "marking_scheme": {
+                        "$ref": "#/$defs/MarkingSchemeRefDoc"
                     },
                     "name": {
                         "type": "string"
                     },
                     "selections": {
                         "items": {
-                            "$ref": "#/definitions/CrosswalkSelection"
+                            "$ref": "#/$defs/CrosswalkSelectionDoc"
                         },
                         "type": "array"
                     },
-                    "sourceScheme": {
-                        "$ref": "#/definitions/CrosswalkSchemeDependency"
+                    "source_scheme": {
+                        "$ref": "#/$defs/SchemeDependencyDoc"
                     },
-                    "targetScheme": {
-                        "$ref": "#/definitions/CrosswalkSchemeDependency"
+                    "target_scheme": {
+                        "$ref": "#/$defs/SchemeDependencyDoc"
                     },
                     "type": {
                         "enum": [
@@ -1172,8 +782,8 @@
                     "id",
                     "version",
                     "name",
-                    "sourceScheme",
-                    "targetScheme",
+                    "source_scheme",
+                    "target_scheme",
                     "mappings"
                 ],
                 "type": "object"
@@ -1182,35 +792,12 @@
         "required": [
             "crosswalk"
         ],
+        "title": "EzClassify Crosswalk Schema",
         "type": "object"
     },
-    "guide-definition.schema.json": {
-        "$schema": "http://json-schema.org/draft-07/schema#",
-        "additionalProperties": false,
-        "definitions": {
-            "AttributionDoc": {
-                "additionalProperties": false,
-                "properties": {
-                    "citation": {
-                        "type": "string"
-                    },
-                    "license": {
-                        "type": "string"
-                    },
-                    "licenseUrl": {
-                        "type": "string"
-                    },
-                    "name": {
-                        "type": "string"
-                    }
-                },
-                "required": [
-                    "name",
-                    "license"
-                ],
-                "type": "object"
-            },
-            "CharacterWindow": {
+    "guide.schema.json": {
+        "$defs": {
+            "character_window": {
                 "additionalProperties": false,
                 "properties": {
                     "chars": {
@@ -1223,13 +810,14 @@
                 ],
                 "type": "object"
             },
-            "ConceptRef": {
+            "concept_ref": {
                 "additionalProperties": false,
                 "properties": {
                     "category": {
                         "type": "string"
                     },
                     "id": {
+                        "minLength": 1,
                         "type": "string"
                     },
                     "value": {
@@ -1241,358 +829,15 @@
                 ],
                 "type": "object"
             },
-            "ExternalSourceAuth": {
-                "additionalProperties": false,
-                "properties": {
-                    "accessKeyRef": {
-                        "$ref": "#/definitions/SecretRefDoc"
-                    },
-                    "clientCredentialRef": {
-                        "$ref": "#/definitions/SecretRefDoc"
-                    },
-                    "credentialRef": {
-                        "$ref": "#/definitions/SecretRefDoc"
-                    },
-                    "flow": {
-                        "enum": [
-                            "none",
-                            "basic",
-                            "bearer",
-                            "header",
-                            "aws-sigv4",
-                            "oauth2-cc"
-                        ],
-                        "type": "string"
-                    },
-                    "params": {
-                        "$ref": "#/definitions/Record%3Cstring%2Cstring%3E"
-                    },
-                    "secretKeyRef": {
-                        "$ref": "#/definitions/SecretRefDoc"
-                    }
-                },
-                "required": [
-                    "flow"
-                ],
-                "type": "object"
-            },
-            "ExternalSourceCapabilities": {
-                "additionalProperties": false,
-                "properties": {
-                    "ancestorsOf": {
-                        "type": "boolean"
-                    },
-                    "childrenOf": {
-                        "type": "boolean"
-                    },
-                    "count": {
-                        "type": "boolean"
-                    },
-                    "enumerate": {
-                        "type": "boolean"
-                    },
-                    "prefixMatch": {
-                        "type": "boolean"
-                    },
-                    "resolveAliases": {
-                        "enum": [
-                            "exact",
-                            "fuzzy",
-                            "none"
-                        ],
-                        "type": "string"
-                    },
-                    "search": {
-                        "type": "boolean"
-                    }
-                },
-                "type": "object"
-            },
-            "ExternalSourcePagination": {
-                "anyOf": [
-                    {
-                        "additionalProperties": false,
-                        "properties": {
-                            "style": {
-                                "const": "none",
-                                "type": "string"
-                            }
-                        },
-                        "required": [
-                            "style"
-                        ],
-                        "type": "object"
-                    },
-                    {
-                        "additionalProperties": false,
-                        "properties": {
-                            "pageParam": {
-                                "type": "string"
-                            },
-                            "start": {
-                                "type": "integer"
-                            },
-                            "style": {
-                                "const": "page",
-                                "type": "string"
-                            }
-                        },
-                        "required": [
-                            "style",
-                            "pageParam",
-                            "start"
-                        ],
-                        "type": "object"
-                    },
-                    {
-                        "additionalProperties": false,
-                        "properties": {
-                            "offsetParam": {
-                                "type": "string"
-                            },
-                            "style": {
-                                "const": "offset",
-                                "type": "string"
-                            }
-                        },
-                        "required": [
-                            "style",
-                            "offsetParam"
-                        ],
-                        "type": "object"
-                    },
-                    {
-                        "additionalProperties": false,
-                        "properties": {
-                            "cursorParam": {
-                                "type": "string"
-                            },
-                            "nextField": {
-                                "type": "string"
-                            },
-                            "style": {
-                                "const": "cursor",
-                                "type": "string"
-                            }
-                        },
-                        "required": [
-                            "style",
-                            "cursorParam",
-                            "nextField"
-                        ],
-                        "type": "object"
-                    },
-                    {
-                        "additionalProperties": false,
-                        "properties": {
-                            "style": {
-                                "const": "link-header",
-                                "type": "string"
-                            }
-                        },
-                        "required": [
-                            "style"
-                        ],
-                        "type": "object"
-                    }
-                ]
-            },
-            "ExternalSourceQueryParams": {
-                "additionalProperties": false,
-                "properties": {
-                    "pageSize": {
-                        "type": "string"
-                    },
-                    "prefix": {
-                        "type": "string"
-                    },
-                    "scope": {
-                        "type": "string"
-                    },
-                    "search": {
-                        "type": "string"
-                    }
-                },
-                "type": "object"
-            },
-            "ExternalSourceSpec<RuleMappingDoc>": {
-                "additionalProperties": false,
-                "properties": {
-                    "attribution": {
-                        "$ref": "#/definitions/AttributionDoc"
-                    },
-                    "auth": {
-                        "$ref": "#/definitions/ExternalSourceAuth"
-                    },
-                    "capabilities": {
-                        "$ref": "#/definitions/ExternalSourceCapabilities"
-                    },
-                    "grantId": {
-                        "type": "string"
-                    },
-                    "headers": {
-                        "$ref": "#/definitions/Record%3Cstring%2Cstring%3E"
-                    },
-                    "id": {
-                        "type": "string"
-                    },
-                    "liveFetch": {
-                        "type": "boolean"
-                    },
-                    "mapping": {
-                        "$ref": "#/definitions/RuleMappingDoc"
-                    },
-                    "mappingHash": {
-                        "type": "string"
-                    },
-                    "pagination": {
-                        "$ref": "#/definitions/ExternalSourcePagination"
-                    },
-                    "query": {
-                        "$ref": "#/definitions/Record%3Cstring%2Cstring%3E"
-                    },
-                    "queryParams": {
-                        "$ref": "#/definitions/ExternalSourceQueryParams"
-                    },
-                    "rateLimit": {
-                        "additionalProperties": false,
-                        "properties": {
-                            "burst": {
-                                "type": "integer"
-                            },
-                            "windowMs": {
-                                "type": "number"
-                            }
-                        },
-                        "required": [
-                            "burst",
-                            "windowMs"
-                        ],
-                        "type": "object"
-                    },
-                    "recordsPath": {
-                        "type": "string"
-                    },
-                    "snapshotId": {
-                        "pattern": "^sha256:[0-9a-f]{64}$",
-                        "type": "string"
-                    },
-                    "snapshotRef": {
-                        "type": "string"
-                    },
-                    "source": {
-                        "type": "string"
-                    },
-                    "srcref": {
-                        "type": "string"
-                    },
-                    "timeoutMs": {
-                        "type": "number"
-                    },
-                    "tls": {
-                        "$ref": "#/definitions/ExternalSourceTls"
-                    },
-                    "transport": {
-                        "$ref": "#/definitions/ExternalSourceTransport"
-                    }
-                },
-                "required": [
-                    "source",
-                    "mapping"
-                ],
-                "type": "object"
-            },
-            "ExternalSourceTls": {
-                "additionalProperties": false,
-                "if": {
-                    "required": [
-                        "keyPassphraseRef"
-                    ]
-                },
-                "minProperties": 1,
-                "properties": {
-                    "caBundleRef": {
-                        "$ref": "#/definitions/SecretRefDoc"
-                    },
-                    "clientCertAndKeyRef": {
-                        "$ref": "#/definitions/SecretRefDoc"
-                    },
-                    "keyPassphraseRef": {
-                        "$ref": "#/definitions/SecretRefDoc"
-                    }
-                },
-                "then": {
-                    "required": [
-                        "clientCertAndKeyRef"
-                    ]
-                },
-                "type": "object"
-            },
-            "ExternalSourceTransport": {
-                "enum": [
-                    "http",
-                    "file",
-                    "inline-data"
-                ],
-                "type": "string"
-            },
-            "GuideBlock": {
-                "additionalProperties": false,
-                "properties": {
-                    "categories": {
-                        "items": {
-                            "$ref": "#/definitions/GuideCategory"
-                        },
-                        "type": "array"
-                    },
-                    "id": {
-                        "type": "string"
-                    },
-                    "layer": {
-                        "$ref": "#/definitions/GuideLayer"
-                    },
-                    "name": {
-                        "type": "string"
-                    },
-                    "rules": {
-                        "$ref": "#/definitions/GuideRulesBlock"
-                    },
-                    "targetSchemes": {
-                        "items": {
-                            "$ref": "#/definitions/GuideDependency"
-                        },
-                        "type": "array"
-                    },
-                    "type": {
-                        "enum": [
-                            "guide",
-                            "layer"
-                        ],
-                        "type": "string"
-                    },
-                    "version": {
-                        "type": "string"
-                    },
-                    "vocabulary": {
-                        "$ref": "#/definitions/Vocabulary"
-                    }
-                },
-                "required": [
-                    "id",
-                    "version",
-                    "name",
-                    "targetSchemes",
-                    "rules"
-                ],
-                "type": "object"
-            },
-            "GuideCategory": {
+            "guide_category": {
                 "additionalProperties": false,
                 "properties": {
                     "id": {
+                        "minLength": 1,
                         "type": "string"
                     },
                     "label": {
+                        "minLength": 1,
                         "type": "string"
                     }
                 },
@@ -1602,42 +847,29 @@
                 ],
                 "type": "object"
             },
-            "GuideDependency": {
-                "additionalProperties": false,
-                "properties": {
-                    "id": {
-                        "type": "string"
-                    },
-                    "version": {
-                        "type": "string"
-                    }
-                },
-                "required": [
-                    "id"
-                ],
-                "type": "object"
-            },
-            "GuideLayer": {
+            "guide_layer": {
                 "additionalProperties": false,
                 "properties": {
                     "base": {
+                        "minLength": 1,
                         "type": "string"
                     },
                     "removes": {
                         "items": {
-                            "$ref": "#/definitions/GuideLayerRemoval"
+                            "$ref": "#/$defs/guide_layer_removal"
                         },
                         "type": "array"
                     },
                     "requires": {
                         "items": {
+                            "minLength": 1,
                             "type": "string"
                         },
                         "type": "array"
                     },
                     "restores": {
                         "items": {
-                            "$ref": "#/definitions/GuideLayerRemoval"
+                            "$ref": "#/$defs/guide_layer_removal"
                         },
                         "type": "array"
                     }
@@ -1647,38 +879,103 @@
                 ],
                 "type": "object"
             },
-            "GuideLayerRemoval": {
-                "anyOf": [
-                    {
+            "guide_layer_removal": {
+                "additionalProperties": false,
+                "maxProperties": 1,
+                "minProperties": 1,
+                "properties": {
+                    "category": {
+                        "minLength": 1,
+                        "type": "string"
+                    },
+                    "rule": {
+                        "minLength": 1,
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "guide_match_all": {
+                "additionalProperties": false,
+                "properties": {
+                    "all": {
+                        "items": {
+                            "$ref": "#/$defs/guide_match_node"
+                        },
+                        "minItems": 1,
+                        "type": "array"
+                    },
+                    "label": {
+                        "type": "string"
+                    },
+                    "within": {
+                        "$ref": "#/$defs/match_window"
+                    }
+                },
+                "required": [
+                    "all",
+                    "within"
+                ],
+                "type": "object"
+            },
+            "guide_match_any": {
+                "additionalProperties": false,
+                "properties": {
+                    "any": {
+                        "items": {
+                            "$ref": "#/$defs/guide_match_node"
+                        },
+                        "minItems": 1,
+                        "type": "array"
+                    },
+                    "label": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "any"
+                ],
+                "type": "object"
+            },
+            "guide_match_context": {
+                "additionalProperties": false,
+                "properties": {
+                    "context": {
                         "additionalProperties": false,
                         "properties": {
-                            "rule": {
-                                "type": "string"
+                            "candidate": {
+                                "$ref": "#/$defs/guide_match_node"
+                            },
+                            "cue": {
+                                "$ref": "#/$defs/guide_match_node"
+                            },
+                            "side": {
+                                "$ref": "#/$defs/match_context_side"
+                            },
+                            "within": {
+                                "$ref": "#/$defs/match_window"
                             }
                         },
                         "required": [
-                            "rule"
+                            "candidate",
+                            "cue",
+                            "within"
                         ],
                         "type": "object"
                     },
-                    {
-                        "additionalProperties": false,
-                        "properties": {
-                            "category": {
-                                "type": "string"
-                            }
-                        },
-                        "required": [
-                            "category"
-                        ],
-                        "type": "object"
+                    "label": {
+                        "type": "string"
                     }
-                ]
+                },
+                "required": [
+                    "context"
+                ],
+                "type": "object"
             },
-            "GuideMatchSpec": {
+            "guide_match_leaf": {
                 "additionalProperties": false,
                 "properties": {
-                    "caseSensitive": {
+                    "case_sensitive": {
                         "type": "boolean"
                     },
                     "label": {
@@ -1700,13 +997,130 @@
                 ],
                 "type": "object"
             },
-            "GuideRule": {
+            "guide_match_near": {
+                "additionalProperties": false,
+                "properties": {
+                    "label": {
+                        "type": "string"
+                    },
+                    "near": {
+                        "additionalProperties": false,
+                        "properties": {
+                            "a": {
+                                "$ref": "#/$defs/guide_match_node"
+                            },
+                            "b": {
+                                "$ref": "#/$defs/guide_match_node"
+                            },
+                            "emit": {
+                                "$ref": "#/$defs/match_near_emit"
+                            },
+                            "within": {
+                                "$ref": "#/$defs/match_window"
+                            }
+                        },
+                        "required": [
+                            "a",
+                            "b",
+                            "within"
+                        ],
+                        "type": "object"
+                    }
+                },
+                "required": [
+                    "near"
+                ],
+                "type": "object"
+            },
+            "guide_match_node": {
+                "anyOf": [
+                    {
+                        "$ref": "#/$defs/guide_match_leaf"
+                    },
+                    {
+                        "$ref": "#/$defs/guide_match_any"
+                    },
+                    {
+                        "$ref": "#/$defs/guide_match_all"
+                    },
+                    {
+                        "$ref": "#/$defs/guide_match_not"
+                    },
+                    {
+                        "$ref": "#/$defs/guide_match_near"
+                    },
+                    {
+                        "$ref": "#/$defs/guide_match_context"
+                    },
+                    {
+                        "$ref": "#/$defs/guide_match_validate"
+                    }
+                ]
+            },
+            "guide_match_not": {
+                "additionalProperties": false,
+                "properties": {
+                    "label": {
+                        "type": "string"
+                    },
+                    "not": {
+                        "$ref": "#/$defs/guide_match_node"
+                    },
+                    "of": {
+                        "$ref": "#/$defs/guide_match_node"
+                    },
+                    "within": {
+                        "$ref": "#/$defs/match_window"
+                    }
+                },
+                "required": [
+                    "not",
+                    "of",
+                    "within"
+                ],
+                "type": "object"
+            },
+            "guide_match_validate": {
+                "additionalProperties": false,
+                "properties": {
+                    "label": {
+                        "type": "string"
+                    },
+                    "validate": {
+                        "additionalProperties": false,
+                        "properties": {
+                            "args": {},
+                            "candidate": {
+                                "$ref": "#/$defs/guide_match_node"
+                            },
+                            "keep": {
+                                "$ref": "#/$defs/match_validation_keep"
+                            },
+                            "with": {
+                                "minLength": 1,
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "candidate",
+                            "with"
+                        ],
+                        "type": "object"
+                    }
+                },
+                "required": [
+                    "validate"
+                ],
+                "type": "object"
+            },
+            "guide_rule": {
                 "additionalProperties": false,
                 "properties": {
                     "category": {
                         "type": "string"
                     },
                     "id": {
+                        "minLength": 1,
                         "type": "string"
                     },
                     "keywords": {
@@ -1715,17 +1129,21 @@
                         },
                         "type": "array"
                     },
+                    "marking": {
+                        "type": "string"
+                    },
                     "match": {
                         "items": {
-                            "$ref": "#/definitions/MatchNode"
+                            "$ref": "#/$defs/guide_match_node"
                         },
                         "type": "array"
                     },
                     "name": {
+                        "minLength": 1,
                         "type": "string"
                     },
                     "outcome": {
-                        "$ref": "#/definitions/GuideRuleOutcome"
+                        "$ref": "#/$defs/guide_rule_outcome"
                     },
                     "overrides": {
                         "items": {
@@ -1737,7 +1155,7 @@
                         "type": "string"
                     },
                     "when": {
-                        "$ref": "#/definitions/RuleWhen"
+                        "$ref": "#/$defs/guide_when"
                     }
                 },
                 "required": [
@@ -1747,12 +1165,24 @@
                 ],
                 "type": "object"
             },
-            "GuideRuleOutcome": {
+            "guide_rule_outcome": {
                 "additionalProperties": false,
+                "anyOf": [
+                    {
+                        "required": [
+                            "rendered"
+                        ]
+                    },
+                    {
+                        "required": [
+                            "concepts"
+                        ]
+                    }
+                ],
                 "properties": {
                     "concepts": {
                         "items": {
-                            "$ref": "#/definitions/ConceptRef"
+                            "$ref": "#/$defs/concept_ref"
                         },
                         "type": "array"
                     },
@@ -1762,288 +1192,77 @@
                 },
                 "type": "object"
             },
-            "GuideRulesBlock": {
+            "guide_when": {
                 "additionalProperties": false,
-                "properties": {
-                    "external": {
-                        "items": {
-                            "$ref": "#/definitions/ExternalSourceSpec%3CRuleMappingDoc%3E"
-                        },
-                        "type": "array"
-                    },
-                    "inline": {
-                        "items": {
-                            "$ref": "#/definitions/GuideRule"
-                        },
-                        "type": "array"
-                    }
-                },
-                "type": "object"
-            },
-            "MatchAllNode": {
-                "additionalProperties": false,
+                "minProperties": 1,
                 "properties": {
                     "all": {
                         "items": {
-                            "$ref": "#/definitions/MatchNode"
+                            "$ref": "#/$defs/guide_when_node"
                         },
                         "minItems": 1,
                         "type": "array"
                     },
-                    "label": {
-                        "type": "string"
-                    },
-                    "within": {
-                        "$ref": "#/definitions/Win"
-                    }
-                },
-                "required": [
-                    "all",
-                    "within"
-                ],
-                "type": "object"
-            },
-            "MatchAnyNode": {
-                "additionalProperties": false,
-                "properties": {
                     "any": {
                         "items": {
-                            "$ref": "#/definitions/MatchNode"
+                            "$ref": "#/$defs/guide_when_node"
                         },
                         "minItems": 1,
                         "type": "array"
                     },
-                    "label": {
+                    "none": {
+                        "items": {
+                            "$ref": "#/$defs/guide_when_node"
+                        },
+                        "minItems": 1,
+                        "type": "array"
+                    }
+                },
+                "type": "object"
+            },
+            "guide_when_has": {
+                "additionalProperties": false,
+                "properties": {
+                    "has": {
                         "type": "string"
                     }
                 },
                 "required": [
-                    "any"
+                    "has"
                 ],
                 "type": "object"
             },
-            "MatchContextExpression": {
-                "additionalProperties": false,
-                "properties": {
-                    "candidate": {
-                        "$ref": "#/definitions/MatchNode"
-                    },
-                    "cue": {
-                        "$ref": "#/definitions/MatchNode"
-                    },
-                    "side": {
-                        "$ref": "#/definitions/MatchContextSide"
-                    },
-                    "within": {
-                        "$ref": "#/definitions/Win"
-                    }
-                },
-                "required": [
-                    "candidate",
-                    "cue",
-                    "within"
-                ],
-                "type": "object"
-            },
-            "MatchContextNode": {
-                "additionalProperties": false,
-                "properties": {
-                    "context": {
-                        "$ref": "#/definitions/MatchContextExpression"
-                    },
-                    "label": {
-                        "type": "string"
-                    }
-                },
-                "required": [
-                    "context"
-                ],
-                "type": "object"
-            },
-            "MatchContextSide": {
-                "enum": [
-                    "before",
-                    "after",
-                    "both"
-                ],
-                "type": "string"
-            },
-            "MatchNearEmit": {
-                "enum": [
-                    "a",
-                    "b",
-                    "envelope"
-                ],
-                "type": "string"
-            },
-            "MatchNearExpression": {
-                "additionalProperties": false,
-                "properties": {
-                    "a": {
-                        "$ref": "#/definitions/MatchNode"
-                    },
-                    "b": {
-                        "$ref": "#/definitions/MatchNode"
-                    },
-                    "emit": {
-                        "$ref": "#/definitions/MatchNearEmit"
-                    },
-                    "within": {
-                        "$ref": "#/definitions/Win"
-                    }
-                },
-                "required": [
-                    "a",
-                    "b",
-                    "within"
-                ],
-                "type": "object"
-            },
-            "MatchNearNode": {
-                "additionalProperties": false,
-                "properties": {
-                    "label": {
-                        "type": "string"
-                    },
-                    "near": {
-                        "$ref": "#/definitions/MatchNearExpression"
-                    }
-                },
-                "required": [
-                    "near"
-                ],
-                "type": "object"
-            },
-            "MatchNode": {
+            "guide_when_node": {
                 "anyOf": [
                     {
-                        "$ref": "#/definitions/GuideMatchSpec"
+                        "$ref": "#/$defs/guide_when_has"
                     },
                     {
-                        "$ref": "#/definitions/MatchAnyNode"
+                        "$ref": "#/$defs/guide_when_test"
                     },
                     {
-                        "$ref": "#/definitions/MatchAllNode"
-                    },
-                    {
-                        "$ref": "#/definitions/MatchNotNode"
-                    },
-                    {
-                        "$ref": "#/definitions/MatchNearNode"
-                    },
-                    {
-                        "$ref": "#/definitions/MatchContextNode"
-                    },
-                    {
-                        "$ref": "#/definitions/MatchValidateNode"
+                        "$ref": "#/$defs/guide_when"
                     }
                 ]
             },
-            "MatchNotNode": {
-                "additionalProperties": false,
-                "properties": {
-                    "label": {
-                        "type": "string"
-                    },
-                    "not": {
-                        "$ref": "#/definitions/MatchNode"
-                    },
-                    "of": {
-                        "$ref": "#/definitions/MatchNode"
-                    },
-                    "within": {
-                        "$ref": "#/definitions/Win"
-                    }
-                },
-                "required": [
-                    "not",
-                    "of",
-                    "within"
-                ],
-                "type": "object"
-            },
-            "MatchValidateNode": {
-                "additionalProperties": false,
-                "properties": {
-                    "label": {
-                        "type": "string"
-                    },
-                    "validate": {
-                        "$ref": "#/definitions/MatchValidationExpression"
-                    }
-                },
-                "required": [
-                    "validate"
-                ],
-                "type": "object"
-            },
-            "MatchValidationExpression": {
-                "additionalProperties": false,
-                "properties": {
-                    "args": {},
-                    "candidate": {
-                        "$ref": "#/definitions/MatchNode"
-                    },
-                    "keep": {
-                        "$ref": "#/definitions/MatchValidationKeep"
-                    },
-                    "with": {
-                        "minLength": 1,
-                        "type": "string"
-                    }
-                },
-                "required": [
-                    "candidate",
-                    "with"
-                ],
-                "type": "object"
-            },
-            "MatchValidationKeep": {
+            "guide_when_operator": {
                 "enum": [
-                    "pass",
-                    "fail"
+                    "has_concept",
+                    "not_has_concept",
+                    "has_content",
+                    "count_gt",
+                    "count_gte",
+                    "count_eq",
+                    "count_lt",
+                    "count_lte"
                 ],
                 "type": "string"
             },
-            "ProcessingRole": {
-                "enum": [
-                    "whole",
-                    "part"
-                ],
-                "type": "string"
-            },
-            "Record<string,Term>": {
-                "additionalProperties": {
-                    "$ref": "#/definitions/Term"
-                },
-                "type": "object"
-            },
-            "Record<string,string>": {
-                "additionalProperties": {
-                    "type": "string"
-                },
-                "type": "object"
-            },
-            "RuleCondition": {
+            "guide_when_test": {
                 "additionalProperties": false,
                 "properties": {
-                    "category": {
-                        "type": "string"
-                    },
-                    "has": {
-                        "type": "string"
-                    },
-                    "is": {
-                        "type": "string"
-                    },
                     "operator": {
-                        "type": "string"
-                    },
-                    "role": {
-                        "$ref": "#/definitions/ProcessingRole"
-                    },
-                    "target": {
-                        "$ref": "#/definitions/RuleConditionTarget"
+                        "$ref": "#/$defs/guide_when_operator"
                     },
                     "value": {
                         "type": [
@@ -2052,246 +1271,91 @@
                         ]
                     }
                 },
+                "required": [
+                    "operator"
+                ],
                 "type": "object"
             },
-            "RuleConditionTarget": {
-                "enum": [
-                    "self",
-                    "context",
-                    "contributors"
-                ],
-                "type": "string"
-            },
-            "RuleContributorQuantifier": {
-                "enum": [
-                    "any",
-                    "all",
-                    "none"
-                ],
-                "type": "string"
-            },
-            "RuleMappingDoc": {
+            "marking_scheme_ref": {
                 "additionalProperties": false,
                 "properties": {
-                    "record": {
+                    "id": {
+                        "minLength": 1,
                         "type": "string"
                     },
-                    "rule": {
-                        "additionalProperties": false,
-                        "properties": {
-                            "category": {
-                                "type": "string"
-                            },
-                            "id": {
-                                "type": "string"
-                            },
-                            "keywords": {
-                                "anyOf": [
-                                    {
-                                        "items": {
-                                            "type": "string"
-                                        },
-                                        "type": "array"
-                                    },
-                                    {
-                                        "type": "string"
-                                    }
-                                ]
-                            },
-                            "name": {
-                                "type": "string"
-                            },
-                            "outcome": {
-                                "additionalProperties": false,
-                                "properties": {
-                                    "concepts": {
-                                        "type": "string"
-                                    },
-                                    "rendered": {
-                                        "type": "string"
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        },
-                        "required": [
-                            "id"
-                        ],
-                        "type": "object"
+                    "version": {
+                        "type": "string"
                     }
                 },
                 "required": [
-                    "rule"
+                    "id"
                 ],
                 "type": "object"
             },
-            "RuleWhen": {
+            "match_context_side": {
+                "enum": [
+                    "before",
+                    "after",
+                    "both"
+                ],
+                "type": "string"
+            },
+            "match_near_emit": {
+                "enum": [
+                    "a",
+                    "b",
+                    "envelope"
+                ],
+                "type": "string"
+            },
+            "match_validation_keep": {
+                "enum": [
+                    "pass",
+                    "fail"
+                ],
+                "type": "string"
+            },
+            "match_window": {
                 "anyOf": [
                     {
-                        "type": "string"
+                        "$ref": "#/$defs/token_window"
                     },
                     {
-                        "items": {
-                            "type": "string"
-                        },
-                        "type": "array"
-                    },
-                    {
-                        "$ref": "#/definitions/RuleWhenQuantifier"
+                        "$ref": "#/$defs/character_window"
                     }
                 ]
             },
-            "RuleWhenNode": {
-                "anyOf": [
-                    {
-                        "$ref": "#/definitions/RuleCondition"
-                    },
-                    {
-                        "$ref": "#/definitions/RuleWhenQuantifier"
-                    }
-                ]
-            },
-            "RuleWhenQuantifier": {
+            "scheme_dependency": {
                 "additionalProperties": false,
                 "properties": {
-                    "all": {
-                        "items": {
-                            "$ref": "#/definitions/RuleWhenNode"
-                        },
-                        "type": "array"
+                    "id": {
+                        "minLength": 1,
+                        "type": "string"
                     },
-                    "any": {
-                        "items": {
-                            "$ref": "#/definitions/RuleWhenNode"
-                        },
-                        "type": "array"
-                    },
-                    "none": {
-                        "items": {
-                            "$ref": "#/definitions/RuleWhenNode"
-                        },
-                        "type": "array"
-                    },
-                    "quantifier": {
-                        "$ref": "#/definitions/RuleContributorQuantifier"
-                    },
-                    "target": {
-                        "const": "contributors",
+                    "version": {
                         "type": "string"
                     }
                 },
+                "required": [
+                    "id"
+                ],
                 "type": "object"
             },
-            "SecretRefDoc": {
-                "anyOf": [
-                    {
-                        "additionalProperties": false,
-                        "properties": {
-                            "envVar": {
-                                "type": "string"
-                            },
-                            "provider": {
-                                "const": "env",
-                                "type": "string"
-                            }
-                        },
-                        "required": [
-                            "provider",
-                            "envVar"
-                        ],
-                        "type": "object"
-                    },
-                    {
-                        "additionalProperties": false,
-                        "properties": {
-                            "certVar": {
-                                "type": "string"
-                            },
-                            "keyVar": {
-                                "type": "string"
-                            },
-                            "provider": {
-                                "const": "env",
-                                "type": "string"
-                            }
-                        },
-                        "required": [
-                            "provider",
-                            "certVar",
-                            "keyVar"
-                        ],
-                        "type": "object"
-                    },
-                    {
-                        "additionalProperties": false,
-                        "properties": {
-                            "path": {
-                                "type": "string"
-                            },
-                            "provider": {
-                                "const": "file",
-                                "type": "string"
-                            }
-                        },
-                        "required": [
-                            "provider",
-                            "path"
-                        ],
-                        "type": "object"
-                    },
-                    {
-                        "additionalProperties": false,
-                        "properties": {
-                            "certPath": {
-                                "type": "string"
-                            },
-                            "keyPath": {
-                                "type": "string"
-                            },
-                            "provider": {
-                                "const": "file",
-                                "type": "string"
-                            }
-                        },
-                        "required": [
-                            "provider",
-                            "certPath",
-                            "keyPath"
-                        ],
-                        "type": "object"
-                    },
-                    {
-                        "additionalProperties": false,
-                        "properties": {
-                            "provider": {
-                                "const": "secret-store",
-                                "type": "string"
-                            },
-                            "secretId": {
-                                "type": "string"
-                            }
-                        },
-                        "required": [
-                            "provider",
-                            "secretId"
-                        ],
-                        "type": "object"
-                    }
-                ]
-            },
-            "Term": {
+            "term": {
                 "additionalProperties": false,
                 "properties": {
                     "plural": {
+                        "minLength": 1,
                         "type": "string"
                     },
                     "singular": {
+                        "minLength": 1,
                         "type": "string"
                     }
                 },
                 "type": "object"
             },
-            "TokenWindow": {
+            "token_window": {
                 "additionalProperties": false,
                 "properties": {
                     "tokens": {
@@ -2304,31 +1368,89 @@
                 ],
                 "type": "object"
             },
-            "Vocabulary": {
-                "$ref": "#/definitions/Record%3Cstring%2CTerm%3E"
-            },
-            "Win": {
-                "anyOf": [
-                    {
-                        "$ref": "#/definitions/TokenWindow"
-                    },
-                    {
-                        "$ref": "#/definitions/CharacterWindow"
-                    }
-                ]
+            "vocabulary": {
+                "additionalProperties": {
+                    "$ref": "#/$defs/term"
+                },
+                "minProperties": 1,
+                "type": "object"
             }
         },
+        "$id": "https://ezclassify.com/schemas/v1/guide.schema.json",
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
         "properties": {
             "guide": {
-                "$ref": "#/definitions/GuideBlock"
+                "additionalProperties": false,
+                "properties": {
+                    "categories": {
+                        "items": {
+                            "$ref": "#/$defs/guide_category"
+                        },
+                        "type": "array"
+                    },
+                    "id": {
+                        "minLength": 1,
+                        "type": "string"
+                    },
+                    "layer": {
+                        "$ref": "#/$defs/guide_layer"
+                    },
+                    "marking": {
+                        "type": "string"
+                    },
+                    "marking_scheme": {
+                        "$ref": "#/$defs/marking_scheme_ref"
+                    },
+                    "name": {
+                        "minLength": 1,
+                        "type": "string"
+                    },
+                    "rules": {
+                        "items": {
+                            "$ref": "#/$defs/guide_rule"
+                        },
+                        "type": "array"
+                    },
+                    "target_schemes": {
+                        "items": {
+                            "$ref": "#/$defs/scheme_dependency"
+                        },
+                        "minItems": 1,
+                        "type": "array"
+                    },
+                    "type": {
+                        "enum": [
+                            "guide",
+                            "layer"
+                        ],
+                        "type": "string"
+                    },
+                    "version": {
+                        "minLength": 1,
+                        "type": "string"
+                    },
+                    "vocabulary": {
+                        "$ref": "#/$defs/vocabulary"
+                    }
+                },
+                "required": [
+                    "id",
+                    "version",
+                    "name",
+                    "target_schemes",
+                    "rules"
+                ],
+                "type": "object"
             }
         },
         "required": [
             "guide"
         ],
+        "title": "EzClassify Guide Schema",
         "type": "object"
     },
-    "scheme-definition.schema.json": {
+    "scheme.schema.json": {
         "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false,
         "definitions": {
@@ -2420,7 +1542,7 @@
                     "license": {
                         "type": "string"
                     },
-                    "licenseUrl": {
+                    "license_url": {
                         "type": "string"
                     },
                     "name": {
@@ -2436,12 +1558,6 @@
             "CategoryDoc": {
                 "additionalProperties": false,
                 "properties": {
-                    "allowed_concepts": {
-                        "items": {
-                            "type": "string"
-                        },
-                        "type": "array"
-                    },
                     "citation": {
                         "type": "string"
                     },
@@ -2473,6 +1589,9 @@
                     "label": {
                         "$ref": "#/definitions/CategoryLabelDoc"
                     },
+                    "marking": {
+                        "type": "string"
+                    },
                     "position": {
                         "type": "number"
                     },
@@ -2488,12 +1607,7 @@
                             "min",
                             "union",
                             "intersection",
-                            "symmetric_difference",
-                            "exclusive_or",
-                            "complement",
                             "first",
-                            "last",
-                            "least_upper_bound",
                             "pipeline"
                         ],
                         "type": "string"
@@ -2518,27 +1632,16 @@
                                 "type": "string"
                             },
                             {
-                                "const": "numeric",
-                                "type": "string"
-                            },
-                            {
                                 "items": {
                                     "enum": [
                                         "position",
-                                        "alphabetical",
-                                        "numeric"
+                                        "alphabetical"
                                     ],
                                     "type": "string"
                                 },
                                 "type": "array"
                             }
                         ]
-                    },
-                    "suppress_if_subset_of": {
-                        "type": "string"
-                    },
-                    "views": {
-                        "$ref": "#/definitions/Record%3Cstring%2Cstring%3E"
                     }
                 },
                 "required": [
@@ -2801,24 +1904,6 @@
                 },
                 "type": "object"
             },
-            "ConceptCategoryMappingDoc": {
-                "additionalProperties": false,
-                "properties": {
-                    "id": {
-                        "type": "string"
-                    },
-                    "unless": {
-                        "type": "string"
-                    },
-                    "when": {
-                        "type": "string"
-                    }
-                },
-                "required": [
-                    "id"
-                ],
-                "type": "object"
-            },
             "ConceptColor": {
                 "additionalProperties": false,
                 "properties": {
@@ -2885,6 +1970,9 @@
                         },
                         "type": "array"
                     },
+                    "marking": {
+                        "type": "string"
+                    },
                     "members": {
                         "items": {
                             "type": "string"
@@ -2924,15 +2012,6 @@
                     "stands_for_whole": {
                         "type": "string"
                     },
-                    "supersedes": {
-                        "items": {
-                            "type": "string"
-                        },
-                        "type": "array"
-                    },
-                    "synonyms": {
-                        "$ref": "#/definitions/Record%3Cstring%2Cstring%3E"
-                    },
                     "text_input": {
                         "$ref": "#/definitions/TextInputDoc"
                     },
@@ -2969,29 +2048,58 @@
                 ],
                 "type": "object"
             },
-            "ConceptGroupDoc": {
+            "ConceptImportCategoryDoc": {
                 "additionalProperties": false,
                 "properties": {
-                    "concept_ids": {
-                        "items": {
-                            "type": "string"
-                        },
-                        "type": "array"
-                    },
                     "id": {
                         "type": "string"
                     },
-                    "name": {
+                    "unless": {
+                        "type": "string"
+                    },
+                    "when": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "id"
+                ],
+                "type": "object"
+            },
+            "ConceptImportDoc": {
+                "additionalProperties": false,
+                "properties": {
+                    "attribution": {
+                        "$ref": "#/definitions/AttributionDoc"
+                    },
+                    "id": {
+                        "minLength": 1,
+                        "type": "string"
+                    },
+                    "mapping": {
+                        "$ref": "#/definitions/ConceptImportMappingDoc"
+                    },
+                    "records": {
+                        "items": {
+                            "$ref": "#/definitions/Record%3Cstring%2Cunknown%3E"
+                        },
+                        "minItems": 1,
+                        "type": "array"
+                    },
+                    "snapshot_id": {
+                        "pattern": "^sha256:[0-9a-f]{64}$",
                         "type": "string"
                     }
                 },
                 "required": [
                     "id",
-                    "concept_ids"
+                    "attribution",
+                    "records",
+                    "mapping"
                 ],
                 "type": "object"
             },
-            "ConceptMappingDoc": {
+            "ConceptImportMappingDoc": {
                 "additionalProperties": false,
                 "properties": {
                     "concept": {
@@ -3012,7 +2120,7 @@
                                                     "type": "string"
                                                 },
                                                 {
-                                                    "$ref": "#/definitions/ConceptCategoryMappingDoc"
+                                                    "$ref": "#/definitions/ConceptImportCategoryDoc"
                                                 }
                                             ]
                                         },
@@ -3050,18 +2158,6 @@
                             "rank": {
                                 "type": "string"
                             },
-                            "search": {
-                                "additionalProperties": false,
-                                "properties": {
-                                    "queryParam": {
-                                        "type": "string"
-                                    }
-                                },
-                                "required": [
-                                    "queryParam"
-                                ],
-                                "type": "object"
-                            },
                             "views": {
                                 "$ref": "#/definitions/Record%3Cstring%2Cstring%3E"
                             }
@@ -3072,9 +2168,6 @@
                         "type": "object"
                     },
                     "omit": {
-                        "type": "string"
-                    },
-                    "record": {
                         "type": "string"
                     }
                 },
@@ -3098,10 +2191,7 @@
                     "type": {
                         "enum": [
                             "warning",
-                            "handling",
-                            "admonition",
-                            "distribution",
-                            "info"
+                            "admonition"
                         ],
                         "type": "string"
                     },
@@ -3120,9 +2210,6 @@
                 "additionalProperties": false,
                 "properties": {
                     "category": {
-                        "type": "string"
-                    },
-                    "category_id": {
                         "type": "string"
                     },
                     "has": {
@@ -3152,7 +2239,6 @@
             "ConditionOperator": {
                 "enum": [
                     "has_content",
-                    "has_no_content",
                     "has_concept",
                     "not_has_concept",
                     "every_has_concept",
@@ -3161,12 +2247,7 @@
                     "count_gte",
                     "count_eq",
                     "count_lt",
-                    "count_unique_gt",
-                    "count_unique_gte",
-                    "count_unique_eq",
-                    "count_unique_lt",
-                    "count_unique_lte",
-                    "min_order",
+                    "count_lte",
                     "min_rank",
                     "subset_of",
                     "shares_concept_with"
@@ -3220,11 +2301,7 @@
                 "additionalProperties": false,
                 "properties": {
                     "auto_insert": {
-                        "enum": [
-                            "every-paragraph",
-                            "first-line",
-                            "manual"
-                        ],
+                        "const": "every-paragraph",
                         "type": "string"
                     },
                     "pattern": {
@@ -3239,301 +2316,6 @@
                     "template"
                 ],
                 "type": "object"
-            },
-            "ExternalSourceAuth": {
-                "additionalProperties": false,
-                "properties": {
-                    "accessKeyRef": {
-                        "$ref": "#/definitions/SecretRefDoc"
-                    },
-                    "clientCredentialRef": {
-                        "$ref": "#/definitions/SecretRefDoc"
-                    },
-                    "credentialRef": {
-                        "$ref": "#/definitions/SecretRefDoc"
-                    },
-                    "flow": {
-                        "enum": [
-                            "none",
-                            "basic",
-                            "bearer",
-                            "header",
-                            "aws-sigv4",
-                            "oauth2-cc"
-                        ],
-                        "type": "string"
-                    },
-                    "params": {
-                        "$ref": "#/definitions/Record%3Cstring%2Cstring%3E"
-                    },
-                    "secretKeyRef": {
-                        "$ref": "#/definitions/SecretRefDoc"
-                    }
-                },
-                "required": [
-                    "flow"
-                ],
-                "type": "object"
-            },
-            "ExternalSourceCapabilities": {
-                "additionalProperties": false,
-                "properties": {
-                    "ancestorsOf": {
-                        "type": "boolean"
-                    },
-                    "childrenOf": {
-                        "type": "boolean"
-                    },
-                    "count": {
-                        "type": "boolean"
-                    },
-                    "enumerate": {
-                        "type": "boolean"
-                    },
-                    "prefixMatch": {
-                        "type": "boolean"
-                    },
-                    "resolveAliases": {
-                        "enum": [
-                            "exact",
-                            "fuzzy",
-                            "none"
-                        ],
-                        "type": "string"
-                    },
-                    "search": {
-                        "type": "boolean"
-                    }
-                },
-                "type": "object"
-            },
-            "ExternalSourcePagination": {
-                "anyOf": [
-                    {
-                        "additionalProperties": false,
-                        "properties": {
-                            "style": {
-                                "const": "none",
-                                "type": "string"
-                            }
-                        },
-                        "required": [
-                            "style"
-                        ],
-                        "type": "object"
-                    },
-                    {
-                        "additionalProperties": false,
-                        "properties": {
-                            "pageParam": {
-                                "type": "string"
-                            },
-                            "start": {
-                                "type": "integer"
-                            },
-                            "style": {
-                                "const": "page",
-                                "type": "string"
-                            }
-                        },
-                        "required": [
-                            "style",
-                            "pageParam",
-                            "start"
-                        ],
-                        "type": "object"
-                    },
-                    {
-                        "additionalProperties": false,
-                        "properties": {
-                            "offsetParam": {
-                                "type": "string"
-                            },
-                            "style": {
-                                "const": "offset",
-                                "type": "string"
-                            }
-                        },
-                        "required": [
-                            "style",
-                            "offsetParam"
-                        ],
-                        "type": "object"
-                    },
-                    {
-                        "additionalProperties": false,
-                        "properties": {
-                            "cursorParam": {
-                                "type": "string"
-                            },
-                            "nextField": {
-                                "type": "string"
-                            },
-                            "style": {
-                                "const": "cursor",
-                                "type": "string"
-                            }
-                        },
-                        "required": [
-                            "style",
-                            "cursorParam",
-                            "nextField"
-                        ],
-                        "type": "object"
-                    },
-                    {
-                        "additionalProperties": false,
-                        "properties": {
-                            "style": {
-                                "const": "link-header",
-                                "type": "string"
-                            }
-                        },
-                        "required": [
-                            "style"
-                        ],
-                        "type": "object"
-                    }
-                ]
-            },
-            "ExternalSourceQueryParams": {
-                "additionalProperties": false,
-                "properties": {
-                    "pageSize": {
-                        "type": "string"
-                    },
-                    "prefix": {
-                        "type": "string"
-                    },
-                    "scope": {
-                        "type": "string"
-                    },
-                    "search": {
-                        "type": "string"
-                    }
-                },
-                "type": "object"
-            },
-            "ExternalSourceSpec<ConceptMappingDoc>": {
-                "additionalProperties": false,
-                "properties": {
-                    "attribution": {
-                        "$ref": "#/definitions/AttributionDoc"
-                    },
-                    "auth": {
-                        "$ref": "#/definitions/ExternalSourceAuth"
-                    },
-                    "capabilities": {
-                        "$ref": "#/definitions/ExternalSourceCapabilities"
-                    },
-                    "grantId": {
-                        "type": "string"
-                    },
-                    "headers": {
-                        "$ref": "#/definitions/Record%3Cstring%2Cstring%3E"
-                    },
-                    "id": {
-                        "type": "string"
-                    },
-                    "liveFetch": {
-                        "type": "boolean"
-                    },
-                    "mapping": {
-                        "$ref": "#/definitions/ConceptMappingDoc"
-                    },
-                    "mappingHash": {
-                        "type": "string"
-                    },
-                    "pagination": {
-                        "$ref": "#/definitions/ExternalSourcePagination"
-                    },
-                    "query": {
-                        "$ref": "#/definitions/Record%3Cstring%2Cstring%3E"
-                    },
-                    "queryParams": {
-                        "$ref": "#/definitions/ExternalSourceQueryParams"
-                    },
-                    "rateLimit": {
-                        "additionalProperties": false,
-                        "properties": {
-                            "burst": {
-                                "type": "integer"
-                            },
-                            "windowMs": {
-                                "type": "number"
-                            }
-                        },
-                        "required": [
-                            "burst",
-                            "windowMs"
-                        ],
-                        "type": "object"
-                    },
-                    "recordsPath": {
-                        "type": "string"
-                    },
-                    "snapshotId": {
-                        "pattern": "^sha256:[0-9a-f]{64}$",
-                        "type": "string"
-                    },
-                    "snapshotRef": {
-                        "type": "string"
-                    },
-                    "source": {
-                        "type": "string"
-                    },
-                    "srcref": {
-                        "type": "string"
-                    },
-                    "timeoutMs": {
-                        "type": "number"
-                    },
-                    "tls": {
-                        "$ref": "#/definitions/ExternalSourceTls"
-                    },
-                    "transport": {
-                        "$ref": "#/definitions/ExternalSourceTransport"
-                    }
-                },
-                "required": [
-                    "source",
-                    "mapping"
-                ],
-                "type": "object"
-            },
-            "ExternalSourceTls": {
-                "additionalProperties": false,
-                "if": {
-                    "required": [
-                        "keyPassphraseRef"
-                    ]
-                },
-                "minProperties": 1,
-                "properties": {
-                    "caBundleRef": {
-                        "$ref": "#/definitions/SecretRefDoc"
-                    },
-                    "clientCertAndKeyRef": {
-                        "$ref": "#/definitions/SecretRefDoc"
-                    },
-                    "keyPassphraseRef": {
-                        "$ref": "#/definitions/SecretRefDoc"
-                    }
-                },
-                "then": {
-                    "required": [
-                        "clientCertAndKeyRef"
-                    ]
-                },
-                "type": "object"
-            },
-            "ExternalSourceTransport": {
-                "enum": [
-                    "http",
-                    "file",
-                    "inline-data"
-                ],
-                "type": "string"
             },
             "FieldDoc": {
                 "anyOf": [
@@ -3567,12 +2349,6 @@
                         "type": "string"
                     },
                     "in": {
-                        "items": {
-                            "type": "string"
-                        },
-                        "type": "array"
-                    },
-                    "keep": {
                         "items": {
                             "type": "string"
                         },
@@ -3643,18 +2419,15 @@
                                 },
                                 "type": "array"
                             },
+                            "marking": {
+                                "type": "string"
+                            },
                             "mode": {
                                 "enum": [
                                     "inline",
                                     "block"
                                 ],
                                 "type": "string"
-                            },
-                            "omit_defaults": {
-                                "type": "boolean"
-                            },
-                            "omit_empty": {
-                                "type": "boolean"
                             },
                             "omit_whole_values": {
                                 "type": "boolean"
@@ -3710,18 +2483,15 @@
                                 },
                                 "type": "array"
                             },
+                            "marking": {
+                                "type": "string"
+                            },
                             "mode": {
                                 "enum": [
                                     "inline",
                                     "block"
                                 ],
                                 "type": "string"
-                            },
-                            "omit_defaults": {
-                                "type": "boolean"
-                            },
-                            "omit_empty": {
-                                "type": "boolean"
                             },
                             "omit_whole_values": {
                                 "type": "boolean"
@@ -4020,12 +2790,12 @@
                     {
                         "additionalProperties": false,
                         "properties": {
-                            "external_source": {
+                            "concept_import": {
                                 "type": "string"
                             }
                         },
                         "required": [
-                            "external_source"
+                            "concept_import"
                         ],
                         "type": "object"
                     }
@@ -4046,6 +2816,22 @@
                 ],
                 "type": "object"
             },
+            "MarkingSchemeRefDoc": {
+                "additionalProperties": false,
+                "properties": {
+                    "id": {
+                        "minLength": 1,
+                        "type": "string"
+                    },
+                    "version": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "id"
+                ],
+                "type": "object"
+            },
             "NamedConditionRefDoc": {
                 "additionalProperties": false,
                 "properties": {
@@ -4061,9 +2847,6 @@
             "NormalizeRuleDoc": {
                 "additionalProperties": false,
                 "properties": {
-                    "confidence": {
-                        "$ref": "#/definitions/RepairConfidence"
-                    },
                     "correction": {
                         "type": "string"
                     },
@@ -4078,12 +2861,8 @@
                     },
                     "type": {
                         "enum": [
-                            "alias",
-                            "reorder",
-                            "separator",
                             "dedup",
-                            "case",
-                            "infer_missing"
+                            "case"
                         ],
                         "type": "string"
                     }
@@ -4091,7 +2870,6 @@
                 "required": [
                     "id",
                     "type",
-                    "confidence",
                     "explanation"
                 ],
                 "type": "object"
@@ -4147,9 +2925,6 @@
             "ParseConfigDoc": {
                 "additionalProperties": false,
                 "properties": {
-                    "case_sensitive": {
-                        "type": "boolean"
-                    },
                     "normalize": {
                         "items": {
                             "$ref": "#/definitions/NormalizeRuleDoc"
@@ -4161,9 +2936,6 @@
                             "$ref": "#/definitions/RecognizerDoc"
                         },
                         "type": "array"
-                    },
-                    "strip_whitespace": {
-                        "type": "boolean"
                     }
                 },
                 "type": "object"
@@ -4227,35 +2999,6 @@
                             "after"
                         ],
                         "type": "object"
-                    },
-                    {
-                        "additionalProperties": false,
-                        "properties": {
-                            "before": {
-                                "type": "string"
-                            }
-                        },
-                        "required": [
-                            "before"
-                        ],
-                        "type": "object"
-                    },
-                    {
-                        "additionalProperties": false,
-                        "properties": {
-                            "between": {
-                                "items": {
-                                    "type": "string"
-                                },
-                                "maxItems": 2,
-                                "minItems": 2,
-                                "type": "array"
-                            }
-                        },
-                        "required": [
-                            "between"
-                        ],
-                        "type": "object"
                     }
                 ]
             },
@@ -4290,35 +3033,6 @@
                             "above"
                         ],
                         "type": "object"
-                    },
-                    {
-                        "additionalProperties": false,
-                        "properties": {
-                            "below": {
-                                "type": "string"
-                            }
-                        },
-                        "required": [
-                            "below"
-                        ],
-                        "type": "object"
-                    },
-                    {
-                        "additionalProperties": false,
-                        "properties": {
-                            "between": {
-                                "items": {
-                                    "type": "string"
-                                },
-                                "maxItems": 2,
-                                "minItems": 2,
-                                "type": "array"
-                            }
-                        },
-                        "required": [
-                            "between"
-                        ],
-                        "type": "object"
                     }
                 ]
             },
@@ -4343,9 +3057,6 @@
                             "type": "object"
                         },
                         "type": "array"
-                    },
-                    "case_sensitive": {
-                        "type": "boolean"
                     },
                     "format": {
                         "type": "string"
@@ -4378,9 +3089,9 @@
                 },
                 "type": "object"
             },
-            "Record<string,Term>": {
+            "Record<string,TermDoc>": {
                 "additionalProperties": {
-                    "$ref": "#/definitions/Term"
+                    "$ref": "#/definitions/TermDoc"
                 },
                 "type": "object"
             },
@@ -4431,17 +3142,6 @@
                         },
                         "type": "array"
                     },
-                    "of_invalid": {
-                        "enum": [
-                            "preserve_unmatched",
-                            "drop_unmatched",
-                            "refuse"
-                        ],
-                        "type": "string"
-                    },
-                    "refusal_marker": {
-                        "type": "string"
-                    },
                     "surface_separator": {
                         "type": "string"
                     },
@@ -4455,12 +3155,42 @@
                 },
                 "type": "object"
             },
-            "RepairConfidence": {
-                "enum": [
-                    "safe",
-                    "uncertain"
+            "RollupIntersectDoc": {
+                "additionalProperties": false,
+                "oneOf": [
+                    {
+                        "required": [
+                            "category"
+                        ]
+                    },
+                    {
+                        "required": [
+                            "categories"
+                        ]
+                    }
                 ],
-                "type": "string"
+                "properties": {
+                    "categories": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "minItems": 1,
+                        "type": "array"
+                    },
+                    "category": {
+                        "type": "string"
+                    },
+                    "empty_fallback": {
+                        "type": "string"
+                    },
+                    "fallback_if_only": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array"
+                    }
+                },
+                "type": "object"
             },
             "RollupPipelineDoc": {
                 "additionalProperties": false,
@@ -4501,14 +3231,119 @@
             "RollupPipelineStepDoc": {
                 "additionalProperties": false,
                 "properties": {
-                    "else": {
-                        "$ref": "#/definitions/Record%3Cstring%2Cunknown%3E"
-                    },
                     "then": {
-                        "$ref": "#/definitions/Record%3Cstring%2Cunknown%3E"
+                        "$ref": "#/definitions/RollupStepActionDoc"
                     },
                     "when": {
                         "$ref": "#/definitions/WhenDoc"
+                    }
+                },
+                "type": "object"
+            },
+            "RollupStepActionDoc": {
+                "additionalProperties": false,
+                "properties": {
+                    "add": {
+                        "items": {
+                            "additionalProperties": false,
+                            "properties": {
+                                "category": {
+                                    "type": "string"
+                                },
+                                "concept": {
+                                    "anyOf": [
+                                        {
+                                            "type": "string"
+                                        },
+                                        {
+                                            "items": {
+                                                "type": "string"
+                                            },
+                                            "type": "array"
+                                        }
+                                    ]
+                                }
+                            },
+                            "required": [
+                                "concept",
+                                "category"
+                            ],
+                            "type": "object"
+                        },
+                        "type": "array"
+                    },
+                    "clear_categories": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array"
+                    },
+                    "intersect": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/definitions/RollupIntersectDoc"
+                            },
+                            {
+                                "items": {
+                                    "$ref": "#/definitions/RollupIntersectDoc"
+                                },
+                                "type": "array"
+                            }
+                        ]
+                    },
+                    "keep": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "items": {
+                                    "type": "string"
+                                },
+                                "type": "array"
+                            }
+                        ]
+                    },
+                    "move": {
+                        "additionalProperties": false,
+                        "properties": {
+                            "exclude": {
+                                "anyOf": [
+                                    {
+                                        "type": "string"
+                                    },
+                                    {
+                                        "items": {
+                                            "type": "string"
+                                        },
+                                        "type": "array"
+                                    }
+                                ]
+                            },
+                            "from": {
+                                "type": "string"
+                            },
+                            "keep_intersection": {
+                                "type": "boolean"
+                            },
+                            "to": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "from",
+                            "to"
+                        ],
+                        "type": "object"
+                    },
+                    "remove": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array"
+                    },
+                    "union": {
+                        "type": "boolean"
                     }
                 },
                 "type": "object"
@@ -4521,14 +3356,10 @@
                     "require_any",
                     "restrict",
                     "copy",
-                    "move",
                     "inherit_parents",
                     "expand_group",
                     "cardinality",
                     "supersede",
-                    "intersect",
-                    "union",
-                    "max",
                     "warn"
                 ],
                 "type": "string"
@@ -4564,12 +3395,6 @@
                     "definition": {
                         "type": "string"
                     },
-                    "deprecated": {
-                        "type": "boolean"
-                    },
-                    "deprecated_since": {
-                        "type": "string"
-                    },
                     "embedded_marking": {
                         "items": {
                             "$ref": "#/definitions/EmbeddedMarkingStyleDoc"
@@ -4591,8 +3416,19 @@
                     "layer": {
                         "$ref": "#/definitions/LayerBlockDoc"
                     },
-                    "license": {
+                    "marking": {
                         "type": "string"
+                    },
+                    "marking_scheme": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/definitions/MarkingSchemeRefDoc"
+                            },
+                            {
+                                "const": "self",
+                                "type": "string"
+                            }
+                        ]
                     },
                     "name": {
                         "type": "string"
@@ -4606,16 +3442,12 @@
                     "part_scope": {
                         "enum": [
                             "paragraph",
-                            "until-next",
-                            "document"
+                            "until-next"
                         ],
                         "type": "string"
                     },
                     "render": {
                         "$ref": "#/definitions/RenderConfigDoc"
-                    },
-                    "replaced_by": {
-                        "type": "string"
                     },
                     "role_aware": {
                         "type": "boolean"
@@ -4727,7 +3559,7 @@
                         "type": "string"
                     },
                     "vocabulary": {
-                        "$ref": "#/definitions/Vocabulary"
+                        "$ref": "#/definitions/VocabularyDoc"
                     }
                 },
                 "required": [
@@ -4736,24 +3568,6 @@
                     "name",
                     "data"
                 ],
-                "type": "object"
-            },
-            "SchemeConceptsBlock": {
-                "additionalProperties": false,
-                "properties": {
-                    "external": {
-                        "items": {
-                            "$ref": "#/definitions/ExternalSourceSpec%3CConceptMappingDoc%3E"
-                        },
-                        "type": "array"
-                    },
-                    "inline": {
-                        "items": {
-                            "$ref": "#/definitions/ConceptDoc"
-                        },
-                        "type": "array"
-                    }
-                },
                 "type": "object"
             },
             "SchemeDataDoc": {
@@ -4765,14 +3579,17 @@
                         },
                         "type": "array"
                     },
-                    "concept_groups": {
+                    "concept_imports": {
                         "items": {
-                            "$ref": "#/definitions/ConceptGroupDoc"
+                            "$ref": "#/definitions/ConceptImportDoc"
                         },
                         "type": "array"
                     },
                     "concepts": {
-                        "$ref": "#/definitions/SchemeConceptsBlock"
+                        "items": {
+                            "$ref": "#/definitions/ConceptDoc"
+                        },
+                        "type": "array"
                     }
                 },
                 "type": "object"
@@ -4795,28 +3612,15 @@
                     "explanation": {
                         "type": "string"
                     },
-                    "formats": {
-                        "items": {
-                            "type": "string"
-                        },
-                        "type": "array"
-                    },
                     "from": {
-                        "anyOf": [
-                            {
-                                "type": "string"
-                            },
-                            {
-                                "items": {
-                                    "type": "string"
-                                },
-                                "type": "array"
-                            }
-                        ]
+                        "type": "string"
                     },
                     "id": {
                         "minLength": 1,
                         "pattern": "^[^_]",
+                        "type": "string"
+                    },
+                    "marking": {
                         "type": "string"
                     },
                     "max": {
@@ -4895,103 +3699,6 @@
                 ],
                 "type": "object"
             },
-            "SecretRefDoc": {
-                "anyOf": [
-                    {
-                        "additionalProperties": false,
-                        "properties": {
-                            "envVar": {
-                                "type": "string"
-                            },
-                            "provider": {
-                                "const": "env",
-                                "type": "string"
-                            }
-                        },
-                        "required": [
-                            "provider",
-                            "envVar"
-                        ],
-                        "type": "object"
-                    },
-                    {
-                        "additionalProperties": false,
-                        "properties": {
-                            "certVar": {
-                                "type": "string"
-                            },
-                            "keyVar": {
-                                "type": "string"
-                            },
-                            "provider": {
-                                "const": "env",
-                                "type": "string"
-                            }
-                        },
-                        "required": [
-                            "provider",
-                            "certVar",
-                            "keyVar"
-                        ],
-                        "type": "object"
-                    },
-                    {
-                        "additionalProperties": false,
-                        "properties": {
-                            "path": {
-                                "type": "string"
-                            },
-                            "provider": {
-                                "const": "file",
-                                "type": "string"
-                            }
-                        },
-                        "required": [
-                            "provider",
-                            "path"
-                        ],
-                        "type": "object"
-                    },
-                    {
-                        "additionalProperties": false,
-                        "properties": {
-                            "certPath": {
-                                "type": "string"
-                            },
-                            "keyPath": {
-                                "type": "string"
-                            },
-                            "provider": {
-                                "const": "file",
-                                "type": "string"
-                            }
-                        },
-                        "required": [
-                            "provider",
-                            "certPath",
-                            "keyPath"
-                        ],
-                        "type": "object"
-                    },
-                    {
-                        "additionalProperties": false,
-                        "properties": {
-                            "provider": {
-                                "const": "secret-store",
-                                "type": "string"
-                            },
-                            "secretId": {
-                                "type": "string"
-                            }
-                        },
-                        "required": [
-                            "provider",
-                            "secretId"
-                        ],
-                        "type": "object"
-                    }
-                ]
-            },
             "SurfaceOutputDoc": {
                 "additionalProperties": false,
                 "properties": {
@@ -5028,13 +3735,6 @@
                     {
                         "additionalProperties": false,
                         "properties": {
-                            "escape": {
-                                "enum": [
-                                    "none",
-                                    "backslash"
-                                ],
-                                "type": "string"
-                            },
                             "type": {
                                 "const": "text",
                                 "type": "string"
@@ -5076,7 +3776,7 @@
                     }
                 ]
             },
-            "Term": {
+            "TermDoc": {
                 "additionalProperties": false,
                 "properties": {
                     "plural": {
@@ -5221,8 +3921,8 @@
                     }
                 ]
             },
-            "Vocabulary": {
-                "$ref": "#/definitions/Record%3Cstring%2CTerm%3E"
+            "VocabularyDoc": {
+                "$ref": "#/definitions/Record%3Cstring%2CTermDoc%3E"
             },
             "WhenDoc": {
                 "anyOf": [
@@ -5390,15 +4090,6 @@
                     "confidence": {
                         "$ref": "#/definitions/AssertionConfidence"
                     },
-                    "expiresAt": {
-                        "type": "string"
-                    },
-                    "metadata": {
-                        "$ref": "#/definitions/Record%3Cstring%2Cunknown%3E"
-                    },
-                    "provenance": {
-                        "$ref": "#/definitions/SourceReference"
-                    },
                     "replacedConceptId": {
                         "type": "string"
                     },
@@ -5424,73 +4115,9 @@
                 "enum": [
                     "certain",
                     "inferred",
-                    "repaired",
-                    "uncertain"
+                    "repaired"
                 ],
                 "type": "string"
-            },
-            "Attribution": {
-                "additionalProperties": false,
-                "properties": {
-                    "citation": {
-                        "type": "string"
-                    },
-                    "license": {
-                        "type": "string"
-                    },
-                    "licenseUrl": {
-                        "type": "string"
-                    },
-                    "name": {
-                        "type": "string"
-                    }
-                },
-                "required": [
-                    "name",
-                    "license"
-                ],
-                "type": "object"
-            },
-            "BestEffortRuleSourceReference": {
-                "additionalProperties": false,
-                "properties": {
-                    "providerId": {
-                        "type": "string"
-                    },
-                    "reproducibility": {
-                        "const": "best-effort",
-                        "type": "string"
-                    }
-                },
-                "required": [
-                    "providerId",
-                    "reproducibility"
-                ],
-                "type": "object"
-            },
-            "BestEffortSourceReference": {
-                "additionalProperties": false,
-                "properties": {
-                    "attribution": {
-                        "$ref": "#/definitions/Attribution"
-                    },
-                    "locator": {
-                        "type": "string"
-                    },
-                    "providerId": {
-                        "type": "string"
-                    },
-                    "reproducibility": {
-                        "const": "best-effort",
-                        "type": "string"
-                    }
-                },
-                "required": [
-                    "attribution",
-                    "providerId",
-                    "reproducibility"
-                ],
-                "type": "object"
             },
             "ComponentRef": {
                 "additionalProperties": false,
@@ -5796,59 +4423,6 @@
                 ],
                 "type": "string"
             },
-            "Record<string,unknown>": {
-                "additionalProperties": {},
-                "type": "object"
-            },
-            "ReproducibleRuleSourceReference": {
-                "additionalProperties": false,
-                "properties": {
-                    "providerId": {
-                        "type": "string"
-                    },
-                    "reproducibility": {
-                        "const": "reproducible",
-                        "type": "string"
-                    },
-                    "snapshotId": {
-                        "type": "string"
-                    }
-                },
-                "required": [
-                    "providerId",
-                    "reproducibility",
-                    "snapshotId"
-                ],
-                "type": "object"
-            },
-            "ReproducibleSourceReference": {
-                "additionalProperties": false,
-                "properties": {
-                    "attribution": {
-                        "$ref": "#/definitions/Attribution"
-                    },
-                    "locator": {
-                        "type": "string"
-                    },
-                    "providerId": {
-                        "type": "string"
-                    },
-                    "reproducibility": {
-                        "const": "reproducible",
-                        "type": "string"
-                    },
-                    "snapshotId": {
-                        "type": "string"
-                    }
-                },
-                "required": [
-                    "attribution",
-                    "providerId",
-                    "reproducibility",
-                    "snapshotId"
-                ],
-                "type": "object"
-            },
             "RuleReference": {
                 "additionalProperties": false,
                 "properties": {
@@ -5860,9 +4434,6 @@
                     },
                     "ruleId": {
                         "type": "string"
-                    },
-                    "source": {
-                        "$ref": "#/definitions/RuleSourceReference"
                     }
                 },
                 "required": [
@@ -5871,26 +4442,6 @@
                     "ruleDigest"
                 ],
                 "type": "object"
-            },
-            "RuleSourceReference": {
-                "anyOf": [
-                    {
-                        "$ref": "#/definitions/ReproducibleRuleSourceReference"
-                    },
-                    {
-                        "$ref": "#/definitions/BestEffortRuleSourceReference"
-                    }
-                ]
-            },
-            "SourceReference": {
-                "anyOf": [
-                    {
-                        "$ref": "#/definitions/ReproducibleSourceReference"
-                    },
-                    {
-                        "$ref": "#/definitions/BestEffortSourceReference"
-                    }
-                ]
             },
             "TestAssertion": {
                 "anyOf": [
@@ -6083,7 +4634,6 @@
                     "guideEvaluate",
                     "checkAccess",
                     "auditDocument",
-                    "assessDocumentAccess",
                     "translate"
                 ],
                 "type": "string"
@@ -6091,9 +4641,6 @@
             "TestOptions": {
                 "additionalProperties": false,
                 "properties": {
-                    "confidence": {
-                        "type": "boolean"
-                    },
                     "context": {
                         "$ref": "#/definitions/ProcessingContext"
                     },
@@ -6183,37 +4730,11 @@
             "composition": {
                 "$ref": "#/definitions/TestComposition"
             },
-            "extends": {
-                "$ref": "#/definitions/ComponentRef"
-            },
             "id": {
                 "type": "string"
             },
             "name": {
                 "type": "string"
-            },
-            "overrides": {
-                "additionalProperties": {
-                    "additionalProperties": false,
-                    "properties": {
-                        "assertions": {
-                            "items": {
-                                "$ref": "#/definitions/TestAssertion"
-                            },
-                            "minItems": 1,
-                            "type": "array"
-                        },
-                        "reason": {
-                            "type": "string"
-                        }
-                    },
-                    "required": [
-                        "reason",
-                        "assertions"
-                    ],
-                    "type": "object"
-                },
-                "type": "object"
             },
             "version": {
                 "type": "string"
@@ -6223,6 +4744,7 @@
             "apiVersion",
             "id",
             "version",
+            "composition",
             "cases"
         ],
         "type": "object"

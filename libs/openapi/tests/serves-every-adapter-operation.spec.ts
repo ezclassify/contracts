@@ -278,6 +278,88 @@ describe('the wire serves what the adapter contract promises', () => {
         });
     });
 
+    it('describes every crosswalk in one call, outside the connect payload', () => {
+        const route = '/v1/ctx/{ctxId}/{version}/crosswalk/describe';
+        expect(operation(route, 'get').operationId).toBe(
+            'ctxCrosswalkDescribe',
+        );
+        expect(responseRef(route, 'get')).toBe(
+            '#/components/schemas/CtxCrosswalkDescribeResponseBody',
+        );
+        expect(
+            schema('CtxCrosswalkDescribeResponseBody').properties?.[
+                'crosswalks'
+            ],
+        ).toEqual({
+            type: 'array',
+            items: { $ref: '#/components/schemas/ContextCrosswalkDescriptor' },
+            description: expect.any(String),
+        });
+
+        const descriptor = schema('ContextCrosswalkDescriptor');
+        expect(descriptor.required).toEqual(
+            expect.arrayContaining([
+                'id',
+                'version',
+                'name',
+                'source',
+                'target',
+                'mappings',
+                'selections',
+            ]),
+        );
+        // A described candidate always states its treatment, so no reader has
+        // to know that a document candidate without one carries.
+        expect(schema('ContextCrosswalkCandidate').required).toEqual(
+            expect.arrayContaining(['id', 'disposition', 'reason']),
+        );
+        expect(schema('CrosswalkMapping').required).toEqual(
+            expect.arrayContaining(['id', 'disposition', 'reason']),
+        );
+
+        // The context description every client reads on connect names its
+        // crosswalks by provenance only; the reviewed mappings stay on the
+        // dedicated read.
+        const describe = schema('CtxDescribeResponseBody');
+        expect(describe.properties?.['crosswalks']).toMatchObject({
+            items: { $ref: '#/components/schemas/CtxComponentDescriptor' },
+        });
+    });
+
+    it('reports each document whole on its summary and keeps the parts off the wire', () => {
+        for (const summary of [
+            'GuideViewResponse',
+            'SchemeViewResponse',
+            'ContextCrosswalkDescriptor',
+            'CtxAccessRulesResponseBody',
+        ]) {
+            expect(schema(summary).properties?.['marking']).toMatchObject({
+                type: 'string',
+            });
+            expect(schema(summary).required ?? []).not.toContain('marking');
+        }
+        for (const part of ['GuideRule', 'GuideRuleView', 'CrosswalkMapping']) {
+            expect(schema(part).properties).not.toHaveProperty('marking');
+        }
+    });
+
+    it('tells a candidate that lost a selection apart from an omission', () => {
+        const disposition = JSON.stringify(
+            schema('CrosswalkOutcome').properties?.['disposition'],
+        );
+        expect(disposition).toContain('not-selected');
+        expect(disposition).toContain('unmapped');
+        // A document cannot author it, and a selection reports what it chose.
+        expect(schema('CrosswalkDisposition').enum).not.toContain(
+            'not-selected',
+        );
+        expect(
+            JSON.stringify(
+                schema('CrosswalkSelectionOutcome').properties?.['disposition'],
+            ),
+        ).not.toContain('not-selected');
+    });
+
     it('requires the access-check subject the REST handler refuses to omit', () => {
         const route = '/v1/ctx/{ctxId}/{version}/access/check';
         expect(requestRef(route, 'post')).toBe(
@@ -337,38 +419,20 @@ describe('the document says how a caller authenticates', () => {
         );
     });
 
-    it('declares the opaque application credential carrier', () => {
-        expect(
-            spec.components.securitySchemes?.['applicationCredential'],
-        ).toMatchObject({
-            type: 'apiKey',
-            in: 'header',
-            name: 'x-ezclassify-application-grant',
-        });
-    });
-
-    it('keeps the default caller credentials and admits the separate application credential only on Context operations', () => {
+    it('applies the default caller credentials to every authenticated operation', () => {
         expect(spec.security).toEqual([{ bearerAuth: [], contextToken: [] }]);
-
-        let contextOperations = 0;
+        expect(
+            Object.keys(spec.components.securitySchemes ?? {}).sort(),
+        ).toEqual(['bearerAuth', 'contextToken']);
         for (const [route, item] of Object.entries(spec.paths)) {
             if (ANONYMOUS_ROUTES.includes(route)) continue;
             for (const [method, op] of Object.entries(item)) {
-                const security = (op as { security?: unknown }).security;
-                const isContext =
-                    route === '/v1/ctx' || route.startsWith('/v1/ctx/');
-                if (isContext) contextOperations += 1;
-                expect(security, `${method.toUpperCase()} ${route}`).toEqual(
-                    isContext
-                        ? [
-                              { bearerAuth: [], contextToken: [] },
-                              { applicationCredential: [] },
-                          ]
-                        : undefined,
-                );
+                expect(
+                    (op as { security?: unknown }).security,
+                    `${method.toUpperCase()} ${route}`,
+                ).toBeUndefined();
             }
         }
-        expect(contextOperations).toBeGreaterThan(0);
     });
 
     it.each(ANONYMOUS_ROUTES)(
@@ -442,6 +506,17 @@ describe('a 404 says which kind of 404 it is', () => {
         });
     });
 
+    it('carries a code for a scheme the Context does not hold', () => {
+        expect(notFound.description).toMatch(/scheme_not_found/);
+        expect(examples()).toContainEqual({
+            error: 'Scheme not found in context: no-such-scheme',
+            code: 'scheme_not_found',
+        });
+        expect(
+            schema('ErrorResponse').properties?.['code']?.description,
+        ).toMatch(/scheme_not_found/);
+    });
+
     it('names the code on the error body every 404 shares', () => {
         expect(
             schema('ErrorResponse').properties?.['code']?.description,
@@ -458,5 +533,69 @@ describe('a 404 says which kind of 404 it is', () => {
     it('states the contrast where the unauthenticated warning lives', () => {
         expect(spec.info.description).toMatch(/route_not_found/);
         expect(spec.info.description).toMatch(/security property/);
+    });
+});
+
+/**
+ * A client states which application it is, so the deployment can report usage
+ * per application. The id is a plain request header on every Context operation,
+ * not a credential: the server serves a request whatever it names.
+ */
+describe('the document lets a client name its application', () => {
+    const applicationId = (
+        spec.components as {
+            parameters?: Record<string, Record<string, unknown>>;
+        }
+    ).parameters?.['ApplicationId'];
+
+    it('declares the application id as an optional header', () => {
+        expect(applicationId).toMatchObject({
+            name: 'x-ezclassify-application-id',
+            in: 'header',
+            required: false,
+            schema: { type: 'string' },
+        });
+    });
+
+    it('states the id grammar: 1 to 128 printable ASCII characters', () => {
+        const schema = applicationId?.['schema'] as {
+            pattern?: string;
+            maxLength?: number;
+        };
+        expect(schema.maxLength).toBe(128);
+        const grammar = new RegExp(schema.pattern ?? '(?!)');
+        expect(grammar.test('case-intake-portal')).toBe(true);
+        expect(grammar.test('!')).toBe(true);
+        expect(grammar.test('~'.repeat(128))).toBe(true);
+        expect(grammar.test('')).toBe(false);
+        expect(grammar.test('has space')).toBe(false);
+        expect(grammar.test('caf\u00e9')).toBe(false);
+        expect(grammar.test('a'.repeat(129))).toBe(false);
+        expect(applicationId?.['description']).toMatch(
+            /A value that does not match is served and counted as unidentified\./,
+        );
+    });
+
+    it('accepts it on every Context operation and nowhere else', () => {
+        let contextOperations = 0;
+        for (const [route, item] of Object.entries(spec.paths)) {
+            const isContext =
+                route === '/v1/ctx' || route.startsWith('/v1/ctx/');
+            for (const [method, op] of Object.entries(item)) {
+                const parameters =
+                    (op as { parameters?: Array<{ $ref?: string }> })
+                        .parameters ?? [];
+                const carries = parameters.some(
+                    (parameter) =>
+                        parameter.$ref ===
+                        '#/components/parameters/ApplicationId',
+                );
+                expect(carries, `${method.toUpperCase()} ${route}`).toBe(
+                    isContext,
+                );
+                if (isContext) contextOperations += 1;
+            }
+        }
+        expect(contextOperations).toBeGreaterThan(0);
     });
 });

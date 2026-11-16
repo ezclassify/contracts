@@ -54,14 +54,12 @@
             "require": "./dist/lib/test-suite-schema.cjs"
         },
         "./json-schemas/*": "./generated/json-schemas/*",
-        "./json-schemas-input/*": "./generated/json-schemas-input/*",
-        "./json-schemas-test/*": "./generated/json-schemas-test/*"
+        "./validation/v1/*": "./generated/validation/v1/*"
     },
     "files": [
         "dist/lib/",
-        "generated/json-schemas-input/",
-        "generated/json-schemas-test/",
         "generated/json-schemas/",
+        "generated/validation/",
         "!dist/**/*.map"
     ],
     "scripts": {

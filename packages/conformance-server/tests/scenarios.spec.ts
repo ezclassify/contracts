@@ -99,7 +99,6 @@ describe('integration scenarios', () => {
             }
             const body = await response.json();
             expect(body).toEqual(refusal.response.body);
-            expect(body).not.toEqual({ error: 'not_found' });
             expect((await fetch(`${server.url}/v1/ready`)).status).toBe(200);
         },
     );

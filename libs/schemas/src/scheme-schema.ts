@@ -4,11 +4,10 @@ import schema from '../generated/validation/v1/scheme.schema.json';
 /**
  * Static scheme schema JSON for validating a complete scheme document.
  *
- * Root shape: `{ scheme: { id, version, name, data: { categories[], concepts: {
- * inline[], external[] } }, rules[], rollup_pipelines[], parse: {
- * case_sensitive, strip_whitespace, recognizers[], normalize[] }, render: {
- * formats[] } } }`. Required top-level fields: `scheme.id`, `scheme.version`,
- * `scheme.name`, `scheme.data`.
+ * Root shape: `{ scheme: { id, version, name, data: { categories[], concepts[],
+ * concept_imports[] }, rules[], rollup_pipelines[], parse: { recognizers[],
+ * normalize[] }, render: { formats[] } } }`. Required top-level fields:
+ * `scheme.id`, `scheme.version`, `scheme.name`, `scheme.data`.
  *
  * Used by the loader to validate a scheme YAML/JSON file before parsing. Works
  * in both Node and browser contexts: imported as a static JSON asset.
@@ -34,7 +33,7 @@ function itemFragment(node: unknown, at: string): SchemaNode {
 
 /**
  * Sub-schema for a single concept element within
- * `scheme.data.concepts.inline[]`.
+ * `scheme.data.concepts[]`.
  *
  * Required fields: `id`, `name`, `views` (a string or an object with a `default`
  * key), and `categories` (at least one). `aliases` is optional. Used by
@@ -42,8 +41,8 @@ function itemFragment(node: unknown, at: string): SchemaNode {
  * isolation from the full scheme document.
  */
 export const conceptSchema = itemFragment(
-    reader.properties(dataProps.concepts, 'scheme.data.concepts').inline,
-    'scheme.data.concepts.inline',
+    dataProps.concepts,
+    'scheme.data.concepts',
 );
 
 /**
@@ -86,16 +85,14 @@ const schemeMetadataKeys = new Set([
     'id',
     'version',
     'name',
+    'marking_scheme',
+    'marking',
     'description',
     'definition',
     'guidance',
-    'license',
     'tier',
     'type',
     'layer',
-    'deprecated',
-    'deprecated_since',
-    'replaced_by',
     'role_aware',
     'ui',
     'vocabulary',
@@ -110,7 +107,7 @@ const metadataProperties = Object.fromEntries(
  * rendering sections are validated by the complete scheme schema.
  *
  * Includes the fields declared by the canonical `SchemeBlock`, such as `id`,
- * `version`, `name`, `description`, `license`, `role_aware`, and `ui`. The
+ * `version`, `name`, `description`, `role_aware`, and `ui`. The
  * required fields are `id`, `version`, and `name`; optional metadata fields
  * retain their canonical property validators. Used for catalog listings and
  * layer header parsing.
@@ -136,8 +133,7 @@ export const schemeMetaSchema = {
  * Sub-schema for the `scheme.parse` section, covering recognition policy,
  * exceptional recognizers, and normalize rules.
  *
- * Includes: `case_sensitive`, `strip_whitespace`, `recognizers[]`, and
- * `normalize[]` (repair rules). Used by the parser configuration validator and
+ * Includes `recognizers[]` and `normalize[]` (repair rules). Used by the parser configuration validator and
  * editors that modify grammar settings independently of the full scheme
  * document.
  */
@@ -177,8 +173,7 @@ export const rollupPipelineSchema = itemFragment(
  * Sub-schema for a single normalize/repair rule within
  * `scheme.parse.normalize[]`.
  *
- * Required fields: `id`, `type` (one of `alias | reorder | separator | dedup |
- * case | infer_missing`), `confidence` (`safe` or `uncertain`), `explanation`.
+ * Required fields: `id`, `type` (one of `dedup | case`), `explanation`.
  * Canonical rewrite fields: `pattern` and `correction`. Used by validators and
  * repair-rule editors.
  */

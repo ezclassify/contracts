@@ -1,6 +1,14 @@
-import type { Vocabulary } from './scheme';
-import type { GuideCategory, GuideDependency, GuideRule } from './guide';
-import type { ExternalSourceSpec, RuleMappingDoc } from './external-source';
+import type {
+    MarkingSchemeRefDoc,
+    SchemeDependencyDoc,
+    VocabularyDoc,
+} from './scheme-definition';
+import type {
+    GuideWhenOperator,
+    MatchContextSide,
+    MatchNearEmit,
+    MatchValidationKeep,
+} from './guide';
 import type { LayerBinding } from './layer';
 
 /**
@@ -49,27 +57,351 @@ export interface GuideLayer extends LayerBinding {
 }
 
 /**
- * Inline-or-external guide-rule block. The canonical 1.0 wire format for
- * `GuideBlock.rules`.
+ * Proximity measured in whitespace-delimited tokens.
  *
  * @public
  */
-export interface GuideRulesBlock {
+export interface TokenWindowDoc {
     /**
-     * Inline rules, authored as an array of `GuideRule` entries with `id`
-     * carried as a field on each entry, matches the scheme inline shape
-     * (`data.concepts.inline: [...]`) so authoring stays uniform across scheme
-     * and guide YAML. Uniqueness of `id` within the array is enforced by the
-     * loader's validator; the engine builds a `Map<string, GuideRule>` index at
-     * load time to keep id lookups O(1).
+     * The largest distance allowed between two spans, counted in
+     * whitespace-delimited tokens between their nearest edges.
+     *
+     * @asType integer
+     * @minimum 0
      */
-    inline?: GuideRule[];
+    tokens: number;
+}
+
+/**
+ * Proximity measured in characters.
+ *
+ * @public
+ */
+export interface CharacterWindowDoc {
     /**
-     * Live external rule sources. An array allows a guide to draw rules from
-     * multiple upstream endpoints, composed via `ChainedGuideRuleSource`
-     * at load time.
+     * The largest distance allowed between two spans, counted in characters
+     * (UTF-16 code units) between their nearest edges. Spans that touch or
+     * overlap are 0 apart.
+     *
+     * @asType integer
+     * @minimum 0
      */
-    external?: ExternalSourceSpec<RuleMappingDoc>[];
+    chars: number;
+}
+
+/**
+ * A bounded proximity window. Exactly one token or character bound is
+ * present, so a windowed match never widens to the whole line.
+ *
+ * @public
+ */
+export type MatchWindowDoc = TokenWindowDoc | CharacterWindowDoc;
+
+/**
+ * A match leaf: a built-in matcher by name, or `regex` with its own pattern.
+ *
+ * @public
+ */
+export interface GuideMatchLeafDoc {
+    /**
+     * Matcher type: a built-in name (ipv4, cidr, ipv6, mac_address, email,
+     * hostname, url, coordinates, mgrs, phone, ssn, credit_card, date, uuid)
+     * or `regex` for a custom pattern.
+     *
+     * @minLength 1
+     */
+    type: string;
+    /** Custom regex pattern: only used when type is `regex`. */
+    pattern?: string;
+    /** Display label: overrides the matcher's built-in label. */
+    label?: string;
+    /**
+     * Case-sensitivity for a `type: regex` leaf. When true the pattern matches
+     * case exactly, so an `[A-Z]` class means uppercase only. Absent or false,
+     * the pattern matches case-insensitively. Ignored on other leaves.
+     */
+    case_sensitive?: boolean;
+    /**
+     * `runtime: true` marks a matcher the host provides at runtime. Such a
+     * leaf is always valid at load; if the named matcher is not registered it
+     * matches nothing, and it resolves normally where it is registered.
+     */
+    runtime?: boolean;
+}
+
+/**
+ * The `any` combinator: a span any child matches is a match.
+ *
+ * @public
+ */
+export interface GuideMatchAnyDoc {
+    /**
+     * The alternatives.
+     *
+     * @minItems 1
+     */
+    any: GuideMatchNodeDoc[];
+    /** Display label for this node's matches. Defaults to `any`. */
+    label?: string;
+}
+
+/**
+ * The `all` combinator: every child must match within `within` of the first
+ * child's span, which is the span kept.
+ *
+ * @public
+ */
+export interface GuideMatchAllDoc {
+    /**
+     * The signals that must all match. The first is the anchor.
+     *
+     * @minItems 1
+     */
+    all: GuideMatchNodeDoc[];
+    /** How close every other child's match must lie to the anchor's. */
+    within: MatchWindowDoc;
+    /** Display label for this node's matches. Defaults to `all`. */
+    label?: string;
+}
+
+/**
+ * The `not` combinator: keep each `of` span only when no `not` span lies
+ * within `within` of it.
+ *
+ * @public
+ */
+export interface GuideMatchNotDoc {
+    /** The competing cue. */
+    not: GuideMatchNodeDoc;
+    /** The candidate spans to keep or drop. */
+    of: GuideMatchNodeDoc;
+    /** How close a `not` span must lie to a candidate to drop it. */
+    within: MatchWindowDoc;
+    /** Display label for this node's matches. Defaults to `not`. */
+    label?: string;
+}
+
+/**
+ * The `near` combinator: pair an `a` span with a `b` span within `within`.
+ *
+ * @public
+ */
+export interface GuideMatchNearDoc {
+    /** The pairing to match. */
+    near: {
+        /** The first span of the pair. Kept by default. */
+        a: GuideMatchNodeDoc;
+        /** The second span of the pair. */
+        b: GuideMatchNodeDoc;
+        /** How close the `b` span must lie to the `a` span. */
+        within: MatchWindowDoc;
+        /** Which span survives a match: `a` (the default), `b`, or `envelope`. */
+        emit?: MatchNearEmit;
+    };
+    /** Display label for this node's matches. Defaults to `near`. */
+    label?: string;
+}
+
+/**
+ * The `context` combinator: keep each candidate span only when a cue span lies
+ * within `within` on the given side.
+ *
+ * @public
+ */
+export interface GuideMatchContextDoc {
+    /** The candidate and the cue it needs. */
+    context: {
+        /** The spans to keep when the cue is present. */
+        candidate: GuideMatchNodeDoc;
+        /** The span that must lie near a candidate for it to count. */
+        cue: GuideMatchNodeDoc;
+        /** How close the cue must lie to the candidate. */
+        within: MatchWindowDoc;
+        /** Where the cue may lie: `before`, `after`, or `both` (the default). */
+        side?: MatchContextSide;
+    };
+    /** Display label for this node's matches. Defaults to `context`. */
+    label?: string;
+}
+
+/**
+ * The `validate` combinator: run a registered validator over each candidate
+ * span and keep the candidates that pass, or the ones that fail.
+ *
+ * @public
+ */
+export interface GuideMatchValidateDoc {
+    /** The validator to run and which outcome to keep. */
+    validate: {
+        /** The spans whose matched text the validator checks. */
+        candidate: GuideMatchNodeDoc;
+        /**
+         * Registered validator name.
+         *
+         * @minLength 1
+         */
+        with: string;
+        /** Which outcome keeps a candidate: `pass` (the default) or `fail`. */
+        keep?: MatchValidationKeep;
+        /** Optional opaque arguments passed through to the validator. */
+        args?: unknown;
+    };
+    /** Display label for this node's matches. Defaults to `validate`. */
+    label?: string;
+}
+
+/**
+ * One node of a guide rule's `match` list: a leaf, or a combinator over child
+ * nodes.
+ *
+ * @public
+ */
+export type GuideMatchNodeDoc =
+    | GuideMatchLeafDoc
+    | GuideMatchAnyDoc
+    | GuideMatchAllDoc
+    | GuideMatchNotDoc
+    | GuideMatchNearDoc
+    | GuideMatchContextDoc
+    | GuideMatchValidateDoc;
+
+/**
+ * A condition that holds when the user selected one rule.
+ *
+ * @public
+ */
+export interface GuideWhenHasDoc {
+    /** The id of a selectable rule of this guide. */
+    has: string;
+}
+
+/**
+ * A condition that tests the selection with an operator.
+ *
+ * @public
+ */
+export interface GuideWhenTestDoc {
+    /** The test to apply. */
+    operator: GuideWhenOperator;
+    /**
+     * A rule id for `has_concept` and `not_has_concept`, a count for the
+     * `count_*` tests, absent for `has_content`.
+     */
+    value?: string | number;
+}
+
+/**
+ * A block of conditions over the rules the user selected. Every list present
+ * must hold: `any` when one of its nodes holds, `all` when each does, `none`
+ * when none does. Each list present is non-empty.
+ *
+ * @public
+ */
+export interface GuideWhenDoc {
+    /** At least one of these holds. */
+    any?: GuideWhenNodeDoc[];
+    /** Every one of these holds. */
+    all?: GuideWhenNodeDoc[];
+    /** None of these holds. */
+    none?: GuideWhenNodeDoc[];
+}
+
+/**
+ * One node of a guide `when` block: a condition, or a nested block.
+ *
+ * @public
+ */
+export type GuideWhenNodeDoc = GuideWhenHasDoc | GuideWhenTestDoc | GuideWhenDoc;
+
+/**
+ * A concept in one of the guide's target schemes, as a rule's outcome names
+ * it.
+ *
+ * @public
+ */
+export interface ConceptRefDoc {
+    /** The concept id. It exists in one of the guide's target schemes. */
+    id: string;
+    /** The category id, required when the concept belongs to several. */
+    category?: string;
+    /** The value, for a text-input concept such as a country code. */
+    value?: string;
+}
+
+/**
+ * What a guide rule contributes to the marking when it is active.
+ *
+ * @public
+ */
+export interface GuideRuleOutcomeDoc {
+    /** A marking, read in the target scheme. */
+    rendered?: string;
+    /** Concepts asserted directly. */
+    concepts?: ConceptRefDoc[];
+}
+
+/**
+ * A section that groups a guide's rules in the UI.
+ *
+ * @public
+ */
+export interface GuideCategoryDoc {
+    /** Unique identifier within the guide. */
+    id: string;
+    /** Display label for the section heading. */
+    label: string;
+    /** Description shown below the heading. */
+    description?: string;
+}
+
+/**
+ * A guide rule as a guide document authors it. A rule an engine answers with
+ * is a `GuideRule`, which carries the same facts in the wire shape and no
+ * marking.
+ *
+ * Rules are presented as checkboxes. `keywords` and `match` find the rule in
+ * text; `outcome` is what it contributes to the marking. A rule with `when` is
+ * computed: it activates from the rules the user selected and is not offered
+ * as a checkbox.
+ *
+ * @public
+ */
+export interface GuideRuleDoc {
+    /** Unique identifier within the guide. */
+    id: string;
+    /** Human-readable display name. */
+    name: string;
+    /**
+     * This rule's part marking, written in the scheme the document's
+     * `marking_scheme` names. Text, never interpreted: no engine parses it,
+     * checks it, acts on it, or reports it.
+     */
+    marking?: string;
+    /** Description of the data element this rule covers. */
+    description?: string;
+    /** Searchable terms for literal keyword matching. */
+    keywords?: string[];
+    /** Pattern matchers for content evaluation, checked beside `keywords`. */
+    match?: GuideMatchNodeDoc[];
+    /** Guide category id for grouping in the UI. */
+    category?: string;
+    /**
+     * What this rule contributes when active. At least one of `rendered` or
+     * `concepts` is set.
+     */
+    outcome: GuideRuleOutcomeDoc;
+    /** Explanation of why this outcome applies. */
+    rationale?: string;
+    /**
+     * When present, the rule is computed: it activates when this block holds
+     * over the selectable rules the user selected.
+     */
+    when?: GuideWhenDoc;
+    /**
+     * Rule ids whose outcomes this rule replaces when active. Omitted, this
+     * rule's outcome is added alongside the rules it depends on.
+     */
+    overrides?: string[];
 }
 
 /**
@@ -86,13 +418,29 @@ export interface GuideBlock {
     version: string;
     /** Human-readable guide name. */
     name: string;
+    /**
+     * The scheme this document's markings are written in. A guide is not a
+     * scheme, so it always names one by reference.
+     *
+     * Authoring data only: no engine resolves the scheme it names.
+     */
+    marking_scheme?: MarkingSchemeRefDoc;
+    /**
+     * The whole marking of this guide document, written in the scheme
+     * `marking_scheme` names. Every `marking` on one of its rules is a part of
+     * it.
+     *
+     * Text, never interpreted: no engine parses it, checks it, or acts on it.
+     * A guide's summary views report it unchanged for display.
+     */
+    marking?: string;
     /** Longer description of what this guide covers. */
     description?: string;
     /**
      * Display words this guide advertises for UI consumers. A presentation
      * hint only.
      */
-    vocabulary?: Vocabulary;
+    vocabulary?: VocabularyDoc;
     /**
      * What kind of document this is. Absent means `'guide'`. `type: 'layer'`
      * requires the `layer` block and `type: 'guide'` forbids it, both enforced
@@ -105,12 +453,16 @@ export interface GuideBlock {
      * forbidden otherwise.
      */
     layer?: GuideLayer;
-    /** Target scheme dependencies: at least one required. */
-    targetSchemes: GuideDependency[];
+    /**
+     * The schemes this guide's outcomes are written in: at least one.
+     *
+     * @minItems 1
+     */
+    target_schemes: SchemeDependencyDoc[];
     /** Sections for organizing rules in the UI. */
-    categories?: GuideCategory[];
-    /** Guide rules: inline array and/or external sources. */
-    rules: GuideRulesBlock;
+    categories?: GuideCategoryDoc[];
+    /** The guide's rules, in the order they are offered. */
+    rules: GuideRuleDoc[];
 }
 
 /**

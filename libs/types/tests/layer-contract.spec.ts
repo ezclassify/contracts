@@ -32,8 +32,10 @@ import type {
     AccessLayer,
     ComponentRef,
     ContextAccessRef,
+    ContextCrosswalkComponent,
     ContextCrosswalkRef,
     ContextDefinition,
+    ContextFromComponentsArgs,
     ContextGuideRef,
     ContextSchemeRef,
     CrosswalkDefinition,
@@ -198,15 +200,13 @@ describe('the composition rules say where access departs from them', () => {
 
     it('promises only what an override leaves observable', () => {
         // The runtime keeps no record of the element an override replaced;
-        // the winner's source provenance is all a result carries.
+        // the winner is all a result carries.
         const prose = docSection(layerSource, 'Composition')
             .replace(/\n\s*\*\s?/g, ' ')
             .replace(/\s+/g, ' ');
         expect(prose).not.toMatch(/override marker/i);
         expect(prose).toMatch(/The composed result shows only the winner/);
-        expect(prose).toMatch(
-            /carries that source's `provenance`\. No record names the element the layer replaced/,
-        );
+        expect(prose).toMatch(/No record names the element the layer replaced/);
     });
 
     it('still explains the departure in full further down', () => {
@@ -223,15 +223,20 @@ describe('the runtime Context contract admits which layers it takes', () => {
         'export interface ContextFromComponentsArgs',
     );
 
-    it.each(['scheme', 'guide', 'access'])(
+    it.each(['scheme', 'guide', 'access', 'crosswalk'])(
         'names the supported %s layer family',
         (family) => {
             expect(doc.toLowerCase()).toContain(family);
         },
     );
 
-    it('requires explicit refusal of unsupported crosswalk layers', () => {
-        expect(doc).toMatch(/Crosswalk layers are not accepted yet/);
-        expect(doc).toMatch(/resolvers must refuse them explicitly/);
+    it('takes crosswalk stacks beside guide and access stacks', () => {
+        expectTypeOf<
+            ContextFromComponentsArgs['crosswalkComponents']
+        >().toEqualTypeOf<ContextCrosswalkComponent[] | undefined>();
+        expectTypeOf<ContextCrosswalkComponent>().toEqualTypeOf<{
+            crosswalk: unknown;
+            layers?: unknown[];
+        }>();
     });
 });

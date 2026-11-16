@@ -34,25 +34,24 @@ scheme:
         label: Handling
         rollup: union
     concepts:
-      inline:
-        - {
-              id: LEVEL_ONE,
-              name: Level one,
-              views: { default: ONE },
-              categories: [level],
-          }
-        - {
-              id: AUTHORITY_A,
-              name: Authority A,
-              views: { default: AA },
-              categories: [authority],
-          }
-        - {
-              id: HANDLING_A,
-              name: Handling A,
-              views: { default: HA },
-              categories: [handling],
-          }
+      - {
+            id: LEVEL_ONE,
+            name: Level one,
+            views: { default: ONE },
+            categories: [level],
+        }
+      - {
+            id: AUTHORITY_A,
+            name: Authority A,
+            views: { default: AA },
+            categories: [authority],
+        }
+      - {
+            id: HANDLING_A,
+            name: Handling A,
+            views: { default: HA },
+            categories: [handling],
+        }
   render:
     default: banner
     formats:

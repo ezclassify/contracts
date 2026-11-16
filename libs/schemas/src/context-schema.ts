@@ -1,5 +1,5 @@
 import { schemaReader } from './fragment';
-import schema from '../generated/json-schemas-input/context-definition.schema.json';
+import schema from '../generated/validation/v1/context.schema.json';
 
 /**
  * Static context schema JSON for validating a Context YAML/JSON document.
@@ -22,7 +22,7 @@ export const contextSchema = schema as Record<string, unknown>;
 const reader = schemaReader(
     schema,
     'definitions',
-    'context-definition.schema.json',
+    'context.schema.json',
 );
 const defs = reader.defs;
 

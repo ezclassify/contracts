@@ -1,89 +1,23 @@
-import type { Assertion, Vocabulary } from './scheme';
+import type { AccessRuleDoc } from './access-definition';
+import type { Assertion, Vocabulary, Warning } from './scheme';
 import type {
     ArtifactReference,
     AssertionReference,
     RuleReference,
-    SourceReference,
 } from './provenance';
 
 /**
  * Strategy for comparing subject attributes against data assertions in a category
  * during an access check.
  *
- * - `gte`: user's ranked concept must be ≥ the data concept's rank
+ * - `gte`: user's ranked concept must be at or above the data concept's rank
  * - `superset`: user's concept set must include all data concepts
  * - `includes`: user's concept set must include at least one data concept
  * - `exact`: user's concepts must exactly match the data concepts
- * - `any`: a supplied, non-null user attribute grants access, including an empty
- * array; it does not require a recognized concept or a non-empty concept set
  *
- * Declared on `AccessRuleEntry.strategy` for simple attribute-mapping rules.
+ * Declared on `AccessRuleDoc.strategy` for simple attribute-mapping rules.
  */
-export type AccessRule = 'gte' | 'superset' | 'includes' | 'exact' | 'any';
-
-/** Condition that tests data assertions before a rule is evaluated. */
-export interface AccessRuleWhenData {
-    /** Category to test */
-    categoryId: string;
-    /** Condition operator (has_concept, has_content, min_order) */
-    operator: string;
-    /** Operand for the operator (concept ID or numeric threshold) */
-    value?: string | number;
-}
-
-/** Cross-source comparison block for conditional access rules. */
-export interface AccessRuleCheck {
-    /** Dot-path into user attributes */
-    user?: string;
-    /** Dot-path into caller-provided context */
-    context?: string;
-    /** Compare against data category assertions */
-    data_category?: string;
-    /**
-     * Comparison operator (is_in, contains_all, contains_any, equals, gte,
-     * superset, after_now)
-     */
-    operator: string;
-    /** Literal value for equals/gte comparisons */
-    value?: unknown;
-}
-
-/**
- * Conditional access rule with optional when/check blocks.
- *
- * @public
- * @see {@link AccessDefinition}, whose `rules.inline` entries are authored in
- * this shape and which the runtime holds unchanged after load.
- */
-export interface AccessRuleEntry {
-    /** Unique identifier for this rule */
-    id: string;
-    /** Human-readable name for this rule (shown in access decision output) */
-    name: string;
-    /** Simple mapping: user attribute name (supports dot-path) */
-    attribute?: string;
-    /** Category this rule evaluates */
-    categoryId?: string;
-    /**
-     * Comparison strategy for simple-mapping rules (required when the rule has
-     * `attribute` + `categoryId`). Absent on `check:`-based rules, which carry
-     * their own operator inside the check block.
-     */
-    strategy?: AccessRule;
-    /** View to match user values against (default: try all) */
-    view?: string;
-    /** Explicit value mapping from user attribute values to concept IDs */
-    values?: Record<string, string>;
-    /** Condition: only evaluate this rule when data matches */
-    when?: {
-        /** The data condition that must hold for the rule to be evaluated. */
-        data?: AccessRuleWhenData;
-    };
-    /** Cross-source check comparing user, context, and data values */
-    check?: AccessRuleCheck;
-    /** Custom denial message with {variable} substitution */
-    denyReason?: string;
-}
+export type AccessRule = 'gte' | 'superset' | 'includes' | 'exact';
 
 /** Source of one operand in an access-policy comparison. */
 export type AccessOperandSource =
@@ -179,19 +113,10 @@ export interface AccessDecision {
     /** One result per rule in the policy, in policy order. */
     rules: AccessRuleResult[];
     /**
-     * Source provenance for the access-rule source that evaluated this
-     * decision.
-     *
-     * Populated only when the `AccessEngine` was wired with an external
-     * `AccessRuleSource` override at load time (typically a
-     * `MappedAccessRuleSource` the server's Context loader built from an access
-     * YAML's `rules.external` block). Inline-backed decisions leave this field
-     * undefined to keep payloads compact for the common single-source case.
-     *
-     * Identity fields mirror the source's `sourceIdentity()` observation at
-     * engine-construction time.
+     * Warnings from preparing and evaluating the target, including automatic
+     * changes. Present on granted and denied decisions; empty when none apply.
      */
-    provenance?: SourceReference;
+    warnings: Warning[];
 }
 
 /**
@@ -258,9 +183,9 @@ export interface ConceptModernization {
 /**
  * Human-readable description of a single access rule.
  *
- * Returned by `AccessEngineAdapter.describeAccessRule`. Tooling (LLM agents, UI
- * tooltips) can render `requirementText` directly or walk `attributesNeeded` to
- * know which `userAttributes` values a caller has to provide.
+ * Returned by `AccessEngineAdapter.describeAllAccessRules`. Tooling (LLM agents,
+ * UI tooltips) can render `requirementText` directly or walk `attributesNeeded`
+ * to know which `userAttributes` values a caller has to provide.
  */
 export interface AccessRuleDescription {
     /** Qualified rule being described. */
@@ -283,8 +208,6 @@ export interface AccessRuleDescription {
     dependsOn: RuleReference[];
     /** Qualified rules this rule overrides. */
     overrides: RuleReference[];
-    /** Line-oriented rendering of the description. */
-    lines: string[];
 }
 
 /** Trusted marking/assertion target accepted by access requirement description. */
@@ -326,8 +249,6 @@ export interface AccessRequirementsDescription {
     combinedRequirementText: string;
     /** Union of subject and context paths needed to evaluate the target. */
     combinedAttributesNeeded: string[];
-    /** Line-oriented rendering of the combined description. */
-    lines: string[];
 }
 
 /** Which scheme an access policy governs. */
@@ -335,8 +256,7 @@ export interface AccessPolicyTargetScheme {
     /** Scheme ID this access policy applies to. */
     id: string;
     /**
-     * Optional specific version or constraint string (caret/tilde). Absent =
-     * any version.
+     * Optional specific version or version range. Absent means any version.
      */
     version?: string;
 }
@@ -344,10 +264,9 @@ export interface AccessPolicyTargetScheme {
 /**
  * The `access` envelope that wraps all access-policy fields on disk.
  *
- * @internal Runtime, post-load shape. The published wire format is
- * {@link AccessDefinition} (`rules: AccessRulesBlock`, `{ inline, external }`).
- * Authors and tools that read/write access YAML/JSON should target
- * `AccessDefinition`, not this interface.
+ * @internal Runtime, post-load shape. The published document format is
+ * {@link AccessDefinition}. Authors and tools that read/write access YAML/JSON
+ * should target `AccessDefinition`, not this interface.
  */
 export interface AccessPolicyEnvelope {
     /**
@@ -365,6 +284,11 @@ export interface AccessPolicyEnvelope {
     /** Optional longer description shown where the policy is listed. */
     description?: string;
     /**
+     * The access document's own overall marking, from `access.marking`. Carried
+     * for display and never interpreted.
+     */
+    marking?: string;
+    /**
      * Optional display-term overrides consulted by runtime UI components. Keys
      * are consumer-defined; each consumer merges with its own defaults via
      * `resolveVocabulary`. The `"accessHandbook"` key renames this access
@@ -376,14 +300,8 @@ export interface AccessPolicyEnvelope {
     vocabulary?: Vocabulary;
     /** The scheme this access policy applies to. */
     targetScheme: AccessPolicyTargetScheme;
-    /**
-     * Resolved rule list, post-load. Each entry carries its `id` inline; this
-     * is the in-memory shape AccessEngine evaluates against, not the wire
-     * format. The wire format ({@link AccessDefinition}) is the `{ inline:
-     * [...], external?: [...] }` block. Authored inline rules form an array;
-     * the loader materializes external sources and combines the rule entries.
-     */
-    rules: AccessRuleEntry[];
+    /** Resolved rule list, post-load, in document order. */
+    rules: AccessRuleDoc[];
 }
 
 /**

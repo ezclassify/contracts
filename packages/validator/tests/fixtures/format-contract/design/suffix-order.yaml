@@ -29,23 +29,22 @@ scheme:
         label: Partner list
         rollup: union
     concepts:
-      inline:
-        - id: LEVEL_ONE
-          name: Level one
-          views: { default: ONE }
-          categories: [level]
-        - id: VIEWERS_ONLY
-          name: Named viewers only
-          views: { default: VIEWERS ONLY }
-          categories: [handling]
-        - id: PARTNER_A
-          name: Partner A
-          views: { default: PA }
-          categories: [partner]
-        - id: PARTNER_B
-          name: Partner B
-          views: { default: PB }
-          categories: [partner]
+      - id: LEVEL_ONE
+        name: Level one
+        views: { default: ONE }
+        categories: [level]
+      - id: VIEWERS_ONLY
+        name: Named viewers only
+        views: { default: VIEWERS ONLY }
+        categories: [handling]
+      - id: PARTNER_A
+        name: Partner A
+        views: { default: PA }
+        categories: [partner]
+      - id: PARTNER_B
+        name: Partner B
+        views: { default: PB }
+        categories: [partner]
   render:
     default: banner
     formats:

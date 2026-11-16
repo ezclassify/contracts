@@ -28,8 +28,8 @@ packages/conformance-server/scenarios/**/*.json
 # measured rather than assumed: ts-json-schema-generator names anonymous
 # structures after their CHARACTER OFFSETS in the TypeScript source, so a
 # reflowed union in libs/types/src rewrites `$ref` identifiers in the published
-# generated/json-schemas-input set. Running Prettier over these trees moved the
-# generated names, broke both the input-schema freeze golden and the public
+# generated schemas. Running Prettier over these trees moved the
+# generated names, broke both the document-schema freeze golden and the public
 # signature golden, and would have churned every vendored SDK spec mirror, for
 # whitespace. These files stay in the shape their goldens were frozen against;
 # a deliberate contract change regenerates the goldens in the same commit.

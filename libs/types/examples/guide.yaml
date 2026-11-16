@@ -1,0 +1,37 @@
+# A guide with a computed rule.
+#
+# Read it aloud: this guide offers two rules a reader can select, and a third
+# that applies on its own whenever both of the first two are selected.
+guide:
+  id: acme-quickmark-rules
+  version: 1.0.0
+  name: ACME Quickmark Rules
+  description: Rule pack for the ACME quick-mark workflow.
+  target_schemes:
+    - id: acme-classification-primary
+  rules:
+    - id: handles-pii
+      name: Document handles personally identifiable information
+      keywords: [pii, ssn, dob]
+      match:
+        - type: regex
+          pattern: '\bEMP-\d{6}\b'
+          label: Employee number
+          case_sensitive: true
+      outcome:
+        rendered: INTERNAL
+    - id: handles-source-code
+      name: Document contains source code
+      keywords: [source-code, git]
+      outcome:
+        rendered: INTERNAL
+    - id: pii-in-code
+      name: Personal data embedded in source code
+      when:
+        all:
+          - has: handles-pii
+          - has: handles-source-code
+      outcome:
+        concepts:
+          - id: EXEC
+            category: caveats

@@ -9,21 +9,15 @@
  * - Libs/schemas/generated/json-schemas/<type>.schema.json: one per engine result
  *   type a REST client receives; the REST SDKs generate their result types from
  *   this set
- * - Libs/schemas/generated/json-schemas-test/<type>.schema.json: the scheme test
- *   runner's output contract (a saved suite run and the operation results its
- *   expectations are checked against)
- * - Libs/schemas/generated/json-schemas-input/*.schema.json: the authoring input
- *   contracts (scheme/guide/access/crosswalk/context/test suite)
- * - Libs/schemas/generated/validation/v1/*.schema.json: published document
- *   validation views, derived with schema-only constraints and stable names
+ * - Libs/schemas/generated/validation/v1/<kind>.schema.json: one schema per
+ *   authored document kind (scheme, guide, access, crosswalk, context, test
+ *   suite), derived from the document types with the schema-only constraints
+ *   and stable names declared in validation-schema.mjs
  *
  * Responses are open and requests are closed. The output schemas describe what
  * an engine answers, and an answer may gain fields, so they are generated open:
  * a consumer that validates a response with one keeps working the day a field
- * is added. `TestOperationResults` is the exception. It is the contract a
- * suite's expectations are checked against, which makes it authored input, and
- * it stays closed so an expectation cannot name a field no result has. The
- * input schemas are closed throughout.
+ * is added. The document schemas are closed throughout.
  *
  * Do NOT hand-edit generated/: edit the source types in @ezclassify/types or
  * the schema-only refinements in validation-schema.mjs and re-run.
@@ -54,8 +48,6 @@ const generatedRoot = args[0]
     : path.join(engineRoot, 'libs/schemas/generated');
 const outDir = path.join(generatedRoot, 'json-schemas');
 fs.mkdirSync(outDir, { recursive: true });
-const testOutDir = path.join(generatedRoot, 'json-schemas-test');
-fs.mkdirSync(testOutDir, { recursive: true });
 const writeGeneratedJson = await createGeneratedJsonWriter(
     path.join(
         engineRoot,
@@ -63,22 +55,8 @@ const writeGeneratedJson = await createGeneratedJsonWriter(
     ),
 );
 
-/**
- * @type {{
- *     type: string;
- *     path: string;
- *     closed?: boolean;
- *     test?: boolean;
- * }[]}
- */
+/** @type {{ type: string; path: string }[]} */
 const types = [
-    {
-        type: 'TestOperationResults',
-        path: 'libs/types/src/test-suite.ts',
-        closed: true,
-        test: true,
-    },
-    { type: 'TestSuiteRun', path: 'libs/types/src/test-suite.ts', test: true },
     // libs/types/src/scheme.ts
     { type: 'ValidateResult', path: 'libs/types/src/scheme.ts' },
     { type: 'ProcessResult', path: 'libs/types/src/scheme.ts' },
@@ -96,6 +74,7 @@ const types = [
     // libs/types/src/engine.ts
     { type: 'ScanResult', path: 'libs/types/src/engine.ts' },
     { type: 'ScanLimits', path: 'libs/types/src/engine.ts' },
+    { type: 'UnreadMark', path: 'libs/types/src/engine.ts' },
     // libs/types/src/access.ts
     { type: 'AccessRuleResult', path: 'libs/types/src/access.ts' },
     { type: 'AccessDecision', path: 'libs/types/src/access.ts' },
@@ -124,11 +103,8 @@ function toKebab(name) {
 let ok = 0;
 let fail = 0;
 
-for (const { type, path: srcPath, closed, test } of types) {
-    const outFile = path.join(
-        test ? testOutDir : outDir,
-        `${toKebab(type)}.schema.json`,
-    );
+for (const { type, path: srcPath } of types) {
+    const outFile = path.join(outDir, `${toKebab(type)}.schema.json`);
 
     const cmd = [
         'npx ts-json-schema-generator',
@@ -137,7 +113,7 @@ for (const { type, path: srcPath, closed, test } of types) {
         '--tsconfig tsconfig.base.json',
         '--no-top-ref',
         '--expose all',
-        ...(closed ? [] : ['--additional-properties']),
+        '--additional-properties',
     ].join(' ');
 
     try {
@@ -156,53 +132,47 @@ for (const { type, path: srcPath, closed, test } of types) {
     }
 }
 
-// Generate the *input-contract* schemas: what customers and Studio builders
-// author against. TS types are the source of truth; the generated files are
-// committed to generated/ so consumers can import them and the drift gate can diff.
-const inputOutDir = path.join(generatedRoot, 'json-schemas-input');
-fs.mkdirSync(inputOutDir, { recursive: true });
+// Generate the document schemas: what customers and Studio builders author
+// against. TS types are the source of truth; the generated files are committed
+// to generated/ so consumers can import them and the drift gate can diff.
 const validationOutDir = path.join(generatedRoot, 'validation/v1');
 fs.mkdirSync(validationOutDir, { recursive: true });
 
-const inputTypes = [
+const documentTypes = [
     {
-        type: 'TestSuite',
-        path: 'libs/types/src/test-suite.ts',
-        file: 'test-suite.schema.json',
-    },
-    {
+        kind: 'scheme',
         type: 'SchemeDefinition',
         path: 'libs/types/src/scheme-definition.ts',
-        file: 'scheme-definition.schema.json',
-        validation: 'scheme',
     },
     {
+        kind: 'guide',
         type: 'GuideDefinition',
         path: 'libs/types/src/guide-definition.ts',
-        file: 'guide-definition.schema.json',
-        validation: 'guide',
     },
     {
+        kind: 'access',
         type: 'AccessDefinition',
         path: 'libs/types/src/access-definition.ts',
-        file: 'access-policy.schema.json',
-        validation: 'access',
     },
     {
-        type: 'ContextDefinition',
-        path: 'libs/types/src/context-definition.ts',
-        file: 'context-definition.schema.json',
-    },
-    {
+        kind: 'crosswalk',
         type: 'CrosswalkDefinition',
         path: 'libs/types/src/crosswalk.ts',
-        file: 'crosswalk-definition.schema.json',
-        validation: 'crosswalk',
+    },
+    {
+        kind: 'context',
+        type: 'ContextDefinition',
+        path: 'libs/types/src/context-definition.ts',
+    },
+    {
+        kind: 'test-suite',
+        type: 'TestSuite',
+        path: 'libs/types/src/test-suite.ts',
     },
 ];
 
-for (const { type, path: srcPath, file, validation } of inputTypes) {
-    const outFile = path.join(inputOutDir, file);
+for (const { kind, type, path: srcPath } of documentTypes) {
+    const outFile = path.join(validationOutDir, `${kind}.schema.json`);
     const cmd = [
         'npx ts-json-schema-generator',
         `--path "${srcPath}"`,
@@ -218,20 +188,10 @@ for (const { type, path: srcPath, file, validation } of inputTypes) {
             encoding: 'utf8',
             stdio: ['pipe', 'pipe', 'pipe'],
         });
-        await writeGeneratedJson(outFile, json);
-        if (validation) {
-            const published = path.join(
-                validationOutDir,
-                `${validation}.schema.json`,
-            );
-            await writeGeneratedJson(
-                published,
-                JSON.stringify(validationSchema(validation, JSON.parse(json))),
-            );
-            console.log(
-                `✓ ${type} validation view → ${path.relative(engineRoot, published)}`,
-            );
-        }
+        await writeGeneratedJson(
+            outFile,
+            JSON.stringify(validationSchema(kind, JSON.parse(json))),
+        );
         console.log(`✓ ${type} → ${path.relative(engineRoot, outFile)}`);
         ok++;
     } catch (err) {

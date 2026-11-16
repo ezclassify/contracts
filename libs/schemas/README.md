@@ -7,9 +7,9 @@ by other-language SDK generators and documentation tooling.
 
 ```
 generated/json-schemas/         result schemas: the shapes a REST client receives
-generated/json-schemas-input/   input schemas: the documents you author
-generated/json-schemas-test/    scheme test output: a saved suite run and the
-                                operation results its expectations check
+generated/validation/v1/        document schemas: one per kind you author
+                                (scheme, guide, access, crosswalk, context,
+                                test suite)
 dist/lib/                       the document schemas as objects, ESM and CJS
 ```
 
@@ -36,15 +36,14 @@ import { crosswalkSchema } from '@ezclassify/schemas/crosswalk-schema';
 ```
 
 The document families are `./scheme-schema`, `./guide-schema`,
-`./access-schema`, `./context-schema` and `./crosswalk-schema`.
+`./access-schema`, `./context-schema`, `./crosswalk-schema` and
+`./test-suite-schema`.
 
-`./test-suite-schema` additionally exports `testSuiteSchema` for portable test
-suite input, `testOperationResultsSchema` for operation expectations, and
-`testSuiteRunSchema` for saved reports. Runtime runners own the suite's semantic
-inheritance and operation checks.
+`./test-suite-schema` exports `testSuiteSchema` for portable test suite input.
+Runtime runners own the suite's operation checks.
 
-Guide descriptions are optional in the canonical input types, generated input
-schema, and v1 document validator. When present, `description` must be a string.
+Guide descriptions are optional in the document types, the generated schema, and
+the v1 document validator. When present, `description` must be a string.
 `guideRuleSchema` validates one inline guide rule, including its required
 outcome and nested references. Validate the enclosing `guide.rules` block
 through `guideSchema`.

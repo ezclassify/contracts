@@ -1,10 +1,5 @@
-import type { RuleWhen, Vocabulary } from './scheme';
-import type { GuideRuleSource } from './source';
-import type {
-    ArtifactReference,
-    RuleReference,
-    SourceReference,
-} from './provenance';
+import type { Vocabulary } from './scheme';
+import type { RuleReference } from './provenance';
 
 /** A span where a pattern matched in the scanned text. */
 export interface MatchSpan {
@@ -308,6 +303,57 @@ export interface GuideRuleOutcome {
 }
 
 /**
+ * The tests a guide `when` condition can apply to the rules the user
+ * selected. `has_concept` and `not_has_concept` name a rule by id in `value`;
+ * the `count_*` tests (greater than, greater than or equal, equal, less than,
+ * less than or equal) compare the number of selected rules with the number in
+ * `value`; `has_content` holds when any rule is selected.
+ */
+export type GuideWhenOperator =
+    | 'has_concept'
+    | 'not_has_concept'
+    | 'has_content'
+    | 'count_gt'
+    | 'count_gte'
+    | 'count_eq'
+    | 'count_lt'
+    | 'count_lte';
+
+/** A guide condition that holds when the user selected one rule. */
+export interface GuideWhenHas {
+    /** The id of a selectable rule of this guide. */
+    has: string;
+}
+
+/** A guide condition that tests the user's selection with an operator. */
+export interface GuideWhenTest {
+    /** The test to apply. */
+    operator: GuideWhenOperator;
+    /**
+     * A rule id for `has_concept` and `not_has_concept`, a count for the
+     * `count_*` tests, absent for `has_content`.
+     */
+    value?: string | number;
+}
+
+/**
+ * A block of conditions over the rules the user selected. Every list present
+ * must hold: `any` when one of its nodes holds, `all` when each does, `none`
+ * when none does.
+ */
+export interface GuideWhen {
+    /** At least one of these holds. */
+    any?: GuideWhenNode[];
+    /** Every one of these holds. */
+    all?: GuideWhenNode[];
+    /** None of these holds. */
+    none?: GuideWhenNode[];
+}
+
+/** One node of a guide `when` block: a condition, or a nested block. */
+export type GuideWhenNode = GuideWhenHas | GuideWhenTest | GuideWhen;
+
+/**
  * A rule in a marking guide: a data-element description with an outcome that
  * contributes to the aggregate marking when activated.
  *
@@ -318,8 +364,8 @@ export interface GuideRuleOutcome {
  * auto-activate based on sibling rule selection state and do not appear as
  * user-visible checkboxes.
  *
- * This is the named runtime/read-result shape. Authoring input is carried by
- * the guide definition's `rules.inline` entries.
+ * This is the named runtime/read-result shape. A guide document authors its
+ * rules as `GuideRuleDoc` entries in `guide.rules`.
  */
 export interface GuideRule {
     /** Unique identifier within the guide. */
@@ -352,12 +398,10 @@ export interface GuideRule {
     /** Explanation of why this outcome applies. */
     rationale?: string;
     /**
-     * When present, this rule auto-activates based on other rules' selection
-     * state. Uses the same when framework as scheme rules. `has` references
-     * guide rule IDs. Rules with `when` are "computed"; they don't appear as
-     * checkboxes.
+     * When present, the rule is computed: it activates when this block holds
+     * over the rules the user selected, and it is not offered as a checkbox.
      */
-    when?: RuleWhen;
+    when?: GuideWhen;
     /**
      * Rule IDs whose outcomes this rule replaces when active. When omitted
      * (default), this rule's outcome is additive: it contributes alongside the
@@ -376,10 +420,9 @@ export interface GuideRule {
  * `GuideEngine.evaluate()`. Rules with `when` auto-activate based on other
  * rules' selection state and do not appear as user-visible checkboxes.
  *
- * @internal Runtime, post-load shape. The published wire format is
- * `GuideDefinition` (`guide.rules: GuideRulesBlock`, `{ inline, external }`).
- * Authors and tools that read/write guide YAML/JSON should target
- * `GuideDefinition`, not `Guide`.
+ * @internal Runtime, post-load shape. The published document format is
+ * `GuideDefinition`. Authors and tools that read/write guide YAML/JSON should
+ * target `GuideDefinition`, not `Guide`.
  */
 export interface Guide {
     /** Unique identifier. */
@@ -390,6 +433,11 @@ export interface Guide {
     name: string;
     /** Long description. */
     description: string;
+    /**
+     * The guide document's own overall marking, from `guide.marking`. Carried
+     * for display and never interpreted.
+     */
+    marking?: string;
     /**
      * Optional display-term overrides consulted by runtime UI components. Keys
      * are consumer-defined (e.g. "rule", "category"); each consumer merges with
@@ -403,13 +451,7 @@ export interface Guide {
     targetSchemes: GuideDependency[];
     /** Sections for organizing rules in the UI. */
     categories?: GuideCategory[];
-    /**
-     * Resolved rule list, post-load. Each entry carries its `id` inline; this
-     * is the in-memory shape the engine evaluates against, not the wire format.
-     * The wire format (`GuideBlock.rules`) is the `{ inline: <map>,
-     * external?: [...] }` block; the loader materializes external sources and
-     * projects the `inline` map back to this flat array.
-     */
+    /** Resolved rule list, post-load, in document order. */
     rules: GuideRule[];
 }
 
@@ -425,6 +467,20 @@ export interface GuideBreakdownEntry {
     wasOverridden: boolean;
     /** Qualified overriding rule when this outcome was replaced. */
     overriddenBy?: RuleReference;
+}
+
+/**
+ * One selected rule, named by the guide that holds it.
+ *
+ * Guides in a Context are independent, so two of them may use the same rule
+ * id. A selection names the guide as well as the rule, and the two pairs are
+ * two rules.
+ */
+export interface GuideRuleSelection {
+    /** Id of the guide that holds the rule. */
+    guideId: string;
+    /** Id of the rule within that guide. */
+    ruleId: string;
 }
 
 /** Aggregated guide output: one rolled-up marking per target scheme id. */
@@ -477,8 +533,6 @@ export interface EvaluationResult {
      * layers stop re-filtering the full breakdown.
      */
     contributingBreakdown: GuideBreakdownEntry[];
-    /** External guide-rule source observation used by this evaluation. */
-    provenance?: SourceReference;
 }
 
 /** A guide rule matched by keyword search. */
@@ -516,12 +570,6 @@ export interface GuideScanSpan {
      * @asType integer
      */
     end: number;
-    /**
-     * Advisory confidence in [0, 1], present only when the scan asked for it
-     * with the `confidence` scan option. An ordinal hint derived from the
-     * match's shape, not a calibrated probability.
-     */
-    confidence?: number;
 }
 
 /**
@@ -536,97 +584,12 @@ export interface GuideScanResult {
     /** The guide rule that matched. */
     rule: GuideRule;
     /**
-     * The id of the guide the rule belongs to, when the scan covered more than
-     * one.
+     * The id of the guide the rule belongs to. Rule ids are unique only within
+     * a guide, so a selection built from this hit names this guide.
      */
-    guideId?: string;
+    guideId: string;
     /** Each keyword or matcher label that fired, once each. */
     matchedKeywords: string[];
     /** Every place in the text where the rule fired, in the order found. */
     spans: GuideScanSpan[];
-    /**
-     * Source provenance for the guide-rule source that supplied the matched
-     * rule.
-     *
-     * Populated only when the rule came from an external `GuideRuleSource`
-     * override wired into the `GuideEngine` at load time (typically a
-     * `MappedGuideRuleSource` the server's Context loader built from a guide
-     * YAML's `rules.external` block). Inline-backed results leave this field
-     * undefined to keep payloads compact for the common single-source case.
-     *
-     * Identity fields mirror the source's `sourceIdentity()` observation at
-     * engine-construction time.
-     */
-    provenance?: SourceReference;
-}
-
-/**
- * Human-readable description of a guide rule. Parallels `ConceptDescription` on
- * the scheme side.
- */
-export interface RuleDescription {
-    /** Qualified rule being described. */
-    rule: RuleReference;
-    /** Guide artifact that owns the rule. */
-    guide: ArtifactReference;
-    /** Human-readable rule name. */
-    name: string;
-    /** Optional policy-authored description. */
-    description?: string;
-    /** Human-readable outcome expression. */
-    outcomeText: string;
-    /** Human-readable activation expression. */
-    whenText?: string;
-    /** Whether the rule is computed from other guide facts. */
-    isComputed: boolean;
-    /** Qualified rules referenced by this rule's activation block. */
-    dependsOn: RuleReference[];
-    /** Qualified rules this rule overrides when it fires. */
-    overrides: RuleReference[];
-    /** Flattened multi-line description matching `ConceptDescription.lines`. */
-    lines: string[];
-}
-
-/** Validation result for a guide document. */
-export interface GuideValidationResult {
-    /** True when the guide document has no issues. */
-    valid: boolean;
-    /** Each problem found in the guide document, in words. Empty when valid. */
-    issues: string[];
-}
-
-/**
- * Optional progress callback. Receives `(current, total)`, where `total` is the
- * length of the scanned text in UTF-16 code units and `current` is how far the
- * scan has advanced on that scale, across every guide being scanned. It is
- * invoked at least at the start and end of the scan.
- *
- * @param current - How far the scan has advanced, on the same scale as `total`.
- * @param total - Length of the scanned text, in UTF-16 code units.
- */
-export type GuideScanProgressCallback = (
-    current: number,
-    total: number,
-) => void;
-
-/** Options accepted by guide scan operations. */
-export interface GuideScanOptions {
-    /** Optional progress callback invoked as the scan advances. */
-    onProgress?: GuideScanProgressCallback;
-    /**
-     * Opt in to advisory confidence on emitted spans. Default `false`.
-     *
-     * When `false` or absent, no span carries a `confidence` field. When
-     * `true`, each emitted span gets a deterministic, advisory `confidence` in
-     * `[0, 1]` derived purely from the match's shape (see the engine's
-     * `confidenceForNode` tiers). It is an ordinal hint, not a calibrated
-     * probability, and never enters any serialized or hashed form.
-     */
-    confidence?: boolean;
-    /**
-     * Optional source used instead of the guide's inline rule collection.
-     *
-     * @internal
-     */
-    source?: GuideRuleSource;
 }

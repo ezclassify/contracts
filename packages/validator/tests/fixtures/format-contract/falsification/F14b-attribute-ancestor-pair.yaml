@@ -25,16 +25,15 @@ scheme:
         single: true
         required: true
     concepts:
-      inline:
-        - id: BROAD
-          name: Broad instruction
-          views: { default: BROAD }
-          categories: [kind]
-        - id: NARROW
-          name: Narrow instruction
-          views: { default: NARROW }
-          categories: [kind]
-          parents: [BROAD]
+      - id: BROAD
+        name: Broad instruction
+        views: { default: BROAD }
+        categories: [kind]
+      - id: NARROW
+        name: Narrow instruction
+        views: { default: NARROW }
+        categories: [kind]
+        parents: [BROAD]
   render:
     default: structured
     formats:

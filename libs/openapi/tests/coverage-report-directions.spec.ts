@@ -135,10 +135,9 @@ describe('CheckCoverageResult reports both directions', () => {
         expect(rules()).toEqual([
             ['union'],
             ['intersection'],
-            ['least_upper_bound', 'max', 'min'],
+            ['max', 'min'],
             ['pipeline'],
-            ['first', 'last'],
-            ['complement', 'exclusive_or', 'symmetric_difference'],
+            ['first'],
         ]);
         expect(rules().flat().sort()).toEqual([...operators].sort());
     });

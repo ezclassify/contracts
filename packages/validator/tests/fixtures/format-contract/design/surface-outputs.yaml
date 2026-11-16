@@ -55,23 +55,22 @@ scheme:
         single: true
         scopes: [retention]
     concepts:
-      inline:
-        - id: INTERNAL
-          name: Internal
-          views: { default: INTERNAL, abbreviated: INT }
-          categories: [level]
-        - id: CONFIDENTIAL
-          name: Confidential
-          views: { default: CONFIDENTIAL, abbreviated: CONF }
-          categories: [level]
-        - id: PARTNERS
-          name: Shared with partners
-          views: { default: PARTNERS }
-          categories: [sharing]
-        - id: KEEP_7Y
-          name: Seven years
-          views: { default: KEEP 7 YEARS }
-          categories: [keep]
+      - id: INTERNAL
+        name: Internal
+        views: { default: INTERNAL, abbreviated: INT }
+        categories: [level]
+      - id: CONFIDENTIAL
+        name: Confidential
+        views: { default: CONFIDENTIAL, abbreviated: CONF }
+        categories: [level]
+      - id: PARTNERS
+        name: Shared with partners
+        views: { default: PARTNERS }
+        categories: [sharing]
+      - id: KEEP_7Y
+        name: Seven years
+        views: { default: KEEP 7 YEARS }
+        categories: [keep]
   render:
     surface_separator: "\n"
     surfaces:

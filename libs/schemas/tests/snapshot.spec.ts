@@ -28,6 +28,7 @@ const EXPECTED_SCHEMAS = [
     'explanation-trace.schema.json',
     'scan-limits.schema.json',
     'scan-result.schema.json',
+    'unread-mark.schema.json',
     'access-rule-result.schema.json',
     'access-decision.schema.json',
     'category-access-result.schema.json',
@@ -71,12 +72,16 @@ describe('@ezclassify/schemas generated spec bundle', () => {
         expect(actual).toEqual(expected);
     });
 
-    it('keeps the scheme test runner output in its own set', () => {
+    it('publishes one document schema per kind', () => {
         expect(
-            fs.readdirSync(path.join(generatedRoot, 'json-schemas-test')).sort(),
+            fs.readdirSync(path.join(generatedRoot, 'validation/v1')).sort(),
         ).toEqual([
-            'test-operation-results.schema.json',
-            'test-suite-run.schema.json',
+            'access.schema.json',
+            'context.schema.json',
+            'crosswalk.schema.json',
+            'guide.schema.json',
+            'scheme.schema.json',
+            'test-suite.schema.json',
         ]);
     });
 });

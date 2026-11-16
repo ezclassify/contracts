@@ -29,19 +29,18 @@ scheme:
         label: Handling
         rollup: union
     concepts:
-      inline:
-        - id: OWNER_HOME
-          name: Home owner
-          views: { default: HOME }
-          categories: [owner]
-        - id: LEVEL_ONE
-          name: Level one
-          views: { default: ONE }
-          categories: [level]
-        - id: HANDLING_ONE
-          name: Handling one
-          views: { default: H1 }
-          categories: [handling]
+      - id: OWNER_HOME
+        name: Home owner
+        views: { default: HOME }
+        categories: [owner]
+      - id: LEVEL_ONE
+        name: Level one
+        views: { default: ONE }
+        categories: [level]
+      - id: HANDLING_ONE
+        name: Handling one
+        views: { default: H1 }
+        categories: [handling]
   render:
     default: banner
     formats:

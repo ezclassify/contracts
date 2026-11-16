@@ -5,13 +5,13 @@
     },
     "corpusVersion": "v1",
     "coverage": {
-        "cases": 249,
-        "operationsCovered": 31
+        "cases": 245,
+        "operationsCovered": 26
     },
     "generation": {
-        "contentDigest": "sha256:2aab2f7dae92a6a04d16eac5964b7949742870cd1e360612ab35ebbcd97b7612",
+        "contentDigest": "sha256:e8a50a82b94991defd733fa80c1b02b846f6a390ece02f34569fbc89b954c0b6",
         "generator": "ezclassify-integration-scenario-recorder",
-        "generatorDigest": "sha256:9aa8ddd2b42bce463751a61f6761dff9ac5fb3f96cac8ede5780deb722dfcb5d"
+        "generatorDigest": "sha256:731aef3390217d515a1dd04a3a2c1899373dc85515e63e08d34b648d3a95c457"
     },
     "recordedResponseHeaders": [
         "allow",
@@ -21,25 +21,12 @@
         "x-ezclassify-resolved-version"
     ],
     "runtime": {
-        "engineVersion": "1.0.0-dev.30",
-        "producerPackages": [
-            "@ezclassify/engine@1.0.0-dev.30",
-            "@ezclassify/runtime-host@1.0.0-dev.30",
-            "@ezclassify/trust@1.0.0-dev.30",
-            "@ezclassify/server-auth@1.0.0-dev.30",
-            "@ezclassify/loaders@1.0.0-dev.30",
-            "@ezclassify/runtime-types@1.0.0-dev.30",
-            "@ezclassify/types@1.0.0-dev.30",
-            "@ezclassify/schemas@1.0.0-dev.30",
-            "@ezclassify/validator@1.0.0-dev.30"
-        ],
-        "producerSourceDigest": "sha256:f854566769c5ff748b3615fca3babed6dc797e9b16e14e75c03473c214156c64",
-        "restApiVersion": "1.0.0-dev.30"
+        "engineVersion": "1.0.0-dev.30"
     },
     "spec": {
-        "digest": "sha256:cf1679c6bae46071cec779c7864802568a3f517aea6b3cc7a2a634de512c6e61",
+        "digest": "sha256:5b10dd61da6005025820a3e39c406756e2a7c280db6e16f1325c289fa6217353",
         "infoVersion": "1.0.0-dev.30",
         "package": "@ezclassify/openapi",
-        "validationJsonDigest": "sha256:5838e7e26a6d17602d60a6d8f668e59727044f46847eaf762f48f93e8b2aa07b"
+        "validationJsonDigest": "sha256:a3413db1e73b3bc396d9d9c7234e7d2ce4fdd6ffc4b697b150604b13bc055af1"
     }
 }

@@ -1,23 +1,20 @@
 {
     "$defs": {
-        "AssertionReference": {
+        "CrosswalkAssertionDoc": {
             "additionalProperties": false,
-            "description": "Compact reference to an assertion without engine-production metadata.",
+            "description": "A concept in a category, as a crosswalk document names it.",
             "properties": {
-                "categoryId": {
-                    "description": "Category containing the asserted concept.",
+                "category": {
+                    "description": "The category the concept is asserted in.",
                     "type": "string"
                 },
-                "conceptId": {
-                    "description": "Asserted concept identifier.",
-                    "type": "string"
-                },
+                "concept": { "description": "The concept.", "type": "string" },
                 "value": {
-                    "description": "Captured value for value-bearing concepts.",
+                    "description": "The captured value, for a value-bearing concept.",
                     "type": "string"
                 }
             },
-            "required": ["categoryId", "conceptId"],
+            "required": ["category", "concept"],
             "type": "object"
         },
         "CrosswalkDisposition": {
@@ -27,7 +24,7 @@
         },
         "CrosswalkLayer": {
             "additionalProperties": false,
-            "description": "The crosswalk family's layer payload. Required when `type: 'layer'`, forbidden otherwise.\n\nA crosswalk layer is how an organization covers source assertions its base crosswalk has never seen. Concepts local to that organization arrive through its own scheme layer, and the sold crosswalk above it structurally could not have mapped them; without a layer they translate as `unmapped`, which is safe but leaves a reviewer holding the decision. The layer's own `mappings` and `selections` are the additions and overrides, written as an ordinary crosswalk document; what it takes away is listed here.\n\nBinding and merge rules are the cross-family ones: see `LayerBinding`. A crosswalk layer may add, override, and remove; later wins on a colliding id. The layer's `sourceScheme` and `targetScheme` must name the same pair its base does, since a mapping between one pair of schemes says nothing about another.",
+            "description": "The crosswalk family's layer payload. Required when `type: 'layer'`, forbidden otherwise.\n\nA crosswalk layer is how an organization covers source assertions its base crosswalk has never seen. Concepts local to that organization arrive through its own scheme layer, and the sold crosswalk above it structurally could not have mapped them; without a layer they translate as `unmapped`, which is safe but leaves a reviewer holding the decision. The layer's own `mappings` and `selections` are the additions and overrides, written as an ordinary crosswalk document; what it takes away is listed here.\n\nBinding and merge rules are the cross-family ones: see `LayerBinding`. A crosswalk layer may add, override, and remove; later wins on a colliding id. The layer's `source_scheme` and `target_scheme` must name the same pair its base does, since a mapping between one pair of schemes says nothing about another.",
             "properties": {
                 "base": {
                     "description": "The artifact or layer this one stacks on, as `id@version`.",
@@ -79,9 +76,9 @@
             ],
             "description": "One element a crosswalk layer takes away, named by kind and id. Exactly one key.\n\nThe same reference-not-a-path reasoning as the scheme family: a mapping or a selection is addressed by the id it was reviewed under, which survives a storage change and validates as a closed set."
         },
-        "CrosswalkMapping": {
+        "CrosswalkMappingDoc": {
             "additionalProperties": false,
-            "description": "Reviewed treatment of one source assertion in a directional crosswalk.",
+            "description": "A reviewed treatment of one source assertion, as a crosswalk document authors it. A mapping a Context describes is a `CrosswalkMapping`, which carries the same facts in the wire shape and no marking.",
             "properties": {
                 "authority": {
                     "description": "Authority or reviewed source behind the mapping, when one exists.",
@@ -103,63 +100,30 @@
                     "description": "Stable identifier for audit and review.",
                     "type": "string"
                 },
+                "marking": {
+                    "description": "This mapping's part marking, written in the scheme the document's `marking_scheme` names. Text, never interpreted: no engine parses it, checks it, acts on it, or reports it.",
+                    "type": "string"
+                },
                 "reason": {
                     "description": "Human-readable basis for the decision.",
                     "type": "string"
                 },
                 "source": {
-                    "$ref": "#/$defs/AssertionReference",
+                    "$ref": "#/$defs/CrosswalkAssertionDoc",
                     "description": "Source assertion matched by this mapping."
                 },
                 "targets": {
                     "description": "Target assertions. `carry` mappings emit these automatically; `review` mappings expose them only as proposals. `omit` and `forbid` mappings have no targets.",
-                    "items": { "$ref": "#/$defs/CrosswalkTarget" },
+                    "items": { "$ref": "#/$defs/CrosswalkTargetDoc" },
                     "type": "array"
                 }
             },
             "required": ["id", "source", "disposition", "reason"],
             "type": "object"
         },
-        "CrosswalkSchemeDependency": {
+        "CrosswalkSelectionCandidateDoc": {
             "additionalProperties": false,
-            "description": "Scheme dependency declared by a directional crosswalk.",
-            "properties": {
-                "id": {
-                    "description": "Scheme artifact identifier.",
-                    "type": "string"
-                },
-                "version": {
-                    "description": "Required scheme version or semver range.",
-                    "type": "string"
-                }
-            },
-            "required": ["id"],
-            "type": "object"
-        },
-        "CrosswalkSelection": {
-            "additionalProperties": false,
-            "description": "Cross-field decision that activates exactly one reviewed mapping candidate.",
-            "properties": {
-                "candidates": {
-                    "description": "Ordered candidates; order breaks ties and places a fallback last.",
-                    "items": { "$ref": "#/$defs/CrosswalkSelectionCandidate" },
-                    "type": "array"
-                },
-                "id": {
-                    "description": "Stable selection identifier for audit and review.",
-                    "type": "string"
-                },
-                "strategy": {
-                    "$ref": "#/$defs/CrosswalkSelectionStrategy",
-                    "description": "Deterministic candidate-selection strategy."
-                }
-            },
-            "required": ["id", "strategy", "candidates"],
-            "type": "object"
-        },
-        "CrosswalkSelectionCandidate": {
-            "additionalProperties": false,
-            "description": "One possible reviewed mapping set in a cross-field crosswalk decision.",
+            "description": "A selection candidate as a crosswalk document authors it.",
             "properties": {
                 "authority": {
                     "description": "Authority behind the candidate decision, when one exists.",
@@ -183,7 +147,7 @@
                 },
                 "mappings": {
                     "description": "Per-assertion mappings activated when this candidate is selected.",
-                    "items": { "$ref": "#/$defs/CrosswalkMapping" },
+                    "items": { "$ref": "#/$defs/CrosswalkMappingDoc" },
                     "type": "array"
                 },
                 "reason": {
@@ -192,47 +156,70 @@
                 },
                 "score": {
                     "description": "Assertions counted by a `most-matches` selection.",
-                    "items": { "$ref": "#/$defs/AssertionReference" },
+                    "items": { "$ref": "#/$defs/CrosswalkAssertionDoc" },
                     "type": "array"
                 },
                 "sources": {
                     "description": "Source assertions covered when this candidate is selected.",
-                    "items": { "$ref": "#/$defs/AssertionReference" },
+                    "items": { "$ref": "#/$defs/CrosswalkAssertionDoc" },
                     "type": "array"
                 },
                 "targets": {
                     "description": "Targets emitted once when this candidate is selected.",
-                    "items": { "$ref": "#/$defs/CrosswalkTarget" },
+                    "items": { "$ref": "#/$defs/CrosswalkTargetDoc" },
                     "type": "array"
                 },
                 "when": {
-                    "$ref": "#/$defs/CrosswalkSelectionCondition",
+                    "$ref": "#/$defs/CrosswalkSelectionConditionDoc",
                     "description": "Predicate used by a `first-match` selection; omission makes this the fallback."
                 }
             },
             "required": ["id", "reason"],
             "type": "object"
         },
-        "CrosswalkSelectionCondition": {
+        "CrosswalkSelectionConditionDoc": {
             "additionalProperties": false,
-            "description": "Boolean test over source assertions used to choose a crosswalk candidate.",
+            "description": "The test that chooses a selection candidate, as a crosswalk document authors it.",
             "properties": {
                 "all": {
-                    "description": "Every referenced assertion must be present.",
-                    "items": { "$ref": "#/$defs/AssertionReference" },
+                    "description": "Every one of these must be present.",
+                    "items": { "$ref": "#/$defs/CrosswalkAssertionDoc" },
                     "type": "array"
                 },
                 "any": {
-                    "description": "At least one referenced assertion must be present.",
-                    "items": { "$ref": "#/$defs/AssertionReference" },
+                    "description": "At least one of these must be present.",
+                    "items": { "$ref": "#/$defs/CrosswalkAssertionDoc" },
                     "type": "array"
                 },
                 "none": {
-                    "description": "None of the referenced assertions may be present.",
-                    "items": { "$ref": "#/$defs/AssertionReference" },
+                    "description": "None of these may be present.",
+                    "items": { "$ref": "#/$defs/CrosswalkAssertionDoc" },
                     "type": "array"
                 }
             },
+            "type": "object"
+        },
+        "CrosswalkSelectionDoc": {
+            "additionalProperties": false,
+            "description": "A cross-field decision as a crosswalk document authors it.",
+            "properties": {
+                "candidates": {
+                    "description": "Ordered candidates; order breaks ties and places a fallback last.",
+                    "items": {
+                        "$ref": "#/$defs/CrosswalkSelectionCandidateDoc"
+                    },
+                    "type": "array"
+                },
+                "id": {
+                    "description": "Stable selection identifier for audit and review.",
+                    "type": "string"
+                },
+                "strategy": {
+                    "$ref": "#/$defs/CrosswalkSelectionStrategy",
+                    "description": "Deterministic candidate-selection strategy."
+                }
+            },
+            "required": ["id", "strategy", "candidates"],
             "type": "object"
         },
         "CrosswalkSelectionStrategy": {
@@ -240,28 +227,59 @@
             "enum": ["first-match", "most-matches"],
             "type": "string"
         },
-        "CrosswalkTarget": {
+        "CrosswalkTargetDoc": {
             "additionalProperties": false,
-            "description": "One target assertion a crosswalk can emit or propose.",
+            "description": "A target a crosswalk document's mapping emits or proposes.",
             "properties": {
-                "categoryId": {
-                    "description": "Category containing the asserted concept.",
+                "category": {
+                    "description": "The category the concept is asserted in.",
                     "type": "string"
                 },
-                "conceptId": {
-                    "description": "Asserted concept identifier.",
-                    "type": "string"
-                },
-                "copyValue": {
+                "concept": { "description": "The concept.", "type": "string" },
+                "copy_value": {
                     "description": "Copy the source assertion's captured value onto this target.",
                     "type": "boolean"
                 },
                 "value": {
-                    "description": "Captured value for value-bearing concepts.",
+                    "description": "The captured value, for a value-bearing concept.",
                     "type": "string"
                 }
             },
-            "required": ["categoryId", "conceptId"],
+            "required": ["category", "concept"],
+            "type": "object"
+        },
+        "MarkingSchemeRefDoc": {
+            "additionalProperties": false,
+            "description": "The scheme a document's markings are written in, named by id and, optionally, version. Every document that can be marked names one this way; a scheme document may also write `self`. See `SchemeBlock.marking_scheme`.",
+            "properties": {
+                "id": {
+                    "description": "The marking scheme's id.",
+                    "minLength": 1,
+                    "type": "string"
+                },
+                "version": {
+                    "description": "The marking scheme's version. Omitted, any version.",
+                    "type": "string"
+                }
+            },
+            "required": ["id"],
+            "type": "object"
+        },
+        "SchemeDependencyDoc": {
+            "additionalProperties": false,
+            "description": "A scheme another document depends on: the scheme a guide's outcomes, an access policy's rules, or one side of a crosswalk are written in.",
+            "properties": {
+                "id": {
+                    "description": "The scheme's id.",
+                    "minLength": 1,
+                    "type": "string"
+                },
+                "version": {
+                    "description": "The scheme version, or a semver range such as `>=2.0.0`. Omitted, any version.",
+                    "type": "string"
+                }
+            },
+            "required": ["id"],
             "type": "object"
         }
     },
@@ -296,8 +314,16 @@
                 },
                 "mappings": {
                     "description": "How each source concept translates into the target scheme.",
-                    "items": { "$ref": "#/$defs/CrosswalkMapping" },
+                    "items": { "$ref": "#/$defs/CrosswalkMappingDoc" },
                     "type": "array"
+                },
+                "marking": {
+                    "description": "The whole marking of this crosswalk document, written in the scheme `marking_scheme` names. Every `marking` on one of its mappings is a part of it.\n\nText, never interpreted: no engine parses it, checks it, or acts on it. The Context's description of the crosswalk reports it unchanged for display.",
+                    "type": "string"
+                },
+                "marking_scheme": {
+                    "$ref": "#/$defs/MarkingSchemeRefDoc",
+                    "description": "The scheme this document's markings are written in. A crosswalk is not a scheme, so it always names one by reference.\n\nAuthoring data only: no engine resolves the scheme it names."
                 },
                 "name": {
                     "description": "Human-readable crosswalk name.",
@@ -305,15 +331,15 @@
                 },
                 "selections": {
                     "description": "Optional cross-field decisions whose selected mappings supplement `mappings`.",
-                    "items": { "$ref": "#/$defs/CrosswalkSelection" },
+                    "items": { "$ref": "#/$defs/CrosswalkSelectionDoc" },
                     "type": "array"
                 },
-                "sourceScheme": {
-                    "$ref": "#/$defs/CrosswalkSchemeDependency",
+                "source_scheme": {
+                    "$ref": "#/$defs/SchemeDependencyDoc",
                     "description": "The scheme this crosswalk translates from."
                 },
-                "targetScheme": {
-                    "$ref": "#/$defs/CrosswalkSchemeDependency",
+                "target_scheme": {
+                    "$ref": "#/$defs/SchemeDependencyDoc",
                     "description": "The scheme this crosswalk translates to."
                 },
                 "type": {
@@ -330,8 +356,8 @@
                 "id",
                 "version",
                 "name",
-                "sourceScheme",
-                "targetScheme",
+                "source_scheme",
+                "target_scheme",
                 "mappings"
             ],
             "type": "object"

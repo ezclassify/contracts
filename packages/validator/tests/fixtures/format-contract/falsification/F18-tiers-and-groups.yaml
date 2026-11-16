@@ -24,17 +24,16 @@ scheme:
         label: Release list
         rollup: union
     concepts:
-      inline:
-        - { id: PROGRAM_ROOT, name: Program root, views: { default: PROGRAM ROOT, abbreviated: PR }, categories: [program] }
-        - id: PROGRAM_PART
-          name: Program part
-          views: { default: PART, abbreviated: PT }
-          categories: [program]
-          parents: [PROGRAM_ROOT]
-          tier: subprogram
-        - { id: RELEASE_HEADER, name: Authorized release, views: { default: RELEASE }, categories: [handling] }
-        - { id: HANDLING_A, name: Handling A, views: { default: HA }, categories: [handling] }
-        - { id: PARTNER_A, name: Partner A, views: { default: PA }, categories: [release] }
+      - { id: PROGRAM_ROOT, name: Program root, views: { default: PROGRAM ROOT, abbreviated: PR }, categories: [program] }
+      - id: PROGRAM_PART
+        name: Program part
+        views: { default: PART, abbreviated: PT }
+        categories: [program]
+        parents: [PROGRAM_ROOT]
+        tier: subprogram
+      - { id: RELEASE_HEADER, name: Authorized release, views: { default: RELEASE }, categories: [handling] }
+      - { id: HANDLING_A, name: Handling A, views: { default: HA }, categories: [handling] }
+      - { id: PARTNER_A, name: Partner A, views: { default: PA }, categories: [release] }
   render:
     default: banner
     formats:

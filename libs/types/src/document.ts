@@ -10,14 +10,12 @@ import type {
     Warning,
 } from './scheme';
 import type { EvaluationResult } from './guide';
-import type { AccessDecision } from './access';
 import type {
     ArtifactReference,
     AssertionReference,
     AssertionSupport,
     ContentEvidenceSpan,
     RuleReference,
-    SourceReference,
 } from './provenance';
 
 /**
@@ -36,12 +34,6 @@ export type DocumentOverallVerdict =
     | 'inadequate-coverage'
     | 'procedural-gap'
     | 'mixed';
-
-/** Authority basis used to construct an access scenario. */
-export type AccessScenarioBasis = 'authored' | 'authoritative' | 'projected';
-
-/** Closed evaluation status of an access scenario. */
-export type AccessScenarioStatus = 'granted' | 'denied' | 'not-evaluated';
 
 /** Explains why an assessment dimension or conclusion is constrained. */
 export interface AssessmentLimitation {
@@ -74,12 +66,6 @@ export interface DocumentResponseCounts {
     evidenceSpans: number;
     /** Number of evaluated guide units. @asType integer */
     guideUnits: number;
-    /** Access-rule results across all scenarios. @asType integer */
-    accessRuleResults: number;
-    /** Content requirements across all scenarios. @asType integer */
-    contentRequirements: number;
-    /** Context requirements across all scenarios. @asType integer */
-    contextRequirements: number;
 }
 
 /** Describes the explicit projection applied after full evaluation. */
@@ -109,8 +95,6 @@ export interface ContextResolution {
     resolvedVersion: string;
     /** Ordered artifacts participating in the composition. */
     artifacts: ArtifactReference[];
-    /** De-duplicated source observations used by the operation. */
-    sources: SourceReference[];
 }
 
 /** Concrete Context operation envelope shared by local and remote surfaces. */
@@ -119,8 +103,6 @@ export interface ContextOperationResult<T> {
     resolution: ContextResolution;
     /** Typed operation result. */
     result: T;
-    /** Limitations applying to the operation as a whole. */
-    operationLimitations: AssessmentLimitation[];
     /** Projection metadata, present only for document operations. */
     responseProjection?: DocumentResponseProjection;
 }
@@ -391,9 +373,9 @@ export interface MarkingValidation {
     /**
      * The settled marking, written as validate writes it when the request
      * names no output: in the scheme's default format, or for a scheme that
-     * declares `render.surfaces`, each written surface in its default for the
-     * role the marking has in this document, by the rule
-     * `RenderConfigDoc.surfaces` states.
+     * declares `render.surfaces`, in the defaults for the role the marking has
+     * in this document that the rule `RenderConfigDoc.surfaces` states for an
+     * unnamed output selects.
      */
     rendered: string;
 }
@@ -505,102 +487,6 @@ export interface DocumentAssessmentInput {
     responseProfile?: DocumentResponseProfile;
 }
 
-/** Effective marking/assertion target evaluated in one access scenario. */
-export interface EffectiveDocumentTarget {
-    /** Authority basis used to construct the target. */
-    basis: AccessScenarioBasis;
-    /** Scheme-rendered effective marking. */
-    marking: string;
-    /**
-     * Effective assertions evaluated by access policy, listed in print order:
-     * the order `marking` places each concept; a concept it leaves out appears
-     * where it would print.
-     */
-    assertions: Assertion[];
-    /** Authored document-wide marking when present. */
-    authoredWhole?: string;
-    /** Authored part markings. */
-    authoredParts: string[];
-    /** Whole required by accepted/manual guide facts. */
-    determinedGuideRequiredWhole?: string;
-    /** Advisory whole additionally assuming unresolved nominations. */
-    projectedGuideRequiredWhole?: string;
-}
-
-/** Traceable document-side route for causing an assertion to cease applying. */
-export interface ContentChangeRequirement {
-    /** Access rule that denied the effective target. */
-    rule: RuleReference;
-    /** Blocking content-derived assertion. */
-    assertion: AssertionReference;
-    /** Assertion support records proving the content lineage. */
-    supportIds: string[];
-    /** Conditional instruction that does not synthesize replacement text. */
-    instruction: string;
-    /** Revised content must always be reassessed. */
-    verificationRequired: true;
-}
-
-/** Conditional external relationship needed by a subject-context comparison. */
-export interface SubjectContextRequirement {
-    /** Access rule requiring the relationship. */
-    rule: RuleReference;
-    /** Immutable subject operand path. */
-    subjectPath: string;
-    /** Supplied context operand path. */
-    contextPath: string;
-    /** Comparison operator. */
-    operator: string;
-    /** Context values that would satisfy the relationship, when known. */
-    acceptableValues?: unknown[];
-    /** Conditional explanation of the external-state prerequisite. */
-    instruction: string;
-}
-
-/** Access result for one authored, authoritative, or projected target. */
-export interface AccessScenarioAssessment {
-    /** Authority basis of this scenario. */
-    basis: AccessScenarioBasis;
-    /** Whether the scenario is advisory rather than authoritative. */
-    advisory: boolean;
-    /** Closed evaluation status. */
-    status: AccessScenarioStatus;
-    /** Effective target, or null when none can be derived. */
-    target: EffectiveDocumentTarget | null;
-    /** Access decision, omitted for summary and not-evaluated scenarios. */
-    decision?: AccessDecision;
-    /** Traceable document-side requirements, omitted by summary. */
-    contentRequirements?: ContentChangeRequirement[];
-    /** Conditional relationship requirements, omitted by summary. */
-    contextRequirements?: SubjectContextRequirement[];
-    /** Scenario-specific limitations. */
-    limitations: AssessmentLimitation[];
-}
-
-/** Three-scenario document access result with no fused grant or denial. */
-export interface DocumentAccessAssessment {
-    /** Structural and guide audit used to build every scenario. */
-    audit: DocumentAuditReport;
-    /** Decision based only on authored markings. */
-    authored: AccessScenarioAssessment;
-    /** Decision including accepted findings and manual selections. */
-    authoritative: AccessScenarioAssessment;
-    /** Advisory unresolved-nomination scenario when it adds an assertion. */
-    projected: AccessScenarioAssessment | null;
-}
-
-/** Input for deterministic document access assessment. */
-export interface DocumentAccessAssessmentInput extends DocumentAssessmentInput {
-    /** Immutable user attributes interpreted by the access policy. */
-    userAttributes: Record<string, unknown>;
-    /** Authoritative contextual attributes for this decision. */
-    context?: Record<string, unknown>;
-}
-
 /** Resolved Context envelope returned by document audit operations. */
 export type ContextDocumentAuditResult =
     ContextOperationResult<DocumentAuditReport>;
-
-/** Resolved Context envelope returned by document access assessment. */
-export type ContextDocumentAccessAssessmentResult =
-    ContextOperationResult<DocumentAccessAssessment>;

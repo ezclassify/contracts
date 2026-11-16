@@ -12,31 +12,36 @@ const packageRoot = path.resolve(
 );
 const repoRoot = path.resolve(packageRoot, '../..');
 
-const INPUT_TYPES = [
+const DOCUMENT_TYPES = [
     {
         type: 'SchemeDefinition',
         path: 'libs/types/src/scheme-definition.ts',
-        file: 'scheme-definition.schema.json',
+        file: 'scheme.schema.json',
     },
     {
         type: 'GuideDefinition',
         path: 'libs/types/src/guide-definition.ts',
-        file: 'guide-definition.schema.json',
+        file: 'guide.schema.json',
     },
     {
         type: 'AccessDefinition',
         path: 'libs/types/src/access-definition.ts',
-        file: 'access-policy.schema.json',
+        file: 'access.schema.json',
     },
     {
         type: 'ContextDefinition',
         path: 'libs/types/src/context-definition.ts',
-        file: 'context-definition.schema.json',
+        file: 'context.schema.json',
     },
     {
         type: 'CrosswalkDefinition',
         path: 'libs/types/src/crosswalk.ts',
-        file: 'crosswalk-definition.schema.json',
+        file: 'crosswalk.schema.json',
+    },
+    {
+        type: 'TestSuite',
+        path: 'libs/types/src/test-suite.ts',
+        file: 'test-suite.schema.json',
     },
 ] as const;
 
@@ -134,83 +139,46 @@ function expectTopLevelShapeMatches(
 }
 
 /**
- * Keep the committed input-schema dist aligned with the generator output.
+ * Keep the committed document schemas aligned with the generator output.
  *
- * This runs the local schema build and then asks git whether the generated
- * input bundle differs from what is committed. Any drift is a release-blocking
- * contract mismatch.
+ * This runs the repository's own schema build into a temporary root and
+ * compares each document schema with the committed one. Any drift is a
+ * release-blocking contract mismatch. The root of every schema must also list
+ * the same top-level properties as the document type it describes.
  */
-describe('@ezclassify/schemas generated input drift', () => {
-    it('matches the generated input schemas', () => {
+describe('@ezclassify/schemas generated document schema drift', () => {
+    it('matches the generated document schemas', () => {
         const tempDir = fs.mkdtempSync(
-            path.join(os.tmpdir(), 'schemas-input-'),
+            path.join(os.tmpdir(), 'schemas-documents-'),
         );
         try {
-            for (const { type, path: srcPath, file } of INPUT_TYPES) {
-                const outFile = path.join(tempDir, file);
-                const json = execFileSync(
-                    'npx',
-                    [
-                        'ts-json-schema-generator',
-                        '--path',
-                        srcPath,
-                        '--type',
-                        type,
-                        '--tsconfig',
-                        'tsconfig.base.json',
-                        '--no-top-ref',
-                        '--expose',
-                        'all',
-                    ],
-                    {
-                        cwd: repoRoot,
-                        encoding: 'utf8',
-                        stdio: ['pipe', 'pipe', 'pipe'],
-                    },
-                );
-                const schema = JSON.parse(json) as Record<string, unknown>;
-                expectTopLevelShapeMatches(type, srcPath, schema);
-                fs.writeFileSync(outFile, json, 'utf8');
-            }
-
             execFileSync(
                 process.execPath,
                 [
-                    path.join(
-                        repoRoot,
-                        'node_modules/prettier/bin/prettier.cjs',
-                    ),
-                    '--write',
-                    '--log-level',
-                    'silent',
-                    '--config',
-                    path.join(repoRoot, '.prettierrc.json'),
-                    // Prettier applies the repository's .gitignore to every
-                    // path it is given, and that file ignores `tmp`. On Linux
-                    // the temporary directory sits under /tmp, so without
-                    // this the files were skipped silently and compared
-                    // unformatted. The named file does not exist, so nothing
-                    // is ignored.
-                    '--ignore-path',
-                    path.join(tempDir, '.prettierignore'),
-                    tempDir,
+                    path.join(packageRoot, 'build.mjs'),
+                    `--output-root=${tempDir}`,
                 ],
                 { cwd: repoRoot, stdio: 'pipe' },
             );
 
-            for (const { file } of INPUT_TYPES) {
-                const committed = fs.readFileSync(
-                    path.join(packageRoot, 'generated/json-schemas-input', file),
+            for (const { type, path: srcPath, file } of DOCUMENT_TYPES) {
+                const generated = fs.readFileSync(
+                    path.join(tempDir, 'validation/v1', file),
                     'utf8',
                 );
-                const generated = fs.readFileSync(
-                    path.join(tempDir, file),
+                const committed = fs.readFileSync(
+                    path.join(packageRoot, 'generated/validation/v1', file),
                     'utf8',
                 );
                 expect(committed).toBe(generated);
+                expectTopLevelShapeMatches(
+                    type,
+                    srcPath,
+                    JSON.parse(committed) as Record<string, unknown>,
+                );
             }
         } finally {
             fs.rmSync(tempDir, { recursive: true, force: true });
         }
-    }, 60000);
+    }, 120000);
 });

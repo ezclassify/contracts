@@ -137,23 +137,21 @@ describe('conformance plans', () => {
 
 /**
  * A rank-graded category orders its values by rank and has no other order to
- * fall back on: one that rolls up by `max`, `min` or `least_upper_bound`, and
- * every `hierarchy_root`. An engine refuses to load a scheme that leaves a
- * concept such a category grades unranked, so a reference scheme that does is a
- * fixture no runner can load.
+ * fall back on: one that rolls up by `max` or `min`, and every
+ * `hierarchy_root`. An engine refuses to load a scheme that leaves a concept
+ * such a category grades unranked, so a reference scheme that does is a fixture
+ * no runner can load.
  *
  * The concepts a category grades are the ones that name it in `categories`,
- * narrowed to its `allowed_concepts` when it lists them, less group concepts,
- * whose members carry the ranks. An engine also leaves out a concept that heads
- * another category's list in a format. This check does not work that out, so a
- * reference scheme ranks those concepts too.
+ * less group concepts, whose members carry the ranks. An engine also leaves out
+ * a concept that heads another category's list in a format. This check does not
+ * work that out, so a reference scheme ranks those concepts too.
  */
 describe('reference schemes', () => {
     type Category = {
         id: string;
         rollup?: string;
         hierarchy_root?: boolean;
-        allowed_concepts?: string[];
     };
     type Concept = {
         id: string;
@@ -166,7 +164,7 @@ describe('reference schemes', () => {
             type?: string;
             data?: {
                 categories?: Category[];
-                concepts?: { inline?: Concept[] };
+                concepts?: Concept[];
             };
         };
     };
@@ -177,7 +175,7 @@ describe('reference schemes', () => {
         );
     });
 
-    const rankGradedRollups = new Set(['max', 'min', 'least_upper_bound']);
+    const rankGradedRollups = new Set(['max', 'min']);
 
     /** Whether `category` orders `concept` by its rank. */
     function grades(category: Category, concept: Concept): boolean {
@@ -187,11 +185,6 @@ describe('reference schemes', () => {
         )
             return false;
         if (!(concept.categories ?? []).includes(category.id)) return false;
-        if (
-            category.allowed_concepts &&
-            !category.allowed_concepts.includes(concept.id)
-        )
-            return false;
         return (concept.members ?? []).length === 0;
     }
 
@@ -202,7 +195,7 @@ describe('reference schemes', () => {
     function unranked(document: SchemeFixture): string[] {
         const data = document.scheme?.data ?? {};
         const categories = data.categories ?? [];
-        return (data.concepts?.inline ?? [])
+        return (data.concepts ?? [])
             .filter(
                 (concept) =>
                     concept.rank === undefined &&
@@ -217,7 +210,7 @@ describe('reference schemes', () => {
             scheme: {
                 data: {
                     categories: [category],
-                    concepts: { inline: concepts },
+                    concepts,
                 },
             },
         };
@@ -239,7 +232,6 @@ describe('reference schemes', () => {
     it.each([
         { id: 'level', rollup: 'max' },
         { id: 'level', rollup: 'min' },
-        { id: 'level', rollup: 'least_upper_bound' },
         { id: 'level', rollup: 'union', hierarchy_root: true },
     ])(
         'finds a concept $rollup leaves unranked (negative control)',
@@ -272,20 +264,6 @@ describe('reference schemes', () => {
                     { id: 'LOW', categories: ['level'], rank: 0 },
                     { id: 'GROUP', categories: ['level'], members: ['LOW'] },
                 ]),
-            ),
-        ).toEqual([]);
-    });
-
-    it('asks no rank of a concept the category does not allow', () => {
-        expect(
-            unranked(
-                schemeOf(
-                    { id: 'level', rollup: 'max', allowed_concepts: ['LOW'] },
-                    [
-                        { id: 'LOW', categories: ['level'], rank: 0 },
-                        { id: 'OTHER', categories: ['level'] },
-                    ],
-                ),
             ),
         ).toEqual([]);
     });
@@ -326,9 +304,9 @@ describe('access fixtures', () => {
             'v1',
             'ref-access-rules-1.json',
         ) as {
-            access: { rules: { inline: Array<Record<string, unknown>> } };
+            access: { rules: Array<Record<string, unknown>> };
         };
-        const rule = document.access.rules.inline[0];
+        const rule = document.access.rules[0];
         const validate = compile(schema);
         expect(validate(document)).toBe(true);
         rule.unsupported = true;
@@ -483,27 +461,13 @@ describe('semantic fixtures', () => {
         });
 
         it('agrees with what each variant case recorded', () => {
-            // Only variant cases: a base case may bring its own access policy
-            // in the request (cases 10, 11 and 13), which is not a fixture.
-            // Every variant case is checked against something its recording
-            // says, and every declared variant is exercised by one.
+            // Every variant must be exercised by a recorded operation.
             const exercised = new Set<string>();
             for (const [caseId, request] of Object.entries(requests)) {
                 if (!request.fixtureVariant) continue;
                 const fixtures = fixturesFor(request.fixtureVariant);
                 const output = recordings[caseId]?.output;
                 const artifacts = output?.resolution?.artifacts;
-                if (!artifacts) {
-                    // A case that records no resolution records why. The one
-                    // such answer a fixture decides is a context with no
-                    // access policy (case 17, no-access).
-                    expect(output?.error?.code, caseId).toBe(
-                        'NO_ACCESS_POLICY',
-                    );
-                    expect(fixtures.accessFixture, caseId).toBeNull();
-                    exercised.add(request.fixtureVariant);
-                    continue;
-                }
                 const expected = [
                     `scheme:${idOf(fixtures.schemeFixture, 'scheme')}`,
                     ...(fixtures.guideFixture
@@ -514,7 +478,7 @@ describe('semantic fixtures', () => {
                         : []),
                 ];
                 expect(
-                    artifacts
+                    artifacts!
                         .filter((one) =>
                             ['scheme', 'guide', 'access'].includes(one.kind),
                         )

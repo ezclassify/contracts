@@ -16,7 +16,7 @@ import { describe, expect, it } from 'vitest';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const cacheDir = path.join(root, 'cache', 'v1');
 
-type Treatment = 'cached' | 'decision' | 'never' | 'uncached' | 'resource';
+type Treatment = 'cached' | 'never' | 'uncached' | 'resource';
 
 interface Operation {
     name: string;
@@ -48,8 +48,6 @@ interface Plan {
     client: {
         binding: 'pinned' | 'unpinned';
         context?: string;
-        cacheAccessDecisions?: boolean;
-        construction?: 'refused';
     };
     steps: Step[];
 }
@@ -156,24 +154,6 @@ function pointerResolves(body: unknown, pointer: string): boolean {
     return true;
 }
 
-/**
- * Whether the plan sends one recorded request through two operations that share
- * a method and route, the case where only the operation name tells their cache
- * entries apart. Calling one of them per request needs nothing from the port.
- */
-function usesSharedRoute(plan: Plan): boolean {
-    const sent = new Map<string, string>();
-    for (const step of plan.steps) {
-        const operation = step.operation && operations.get(step.operation);
-        if (!operation || step.case === undefined) continue;
-        const key = `${operation.method} ${operation.route} ${step.case}`;
-        const first = sent.get(key);
-        if (first !== undefined && first !== operation.name) return true;
-        sent.set(key, operation.name);
-    }
-    return false;
-}
-
 /** Steps that need a harness capability, and the capability they need. */
 function capabilitiesUsed(plan: Plan): Set<string> {
     const used = new Set<string>();
@@ -194,7 +174,6 @@ function capabilitiesUsed(plan: Plan): Set<string> {
         )
             used.add('schemeResourceOperations');
     }
-    if (usesSharedRoute(plan)) used.add('sharedRouteOperations');
     return used;
 }
 
@@ -247,18 +226,16 @@ describe('cache conformance plans', () => {
         expect([...ids].filter((id) => !covered.has(id))).toEqual([]);
     });
 
-    it('let no optional capability hollow out an item other than C05, C08 and C09', () => {
+    it('let no optional capability hollow out an item other than C07 and C08', () => {
         // A port may declare an optional capability absent, so an item covered
         // only by plans needing one could pass by being skipped. That is
-        // allowed for the two cancellation items and for C05, which binds only
-        // ports exposing two operations over one route and body.
+        // allowed for the two cancellation items.
         const optional = new Set(
             Object.entries(document.capabilities)
                 .filter(([, capability]) => capability.notApplicable)
                 .map(([id]) => id),
         );
         expect(optional.has('cancellation')).toBe(true);
-        expect(optional.has('sharedRouteOperations')).toBe(true);
         const coveredUnconditionally = new Set(
             document.plans
                 .filter((plan) =>
@@ -270,7 +247,7 @@ describe('cache conformance plans', () => {
             document.checklist
                 .map((item) => item.id)
                 .filter((id) => !coveredUnconditionally.has(id)),
-        ).toEqual(['C05', 'C08', 'C09']);
+        ).toEqual(['C07', 'C08']);
     });
 
     it.each(document.plans.map((plan) => [plan.id, plan] as const))(
@@ -310,10 +287,6 @@ describe('cache conformance plans', () => {
     it.each(document.plans.map((plan) => [plan.id, plan] as const))(
         '%s settles every caller it starts and releases every gate',
         (_id, plan) => {
-            if (plan.client.construction === 'refused') {
-                expect(plan.steps).toEqual([]);
-                return;
-            }
             expect(plan.steps.length).toBeGreaterThan(0);
             const started = new Set<string>();
             const pending = new Set<string>();
@@ -373,7 +346,7 @@ describe('cache conformance plans', () => {
     it('state wire counts that follow from each operation treatment', () => {
         // Plans made only of calls and counts can be worked out from the
         // operations table alone: a cacheable call files one entry per
-        // request identity, every other call is a wire trip, and a refused
+        // request identity, every other call is a wire trip, and a rejected
         // call files nothing. A plan whose count disagrees has misread the
         // contract, so this replays them and compares.
         let replayed = 0;
@@ -399,10 +372,7 @@ describe('cache conformance plans', () => {
                     continue;
                 }
                 const { treatment } = operations.get(step.operation!)!;
-                const cacheable =
-                    treatment === 'cached' ||
-                    (treatment === 'decision' &&
-                        plan.client.cacheAccessDecisions === true);
+                const cacheable = treatment === 'cached';
                 const entry = `${step.operation}|${identity}`;
                 for (let i = 0; i < (step.times ?? 1); i += 1) {
                     if (cacheable && entries.has(entry)) continue;
@@ -418,8 +388,7 @@ describe('cache conformance plans', () => {
     it('exercise every operation under the item its treatment answers to', () => {
         const itemFor: Record<Treatment, string[]> = {
             cached: ['C01'],
-            decision: ['C12', 'C13'],
-            never: ['C15'],
+            never: ['C11'],
             uncached: ['C03'],
             resource: ['C03'],
         };
@@ -468,7 +437,7 @@ describe('cache conformance plans', () => {
         const answeredNever = [...driven]
             .filter(
                 ([caseId, treatments]) =>
-                    (treatments.has('decision') || treatments.has('never')) &&
+                    treatments.has('never') &&
                     casesById.get(caseId)!.response.status === 200,
             )
             .map(([caseId]) => caseId)
@@ -512,47 +481,36 @@ describe('cache conformance plans', () => {
                     1,
             C04: (plan) =>
                 plan.steps.some((step) => step.variant !== undefined),
-            C05: (plan) =>
-                new Set(
-                    plan.steps
-                        .filter((step) => step.step === 'call')
-                        .map((step) => step.operation),
-                ).size > 1,
-            C06: (plan) => plan.steps.some((step) => step.expect !== undefined),
-            C07: (plan) =>
+            C05: (plan) => plan.steps.some((step) => step.expect !== undefined),
+            C06: (plan) =>
                 plan.steps.some(
                     (step) => step.synthetic === 'malformed-success',
                 ),
-            C08: (plan) =>
+            C07: (plan) =>
                 plan.steps.some(
                     (step) => step.step === 'cancel' || step.preCanceled,
                 ),
-            C09: (plan) =>
+            C08: (plan) =>
                 plan.steps.some((step) => step.step === 'expectWireAborted'),
-            C10: (plan) =>
+            C09: (plan) =>
                 plan.client.binding === 'pinned' &&
                 plan.steps.some((step) => step.step === 'advanceClock'),
-            C11: (plan) =>
+            C10: (plan) =>
                 plan.client.binding !== 'pinned' &&
                 plan.steps.some((step) => step.step === 'advanceClock'),
-            C13: (plan) => plan.client.cacheAccessDecisions === true,
-            C14: (plan) =>
-                plan.client.binding !== 'pinned' &&
-                plan.client.cacheAccessDecisions === true &&
-                plan.client.construction === 'refused',
-            C16: (plan) =>
+            C12: (plan) =>
                 plan.client.binding !== 'pinned' &&
                 plan.steps.some(
                     (step) => step.synthetic === 'resolved-version',
                 ),
-            C17: (plan) =>
+            C13: (plan) =>
                 plan.steps.some((step) => step.synthetic === 'denial-404') ||
                 plan.steps.some(
                     (step) =>
                         (step.expect?.error as { status?: number } | undefined)
                             ?.status === 404,
                 ),
-            C18: (plan) =>
+            C14: (plan) =>
                 plan.steps.some((step) => step.step === 'mutateResult') &&
                 plan.steps.some(
                     (step) => step.step === 'expectIndependentResults',

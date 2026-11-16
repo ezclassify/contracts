@@ -67,18 +67,6 @@
             }
         },
         {
-            "name": "normalize",
-            "path": "plans/v1/normalize.json",
-            "slice": "engine",
-            "support": {
-                "dotnet": "required",
-                "go": "required",
-                "java": "required",
-                "node": "required",
-                "python": "required"
-            }
-        },
-        {
             "name": "render",
             "path": "plans/v1/render.json",
             "slice": "engine",
@@ -155,21 +143,8 @@
             }
         },
         {
-            "name": "registry",
-            "notes": "SchemeRegistry multi-scheme operations. Optional for non-reference SDKs.",
-            "path": "plans/v1/registry.json",
-            "slice": "engine",
-            "support": {
-                "dotnet": "optional",
-                "go": "optional",
-                "java": "optional",
-                "node": "required",
-                "python": "optional"
-            }
-        },
-        {
             "name": "surfaces",
-            "notes": "Outputs declared by surface and view against ref-surfaces-1: recognition reports the view the text is read as and its role, never the form it happened to be read in; a read-only form reads as its view and stands for it as an output; a view id names what the text is read as and reads it in the forms that view writes, its case forms included, never in its read-only form; text the engine writes on two surfaces reads back uncorrected; an unnamed output follows the role; a wrapper makes a part; text read as a view of the role the request's context does not name departs from it, unless the request names the view.",
+            "notes": "Outputs declared by surface and view against ref-surfaces-1 and ref-surfaces-2: recognition reports the view the text is read as and its role, never the form it happened to be read in; a read-only form reads as its view and stands for it as an output; a view id names what the text is read as and reads it in the forms that view writes, its case forms included, never in its read-only form; text the engine writes on two surfaces reads back uncorrected; an unnamed output follows the role; a wrapper makes a part; text read as a view of the role the request's context does not name departs from it, unless the request names the view; a named output, an address or a surface, is written alone; with none named, a default that writes every other surface's scope is written alone.",
             "path": "plans/v1/surfaces.json",
             "slice": "engine",
             "support": {
@@ -181,9 +156,35 @@
             }
         },
         {
+            "name": "format-coverage",
+            "notes": "Adapter slice against ref-surfaces-1 and ref-scheme-1: the published profile of each scheme and the coverage of every output it publishes. A view with a case lists and covers the categories its base format writes. An adapter that answers coverage from the profile it holds must answer what the engine recorded for each output.",
+            "path": "plans/v1/format-coverage.json",
+            "slice": "adapter",
+            "support": {
+                "dotnet": "skip",
+                "go": "skip",
+                "java": "skip",
+                "node": "required",
+                "python": "skip"
+            }
+        },
+        {
             "name": "ctx-process",
-            "notes": "Context-based operations (ctxProcess, ctxScan, ctxDocumentAudit). Requires a live REST API server with a contexts file. Embed SDKs resolve ctx server-side; client SDKs call /api/ctx/* directly.",
+            "notes": "Context-based operations (ctxProcess, ctxScan, ctxDocumentAudit). Requires a live REST API server with a contexts file. Embed SDKs resolve ctx server-side; client SDKs call /v1/ctx/* directly.",
             "path": "plans/v1/ctx-process.json",
+            "slice": "server",
+            "support": {
+                "dotnet": "skip",
+                "go": "required",
+                "java": "skip",
+                "node": "skip",
+                "python": "skip"
+            }
+        },
+        {
+            "name": "ctx-scheme-selector",
+            "notes": "Context operations answered in a scheme the Context holds other than its primary (ctxProcess, ctxValidate, ctxAggregate with ?scheme=), and the 404 for a selector it does not hold. Requires a live REST API server serving the ref-ctx-2 fixture.",
+            "path": "plans/v1/ctx-scheme-selector.json",
             "slice": "server",
             "support": {
                 "dotnet": "skip",

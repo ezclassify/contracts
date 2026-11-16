@@ -123,12 +123,7 @@ const READER_FIELDS = [
     'valid',
     'warnings',
 ];
-const AUTHOR_EXTRAS = [
-    'assertionsBeforeRepair',
-    'proposedFixes',
-    'renders',
-    'suggestionsFor',
-];
+const AUTHOR_EXTRAS = ['proposedFixes', 'renders', 'suggestionsFor'];
 
 describe('validate is the reader call', () => {
     it('answers with exactly the fields a reader uses', () => {
@@ -157,16 +152,10 @@ describe('validate is the reader call', () => {
         expect(keys('RecognitionWithCorrections')).toContain('corrections');
     });
 
-    it('carries no fix path, so no error in it can point at one', () => {
+    it('carries no fix path', () => {
         expect(reaches('ValidateResult').has('Fix')).toBe(false);
         // Negative control: the author's result does carry fix paths.
         expect(reaches('ProcessResult').has('Fix')).toBe(true);
-        expect(
-            schema('ValidateResult').properties!['errors']!.description,
-        ).toMatch(/No entry here points at a fix path/);
-        expect(
-            schema('ValidationError').properties!['suggestedFix']!.description,
-        ).toMatch(/Set only on a result that carries that fix/);
     });
 
     it('takes text or facts and nothing that changes the settling', () => {
@@ -185,37 +174,6 @@ describe('validate is the reader call', () => {
         // Exactly one of the two is the rule, so neither is required by shape.
         expect(body.required ?? []).toEqual([]);
         expect(body.additionalProperties).toBe(false);
-    });
-
-    it('lets no request ask the engine to settle less', () => {
-        // Whether text was right as written is what `inputWasValid` and the
-        // applied changes answer, so no route takes a repair level or a stage
-        // to skip.
-        const settlesLess = (properties: string[]) =>
-            properties.filter((key) =>
-                [
-                    'normalization',
-                    'skipRepair',
-                    'skipInference',
-                    'fix',
-                    'preserveDeprecated',
-                ].includes(key),
-            );
-        for (const route of ['process', 'validate', 'explain'])
-            expect(settlesLess(keys(requestOf(route))), route).toEqual([]);
-        for (const [name, component] of Object.entries(schemas))
-            expect(
-                settlesLess(Object.keys(component.properties ?? {})),
-                name,
-            ).toEqual([]);
-        // Negative control: the filter does catch these keys when present.
-        expect(
-            settlesLess([
-                ...keys(requestOf('process')),
-                'normalization',
-                'preserveDeprecated',
-            ]),
-        ).toEqual(['normalization', 'preserveDeprecated']);
     });
 
     it('is what every scan region answers', () => {

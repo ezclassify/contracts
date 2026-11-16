@@ -1,4 +1,5 @@
 import type { RouteDecl } from './types.js';
+import { schemeSelector } from './scheme-selector.js';
 import type { ContextSchemeConceptDescriptionResult } from '../wire.js';
 
 /**
@@ -35,6 +36,7 @@ export const decl: RouteDecl<undefined, ContextSchemeConceptDescriptionResult> =
                 required: false,
                 schema: 'string',
             },
+            schemeSelector,
         ],
         errorResponses: [
             { status: 400, ref: 'BadRequest' },

@@ -21,7 +21,7 @@ npx @ezclassify/conformance-server --port 4010
 
 ```
 EzClassify conformance replay server listening on http://127.0.0.1:4010
-  corpus v1: 70 recorded exchanges (.../wire/v1/corpus.json)
+  corpus v1: 114 recorded exchanges (.../wire/v1/corpus.json)
   contract 1.0.0, auth none
 ```
 
@@ -54,14 +54,18 @@ parallel without agreeing on a number.
 
 ### Options
 
-| CLI               | API            | Default            | What it does                           |
-| ----------------- | -------------- | ------------------ | -------------------------------------- |
-| `--port <n>`      | `port`         | `4010` (API: `0`)  | Port. 0 picks a free one.              |
-| `--host <addr>`   | `host`         | `127.0.0.1`        | Interface to bind.                     |
-| `--corpus <path>` | `corpus`       | the bundled corpus | Replay a different corpus.             |
-| `--auth <mode>`   | `auth`         | `none`             | `none` or `simulated`.                 |
-| `--quiet`         | `log: null`    | reports on stderr  | Silence the unmatched-request reports. |
-|                   | `maxBodyBytes` | 8 MiB              | Request body ceiling.                  |
+| CLI                      | API            | Default            | What it does                           |
+| ------------------------ | -------------- | ------------------ | -------------------------------------- |
+| `--port <n>`             | `port`         | `4010` (API: `0`)  | Port. 0 picks a free one.              |
+| `--host <addr>`          | `host`         | `127.0.0.1`        | Interface to bind.                     |
+| `--corpus <path>`        | `corpus`       | the bundled corpus | Replay a different corpus.             |
+| `--auth <mode>`          | `auth`         | `none`             | `none` or `simulated`.                 |
+| `--quiet`                | `log: null`    | reports on stderr  | Silence the unmatched-request reports. |
+| `--scenario <name>`      | `scenario`     | none               | Serve a named integration profile.     |
+| `--cors-origin <origin>` | `corsOrigin`   | none               | Permit one exact browser origin.       |
+| `--list-scenarios`       |                | n/a                | Print the scenario names and exit.     |
+|                          | `observe`      | none               | Collect request outcomes in process.   |
+|                          | `maxBodyBytes` | 8 MiB              | Request body ceiling.                  |
 
 ## Replay limits
 
@@ -169,9 +173,10 @@ x-content-type-options: nosniff
 That shape is why the mode exists. A deployment running authentication answers
 an unauthenticated request with HTTP 404 without revealing whether the target
 exists. Inspect the refusal shape before interpreting that status as a missing
-resource: the recorded missing-context and missing-version lookup responses
-have their own bodies. An SDK can surface the constant refusal as "possibly not
-authenticated", and this is how you test that publicly. `/v1/health` and
+resource: the runtime answers a missing context with this same constant
+refusal, while its missing-version lookup response has its own body. An SDK
+can surface the constant refusal as "possibly not authenticated", and this is
+how you test that publicly. `/v1/health` and
 `/v1/ready` stay open, as the contract declares.
 
 `--auth none` is the default and does not look at credentials at all.

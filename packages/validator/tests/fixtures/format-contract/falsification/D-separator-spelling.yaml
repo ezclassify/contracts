@@ -26,11 +26,10 @@ scheme:
         label: Owner
         rollup: union
     concepts:
-      inline:
-        - { id: HANDLING_AND, name: Handling and, views: { default: AND }, categories: [handling] }
-        - { id: HANDLING_B, name: Handling B, views: { default: HB }, categories: [handling] }
-        - { id: OWNER_HOME, name: Home owner, views: { default: HOME AND AWAY }, categories: [owner] }
-        - { id: OWNER_AWAY, name: Away owner, views: { default: AWAY }, categories: [owner] }
+      - { id: HANDLING_AND, name: Handling and, views: { default: AND }, categories: [handling] }
+      - { id: HANDLING_B, name: Handling B, views: { default: HB }, categories: [handling] }
+      - { id: OWNER_HOME, name: Home owner, views: { default: HOME AND AWAY }, categories: [owner] }
+      - { id: OWNER_AWAY, name: Away owner, views: { default: AWAY }, categories: [owner] }
   render:
     default: banner
     formats:

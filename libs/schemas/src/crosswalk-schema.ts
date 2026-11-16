@@ -4,19 +4,17 @@ import schema from '../generated/validation/v1/crosswalk.schema.json';
 /**
  * Static crosswalk schema JSON for validating a crosswalk YAML/JSON document.
  *
- * Root shape: `{ crosswalk: { id, version, name, sourceScheme, targetScheme,
+ * Root shape: `{ crosswalk: { id, version, name, source_scheme, target_scheme,
  * mappings, ... } }`. The envelope is required, not optional sugar: a crosswalk
  * file is `{ crosswalk: ... }` the same way a scheme file is `{ scheme: ... }`,
  * which is how a tool handed a bare file learns what kind of document it has.
  * The engine's own loader enforces the same requirement.
  *
- * A crosswalk is directional. `sourceScheme` and `targetScheme` are not
+ * A crosswalk is directional. `source_scheme` and `target_scheme` are not
  * interchangeable, and a reverse mapping is a separate document, because a
  * translation that is safe one way is not necessarily safe coming back.
  *
- * This generated validation view preserves the v1 dialect and definition names
- * derived from `crosswalk-definition.schema.json`. The shipped validator checks
- * crosswalk documents against this schema.
+ * The shipped validator checks crosswalk documents against this schema.
  */
 export const crosswalkSchema = schema as Record<string, unknown>;
 
@@ -30,17 +28,17 @@ const defs = reader.defs;
  * example in a crosswalk editor that validates as the author types.
  */
 export const crosswalkMappingSchema = {
-    ...reader.definition('CrosswalkMapping'),
+    ...reader.definition('CrosswalkMappingDoc'),
     /** Shared definitions that this fragment's `$ref`s point to. */
     $defs: defs,
 };
 
 /**
- * Sub-schema for a `sourceScheme` / `targetScheme` block: the `id` + `version`
+ * Sub-schema for a `source_scheme` / `target_scheme` block: the `id` + `version`
  * of a scheme this crosswalk is pinned to.
  */
 export const crosswalkSchemeDependencySchema = {
-    ...reader.definition('CrosswalkSchemeDependency'),
+    ...reader.definition('SchemeDependencyDoc'),
     /** Shared definitions that this fragment's `$ref`s point to. */
     $defs: defs,
 };

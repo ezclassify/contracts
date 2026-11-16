@@ -23,15 +23,14 @@ scheme:
         label: Handling
         rollup: union
     concepts:
-      inline:
-        - { id: LEVEL_ONE, name: Level one, views: { default: ONE }, categories: [level] }
-        - id: HANDLING_ONE
-          name: Handling one
-          views: { default: H1 }
-          categories: [handling]
-          input_aliases:
-            - text: H
-              after_category: dissemination
+      - { id: LEVEL_ONE, name: Level one, views: { default: ONE }, categories: [level] }
+      - id: HANDLING_ONE
+        name: Handling one
+        views: { default: H1 }
+        categories: [handling]
+        input_aliases:
+          - text: H
+            after_category: dissemination
   render:
     default: banner
     formats:

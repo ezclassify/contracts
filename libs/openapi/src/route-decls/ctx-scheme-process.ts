@@ -1,4 +1,5 @@
 import type { RouteDecl } from './types.js';
+import { schemeSelector } from './scheme-selector.js';
 import type {
     ContextSchemeProcessResult,
     CtxSchemeProcessRequestBody,
@@ -20,6 +21,7 @@ export const decl: RouteDecl<
         'The author\'s call. Reads the input marking text, together with any facts already chosen, against the context\'s composed scheme (base + layers), settles it, and returns everything validate returns plus what an author needs: the corrections to the text, proven fix paths, the outputs named in `outputs` and, when `suggestFor` names categories, the picker options for them. The :version segment may be omitted to default to "latest"; the resolved version is returned in the X-EzClassify-Resolved-Version response header.',
     tags: ['context', 'scheme'],
     pathParams: ['ctxId', 'version'],
+    queryParams: [schemeSelector],
     errorResponses: [
         {
             status: 400,
