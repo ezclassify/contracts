@@ -1,4 +1,4 @@
-import { spawn, type ChildProcessWithoutNullStreams } from 'node:child_process';
+import { spawn } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -37,25 +37,43 @@ function run(
 
 /** Start the server and resolve once it has announced a URL. */
 function serve(args: string[]): Promise<{
-    child: ChildProcessWithoutNullStreams;
     url: string;
     banner: string;
+    stop: () => Promise<void>;
 }> {
     return new Promise((resolve, reject) => {
         const child = spawn(process.execPath, [bin, ...args], {
             stdio: 'pipe',
         });
         let banner = '';
+        let stderr = '';
+        child.stderr.on('data', (chunk) => (stderr += chunk));
         const timer = setTimeout(() => {
             child.kill('SIGKILL');
-            reject(new Error(`the server printed no URL: ${banner}`));
+            reject(
+                new Error(`the server printed no URL: ${banner}\n${stderr}`),
+            );
         }, 20_000);
+        const stopped = new Promise<number | null>((resolveClose) => {
+            child.once('close', (code) => {
+                clearTimeout(timer);
+                reject(
+                    new Error(`the server exited with code ${code}: ${stderr}`),
+                );
+                resolveClose(code);
+            });
+        });
+        const stop = async () => {
+            child.kill('SIGTERM');
+            expect(await stopped, stderr).toBe(0);
+            expect(stderr).toBe('');
+        };
         child.stdout.on('data', (chunk) => {
             banner += chunk;
             const found = /listening on (http:\/\/\S+)/.exec(banner);
             if (found) {
                 clearTimeout(timer);
-                resolve({ banner, child, url: found[1] });
+                resolve({ banner, stop, url: found[1] });
             }
         });
         child.on('error', (cause) => {
@@ -67,15 +85,17 @@ function serve(args: string[]): Promise<{
 
 describe('the CLI', () => {
     it('prints usage naming the test bearer', async () => {
-        const { code, stdout } = await run(['--help']);
+        const { code, stdout, stderr } = await run(['--help']);
         expect(code).toBe(0);
+        expect(stderr).toBe('');
         expect(stdout).toContain('ezclassify-conformance-test-bearer');
         expect(stdout).toContain('--corpus');
     });
 
     it('lists integration profiles without starting a listener', async () => {
-        const { code, stdout } = await run(['--list-scenarios']);
+        const { code, stdout, stderr } = await run(['--list-scenarios']);
         expect(code).toBe(0);
+        expect(stderr).toBe('');
         expect(stdout).toContain('cedar-valley:');
         expect(stdout).toContain('rate-limit:');
     });
@@ -89,7 +109,7 @@ describe('the CLI', () => {
     });
 
     it('runs the selected integration scenario from the command line', async () => {
-        const { child, url, banner } = await serve([
+        const { stop, url, banner } = await serve([
             '--port',
             '0',
             '--scenario',
@@ -99,11 +119,7 @@ describe('the CLI', () => {
             expect(banner).toContain('integration scenario cedar-valley');
             expect((await fetch(`${url}/v1/ready`)).status).toBe(200);
         } finally {
-            const stopped = new Promise((resolve) =>
-                child.on('close', resolve),
-            );
-            child.kill('SIGTERM');
-            await stopped;
+            await stop();
         }
     });
 
@@ -131,7 +147,7 @@ describe('the CLI', () => {
     });
 
     it('serves on an ephemeral port and shuts down on a signal', async () => {
-        const { banner, child, url } = await serve(['--port', '0']);
+        const { banner, stop, url } = await serve(['--port', '0']);
         try {
             expect(banner).toContain('recorded exchanges');
             expect(banner).toContain('auth none');
@@ -141,16 +157,12 @@ describe('the CLI', () => {
                 status: 'ok',
             });
         } finally {
-            const stopped = new Promise((resolve) =>
-                child.on('close', resolve),
-            );
-            child.kill('SIGTERM');
-            await stopped;
+            await stop();
         }
     }, 30_000);
 
     it('takes the auth mode from the command line', async () => {
-        const { banner, child, url } = await serve([
+        const { banner, stop, url } = await serve([
             '--port',
             '0',
             '--auth',
@@ -164,11 +176,7 @@ describe('the CLI', () => {
                 error: 'not_found',
             });
         } finally {
-            const stopped = new Promise((resolve) =>
-                child.on('close', resolve),
-            );
-            child.kill('SIGTERM');
-            await stopped;
+            await stop();
         }
     }, 30_000);
 });
