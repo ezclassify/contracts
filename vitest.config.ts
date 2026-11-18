@@ -1,3 +1,4 @@
+import { fileURLToPath } from 'node:url';
 import * as path from 'path';
 import { defineConfig } from 'vitest/config';
 
@@ -16,6 +17,14 @@ export default defineConfig({
         },
     },
     test: {
+        setupFiles: [
+            fileURLToPath(
+                new URL(
+                    './test-support/fail-on-console-error.mjs',
+                    import.meta.url,
+                ),
+            ),
+        ],
         environment: 'node',
         include: [
             'libs/**/tests/**/*.spec.ts',
