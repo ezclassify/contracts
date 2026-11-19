@@ -149,7 +149,10 @@ test('read-only native preparation and a source-free handoff keep write credenti
     const token = workflow.jobs.handoff.steps.find(
         (step) => step.id === 'conductor',
     );
-    assert.equal(workflow.jobs.handoff.environment, 'development-signal');
+    assert.deepEqual(workflow.jobs.handoff.environment, {
+        name: 'development-signal',
+        deployment: false,
+    });
     assert.equal(
         token?.with.repositories,
         '${{ secrets.EZ_DEVELOPMENT_SIGNAL_DESTINATION }}',

@@ -19,7 +19,9 @@ jobs:
     name: Notify the release pipeline
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    environment: development-signal
+    environment:
+      name: development-signal
+      deployment: false
     steps:
       - name: Require the configured dispatch destination
         env:
