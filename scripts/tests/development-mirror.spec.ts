@@ -119,6 +119,7 @@ test('read-only native preparation and a source-free handoff keep write credenti
         jobs: Record<
             string,
             {
+                environment?: string;
                 steps: {
                     uses?: string;
                     id?: string;
@@ -148,6 +149,14 @@ test('read-only native preparation and a source-free handoff keep write credenti
     const token = workflow.jobs.handoff.steps.find(
         (step) => step.id === 'conductor',
     );
-    assert.equal(token?.with.repositories, 'release-train');
+    assert.equal(workflow.jobs.handoff.environment, 'development-signal');
+    assert.equal(
+        token?.with.repositories,
+        '${{ secrets.EZ_DEVELOPMENT_SIGNAL_DESTINATION }}',
+    );
+    assert.equal(
+        token?.with['private-key'],
+        '${{ secrets.EZ_DEVELOPMENT_SIGNAL_APP_PRIVATE_KEY }}',
+    );
     assert.equal(token?.with['permission-contents'], 'write');
 });
