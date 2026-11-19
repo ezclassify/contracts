@@ -19,26 +19,27 @@ jobs:
     name: Notify the release pipeline
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    environment: development-signal
     steps:
       - name: Require the configured dispatch destination
         env:
-          DISPATCH_REPOSITORY: ${{ secrets.EZCLASSIFY_SPEC_DISPATCH_REPOSITORY }}
+          DISPATCH_REPOSITORY: ${{ secrets.EZ_DEVELOPMENT_SIGNAL_DESTINATION }}
         run: '[[ "$DISPATCH_REPOSITORY" =~ ^[a-zA-Z0-9][a-zA-Z0-9._-]*$ ]]'
 
       - name: Mint dispatch token
         id: app-token
         uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
         with:
-          app-id: ${{ secrets.EZCLASSIFY_SPEC_BOT_APP_ID }}
-          private-key: ${{ secrets.EZCLASSIFY_SPEC_BOT_PRIVATE_KEY }}
+          app-id: ${{ secrets.EZ_DEVELOPMENT_SIGNAL_APP_ID }}
+          private-key: ${{ secrets.EZ_DEVELOPMENT_SIGNAL_APP_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
-          repositories: ${{ secrets.EZCLASSIFY_SPEC_DISPATCH_REPOSITORY }}
+          repositories: ${{ secrets.EZ_DEVELOPMENT_SIGNAL_DESTINATION }}
           permission-contents: write
 
       - name: Dispatch the canonical spec change
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
-          DISPATCH_REPOSITORY: ${{ secrets.EZCLASSIFY_SPEC_DISPATCH_REPOSITORY }}
+          DISPATCH_REPOSITORY: ${{ secrets.EZ_DEVELOPMENT_SIGNAL_DESTINATION }}
           CONTRACTS_SHA: ${{ github.sha }}
         run: |
           set -euo pipefail
