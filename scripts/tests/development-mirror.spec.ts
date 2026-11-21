@@ -123,7 +123,7 @@ test('read-only native preparation and a source-free handoff keep write credenti
                 steps: {
                     uses?: string;
                     id?: string;
-                    with: Record<string, string>;
+                    with: Record<string, string | number>;
                 }[];
             }
         >;
@@ -136,6 +136,10 @@ test('read-only native preparation and a source-free handoff keep write credenti
     assert.equal(workflow.permissions.contents, 'read');
     assert.equal(workflow.permissions.packages, 'read');
     assert.ok(workflow.jobs.prepare);
+    const artifact = workflow.jobs.prepare.steps.find((step) =>
+        step.uses?.startsWith('actions/upload-artifact'),
+    );
+    assert.equal(artifact?.with['retention-days'], 90);
     assert.equal(
         JSON.stringify(workflow.jobs.prepare).includes('secrets.'),
         false,

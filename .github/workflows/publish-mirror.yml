@@ -112,7 +112,8 @@ jobs:
           name: contracts-development-mirror-${{ github.run_attempt }}
           path: ${{ runner.temp }}/contracts-mirror
           if-no-files-found: error
-          retention-days: 1
+          # Downstream snapshots reverify this artifact through the publication receipt.
+          retention-days: 90
 
   handoff:
     needs: prepare
