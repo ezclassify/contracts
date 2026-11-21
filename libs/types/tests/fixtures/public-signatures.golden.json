@@ -334,7 +334,7 @@
     "StructuralViewCategory": "export interface StructuralViewCategory { id: string; label: string; items: unknown[]; }",
     "SuggestResult": "export interface SuggestResult { suggestions: Suggestion[]; warnings: Warning[]; }",
     "SuggestResultsByCategory": "export type SuggestResultsByCategory = Record<string, SuggestResult>;",
-    "Suggestion": "export interface Suggestion { conceptId: string; categoryId: string; label: string; description: string; name: string; views: Record<string, string>; group: string; selected: boolean; order: number; source?: 'parse' | 'preset' | 'alias'; gated?: boolean; requires?: string[]; requiresDisplay?: string[]; }",
+    "Suggestion": "export interface Suggestion { conceptId: string; categoryId: string; label: string; description: string; name: string; views: Record<string, string>; group: string; selected: boolean; order: number; depth?: number; source?: 'parse' | 'preset' | 'alias'; gated?: boolean; requires?: string[]; requiresDisplay?: string[]; }",
     "SurfaceOutputDoc": "export interface SurfaceOutputDoc { surface: string; default: string | DefaultViewByRoleDoc; views: OutputViewDoc[]; }",
     "SyntaxDoc": "export type SyntaxDoc = { type: 'text'; } | { type: 'xml-attributes'; namespace?: { prefix: string; uri: string; }; };",
     "Term": "export interface Term { singular?: string; plural?: string; }",
