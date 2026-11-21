@@ -683,11 +683,18 @@ export interface Suggestion {
     /** True if this concept is already in the current marking. */
     selected: boolean;
     /**
-     * Sort order.
+     * The concept's authored position.
      *
      * @asType integer
      */
     order: number;
+    /**
+     * Zero-based indentation level in the returned browse order. Omitted
+     * when the result supplies no hierarchy for the suggestion.
+     * @asType integer
+     * @minimum 0
+     */
+    depth?: number;
     /**
      * `preset` on a row that offers a label preset, whose `conceptId` is
      * `preset:` followed by the preset id. A concept row leaves it unset.
