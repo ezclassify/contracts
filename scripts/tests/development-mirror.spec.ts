@@ -120,6 +120,7 @@ test('read-only native preparation and a source-free handoff keep write credenti
             string,
             {
                 environment?: string;
+                if?: string;
                 steps: {
                     uses?: string;
                     id?: string;
@@ -130,12 +131,24 @@ test('read-only native preparation and a source-free handoff keep write credenti
     };
     assert.deepEqual(Object.keys(workflow.on).sort(), [
         'push',
+        'repository_dispatch',
         'workflow_dispatch',
     ]);
     assert.deepEqual(workflow.on.push, { branches: ['main'] });
     assert.equal(workflow.permissions.contents, 'read');
     assert.equal(workflow.permissions.packages, 'read');
     assert.ok(workflow.jobs.prepare);
+    assert.deepEqual(workflow.on.repository_dispatch, {
+        types: ['contracts-mirror-refresh'],
+    });
+    assert.match(
+        workflow.jobs.prepare.if ?? '',
+        /github\.actor == 'ezclassify-spec-bot\[bot\]'/,
+    );
+    assert.match(
+        workflow.jobs.prepare.if ?? '',
+        /github\.event\.client_payload\.source_sha == github\.sha/,
+    );
     const artifact = workflow.jobs.prepare.steps.find((step) =>
         step.uses?.startsWith('actions/upload-artifact'),
     );
