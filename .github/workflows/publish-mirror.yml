@@ -9,6 +9,8 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+  repository_dispatch:
+    types: [contracts-mirror-refresh]
 
 permissions:
   packages: read
@@ -21,7 +23,11 @@ concurrency:
 jobs:
   prepare:
     # Only the enabled official main prepares native files for the conductor.
-    if: github.repository == 'ezclassify/contracts' && github.ref == 'refs/heads/main' && vars.EZ_DEVELOPMENT_MIRROR_PUBLISHER == 'true'
+    if: >-
+      github.repository == 'ezclassify/contracts' && github.ref == 'refs/heads/main' &&
+      vars.EZ_DEVELOPMENT_MIRROR_PUBLISHER == 'true' &&
+      (github.event_name != 'repository_dispatch' ||
+       (github.actor == 'ezclassify-spec-bot[bot]' && github.event.client_payload.source_sha == github.sha))
     runs-on: ubuntu-latest
     timeout-minutes: 20
     outputs:
@@ -112,7 +118,8 @@ jobs:
           name: contracts-development-mirror-${{ github.run_attempt }}
           path: ${{ runner.temp }}/contracts-mirror
           if-no-files-found: error
-          retention-days: 1
+          # Downstream snapshots reverify this artifact through the publication receipt.
+          retention-days: 90
 
   handoff:
     needs: prepare
