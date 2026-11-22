@@ -2,14 +2,9 @@
 /**
  * Guards the mirror publish before it runs.
  *
- * The GitHub Packages mirror carries prerelease versions only:
- * `1.0.0-mirror.N`, never a plain `1.0.0`. That is a deliberate decision, and
- * it has a consequence most people get wrong once: a dependency range of
- * `^1.0.0` does not match `1.0.0-mirror.7`. npm excludes prereleases from a
- * range unless the range names one. So a package published to the mirror while
- * declaring `"@ezclassify/schemas": "^1.0.0"` installs cleanly here, where the
- * sibling is a workspace link, and is unresolvable everywhere else. The tarball
- * looks right and the whole fleet still cannot install it.
+ * The private npm mirror carries prerelease versions only. The preparation
+ * checkout pins same-repository dependencies to the exact mirror version so
+ * consumers can install it without changing public source ranges.
  *
  * Three checks:
  *
@@ -19,8 +14,7 @@
  *    publication decision, so the list stays hand-written, but a package added
  *    to the repo and forgotten here would otherwise just never mirror,
  *    silently, which is the failure this check exists to make loud.
- * 2. First-party ranges admit a mirror version. Any dependency on a package this
- *    repository publishes must be written `^1.0.0-0`, not `^1.0.0`.
+ * 2. With `--expect-version <v>`, internal dependencies must pin that version.
  * 3. With `--expect-version <v>`, every listed package is actually at that
  *    version. The publish workflow stamps the mirror version and then calls
  *    this, so a package that slipped past the stamp cannot go out carrying a
@@ -38,7 +32,7 @@ import { fileURLToPath } from 'node:url';
 const here = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(here, '..');
 
-const DEP_FIELDS = [
+export const DEP_FIELDS = [
     'dependencies',
     'devDependencies',
     'peerDependencies',
@@ -96,13 +90,6 @@ export function findPublishableWorkspaces(root = repoRoot) {
     return found;
 }
 
-/** A range that npm will match against `1.0.0-mirror.N`. */
-function admitsMirrorVersion(range) {
-    // Not a general semver evaluation, and it should not be: the mirror stream is
-    // exactly one shape, so the rule is that the range names a 1.0.0 prerelease.
-    return /^\^?1\.0\.0-0$/.test(range.trim());
-}
-
 export function auditMirrorList({
     root = repoRoot,
     expectVersion = null,
@@ -139,10 +126,14 @@ export function auditMirrorList({
         const rel = path.relative(root, manifest);
         for (const field of DEP_FIELDS) {
             for (const [dep, range] of Object.entries(pkg[field] ?? {})) {
-                if (!firstParty.has(dep)) continue;
-                if (admitsMirrorVersion(range)) continue;
+                if (
+                    !expectVersion ||
+                    !firstParty.has(dep) ||
+                    range === expectVersion
+                )
+                    continue;
                 problems.push(
-                    `${rel} ${field}.${dep} is "${range}". The mirror publishes 1.0.0-mirror.N and npm will not match a prerelease against that range, so ${name} would be uninstallable off this machine. Use "^1.0.0-0".`,
+                    `${rel} ${field}.${dep} is "${range}", expected the exact mirror version ${expectVersion}.`,
                 );
             }
         }

@@ -14,6 +14,57 @@ import {
 } from 'node:fs';
 import { join, resolve, sep } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import {
+    auditMirrorList,
+    DEP_FIELDS,
+    findPublishableWorkspaces,
+    readMirrorList,
+} from './check-mirror-list.mjs';
+
+export function developmentVersion(root, sha) {
+    const git = (...args) =>
+        execFileSync('git', args, {
+            cwd: root,
+            encoding: 'utf8',
+            timeout: 30_000,
+        }).trim();
+    if (
+        !/^[a-f0-9]{40}$/.test(sha ?? '') ||
+        git('rev-parse', 'HEAD') !== sha ||
+        git('rev-parse', '--is-shallow-repository') !== 'false'
+    )
+        throw new Error(
+            'Mirror version requires the complete selected source history',
+        );
+    const { version } = JSON.parse(
+        git('show', `${sha}:libs/types/package.json`),
+    );
+    const line =
+        /^((?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.0)-dev\.(?:0|[1-9]\d*)$/.exec(
+            version,
+        );
+    const count = git('rev-list', '--first-parent', '--count', sha);
+    if (!line || !/^[1-9]\d*$/.test(count))
+        throw new Error('Invalid Contracts development version line');
+    return `${line[1]}-dev.${count}`;
+}
+
+function stampMirror(root, version) {
+    const { problems } = auditMirrorList({ root });
+    if (problems.length) throw new Error(problems.join('\n'));
+    const names = new Set(readMirrorList(root));
+    for (const { manifest, pkg } of findPublishableWorkspaces(root)) {
+        pkg.version = version;
+        for (const field of DEP_FIELDS) {
+            for (const name of Object.keys(pkg[field] ?? {})) {
+                if (names.has(name)) pkg[field][name] = version;
+            }
+        }
+        const indent =
+            /^\{\n( +)"/.exec(readFileSync(manifest, 'utf8'))?.[1] ?? '    ';
+        writeFileSync(manifest, JSON.stringify(pkg, null, indent) + '\n');
+    }
+}
 
 /**
  * Bind every packed native package to an exact official source and preparation
@@ -43,7 +94,7 @@ export function createMirrorRecord(root, directory, producer) {
         names.some((n) => !/^@ezclassify\/[a-z0-9-]+$/.test(n))
     )
         throw new Error('Invalid native mirror package list');
-    const version = `1.0.0-mirror.${producer.runId}.${producer.runAttempt}`;
+    const version = developmentVersion(root, producer.sourceSha);
     const packages = [];
     for (const file of readdirSync(directory).sort()) {
         const path = join(directory, file);
@@ -90,21 +141,30 @@ export function createMirrorRecord(root, directory, producer) {
 }
 if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
     const directory = process.argv[2];
-    if (!directory)
+    if (directory === 'version') {
+        console.log(developmentVersion(process.cwd(), process.env.GITHUB_SHA));
+    } else if (directory === 'stamp') {
+        stampMirror(
+            process.cwd(),
+            developmentVersion(process.cwd(), process.env.GITHUB_SHA),
+        );
+    } else if (!directory) {
         throw new Error('Use development-mirror.mjs <packed-directory>');
-    const producer = {
-        repository: process.env.GITHUB_REPOSITORY,
-        sourceSha: process.env.GITHUB_SHA,
-        runId: Number(process.env.GITHUB_RUN_ID),
-        runAttempt: Number(process.env.GITHUB_RUN_ATTEMPT),
-    };
-    const record = createMirrorRecord(
-        process.cwd(),
-        resolve(directory),
-        producer,
-    );
-    writeFileSync(
-        resolve(directory, 'development-mirror.json'),
-        `${JSON.stringify(record, null, 2)}\n`,
-    );
+    } else {
+        const producer = {
+            repository: process.env.GITHUB_REPOSITORY,
+            sourceSha: process.env.GITHUB_SHA,
+            runId: Number(process.env.GITHUB_RUN_ID),
+            runAttempt: Number(process.env.GITHUB_RUN_ATTEMPT),
+        };
+        const record = createMirrorRecord(
+            process.cwd(),
+            resolve(directory),
+            producer,
+        );
+        writeFileSync(
+            resolve(directory, 'development-mirror.json'),
+            `${JSON.stringify(record, null, 2)}\n`,
+        );
+    }
 }

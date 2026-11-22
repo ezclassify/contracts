@@ -36,6 +36,7 @@ jobs:
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
+          fetch-depth: 0
           persist-credentials: false
 
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
@@ -82,22 +83,13 @@ jobs:
         # the post-publish check all read scripts/mirror-packages.json, so they
         # cannot drift apart the way two hand-copied lists do.
         run: |
-          echo "version=1.0.0-mirror.${{ github.run_id }}.${{ github.run_attempt }}" >> "$GITHUB_OUTPUT"
+          echo "version=$(node scripts/development-mirror.mjs version)" >> "$GITHUB_OUTPUT"
           echo "packages=$(node -p 'require("./scripts/mirror-packages.json").packages.join(" ")')" >> "$GITHUB_OUTPUT"
 
       - name: Stamp mirror version
-        run: |
-          for pkg in ${{ steps.plan.outputs.packages }}; do
-            npm pkg set "version=${{ steps.plan.outputs.version }}" -w "$pkg"
-          done
+        run: node scripts/development-mirror.mjs stamp
 
-      - name: The list is complete and every range admits a mirror version
-        # Runs AFTER the stamp so it checks what is about to be published, not
-        # what was committed. Catches three things that otherwise ship quietly:
-        # a publishable workspace nobody added to the list, a first-party
-        # dependency written "^1.0.0" (which npm will not match against
-        # 1.0.0-mirror.N, making the tarball uninstallable off this machine),
-        # and a package the stamp did not reach.
+      - name: Verify the complete mirror package set and exact internal pins
         run: node scripts/check-mirror-list.mjs --expect-version "${{ steps.plan.outputs.version }}"
 
       - name: Build
