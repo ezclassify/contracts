@@ -34,11 +34,7 @@ jobs:
           node-version: '22'
 
       # Plain Node scripts, so they run before anything is installed.
-      - name: Mirror publish list is complete and installable
-        # The mirror carries 1.0.0-mirror.N only, and npm will not match a
-        # prerelease against a "^1.0.0" range. A first-party dependency written
-        # that way installs fine here, where the sibling is a workspace link,
-        # and is unresolvable for every consumer.
+      - name: Mirror publish list is complete
         run: node scripts/check-mirror-list.mjs
 
       - name: Lockfile and dependency age

@@ -13,20 +13,18 @@ import {
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { execFileSync } from 'node:child_process';
-import { createMirrorRecord } from '../development-mirror.mjs';
+import {
+    createMirrorRecord,
+    developmentVersion,
+} from '../development-mirror.mjs';
 
-const producer = {
-    repository: 'ezclassify/contracts',
-    sourceSha: 'a'.repeat(40),
-    runId: 1234567,
-    runAttempt: 2,
-};
 test('records the complete native npm file set with immutable preparation identity; rejects additions and links', () => {
     const parent = mkdtempSync(join(tmpdir(), 'ez-contracts-mirror-'));
     const root = join(parent, 'source');
     mkdirSync(root);
     try {
         mkdirSync(join(root, 'scripts'));
+        mkdirSync(join(root, 'libs/types'), { recursive: true });
         mkdirSync(join(root, 'package'));
         mkdirSync(join(parent, 'packed'));
         writeFileSync(
@@ -34,11 +32,40 @@ test('records the complete native npm file set with immutable preparation identi
             JSON.stringify({ packages: ['@ezclassify/types'] }),
         );
         writeFileSync(
+            join(root, 'libs/types/package.json'),
+            JSON.stringify({ version: '1.1.0-dev.0' }),
+        );
+        writeFileSync(
             join(root, 'package/package.json'),
             JSON.stringify({
                 name: '@ezclassify/types',
-                version: '1.0.0-mirror.1234567.2',
+                version: '1.1.0-dev.1',
             }),
+        );
+        const git = (...args: string[]) =>
+            execFileSync('git', args, { cwd: root, encoding: 'utf8' }).trim();
+        git('init', '-q');
+        git('add', '.');
+        git(
+            '-c',
+            'user.name=Test',
+            '-c',
+            'user.email=test@example.com',
+            '-c',
+            'commit.gpgsign=false',
+            'commit',
+            '-qm',
+            'source',
+        );
+        const producer = {
+            repository: 'ezclassify/contracts',
+            sourceSha: git('rev-parse', 'HEAD'),
+            runId: 1234567,
+            runAttempt: 2,
+        };
+        assert.equal(
+            developmentVersion(root, producer.sourceSha),
+            '1.1.0-dev.1',
         );
         execFileSync(
             'npm',
@@ -74,13 +101,16 @@ test('records the complete native npm file set with immutable preparation identi
                 }),
             /producer/,
         );
+        assert.equal(
+            createMirrorRecord(root, join(parent, 'packed'), {
+                ...producer,
+                runAttempt: 3,
+            }).version,
+            result.version,
+        );
         assert.throws(
-            () =>
-                createMirrorRecord(root, join(parent, 'packed'), {
-                    ...producer,
-                    runAttempt: 3,
-                }),
-            /Unexpected/,
+            () => developmentVersion(root, 'a'.repeat(40)),
+            /complete selected source history/,
         );
         writeFileSync(join(parent, 'packed/extra.tgz'), 'outside');
         assert.throws(
