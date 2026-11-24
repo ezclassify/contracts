@@ -7,8 +7,9 @@ updates:
   - package-ecosystem: npm
     directory: /
     schedule:
-      interval: weekly
-      day: monday
+      interval: cron
+      cronjob: '17 3 * * *'
+      timezone: America/New_York
     cooldown:
       # The repository refuses any third-party release published inside a
       # seven-day window (`npm run check:dependency-age`). Without a matching
@@ -31,7 +32,7 @@ updates:
         update-types:
           - version-update:semver-major
       - dependency-name: '@ezclassify/*'
-    open-pull-requests-limit: 0
+    open-pull-requests-limit: 1
     labels:
       - dependencies
     allow:
@@ -44,8 +45,9 @@ updates:
   - package-ecosystem: github-actions
     directory: /
     schedule:
-      interval: weekly
-      day: monday
+      interval: cron
+      cronjob: '17 3 * * *'
+      timezone: America/New_York
     cooldown:
       default-days: 7
     groups:
@@ -67,4 +69,4 @@ updates:
         update-types:
           - version-update:semver-minor
           - version-update:semver-patch
-    open-pull-requests-limit: 0
+    open-pull-requests-limit: 1
