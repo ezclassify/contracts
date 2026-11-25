@@ -29,6 +29,13 @@
         "openapi.yaml",
         "!dist/**/*.map"
     ],
+    "keywords": [
+        "ezclassify",
+        "openapi",
+        "rest-api",
+        "classification-marking",
+        "wire-types"
+    ],
     "scripts": {
         "build": "npm run clean && tsc -p tsconfig.build.json",
         "clean": "rm -rf dist",

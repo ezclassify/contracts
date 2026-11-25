@@ -62,6 +62,13 @@
         "generated/validation/",
         "!dist/**/*.map"
     ],
+    "keywords": [
+        "ezclassify",
+        "json-schema",
+        "classification-marking",
+        "custom-scheme",
+        "scheme"
+    ],
     "scripts": {
         "build": "node build.mjs && vite build",
         "build:lib": "vite build",

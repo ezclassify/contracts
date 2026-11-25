@@ -19,6 +19,11 @@
         "test.json",
         "README.md"
     ],
+    "keywords": [
+        "ezclassify",
+        "tsconfig",
+        "typescript"
+    ],
     "scripts": {
         "prepublishOnly": "npm run verify:publish",
         "verify:publish": "node -e \"const fs=require('node:fs'); for (const file of ['library.json','app.json','test.json']) JSON.parse(fs.readFileSync(file,'utf8'));\""

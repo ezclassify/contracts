@@ -2,13 +2,13 @@
     "name": "@ezclassify/validator",
     "version": "1.0.0-dev.30",
     "type": "module",
-    "description": "Schema-only validator for EzClassify scheme, guide, access, context, and crosswalk documents",
+    "description": "Validates the scheme, guide, access, context and crosswalk documents you author for EzClassify. It does not validate markings. Runs standalone, with no runtime.",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/ezclassify/contracts.git",
         "directory": "packages/validator"
     },
-    "homepage": "https://ezclassify.com",
+    "homepage": "https://ezclassify.com/docs/authoring-schemes",
     "author": "EzClassify, LLC",
     "license": "Apache-2.0",
     "engines": {
@@ -65,7 +65,9 @@
         "marking",
         "scheme",
         "validation",
-        "json-schema"
+        "json-schema",
+        "custom-scheme",
+        "rules"
     ],
     "scripts": {
         "check:standalone": "node scripts/generate-standalone.mjs --check",

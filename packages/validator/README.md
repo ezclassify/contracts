@@ -1,7 +1,10 @@
 # @ezclassify/validator
 
-Checks that an EzClassify document is well-formed, against the same JSON
-Schemas the product publishes. No license, no account, and no network.
+Validates the scheme, guide, access, context and crosswalk documents you
+author for EzClassify. It checks that each document is well-formed against the
+same JSON Schemas the product publishes. It does not validate markings: to
+check a marking such as a CAPCO or CUI banner line, use an EzClassify runtime.
+No license, no account, and no network.
 
 ```bash
 npx @ezclassify/validator my-scheme.yaml
