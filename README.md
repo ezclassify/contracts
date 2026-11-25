@@ -26,15 +26,15 @@ decision.
 
 ## Packages
 
-| Package                          | What it is                                                                                                       |
-| -------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| `@ezclassify/types`              | Hand-written TypeScript interfaces for every document and wire shape. The source of truth.                       |
-| `@ezclassify/schemas`            | JSON Schemas for scheme, guide, access, context, and crosswalk documents, derived from the types.                |
-| `@ezclassify/openapi`            | The OpenAPI document for the REST surface, plus the route declarations and HTTP body types it is generated from. |
-| `@ezclassify/conformance`        | Test vectors: plans, reference fixtures, HTTP recordings, the golden wire corpus, per-SDK matrix.                |
-| `@ezclassify/conformance-server` | Replays the wire corpus over real HTTP, so an SDK can be tested through its own HTTP stack.                      |
-| `@ezclassify/validator`          | Schema-only document validation with a CLI.                                                                      |
-| `@ezclassify/tsconfig`           | Shared TypeScript configuration.                                                                                 |
+| Package                          | What it is                                                                                                                      |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `@ezclassify/types`              | Hand-written TypeScript interfaces for every document and wire shape. The source of truth.                                      |
+| `@ezclassify/schemas`            | JSON Schemas for scheme, guide, access, context, and crosswalk documents, derived from the types.                               |
+| `@ezclassify/openapi`            | The OpenAPI document for the REST surface, plus the route declarations and HTTP body types it is generated from.                |
+| `@ezclassify/conformance`        | Test vectors: plans, reference fixtures, HTTP recordings, the golden wire corpus, per-SDK matrix.                               |
+| `@ezclassify/conformance-server` | Replays the wire corpus over real HTTP, so an SDK can be tested through its own HTTP stack.                                     |
+| `@ezclassify/validator`          | Schema-only validation for the scheme, guide, access, context and crosswalk documents you author. Run it with npx or import it. |
+| `@ezclassify/tsconfig`           | Shared TypeScript configuration.                                                                                                |
 
 [`libs/openapi/openapi.yaml`](libs/openapi/openapi.yaml) is the REST contract. [`libs/openapi/openapi.json`](libs/openapi/openapi.json) beside it is the
 same document restated as JSON for consumers that do not read YAML. Both ship
