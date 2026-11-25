@@ -8,7 +8,7 @@
         "url": "git+https://github.com/ezclassify/contracts.git",
         "directory": "packages/conformance-server"
     },
-    "homepage": "https://ezclassify.com",
+    "homepage": "https://ezclassify.com/",
     "author": "EzClassify, LLC",
     "license": "Apache-2.0",
     "engines": {

@@ -8,7 +8,7 @@
         "url": "git+https://github.com/ezclassify/contracts.git",
         "directory": "libs/schemas"
     },
-    "homepage": "https://ezclassify.com",
+    "homepage": "https://ezclassify.com/",
     "author": "EzClassify, LLC",
     "license": "Apache-2.0",
     "engines": {
@@ -61,6 +61,13 @@
         "generated/json-schemas/",
         "generated/validation/",
         "!dist/**/*.map"
+    ],
+    "keywords": [
+        "ezclassify",
+        "json-schema",
+        "classification-marking",
+        "custom-scheme",
+        "scheme"
     ],
     "scripts": {
         "build": "node build.mjs && vite build",
