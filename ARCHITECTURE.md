@@ -71,7 +71,7 @@ checks the trigger and the bundle inputs.
 - `@ezclassify/schemas` re-exports the static schemas and the sub-schemas read
   out of them, all browser-safe.
 - `@ezclassify/validator` checks document shape against the published schemas
-  and adds a CLI. It reports structure only.
+  and adds a command to run it. It reports structure only.
 - `@ezclassify/conformance-server` looks a request up in the wire corpus and
   serves what was recorded. Its simulated authentication mode stands in for a
   closed deployment.

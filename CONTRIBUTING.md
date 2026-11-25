@@ -50,7 +50,7 @@ shows up as a diff in review.
 | `npm run docs:check`              | Fails if any exported declaration, member or parameter of a published package lacks a doc comment. Writes nothing.                                                                                                                                                               |
 | `npm run check:schemas`           | Fails if [`libs/schemas/generated/`](libs/schemas/generated/) differs from a fresh generation. Writes nothing.                                                                                                                                                                   |
 | `npm run notices`                 | Regenerates each package's `THIRD-PARTY-NOTICES.md` from its production dependency tree. `npm run check:notices` checks them without writing.                                                                                                                                    |
-| `npm run validate -- <path>`      | Runs the schema-only validator CLI on a document or a directory.                                                                                                                                                                                                                 |
+| `npm run validate -- <path>`      | Runs the schema-only validator on a document or a directory.                                                                                                                                                                                                                     |
 | `npm run format:check`            | Prettier, as CI runs it. `npm run format` rewrites.                                                                                                                                                                                                                              |
 | `npm run deps:relock`             | Deletes `node_modules` and the lockfile, resolves a new lockfile from versions published at least seven days ago, then runs the two checks below.                                                                                                                                |
 | `npm run check:lockfile-portable` | Fails if the lockfile resolves anything from a machine-local registry.                                                                                                                                                                                                           |
@@ -66,7 +66,7 @@ they are stale.
 Every pull request runs, on Node 22: the native portability and
 dependency-age guards, `node scripts/check-mirror-list.mjs`, the install above,
 `npm run format:check`, `npm run build` (including schema regeneration),
-`npm test`, `npm run check:spec`, `npm run check:openapi`, the validator CLI
+`npm test`, `npm run check:spec`, `npm run check:openapi`, the validator command
 against a shipped example, and a clean-tree check. A release run adds Node 24,
 regenerates the OpenAPI document and package notices, and runs
 `npm run docs:check`. Run the same commands before you open a pull request.

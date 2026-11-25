@@ -23,7 +23,7 @@ You will receive an acknowledgment within **48 hours**. We follow a **90-day coo
 
 ## What Is a Security Issue
 
-A security issue is a defect that could be exploited to compromise confidentiality, integrity, or availability. Most of this repository is types, schemas, and data. The code that runs on a user's machine is the validator CLI and the conformance replay server, and the published schemas are what other tools trust to reject a malformed document. Examples include:
+A security issue is a defect that could be exploited to compromise confidentiality, integrity, or availability. Most of this repository is types, schemas, and data. The code that runs on a user's machine is the validator command and the conformance replay server, and the published schemas are what other tools trust to reject a malformed document. Examples include:
 
 - A published schema that accepts raw secret material where it requires a secret reference, or otherwise admits a document shape the contract says must be refused.
 - Prototype pollution, object injection, or unsafe YAML handling while the validator reads a document.
