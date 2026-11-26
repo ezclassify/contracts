@@ -34,12 +34,12 @@ jobs:
       artifact-id: ${{ steps.artifact.outputs.artifact-id }}
       artifact-digest: ${{ steps.artifact.outputs.artifact-digest }}
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
           persist-credentials: false
 
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '24'
           package-manager-cache: false
@@ -104,7 +104,7 @@ jobs:
             npm pack --ignore-scripts --pack-destination "$RUNNER_TEMP/contracts-mirror" -w "$pkg"
           done
           node scripts/development-mirror.mjs "$RUNNER_TEMP/contracts-mirror"
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         id: artifact
         with:
           name: contracts-development-mirror-${{ github.run_attempt }}
@@ -128,7 +128,7 @@ jobs:
           DISPATCH_REPOSITORY: ${{ secrets.EZ_DEVELOPMENT_SIGNAL_DESTINATION }}
         run: '[[ "$DISPATCH_REPOSITORY" =~ ^[a-zA-Z0-9][a-zA-Z0-9._-]*$ ]]'
       - id: conductor
-        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc # v3.4.0
         with:
           app-id: ${{ secrets.EZ_DEVELOPMENT_SIGNAL_APP_ID }}
           private-key: ${{ secrets.EZ_DEVELOPMENT_SIGNAL_APP_PRIVATE_KEY }}
